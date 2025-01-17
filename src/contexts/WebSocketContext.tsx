@@ -1,13 +1,13 @@
 import React, { createContext, useContext, useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { WebSocketMessage } from '@/types/websocket';
+import { WebSocketMessage, WebSocketPayload, WebSocketEventType } from '@/types/websocket';
 
 interface WebSocketContextType {
   isConnected: boolean;
   error: string | null;
-  send: (message: WebSocketMessage<any>) => void;
+  send: <T extends WebSocketPayload>(message: WebSocketMessage<T>) => Promise<void>;
   disconnect: () => void;
-  reconnect: () => void;
+  reconnect: () => Promise<void>;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -22,80 +22,134 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
+  const MAX_RECONNECT_ATTEMPTS = 5;
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     try {
-      const ws = new WebSocket(`${url}?token=${user?.id}`);
+      if (!user?.id) {
+        throw new Error('Cannot connect: No user ID available');
+      }
 
-      ws.onopen = () => {
-        setIsConnected(true);
-        setError(null);
-      };
+      const ws = new WebSocket(`${url}?token=${encodeURIComponent(user.id)}`);
 
-      ws.onclose = () => {
-        setIsConnected(false);
-        setError('WebSocket connection closed');
-        // Attempt to reconnect after 5 seconds
-        setTimeout(() => connect(), 5000);
-      };
+      return new Promise<WebSocket>((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          ws.close();
+          reject(new Error('Connection timeout'));
+        }, 10000);
 
-      ws.onerror = event => {
-        setError('WebSocket error occurred');
-        console.error('WebSocket error:', event);
-      };
+        ws.onopen = () => {
+          clearTimeout(timeout);
+          setIsConnected(true);
+          setError(null);
+          setReconnectAttempts(0);
+          resolve(ws);
+        };
 
-      ws.onmessage = event => {
-        try {
-          const message: WebSocketMessage<any> = JSON.parse(event.data);
-          console.log('WebSocket message received:', message);
-        } catch (err) {
-          console.error('Error parsing WebSocket message:', err);
-        }
-      };
+        ws.onclose = (event: CloseEvent) => {
+          clearTimeout(timeout);
+          setIsConnected(false);
+          const closeReason = event.reason || 'Connection closed';
+          setError(`WebSocket connection closed: ${closeReason}`);
 
-      setSocket(ws);
+          if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+            setTimeout(() => {
+              setReconnectAttempts(prev => prev + 1);
+              void connect();
+            }, delay);
+          }
+        };
+
+        ws.onerror = (event: Event) => {
+          clearTimeout(timeout);
+          const errorMessage = event instanceof ErrorEvent ? event.message : 'Unknown error';
+          setError(`WebSocket error: ${errorMessage}`);
+          reject(new Error(errorMessage));
+        };
+
+        ws.onmessage = (event: MessageEvent) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (!data.type || !data.payload) {
+              throw new Error('Invalid message format');
+            }
+            const message = data as WebSocketMessage<WebSocketPayload>;
+            handleWebSocketMessage(message);
+          } catch (err) {
+            console.error('Error handling WebSocket message:', err);
+            setError(err instanceof Error ? err.message : 'Error processing message');
+          }
+        };
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to connect to WebSocket');
-      console.error('WebSocket connection error:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect';
+      setError(errorMessage);
+      console.error('WebSocket connection error:', errorMessage);
+      throw err;
     }
-  }, [url, user?.id]);
+  }, [url, user?.id, reconnectAttempts]);
+
+  const handleWebSocketMessage = useCallback((message: WebSocketMessage<WebSocketPayload>) => {
+    switch (message.type) {
+      case WebSocketEventType.SAFETY_ALERT:
+      case WebSocketEventType.EMERGENCY_ALERT:
+        // Handle safety/emergency alerts
+        break;
+      case WebSocketEventType.LOCATION_UPDATE:
+        // Handle location update
+        break;
+      case WebSocketEventType.CONNECTION:
+        // Handle connection status
+        break;
+      default:
+        console.warn('Unhandled WebSocket message type:', message.type);
+    }
+  }, []);
 
   const disconnect = useCallback(() => {
     if (socket) {
       socket.close();
       setSocket(null);
       setIsConnected(false);
+      setReconnectAttempts(0);
     }
   }, [socket]);
 
-  const reconnect = useCallback(() => {
+  const reconnect = useCallback(async () => {
     disconnect();
-    connect();
+    setReconnectAttempts(0);
+    const newSocket = await connect();
+    setSocket(newSocket);
   }, [connect, disconnect]);
 
   const send = useCallback(
-    (message: WebSocketMessage<any>) => {
+    async <T extends WebSocketPayload>(message: WebSocketMessage<T>): Promise<void> => {
       if (!socket || socket.readyState !== WebSocket.OPEN) {
-        setError('WebSocket is not connected');
-        return;
+        throw new Error('WebSocket is not connected');
       }
 
       try {
         socket.send(JSON.stringify(message));
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to send message');
+        const errorMessage = err instanceof Error ? err.message : 'Failed to send message';
+        setError(errorMessage);
         console.error('Error sending WebSocket message:', err);
+        throw err;
       }
     },
     [socket]
   );
 
   useEffect(() => {
-    connect();
+    if (user?.id) {
+      void connect().then(setSocket);
+    }
     return () => {
       disconnect();
     };
-  }, [connect, disconnect]);
+  }, [connect, disconnect, user?.id]);
 
   const value = {
     isConnected,

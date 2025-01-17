@@ -23,11 +23,24 @@ const categories: { value: EventCategory; label: string }[] = [
 
 export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [filters, setFilters] = useState<EventFilters>(initialFilters);
+  const [filters, setFilters] = useState<EventFilters>({
+    ...initialFilters,
+    filters: initialFilters.filters || {},
+  });
 
   const handleSave = () => {
     onUpdate(filters);
     setIsOpen(false);
+  };
+
+  const updateFilters = (updates: Partial<typeof filters.filters>) => {
+    setFilters(prev => ({
+      ...prev,
+      filters: {
+        ...prev.filters,
+        ...updates,
+      },
+    }));
   };
 
   return (
@@ -59,10 +72,9 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
                 label="Category"
                 name="category"
                 options={categories}
-                value={filters.categories?.[0] || ''}
+                value={filters.filters?.categories?.[0] || ''}
                 onChange={e =>
-                  setFilters({
-                    ...filters,
+                  updateFilters({
                     categories: e.target.value ? [e.target.value as EventCategory] : undefined,
                   })
                 }
@@ -73,10 +85,9 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
                   label="Start Date"
                   name="startDate"
                   type="date"
-                  value={filters.startDate}
+                  value={filters.filters?.startDate}
                   onChange={e =>
-                    setFilters({
-                      ...filters,
+                    updateFilters({
                       startDate: e.target.value,
                     })
                   }
@@ -85,11 +96,10 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
                   label="End Date"
                   name="endDate"
                   type="date"
-                  value={filters.endDate}
-                  min={filters.startDate}
+                  value={filters.filters?.endDate}
+                  min={filters.filters?.startDate}
                   onChange={e =>
-                    setFilters({
-                      ...filters,
+                    updateFilters({
                       endDate: e.target.value,
                     })
                   }
@@ -99,25 +109,23 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
               <Checkbox
                 label="Show only free events"
                 name="isFree"
-                checked={filters.isFree}
+                checked={filters.filters?.isFree}
                 onChange={e =>
-                  setFilters({
-                    ...filters,
+                  updateFilters({
                     isFree: e.target.checked,
                   })
                 }
               />
 
-              {!filters.isFree && (
+              {!filters.filters?.isFree && (
                 <TextField
                   label="Maximum Price ($)"
                   name="maxPrice"
                   type="number"
                   min="0"
-                  value={filters.maxPrice?.toString()}
+                  value={filters.filters?.maxPrice?.toString()}
                   onChange={e =>
-                    setFilters({
-                      ...filters,
+                    updateFilters({
                       maxPrice: parseInt(e.target.value),
                     })
                   }
@@ -128,25 +136,23 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
                 label="Location"
                 name="location"
                 placeholder="Enter city or address"
-                value={filters.location}
+                value={filters.filters?.location}
                 onChange={e =>
-                  setFilters({
-                    ...filters,
+                  updateFilters({
                     location: e.target.value,
                   })
                 }
               />
 
-              {filters.location && (
+              {filters.filters?.location && (
                 <TextField
                   label="Search Radius (km)"
                   name="radius"
                   type="number"
                   min="1"
-                  value={filters.radius?.toString()}
+                  value={filters.filters?.radius?.toString()}
                   onChange={e =>
-                    setFilters({
-                      ...filters,
+                    updateFilters({
                       radius: parseInt(e.target.value),
                     })
                   }
@@ -154,25 +160,22 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
               )}
 
               <Checkbox
-                label="Show only events with available spots"
+                label="Show events with available spots only"
                 name="hasAvailableSpots"
-                checked={filters.hasAvailableSpots}
+                checked={filters.filters?.hasAvailableSpots}
                 onChange={e =>
-                  setFilters({
-                    ...filters,
+                  updateFilters({
                     hasAvailableSpots: e.target.checked,
                   })
                 }
               />
-            </div>
 
-            <div className="mt-6 flex justify-end space-x-3">
-              <Button variant="outline" onClick={() => setIsOpen(false)}>
-                Cancel
-              </Button>
-              <Button variant="primary" onClick={handleSave}>
-                Apply Filters
-              </Button>
+              <div className="mt-6 flex justify-end space-x-3">
+                <Button variant="outline" onClick={() => setIsOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave}>Apply Filters</Button>
+              </div>
             </div>
           </div>
         </div>

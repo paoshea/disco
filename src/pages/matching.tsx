@@ -28,7 +28,7 @@ export default function MatchingPage() {
               }
             : undefined
         );
-        setMatches(response.map(r => r.match));
+        setMatches(response);
       } catch (err) {
         console.error('Error fetching matches:', err);
         setError(

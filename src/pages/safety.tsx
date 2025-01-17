@@ -11,6 +11,7 @@ import { Alert } from '@/components/ui/Alert';
 import { Tab } from '@headlessui/react';
 import { safetyService } from '@/services/api/safety.service';
 import type { SafetyAlertNew as SafetyAlert, SafetyCheckNew as SafetyCheck } from '@/types/safety';
+import type { EmergencyContact } from '@/types/user';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -30,12 +31,20 @@ export default function Safety() {
     dismissAlert,
   } = useSafetyAlert();
 
+  // Use alerts to show active alerts if any
+  const activeAlerts = alerts.filter(alert => alert.status === 'active');
+
   useEffect(() => {
     const init = async () => {
       try {
         if (!authLoading && !user) {
           await router.push('/login');
           return;
+        }
+
+        // Trigger emergency alert if there's a pending SOS
+        if (activeAlerts.some(alert => alert.type === 'sos')) {
+          await triggerEmergencyAlert();
         }
       } catch (err) {
         console.error('Error initializing safety page:', err);
@@ -48,7 +57,22 @@ export default function Safety() {
     };
 
     void init();
-  }, [router, user, authLoading]);
+  }, [router, user, authLoading, activeAlerts, triggerEmergencyAlert]);
+
+  // Handle auto-dismissal of resolved alerts
+  useEffect(() => {
+    const dismissResolvedAlerts = async () => {
+      try {
+        // Since id is required in SafetyAlertNew interface, we can be sure it exists
+        const resolvedAlerts = alerts.filter(alert => alert.status === 'resolved');
+        await Promise.all(resolvedAlerts.map(alert => dismissAlert(alert.id)));
+      } catch (err) {
+        console.error('Error dismissing resolved alerts:', err);
+      }
+    };
+
+    void dismissResolvedAlerts();
+  }, [alerts, dismissAlert]);
 
   if (isLoading || safetyLoading || authLoading) {
     return (
@@ -62,6 +86,90 @@ export default function Safety() {
     return null;
   }
 
+  const wrappedSettingsChange = (
+    settings: Parameters<typeof safetyService.updateSafetySettings>[1]
+  ) => {
+    void (async () => {
+      try {
+        await safetyService.updateSafetySettings(user.id, {
+          autoShareLocation: settings.autoShareLocation,
+          meetupCheckins: settings.meetupCheckins,
+          sosAlertEnabled: settings.sosAlertEnabled,
+          requireVerifiedMatch: settings.requireVerifiedMatch,
+          emergencyContacts: (user.emergencyContacts || []).map(contact => ({
+            ...contact,
+            userId: user.id,
+            phoneNumber: contact.phoneNumber || '',
+            email: contact.email || '',
+            createdAt: contact.createdAt || new Date().toISOString(),
+            updatedAt: contact.updatedAt || new Date().toISOString(),
+          })),
+        });
+      } catch (err) {
+        console.error('Error updating safety settings:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update safety settings');
+      }
+    })();
+  };
+
+  const wrappedEditContact = (contact: EmergencyContact) => {
+    void (async () => {
+      try {
+        if (!contact.id) {
+          throw new Error('Contact ID is required');
+        }
+        // Convert user EmergencyContact to safety EmergencyContact
+        const safetyContact = {
+          ...contact,
+          userId: user.id,
+          createdAt: contact.createdAt || new Date().toISOString(),
+          updatedAt: contact.updatedAt || new Date().toISOString(),
+        };
+        await safetyService.updateEmergencyContact(user.id, contact.id, safetyContact);
+      } catch (err) {
+        console.error('Error updating contact:', err);
+        setError(err instanceof Error ? err.message : 'Failed to update contact');
+      }
+    })();
+  };
+
+  const wrappedDeleteContact = (contactId: string) => {
+    void (async () => {
+      try {
+        await safetyService.deleteEmergencyContact(user.id, contactId);
+      } catch (err) {
+        console.error('Error deleting contact:', err);
+        setError(err instanceof Error ? err.message : 'Failed to delete contact');
+      }
+    })();
+  };
+
+  const wrappedCompleteCheck = (checkId: string): Promise<void> => {
+    return (async () => {
+      try {
+        await resolveSafetyCheck(checkId, 'safe');
+      } catch (err) {
+        console.error('Error completing safety check:', err);
+        setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+      }
+    })();
+  };
+
+  // Convert safety checks to the correct type
+  const typedSafetyChecks: SafetyCheck[] = safetyChecks.map(check => ({
+    id: check.id,
+    userId: check.userId,
+    type: check.type || 'custom',
+    status:
+      check.status === 'completed' ? 'completed' : check.status === 'missed' ? 'missed' : 'pending',
+    scheduledFor: check.scheduledFor,
+    location: check.location,
+    description: check.description,
+    createdAt: check.createdAt,
+    updatedAt: check.updatedAt,
+    completedAt: check.completedAt,
+  }));
+
   return (
     <Layout>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -70,6 +178,14 @@ export default function Safety() {
           <p className="mt-2 text-sm text-gray-600">
             Manage your safety settings and emergency contacts
           </p>
+          {activeAlerts.length > 0 && (
+            <Alert
+              type="warning"
+              title="Active Safety Alerts"
+              message={`You have ${activeAlerts.length} active safety alert(s)`}
+              className="mt-4"
+            />
+          )}
         </div>
 
         {error && <Alert type="error" title="Error" message={error} className="mb-6" />}
@@ -118,84 +234,17 @@ export default function Safety() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <SafetyCenter
-                userId={user.id}
-                onSettingsChange={async settings => {
-                  try {
-                    await safetyService.updateSettings(user.id, {
-                      autoShareLocation: settings.autoShareLocation,
-                      meetupCheckins: settings.meetupCheckins,
-                      sosAlertEnabled: settings.sosAlertEnabled,
-                      requireVerifiedMatch: settings.requireVerifiedMatch,
-                      emergencyContacts: (user.emergencyContacts || []).map(contact => ({
-                        ...contact,
-                        userId: user.id,
-                        phoneNumber: contact.phoneNumber || '',
-                        email: contact.email || '',
-                        createdAt: contact.createdAt || new Date().toISOString(),
-                        updatedAt: contact.updatedAt || new Date().toISOString(),
-                      })),
-                    });
-                  } catch (err) {
-                    console.error('Error updating safety settings:', err);
-                    setError(
-                      err instanceof Error ? err.message : 'Failed to update safety settings'
-                    );
-                  }
-                }}
-              />
+              <SafetyCenter userId={user.id} onSettingsChange={wrappedSettingsChange} />
             </Tab.Panel>
             <Tab.Panel>
               <EmergencyContactList
                 contacts={[]}
-                onEdit={async contact => {
-                  try {
-                    await safetyService.updateEmergencyContact(user.id, contact.id, contact);
-                  } catch (err) {
-                    console.error('Error updating contact:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to update contact');
-                  }
-                }}
-                onDelete={async contactId => {
-                  try {
-                    await safetyService.deleteEmergencyContact(user.id, contactId);
-                  } catch (err) {
-                    console.error('Error deleting contact:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to delete contact');
-                  }
-                }}
+                onEdit={wrappedEditContact}
+                onDelete={wrappedDeleteContact}
               />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyCheckList
-                checks={safetyChecks.map(check => ({
-                  id: check.id,
-                  userId: check.userId,
-                  type: check.type || 'custom',
-                  status:
-                    check.status === 'completed'
-                      ? 'completed'
-                      : check.status === 'missed'
-                        ? 'missed'
-                        : 'pending',
-                  scheduledFor: check.scheduledFor,
-                  location: check.location,
-                  description: check.description,
-                  createdAt: check.createdAt,
-                  updatedAt: check.updatedAt,
-                  completedAt: check.completedAt,
-                }))}
-                onComplete={async (checkId: string) => {
-                  try {
-                    await resolveSafetyCheck(checkId, 'safe');
-                  } catch (err) {
-                    console.error('Error completing safety check:', err);
-                    setError(
-                      err instanceof Error ? err.message : 'Failed to complete safety check'
-                    );
-                  }
-                }}
-              />
+              <SafetyCheckList checks={typedSafetyChecks} onComplete={wrappedCompleteCheck} />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

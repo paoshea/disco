@@ -1,5 +1,10 @@
 type NotificationPermission = 'default' | 'granted' | 'denied';
 
+interface NotificationError extends Error {
+  code?: string;
+  name: string;
+}
+
 interface NotificationData {
   type: string;
   [key: string]: unknown;
@@ -10,7 +15,7 @@ interface NotificationOptions<T extends NotificationData = NotificationData> {
   body: string;
   icon?: string;
   data?: T;
-  onClick?: () => void;
+  onClick?: () => void | Promise<void>;
 }
 
 type NotificationHandler = (notification: Notification) => void | Promise<void>;
@@ -68,7 +73,12 @@ export class NotificationService {
       localStorage.setItem(this.storageKey, permission);
       return permission;
     } catch (error) {
-      console.error('Error requesting notification permission:', error);
+      const notificationError = error as NotificationError;
+      console.error('Error requesting notification permission:', {
+        message: notificationError.message,
+        name: notificationError.name,
+        code: notificationError.code,
+      });
       return 'denied';
     }
   }
@@ -80,8 +90,11 @@ export class NotificationService {
     }
 
     if (this.permission !== 'granted') {
-      console.warn('Notification permission not granted');
-      return;
+      const permission = await this.requestPermission();
+      if (permission !== 'granted') {
+        console.warn('Notification permission not granted');
+        return;
+      }
     }
 
     try {
@@ -91,38 +104,48 @@ export class NotificationService {
         data: options.data,
       });
 
-      await new Promise<void>(resolve => {
+      await new Promise<void>((resolve, reject) => {
         notification.onclick = async event => {
           event.preventDefault();
 
-          if (options.data?.type) {
-            const handler = this.handlers.get(options.data.type);
-            if (handler) {
-              try {
+          try {
+            if (options.data?.type) {
+              const handler = this.handlers.get(options.data.type);
+              if (handler) {
                 await handler(notification);
-              } catch (error) {
-                console.error(
-                  `Error in notification handler for type ${options.data.type}:`,
-                  error
-                );
               }
             }
-          }
 
-          if (options.onClick) {
-            try {
-              options.onClick();
-            } catch (error) {
-              console.error('Error in onClick handler:', error);
+            if (options.onClick) {
+              await Promise.resolve(options.onClick());
             }
-          }
 
-          notification.close();
-          resolve();
+            notification.close();
+            resolve();
+          } catch (error) {
+            const notificationError = error as NotificationError;
+            console.error('Error handling notification click:', {
+              message: notificationError.message,
+              name: notificationError.name,
+              code: notificationError.code,
+            });
+            reject(error);
+          }
+        };
+
+        notification.onerror = error => {
+          console.error('Notification error:', error);
+          reject(error);
         };
       });
     } catch (error) {
-      console.error('Error showing notification:', error);
+      const notificationError = error as NotificationError;
+      console.error('Error showing notification:', {
+        message: notificationError.message,
+        name: notificationError.name,
+        code: notificationError.code,
+      });
+      throw error;
     }
   }
 

@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import type { SafetyCenterProps } from '@/types/safety';
-import type { SafetyAlert, SafetyAlertNew } from '@/types/safety';
+import type { SafetyAlertNew } from '@/types/safety';
 import { EmergencyAlert } from './EmergencyAlert';
 import { SafetyFeatures } from './SafetyFeatures';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
@@ -8,27 +8,32 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 
-const convertToSafetyAlert = (alert: SafetyAlertNew): SafetyAlert => ({
-  id: alert.id,
-  userId: alert.userId,
-  type:
-    alert.type === 'location'
-      ? 'location-share'
-      : alert.type === 'meetup'
-        ? 'check-in'
-        : (alert.type as 'sos' | 'custom'),
-  status: alert.status === 'active' ? 'pending' : alert.status,
-  location: alert.location,
-  message: alert.description,
-  contactedEmergencyServices: false,
-  notifiedContacts: [],
-  createdAt: alert.createdAt,
-  updatedAt: alert.updatedAt,
-  resolvedAt: alert.resolvedAt,
-});
-
 export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsChange }) => {
   const { alerts, isLoading, error, dismissAlert, addAlert } = useSafetyAlert();
+
+  const handleAlertTriggered = useCallback(
+    async (alert: SafetyAlertNew) => {
+      if (alert.type === 'sos') {
+        try {
+          await addAlert({
+            ...alert,
+            description: alert.description || 'Emergency alert triggered',
+          });
+        } catch (err) {
+          console.error('Failed to add emergency alert:', err);
+          // You might want to show this error to the user through a toast or other UI element
+        }
+      }
+    },
+    [addAlert]
+  );
+
+  const handleSettingsChange = useCallback(
+    (settings: Parameters<NonNullable<typeof onSettingsChange>>[0]) => {
+      onSettingsChange?.(settings);
+    },
+    [onSettingsChange]
+  );
 
   if (isLoading) {
     return (
@@ -46,17 +51,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
     <div className="space-y-8">
       <section>
         <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
-        <EmergencyAlert
-          userId={userId}
-          onAlertTriggered={alert => {
-            if (alert.type === 'sos') {
-              addAlert({
-                ...alert,
-                description: alert.description || 'Emergency alert triggered',
-              });
-            }
-          }}
-        />
+        <EmergencyAlert userId={userId} onAlertTriggered={handleAlertTriggered} />
       </section>
 
       {alerts.length > 0 && (
@@ -67,7 +62,13 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
               <SafetyAlertNotification
                 key={alert.id}
                 alert={alert}
-                onDismiss={() => dismissAlert(alert.id)}
+                onDismiss={async () => {
+                  try {
+                    await dismissAlert(alert.id);
+                  } catch (err) {
+                    console.error('Failed to dismiss alert:', err);
+                  }
+                }}
               />
             ))}
           </div>
@@ -98,7 +99,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
             requireVerifiedMatch: false,
             emergencyContacts: [],
           }}
-          onSettingsChange={onSettingsChange || (() => {})}
+          onSettingsChange={handleSettingsChange}
         />
       </section>
     </div>

@@ -63,7 +63,8 @@ const SignupPage = () => {
       const signupData: RegisterData = {
         email: data.email,
         password: data.password,
-        name: `${data.firstName} ${data.lastName}`,
+        firstName: data.firstName,
+        lastName: data.lastName,
       };
 
       await signup(signupData);

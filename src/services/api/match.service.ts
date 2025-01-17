@@ -1,63 +1,68 @@
-import { AxiosResponse } from 'axios';
 import { Match, MatchPreferences, MatchStatus } from '@/types/match';
-import { api } from './api';
+import { apiClient } from './api.client';
+import { ApiResponse } from './api';
+
+interface GetMatchesParams {
+  page?: number;
+  limit?: number;
+  sortBy?: keyof Match;
+  status?: MatchStatus;
+  latitude?: number;
+  longitude?: number;
+  radius?: number; // in kilometers
+}
 
 interface MatchResponse {
   match: Match;
-  score: number;
 }
 
-interface GetMatchesParams {
-  latitude?: number;
-  longitude?: number;
-  radius?: number;
+interface MatchesResponse {
+  matches: Match[];
 }
 
-interface MatchCreateData {
-  userId: string;
-  preferences: MatchPreferences;
-}
-
-interface MatchUpdateData {
-  preferences?: MatchPreferences;
-  status?: 'active' | 'paused' | 'completed';
+interface MatchStatusResponse {
+  status: MatchStatus;
 }
 
 class MatchService {
-  async getMatches(params?: GetMatchesParams): Promise<MatchResponse[]> {
-    try {
-      const response: AxiosResponse<MatchResponse[]> = await api.get('/matches', {
-        params,
-      });
-      return response.data;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  private readonly baseUrl = '/matches';
+
+  async getMatches(params?: GetMatchesParams): Promise<Match[]> {
+    const response = await apiClient.get<ApiResponse<MatchesResponse>>(this.baseUrl, { params });
+    return response.data.data.matches;
   }
 
-  async getMatch(matchId: string): Promise<MatchResponse> {
+  async getMatch(matchId: string): Promise<Match | null> {
     try {
-      const response: AxiosResponse<{ match: MatchResponse }> = await api.get(
-        `/matches/${matchId}`
+      const response = await apiClient.get<ApiResponse<MatchResponse>>(
+        `${this.baseUrl}/${matchId}`
       );
-      return response.data.match;
+      return response.data.data.match;
     } catch (err) {
+      if (err instanceof Error && err.message.includes('404')) {
+        return null;
+      }
       throw this.handleError(err);
     }
   }
 
   async likeProfile(userId: string): Promise<Match | null> {
     try {
-      const response: AxiosResponse<Match | null> = await api.post(`/matches/like/${userId}`);
-      return response.data;
+      const response = await apiClient.post<ApiResponse<MatchResponse>>(
+        `${this.baseUrl}/like/${userId}`
+      );
+      return response.data.data.match;
     } catch (err) {
+      if (err instanceof Error && err.message.includes('404')) {
+        return null;
+      }
       throw this.handleError(err);
     }
   }
 
   async dislikeProfile(userId: string): Promise<void> {
     try {
-      await api.post(`/matches/dislike/${userId}`);
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/dislike/${userId}`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -65,7 +70,7 @@ class MatchService {
 
   async acceptMatch(matchId: string): Promise<void> {
     try {
-      await api.post(`/matches/${matchId}/accept`);
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/accept`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -73,7 +78,7 @@ class MatchService {
 
   async rejectMatch(matchId: string): Promise<void> {
     try {
-      await api.post(`/matches/${matchId}/reject`);
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/reject`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -81,26 +86,53 @@ class MatchService {
 
   async unmatch(matchId: string): Promise<void> {
     try {
-      await api.delete(`/matches/${matchId}`);
+      await apiClient.delete<ApiResponse<void>>(`${this.baseUrl}/${matchId}`);
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
-  async updatePreferences(preferences: MatchPreferences): Promise<void> {
+  async updatePreferences(preferences: Partial<MatchPreferences>): Promise<void> {
     try {
-      await api.put('/matches/preferences', preferences);
+      await apiClient.put<ApiResponse<void>, Partial<MatchPreferences>>(
+        `${this.baseUrl}/preferences`,
+        preferences
+      );
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
-  async getRecommendations(limit: number = 10): Promise<Match[]> {
+  async updateMatchStatus(matchId: string, status: MatchStatus): Promise<Match> {
     try {
-      const response: AxiosResponse<Match[]> = await api.get('/matches/recommendations', {
-        params: { limit },
-      });
-      return response.data;
+      const response = await apiClient.put<ApiResponse<MatchResponse>>(
+        `${this.baseUrl}/${matchId}/status`,
+        { status }
+      );
+      return response.data.data.match;
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async getMatchStatus(matchId: string): Promise<MatchStatus> {
+    try {
+      const response = await apiClient.get<ApiResponse<MatchStatusResponse>>(
+        `${this.baseUrl}/${matchId}/status`
+      );
+      return response.data.data.status;
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async getRecommendations(limit = 10): Promise<Match[]> {
+    try {
+      const response = await apiClient.get<ApiResponse<MatchesResponse>>(
+        `${this.baseUrl}/recommendations`,
+        { params: { limit } }
+      );
+      return response.data.data.matches;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -108,8 +140,8 @@ class MatchService {
 
   async getPendingMatches(): Promise<Match[]> {
     try {
-      const response: AxiosResponse<Match[]> = await api.get('/matches/pending');
-      return response.data;
+      const response = await apiClient.get<ApiResponse<MatchesResponse>>(`${this.baseUrl}/pending`);
+      return response.data.data.matches;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -117,8 +149,10 @@ class MatchService {
 
   async acceptMatchRequest(matchId: string): Promise<Match> {
     try {
-      const response: AxiosResponse<Match> = await api.post(`/matches/${matchId}/accept`);
-      return response.data;
+      const response = await apiClient.post<ApiResponse<MatchResponse>>(
+        `${this.baseUrl}/${matchId}/accept`
+      );
+      return response.data.data.match;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -126,7 +160,15 @@ class MatchService {
 
   async declineMatchRequest(matchId: string): Promise<void> {
     try {
-      await api.post(`/matches/${matchId}/decline`);
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/decline`);
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async deleteMatch(matchId: string): Promise<void> {
+    try {
+      await apiClient.delete<ApiResponse<void>>(`${this.baseUrl}/${matchId}`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -134,7 +176,7 @@ class MatchService {
 
   async pauseMatching(duration?: number): Promise<void> {
     try {
-      await api.post('/matches/pause', { duration });
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/pause`, { duration });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -142,16 +184,7 @@ class MatchService {
 
   async resumeMatching(): Promise<void> {
     try {
-      await api.post('/matches/resume');
-    } catch (err) {
-      throw this.handleError(err);
-    }
-  }
-
-  async getMatchStatus(): Promise<MatchStatus> {
-    try {
-      const response: AxiosResponse<{ status: MatchStatus }> = await api.get('/matches/status');
-      return response.data.status;
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/resume`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -159,7 +192,7 @@ class MatchService {
 
   async reportMatch(matchId: string, reason: string): Promise<void> {
     try {
-      await api.post(`/matches/${matchId}/report`, { reason });
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/report`, { reason });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -167,7 +200,7 @@ class MatchService {
 
   async blockMatch(matchId: string): Promise<void> {
     try {
-      await api.post(`/matches/${matchId}/block`);
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/block`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -177,7 +210,7 @@ class MatchService {
     if (error instanceof Error) {
       return error;
     }
-    return new Error('An unexpected error occurred');
+    return new Error('An unexpected error occurred in MatchService');
   }
 }
 

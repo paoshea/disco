@@ -71,7 +71,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       setIsLoading(true);
       setError(null);
       const [alertsData, checksData] = await Promise.all([
-        safetyService.getEmergencyAlerts(user.id),
+        safetyService.getSafetyAlerts(user.id),
         safetyService.getSafetyChecks(user.id),
       ]);
 

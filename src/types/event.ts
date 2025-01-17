@@ -60,17 +60,23 @@ export interface Event {
 }
 
 export interface EventFilters {
-  categories?: EventCategory[];
-  startDate?: string;
-  endDate?: string;
-  isFree?: boolean;
-  maxPrice?: number;
-  location?: string;
-  radius?: number;
-  hasAvailableSpots?: boolean;
-  organizerId?: string;
-  participantId?: string;
-  status?: EventStatus[];
+  page?: number;
+  limit?: number;
+  sortBy?: 'date' | 'popularity' | 'distance';
+  filters?: {
+    type?: string;
+    startDate?: string;
+    endDate?: string;
+    categories?: EventCategory[];
+    isFree?: boolean;
+    maxPrice?: number;
+    location?: string;
+    radius?: number;
+    hasAvailableSpots?: boolean;
+    organizerId?: string;
+    participantId?: string;
+    status?: EventStatus[];
+  };
 }
 
 export interface CreateEventInput {

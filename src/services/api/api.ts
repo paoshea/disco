@@ -1,11 +1,23 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-interface ApiError extends Error {
-  status?: number;
-  data?: any;
+export interface ApiErrorResponse {
+  message: string;
+  code?: string;
 }
 
-interface ApiConfig extends AxiosRequestConfig {
+export interface ApiError {
+  message: string;
+  code?: string;
+  status?: number;
+}
+
+export interface ApiResponse<T> {
+  data: T;
+  status: number;
+  message?: string;
+}
+
+export interface ApiConfig extends AxiosRequestConfig {
   baseURL: string;
   timeout: number;
   headers: {
@@ -37,45 +49,70 @@ class ApiService {
         return config;
       },
       error => {
-        return Promise.reject(this.handleError(error));
+        return Promise.reject(error);
       }
     );
 
     this.instance.interceptors.response.use(
-      response => response,
-      error => {
-        return Promise.reject(this.handleError(error));
+      response => {
+        return response;
+      },
+      (error: AxiosError<ApiErrorResponse>) => {
+        if (error.response?.status === 401) {
+          localStorage.removeItem('token');
+          window.location.href = '/login';
+        }
+        return Promise.reject(error);
       }
     );
   }
 
-  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.get<T>(url, config);
+      return await this.instance.get<ApiResponse<T>>(url, config);
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async post<T, D = Record<string, unknown>>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.post<T>(url, data, config);
+      return await this.instance.post<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
+        url,
+        data,
+        config
+      );
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async put<T, D = Record<string, unknown>>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.put<T>(url, data, config);
+      return await this.instance.put<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
+        url,
+        data,
+        config
+      );
     } catch (error) {
       throw this.handleError(error);
     }
   }
 
-  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+  async delete<T>(
+    url: string,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.delete<T>(url, config);
+      return await this.instance.delete<ApiResponse<T>>(url, config);
     } catch (error) {
       throw this.handleError(error);
     }
@@ -83,20 +120,26 @@ class ApiService {
 
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
-      const apiError: ApiError = new Error(
-        error.response?.data?.message || error.message || 'An unexpected error occurred'
-      );
-      apiError.status = error.response?.status;
-      apiError.data = error.response?.data;
-      return apiError;
+      const response = error.response?.data as ApiErrorResponse | undefined;
+      return {
+        message: response?.message ?? 'An unexpected error occurred',
+        code: response?.code,
+        status: error.response?.status ?? 500,
+      };
     }
 
     if (error instanceof Error) {
-      return error;
+      return {
+        message: error.message,
+        status: 500,
+      };
     }
 
-    return new Error('An unexpected error occurred');
+    return {
+      message: 'An unexpected error occurred',
+      status: 500,
+    };
   }
 }
 
-export const api = new ApiService();
+export const apiService = new ApiService();

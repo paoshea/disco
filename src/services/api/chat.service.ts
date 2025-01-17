@@ -1,13 +1,15 @@
-import { api } from './api';
+import { apiClient } from './api.client';
 import type { ChatRoom, Message } from '@/types/chat';
 
 class ChatService {
-  private readonly baseUrl = '/chat';
+  private readonly baseUrl = '/chats';
 
   async getChats(): Promise<ChatRoom[]> {
     try {
-      const response = await api.get<{ chats: ChatRoom[] }>(`${this.baseUrl}/rooms`);
-      return response.data.chats;
+      const response = await apiClient.get<{ data: { chats: ChatRoom[] } }>(
+        `${this.baseUrl}/rooms`
+      );
+      return response.data.data.chats;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -15,10 +17,10 @@ class ChatService {
 
   async getChatMessages(chatId: string): Promise<Message[]> {
     try {
-      const response = await api.get<{ messages: Message[] }>(
+      const response = await apiClient.get<{ data: { messages: Message[] } }>(
         `${this.baseUrl}/rooms/${chatId}/messages`
       );
-      return response.data.messages;
+      return response.data.data.messages;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -26,11 +28,11 @@ class ChatService {
 
   async sendMessage(chatId: string, content: string): Promise<Message> {
     try {
-      const response = await api.post<{ message: Message }>(
+      const response = await apiClient.post<{ data: { message: Message } }>(
         `${this.baseUrl}/rooms/${chatId}/messages`,
         { content }
       );
-      return response.data.message;
+      return response.data.data.message;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -38,10 +40,10 @@ class ChatService {
 
   async createChat(participantId: string): Promise<ChatRoom> {
     try {
-      const response = await api.post<{ chat: ChatRoom }>(`${this.baseUrl}/rooms`, {
+      const response = await apiClient.post<{ data: { chat: ChatRoom } }>(`${this.baseUrl}/rooms`, {
         participantId,
       });
-      return response.data.chat;
+      return response.data.data.chat;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -49,7 +51,15 @@ class ChatService {
 
   async markAsRead(chatId: string): Promise<void> {
     try {
-      await api.post(`${this.baseUrl}/rooms/${chatId}/read`);
+      await apiClient.post(`${this.baseUrl}/rooms/${chatId}/read`);
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async deleteChat(chatId: string): Promise<void> {
+    try {
+      await apiClient.delete(`${this.baseUrl}/rooms/${chatId}`);
     } catch (err) {
       throw this.handleError(err);
     }

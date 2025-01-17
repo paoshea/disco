@@ -5,7 +5,8 @@ import { authService } from '@/services/api/auth.service';
 export interface RegisterData {
   email: string;
   password: string;
-  name: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface AuthContextType {
@@ -65,8 +66,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       setError(null);
-      const userData = await authService.login(email, password);
-      setUser(userData);
+      const { user, token } = await authService.login(email, password);
+      setUser(user);
+      localStorage.setItem('token', token);
     } catch (err) {
       handleAuthError(err, 'Login');
     } finally {

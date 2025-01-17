@@ -1,9 +1,11 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { ChatList } from '@/components/chat/ChatList';
 import type { ChatRoom, Message } from '@/types/chat';
 import { chatService } from '@/services/api/chat.service';
-import { useWebSocket } from '@/contexts/WebSocketContext';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { useAuth } from '@/hooks/useAuth';
+import { WebSocketEventType, WebSocketMessage, WebSocketPayload } from '@/types/websocket';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
@@ -12,28 +14,39 @@ export default function ChatPage() {
   const [activeChat, setActiveChat] = useState<ChatRoom | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isConnected, send } = useWebSocket();
+  const { user } = useAuth();
+
+  const fetchChats = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await chatService.getChats();
+      setChats(response);
+      if (response.length > 0 && !activeChat) {
+        setActiveChat(response[0]);
+      }
+    } catch (err) {
+      console.error('Error fetching chats:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred while fetching chats');
+    } finally {
+      setLoading(false);
+    }
+  }, [activeChat]);
+
+  const handleWebSocketMessage = useCallback((message: WebSocketMessage<WebSocketPayload>) => {
+    if (message.type === WebSocketEventType.CHAT_MESSAGE) {
+      void fetchChats();
+    }
+  }, [fetchChats]);
+
+  const { isConnected, send } = useWebSocket({
+    url: process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3000/ws',
+    onMessage: handleWebSocketMessage,
+  });
 
   useEffect(() => {
-    const fetchChats = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await chatService.getChats();
-        setChats(response);
-        if (response.length > 0 && !activeChat) {
-          setActiveChat(response[0]);
-        }
-      } catch (err) {
-        console.error('Error fetching chats:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching chats');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     void fetchChats();
-  }, [activeChat]);
+  }, [fetchChats]);
 
   const handleChatSelect = (chatId: string) => {
     const selectedChat = chats.find(chat => chat.matchId === chatId);
@@ -44,7 +57,7 @@ export default function ChatPage() {
   };
 
   const handleSendMessage = async (content: string) => {
-    if (!activeChat) return;
+    if (!activeChat || !user?.id) return;
 
     try {
       const message = await chatService.sendMessage(activeChat.matchId, content);
@@ -58,11 +71,9 @@ export default function ChatPage() {
 
       // Send the message through WebSocket
       send({
-        type: 'chat_message',
-        payload: {
-          chatId: activeChat.matchId,
-          content,
-        },
+        type: WebSocketEventType.CHAT_MESSAGE,
+        payload: message,
+        timestamp: new Date().toISOString(),
       });
     } catch (err) {
       console.error('Error sending message:', err);

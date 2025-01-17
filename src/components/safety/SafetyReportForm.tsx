@@ -2,13 +2,16 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import type { SafetyReportFormProps } from '@/types/safety';
-import { safetyService } from '@/services/api/safety.service';
-import { TextField } from '@/components/forms/TextField';
+import type { SafetyReportFormProps, SafetyEvidence } from '@/types/safety';
 import { TextArea } from '@/components/forms/TextArea';
 import { Select } from '@/components/forms/Select';
 import { Button } from '@/components/ui/Button';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+
+interface UploadResponse {
+  id: string;
+  url: string;
+}
 
 const reportSchema = z.object({
   type: z.enum(['harassment', 'inappropriate', 'spam', 'scam', 'other']),
@@ -41,37 +44,41 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     }
   };
 
+  const uploadFile = async (file: File): Promise<UploadResponse> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await fetch('/api/safety/upload/evidence', {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error('Failed to upload file');
+    }
+    return response.json();
+  };
+
   const handleFormSubmit = async (data: ReportFormData) => {
     try {
       setIsSubmitting(true);
       setError(null);
 
       // Upload evidence files if any
-      const evidenceUrls = await Promise.all(
-        files.map(async (file: File, index: number) => {
-          const formData = new FormData();
-          formData.append('file', file);
-          const response = await fetch('/api/safety/upload/evidence', {
-            method: 'POST',
-            body: formData,
-          });
-          const data = await response.json();
-          return data;
-        })
-      );
+      const evidenceUrls = await Promise.all(files.map(uploadFile));
+
+      const evidence: SafetyEvidence[] = evidenceUrls.map((uploadData, i) => ({
+        id: uploadData.id,
+        alertId: '',
+        type: 'image',
+        url: uploadData.url,
+        description: files[i].name,
+        createdAt: new Date().toISOString(),
+      }));
 
       await onSubmit({
         type: data.type,
         description: data.description,
         reportedUserId,
-        evidence: evidenceUrls.map((data, index) => ({
-          id: data.id,
-          alertId: data.alertId || '',
-          type: 'image',
-          url: data.url,
-          description: files[index].name,
-          createdAt: new Date().toISOString(),
-        })),
+        evidence,
       });
     } catch (err) {
       console.error('Error submitting safety report:', err);
@@ -83,8 +90,12 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     }
   };
 
+  const wrappedSubmit = (data: ReportFormData) => {
+    void handleFormSubmit(data);
+  };
+
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit(wrappedSubmit)} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
       <Select
@@ -93,7 +104,6 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         error={errors.type?.message}
         name="type"
         options={[
-          { value: '', label: 'Select a reason for reporting' },
           { value: 'harassment', label: 'Harassment' },
           { value: 'inappropriate', label: 'Inappropriate Content' },
           { value: 'spam', label: 'Spam' },
@@ -107,29 +117,24 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         {...register('description')}
         error={errors.description?.message}
         placeholder="Please provide details about the incident..."
-        rows={4}
-        name="description"
       />
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Evidence (Optional)</label>
-        <div className="mt-1">
-          <input
-            type="file"
-            multiple
-            accept="image/*"
-            onChange={handleFileChange}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-          />
-        </div>
-        <p className="mt-2 text-sm text-gray-500">Upload any relevant images or screenshots</p>
+        <input
+          type="file"
+          onChange={handleFileChange}
+          multiple
+          accept="image/*,video/*"
+          className="mt-1 block w-full"
+        />
       </div>
 
       <div className="flex justify-end space-x-4">
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
+        <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
           {isSubmitting ? 'Submitting...' : 'Submit Report'}
         </Button>
       </div>

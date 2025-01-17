@@ -22,8 +22,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         .map(match => ({
           id: match.id,
           position: {
-            lat: match.location!.latitude,
-            lng: match.location!.longitude,
+            lat: match.location.latitude,
+            lng: match.location.longitude,
           },
           title: match.name,
           icon: match.profileImage
