@@ -9,6 +9,31 @@ interface MatchSettingsProps {
   onUpdate: (settings: UserSettings) => void;
 }
 
+type MatchSettingsFormData = {
+  discoveryRadius: number;
+  ageRange: {
+    min: number;
+    max: number;
+  };
+  privacy: {
+    showOnlineStatus: boolean;
+    showLastSeen: boolean;
+    showLocation: boolean;
+    showAge: boolean;
+  };
+  notifications: {
+    matches: boolean;
+    messages: boolean;
+    meetupReminders: boolean;
+    safetyAlerts: boolean;
+  };
+  safety: {
+    requireVerifiedMatch: boolean;
+    meetupCheckins: boolean;
+    emergencyContactAlerts: boolean;
+  };
+};
+
 export const MatchSettings: React.FC<MatchSettingsProps> = ({
   initialSettings,
   userId,
@@ -16,19 +41,19 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<UserSettings>({
+  } = useForm<MatchSettingsFormData>({
     defaultValues: initialSettings,
   });
 
-  const onSubmit = async (data: UserSettings) => {
+  const onSubmit = async (data: MatchSettingsFormData) => {
     setIsSubmitting(true);
     setError(null);
-    
+
     try {
       await userService.updateSettings(userId, data);
       onUpdate(data);
@@ -47,7 +72,7 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
-      
+
       <div>
         <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
         <div className="mt-4 space-y-4">
@@ -58,15 +83,15 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
             <input
               type="number"
               id="discoveryRadius"
-              {...register('discoveryRadius', {
-                required: 'Discovery radius is required',
-                min: { value: 1, message: 'Minimum radius is 1km' },
-                max: { value: 100, message: 'Maximum radius is 100km' },
+              {...register('discoveryRadius', { 
+                valueAsNumber: true,
+                min: { value: 1, message: 'Radius must be at least 1km' },
+                max: { value: 100, message: 'Radius cannot exceed 100km' }
               })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               disabled={isSubmitting}
             />
-            {errors.discoveryRadius?.message && (
+            {errors.discoveryRadius && (
               <p className="mt-1 text-sm text-red-600">{errors.discoveryRadius.message}</p>
             )}
           </div>
@@ -75,38 +100,42 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
             <label className="block text-sm font-medium text-gray-700">Age Range</label>
             <div className="mt-2 grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="ageMin" className="block text-sm text-gray-500">
+                <label htmlFor="ageRangeMin" className="sr-only">
                   Minimum Age
                 </label>
                 <input
                   type="number"
-                  id="ageMin"
+                  id="ageRangeMin"
                   {...register('ageRange.min', {
-                    required: 'Minimum age is required',
-                    min: { value: 18, message: 'Must be at least 18' },
+                    valueAsNumber: true,
+                    min: { value: 18, message: 'Must be at least 18 years old' },
+                    max: { value: 100, message: 'Must be less than 100 years old' }
                   })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Min age"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                   disabled={isSubmitting}
                 />
-                {errors.ageRange?.min?.message && (
+                {errors.ageRange?.min && (
                   <p className="mt-1 text-sm text-red-600">{errors.ageRange.min.message}</p>
                 )}
               </div>
               <div>
-                <label htmlFor="ageMax" className="block text-sm text-gray-500">
+                <label htmlFor="ageRangeMax" className="sr-only">
                   Maximum Age
                 </label>
                 <input
                   type="number"
-                  id="ageMax"
+                  id="ageRangeMax"
                   {...register('ageRange.max', {
-                    required: 'Maximum age is required',
-                    min: { value: 18, message: 'Must be at least 18' },
+                    valueAsNumber: true,
+                    min: { value: 18, message: 'Must be at least 18 years old' },
+                    max: { value: 100, message: 'Must be less than 100 years old' }
                   })}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Max age"
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                   disabled={isSubmitting}
                 />
-                {errors.ageRange?.max?.message && (
+                {errors.ageRange?.max && (
                   <p className="mt-1 text-sm text-red-600">{errors.ageRange.max.message}</p>
                 )}
               </div>
@@ -121,13 +150,37 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
           <div className="flex items-center">
             <input
               type="checkbox"
+              id="showOnlineStatus"
+              {...register('privacy.showOnlineStatus')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showOnlineStatus" className="ml-2 block text-sm text-gray-700">
+              Show my online status
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showLastSeen"
+              {...register('privacy.showLastSeen')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showLastSeen" className="ml-2 block text-sm text-gray-700">
+              Show when I was last seen
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
               id="showLocation"
               {...register('privacy.showLocation')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
             <label htmlFor="showLocation" className="ml-2 block text-sm text-gray-700">
-              Show my location to matches
+              Show my location
             </label>
           </div>
           <div className="flex items-center">
@@ -142,16 +195,58 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               Show my age
             </label>
           </div>
+        </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Notification Settings</h3>
+        <div className="mt-4 space-y-4">
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="showLastActive"
-              {...register('privacy.showLastActive')}
+              id="notifyMatches"
+              {...register('notifications.matches')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="showLastActive" className="ml-2 block text-sm text-gray-700">
-              Show when I was last active
+            <label htmlFor="notifyMatches" className="ml-2 block text-sm text-gray-700">
+              Notify me about new matches
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyMessages"
+              {...register('notifications.messages')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyMessages" className="ml-2 block text-sm text-gray-700">
+              Notify me about new messages
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyMeetups"
+              {...register('notifications.meetupReminders')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyMeetups" className="ml-2 block text-sm text-gray-700">
+              Send me meetup reminders
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifySafety"
+              {...register('notifications.safetyAlerts')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifySafety" className="ml-2 block text-sm text-gray-700">
+              Send me safety alerts
             </label>
           </div>
         </div>
@@ -159,29 +254,41 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
 
       <div>
         <h3 className="text-lg font-medium text-gray-900">Safety Settings</h3>
-        <div className="mt-2 space-y-2">
+        <div className="mt-4 space-y-4">
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="requireVerifiedMatch"
+              id="requireVerified"
               {...register('safety.requireVerifiedMatch')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="requireVerifiedMatch" className="ml-2 block text-sm text-gray-700">
-              Only show verified matches
+            <label htmlFor="requireVerified" className="ml-2 block text-sm text-gray-700">
+              Only match with verified users
             </label>
           </div>
           <div className="flex items-center">
             <input
               type="checkbox"
-              id="meetupCheckins"
+              id="enableCheckins"
               {...register('safety.meetupCheckins')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="meetupCheckins" className="ml-2 block text-sm text-gray-700">
+            <label htmlFor="enableCheckins" className="ml-2 block text-sm text-gray-700">
               Enable meetup check-ins
+            </label>
+          </div>
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyEmergencyContacts"
+              {...register('safety.emergencyContactAlerts')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyEmergencyContacts" className="ml-2 block text-sm text-gray-700">
+              Notify emergency contacts during alerts
             </label>
           </div>
         </div>
@@ -190,10 +297,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
       <div className="flex justify-end">
         <button
           type="submit"
+          className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
           disabled={isSubmitting}
-          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
+          {isSubmitting ? 'Saving...' : 'Save Settings'}
         </button>
       </div>
     </form>

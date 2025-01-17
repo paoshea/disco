@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Message } from '@/types/chat';
-import { socketService } from '@/services/websocket/socket.service';
+import { Message, TypingStatus } from '@/types/chat';
+import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuth } from '@/hooks/useAuth';
+import type { User } from '@/types/user';
 
 interface ChatWindowProps {
   matchId: string;
@@ -9,12 +10,19 @@ interface ChatWindowProps {
   recipientName: string;
 }
 
-interface ChatTypingData {
-  userId: string;
-  isTyping: boolean;
+type ChatEvent = 
+  | 'chat:join'
+  | 'chat:leave'
+  | 'chat:message'
+  | 'chat:typing'
+  | `chat:${string}`
+  | `chat:${string}:typing`;
+
+interface ChatJoinPayload {
+  matchId: string;
 }
 
-interface ChatMessageData extends Omit<Message, 'id' | 'timestamp'> {
+interface ChatMessagePayload extends Omit<Message, 'id' | 'timestamp'> {
   matchId: string;
   senderId: string;
   recipientId: string;
@@ -22,34 +30,37 @@ interface ChatMessageData extends Omit<Message, 'id' | 'timestamp'> {
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, recipientName }) => {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
+  const { send, subscribe } = useWebSocket();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!user?.id) return;
+
     // Initialize chat connection
-    socketService.emit<{ matchId: string }>('chat:join', { matchId });
+    send('chat:join', { matchId });
 
     // Listen for new messages
-    socketService.on<Message>(`chat:${matchId}`, (message) => {
+    const unsubscribeMessage = subscribe(`chat:${matchId}`, (message: Message) => {
       setMessages(prev => [...prev, message]);
     });
 
     // Listen for typing status
-    socketService.on<ChatTypingData>(`chat:${matchId}:typing`, (data) => {
+    const unsubscribeTyping = subscribe(`chat:${matchId}:typing`, (data: TypingStatus) => {
       if (data.userId === recipientId) {
         setIsTyping(data.isTyping);
       }
     });
 
     return () => {
-      socketService.emit<{ matchId: string }>('chat:leave', { matchId });
-      socketService.off(`chat:${matchId}`);
-      socketService.off(`chat:${matchId}:typing`);
+      send('chat:leave', { matchId });
+      unsubscribeMessage();
+      unsubscribeTyping();
     };
-  }, [matchId, recipientId]);
+  }, [matchId, recipientId, user?.id, send, subscribe]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -57,27 +68,37 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim()) return;
+    if (!newMessage.trim() || !user?.id) return;
 
-    const message: ChatMessageData = {
+    const message: ChatMessagePayload = {
       matchId,
-      senderId: user!.id,
+      senderId: user.id,
       recipientId,
       content: newMessage.trim(),
     };
 
-    socketService.emit<ChatMessageData>('chat:message', message);
+    send('chat:message', message);
     setNewMessage('');
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (!user?.id) return;
+    
     setNewMessage(e.target.value);
-    socketService.emit<ChatTypingData>('chat:typing', {
+    send('chat:typing', {
       matchId,
-      userId: user!.id,
+      userId: user.id,
       isTyping: e.target.value.length > 0,
-    });
+    } as TypingStatus);
   };
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!user) {
+    return <div>Please log in to chat</div>;
+  }
 
   return (
     <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
@@ -93,21 +114,18 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
           {messages.map(message => (
             <div
               key={message.id}
-              className={`flex ${message.senderId === user!.id ? 'justify-end' : 'justify-start'}`}
+              className={`flex ${message.senderId === user.id ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-xs px-4 py-2 rounded-lg ${
-                  message.senderId === user!.id
+                  message.senderId === user.id
                     ? 'bg-primary-500 text-white'
                     : 'bg-gray-100 text-gray-900'
                 }`}
               >
-                <p className="text-sm">{message.content}</p>
+                <p>{message.content}</p>
                 <p className="text-xs mt-1 opacity-75">
-                  {new Date(message.timestamp).toLocaleTimeString([], {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {new Date(message.timestamp).toLocaleTimeString()}
                 </p>
               </div>
             </div>
@@ -123,13 +141,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
             value={newMessage}
             onChange={handleTyping}
             placeholder="Type a message..."
-            className="flex-1 min-h-[2.5rem] max-h-32 p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
             rows={1}
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="px-4 py-2 text-white bg-primary-500 rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
           >
             Send
           </button>

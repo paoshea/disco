@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -53,33 +53,27 @@ const LoginPage = () => {
   }
 
   return (
-    <Layout title="Login - DISCO!">
+    <Layout>
       <div className="flex min-h-screen flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-              Sign in to your account
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+        <div className="w-full max-w-md">
+          <div className="text-center">
+            <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
+            <p className="mt-2 text-sm text-gray-600">
               Or{' '}
-              <Link
-                href="/signup"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
+              <Link href="/register" className="font-medium text-primary-600 hover:text-primary-500">
                 create a new account
               </Link>
             </p>
           </div>
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-4 rounded-md">
+            <div className="space-y-4">
               <div>
                 <Input
                   label="Email address"
                   type="email"
-                  autoComplete="email"
-                  error={errors.email?.message}
                   {...register('email')}
+                  error={errors.email?.message}
                 />
               </div>
 
@@ -87,34 +81,32 @@ const LoginPage = () => {
                 <Input
                   label="Password"
                   type="password"
-                  autoComplete="current-password"
-                  error={errors.password?.message}
                   {...register('password')}
+                  error={errors.password?.message}
                 />
               </div>
             </div>
 
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      Login failed
-                    </h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
-                    </div>
-                  </div>
-                </div>
+            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm">
+                <Link
+                  href="/forgot-password"
+                  className="font-medium text-primary-600 hover:text-primary-500"
+                >
+                  Forgot your password?
+                </Link>
               </div>
-            )}
+            </div>
 
             <div>
               <Button
                 type="submit"
-                fullWidth
-                disabled={isSubmitting}
+                variant="primary"
+                size="lg"
                 loading={isSubmitting}
+                className="w-full"
               >
                 Sign in
               </Button>

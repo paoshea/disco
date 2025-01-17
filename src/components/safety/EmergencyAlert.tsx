@@ -12,7 +12,10 @@ interface EmergencyAlertProps {
 export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onTrigger, onCancel }) => {
   const [isTriggering, setIsTriggering] = useState(false);
   const [message, setMessage] = useState('');
-  const { location, error: locationError } = useGeolocation();
+  const { position, error: locationError } = useGeolocation({
+    watchPosition: true,
+    enableHighAccuracy: true,
+  });
 
   useEffect(() => {
     // Start getting location immediately when component mounts
@@ -23,16 +26,18 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onTrigger, onCan
     try {
       setIsTriggering(true);
       await onTrigger({
-        type: 'emergency',
+        type: 'sos',
         message,
-        location: location
+        location: position?.coords
           ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-              accuracy: location.accuracy || 0,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy || 0,
             }
           : undefined,
-        status: 'active',
+        status: 'pending',
+        contactedEmergencyServices: false,
+        notifiedContacts: [],
       });
     } catch (error) {
       console.error('Error triggering alert:', error);
@@ -54,20 +59,26 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onTrigger, onCan
       {locationError && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-700">
-            Unable to get your location. Your emergency contacts will still be notified, but we
-            won't be able to share your location with them.
+            Unable to get your location. Your emergency contacts will still be notified, but we won't be
+            able to share your location with them.
           </p>
         </div>
       )}
 
-      {location && (
-        <div className="h-48 rounded-lg overflow-hidden">
+      {position?.coords && (
+        <div className="border border-gray-200 rounded-lg overflow-hidden">
           <MapView
-            center={{ lat: location.latitude, lng: location.longitude }}
+            center={{
+              lat: position.coords.latitude,
+              lng: position.coords.longitude,
+            }}
             zoom={15}
             markers={[
               {
-                position: { lat: location.latitude, lng: location.longitude },
+                position: {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                },
                 title: 'Your Location',
               },
             ]}
@@ -75,40 +86,39 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onTrigger, onCan
         </div>
       )}
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Additional Information (Optional)
-        </label>
-        <textarea
-          className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
-          placeholder="Add any details about your situation..."
-          value={message}
-          onChange={e => setMessage(e.target.value)}
-        />
-      </div>
+      <div className="space-y-4">
+        <div>
+          <label htmlFor="message" className="block text-sm font-medium text-gray-700">
+            Message (Optional)
+          </label>
+          <textarea
+            id="message"
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            placeholder="Add any details that might help emergency contacts or responders..."
+            disabled={isTriggering}
+          />
+        </div>
 
-      <div className="flex flex-col space-y-3">
-        <Button
-          type="button"
-          variant="danger"
-          size="lg"
-          loading={isTriggering}
-          onClick={handleTrigger}
-        >
-          Trigger Emergency Alert
-        </Button>
-        <Button type="button" variant="secondary" onClick={onCancel} disabled={isTriggering}>
-          Cancel
-        </Button>
-      </div>
-
-      <div className="text-center">
-        <p className="text-sm text-gray-500">
-          Emergency Services:{' '}
-          <a href="tel:911" className="text-primary-600 font-semibold">
-            911
-          </a>
-        </p>
+        <div className="flex justify-end space-x-4">
+          <Button
+            variant="secondary"
+            onClick={onCancel}
+            disabled={isTriggering}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant="danger"
+            onClick={handleTrigger}
+            disabled={isTriggering}
+            loading={isTriggering}
+          >
+            {isTriggering ? 'Sending Alert...' : 'Send Emergency Alert'}
+          </Button>
+        </div>
       </div>
     </div>
   );

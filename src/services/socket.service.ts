@@ -1,69 +1,175 @@
 import { io, Socket } from 'socket.io-client';
 
-export class SocketService {
-  private socket: Socket | null = null;
-  private eventHandlers: Map<string, Function[]> = new Map();
+export type WebSocketEvent = 
+  | 'connect'
+  | 'disconnect'
+  | 'error'
+  | 'message'
+  | 'notification'
+  | 'safety_alert'
+  | 'typing'
+  | 'presence'
+  | 'match'
+  | string;
 
-  constructor() {
-    const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:8080';
+export type WebSocketMessage<T extends WebSocketEvent> = T extends 'message'
+  ? {
+      id: string;
+      senderId: string;
+      recipientId: string;
+      content: string;
+      timestamp: string;
+    }
+  : T extends 'notification'
+  ? {
+      id: string;
+      type: 'match' | 'message' | 'safety' | 'system';
+      title: string;
+      message: string;
+      timestamp: string;
+      data?: Record<string, any>;
+    }
+  : T extends 'safety_alert'
+  ? {
+      id: string;
+      type: 'sos' | 'check' | 'alert';
+      userId: string;
+      location?: {
+        latitude: number;
+        longitude: number;
+        accuracy: number;
+      };
+      timestamp: string;
+    }
+  : T extends 'typing'
+  ? {
+      userId: string;
+      conversationId: string;
+      isTyping: boolean;
+    }
+  : T extends 'presence'
+  ? {
+      userId: string;
+      status: 'online' | 'offline' | 'away';
+      lastSeen?: string;
+    }
+  : T extends 'match'
+  ? {
+      matchId: string;
+      userId: string;
+      matchedUserId: string;
+      timestamp: string;
+    }
+  : Record<string, any>;
+
+interface SocketOptions {
+  auth: {
+    token: string | null;
+    userId: string | undefined;
+  };
+  reconnection?: boolean;
+  reconnectionAttempts?: number;
+  reconnectionDelay?: number;
+}
+
+class SocketService {
+  private socket: Socket | null = null;
+  private handlers: Map<WebSocketEvent, Set<(data: any) => void>> = new Map();
+  private reconnectAttempts = 0;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 1000;
+
+  connect(url: string, options: SocketOptions): void {
+    if (this.socket?.connected) return;
 
     this.socket = io(url, {
-      transports: ['websocket'],
-      autoConnect: true,
+      auth: options.auth,
+      reconnection: options.reconnection ?? true,
+      reconnectionAttempts: options.reconnectionAttempts ?? this.maxReconnectAttempts,
+      reconnectionDelay: options.reconnectionDelay ?? this.reconnectDelay,
     });
 
-    // Reconnect existing event handlers
+    this.setupEventHandlers();
+  }
+
+  private setupEventHandlers(): void {
+    if (!this.socket) return;
+
     this.socket.on('connect', () => {
-      this.eventHandlers.forEach((handlers, event) => {
-        handlers.forEach(handler => {
-          this.socket?.on(event, handler);
-        });
+      console.log('WebSocket connected');
+      this.reconnectAttempts = 0;
+      this.notifyHandlers('connect', undefined);
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+      this.notifyHandlers('disconnect', undefined);
+    });
+
+    this.socket.on('error', (error: Error) => {
+      console.error('WebSocket error:', error);
+      this.notifyHandlers('error', error);
+    });
+
+    // Handle custom events
+    ['message', 'notification', 'safety_alert', 'typing', 'presence', 'match'].forEach((event) => {
+      this.socket?.on(event, (data: any) => {
+        this.notifyHandlers(event as WebSocketEvent, data);
       });
     });
   }
 
-  public on<T = any>(event: string, handler: (data: T) => void): void {
+  disconnect(): void {
     if (!this.socket) return;
 
-    // Store handler for reconnection
-    if (!this.eventHandlers.has(event)) {
-      this.eventHandlers.set(event, []);
-    }
-    this.eventHandlers.get(event)?.push(handler);
-
-    this.socket.on(event, handler);
+    this.socket.disconnect();
+    this.socket = null;
+    this.handlers.clear();
   }
 
-  public off<T = any>(event: string, handler?: (data: T) => void): void {
-    if (!this.socket) return;
-
-    if (handler) {
-      // Remove specific handler
-      this.socket.off(event, handler);
-      const handlers = this.eventHandlers.get(event);
-      if (handlers) {
-        const index = handlers.indexOf(handler);
-        if (index > -1) {
-          handlers.splice(index, 1);
-        }
-      }
-    } else {
-      // Remove all handlers for this event
-      this.socket.off(event);
-      this.eventHandlers.delete(event);
+  send<T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>): void {
+    if (!this.socket?.connected) {
+      console.error('Cannot send message: WebSocket not connected');
+      return;
     }
-  }
 
-  public emit<T = any>(event: string, data: T): void {
-    if (!this.socket) return;
     this.socket.emit(event, data);
   }
 
-  public disconnect(): void {
-    if (this.socket) {
-      this.socket.disconnect();
-      this.socket = null;
+  subscribe<T extends WebSocketEvent>(
+    event: T,
+    callback: (data: WebSocketMessage<T>) => void
+  ): () => void {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, new Set());
     }
+
+    const handlers = this.handlers.get(event)!;
+    handlers.add(callback);
+
+    return () => {
+      handlers.delete(callback);
+      if (handlers.size === 0) {
+        this.handlers.delete(event);
+      }
+    };
+  }
+
+  private notifyHandlers<T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>): void {
+    const handlers = this.handlers.get(event);
+    if (!handlers) return;
+
+    handlers.forEach((handler) => {
+      try {
+        handler(data);
+      } catch (error) {
+        console.error(`Error in WebSocket handler for event ${event}:`, error);
+      }
+    });
+  }
+
+  isConnected(): boolean {
+    return this.socket?.connected ?? false;
   }
 }
 

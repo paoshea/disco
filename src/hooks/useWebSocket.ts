@@ -103,7 +103,17 @@ export const useWebSocket = ({
       const error = err instanceof Error ? err : new Error('Failed to connect to WebSocket');
       setState(prev => ({ ...prev, error }));
     }
-  }, [url, protocols, maxReconnectAttempts, reconnectInterval, user?.id, onConnect, onDisconnect, onError, onMessage]);
+  }, [
+    url,
+    protocols,
+    maxReconnectAttempts,
+    reconnectInterval,
+    user?.id,
+    onConnect,
+    onDisconnect,
+    onError,
+    onMessage,
+  ]);
 
   const disconnect = useCallback(() => {
     if (reconnectTimeoutId.current) {

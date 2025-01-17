@@ -12,6 +12,11 @@ interface ImageUploadResponse {
 }
 
 class UserService {
+  async getCurrentUser(): Promise<User> {
+    const response: AxiosResponse<User> = await api.get('/users/me');
+    return response.data;
+  }
+
   async getProfile(userId: string): Promise<User> {
     const response: AxiosResponse<User> = await api.get(`/users/${userId}`);
     return response.data;
@@ -46,11 +51,15 @@ class UserService {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response: AxiosResponse<ImageUploadResponse> = await api.post('/users/profile-image', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response: AxiosResponse<ImageUploadResponse> = await api.post(
+      '/users/profile-image',
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
 
     return response.data.imageUrl;
   }

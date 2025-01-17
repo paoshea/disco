@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { User } from '@/types/user';
-import { userService } from '@/services/api/user.service';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { TextArea } from '@/components/ui/TextArea';
 
 interface ProfileEditProps {
   user: User;
-  onUpdate: (user: User) => void;
-  onCancel: () => void;
+  onUpdate: (data: Partial<User>) => Promise<void>;
 }
 
 interface ProfileFormData {
@@ -30,7 +31,7 @@ const AVAILABLE_INTERESTS = [
   'Fitness',
 ];
 
-export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate, onCancel }) => {
+export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -45,21 +46,19 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate, onCanc
       firstName: user.firstName,
       lastName: user.lastName,
       bio: user.bio || '',
-      interests: user.interests,
+      interests: user.interests || [],
       phoneNumber: user.phoneNumber || '',
     },
   });
 
-  const selectedInterests = watch('interests', []);
+  const selectedInterests = watch('interests');
 
   const toggleInterest = (interest: string) => {
-    const current = new Set(selectedInterests);
-    if (current.has(interest)) {
-      current.delete(interest);
-    } else {
-      current.add(interest);
-    }
-    setValue('interests', Array.from(current));
+    const current = selectedInterests || [];
+    const updated = current.includes(interest)
+      ? current.filter((i) => i !== interest)
+      : [...current, interest];
+    setValue('interests', updated);
   };
 
   const onSubmit = async (data: ProfileFormData) => {
@@ -67,19 +66,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate, onCanc
     setError(null);
 
     try {
-      const updatedUser = await userService.updateProfile({
-        ...user,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        bio: data.bio,
-        interests: data.interests,
-        phoneNumber: data.phoneNumber,
-        name: `${data.firstName} ${data.lastName}`,
-      });
-      onUpdate(updatedUser);
+      await onUpdate(data);
     } catch (err) {
-      setError('Failed to update profile. Please try again.');
       console.error('Error updating profile:', err);
+      setError('Failed to update profile. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -95,78 +85,54 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate, onCanc
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700">
-            First Name
-          </label>
-          <input
-            type="text"
-            id="firstName"
+          <Input
+            label="First Name"
             {...register('firstName', { required: 'First name is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            disabled={isSubmitting}
+            error={errors.firstName?.message}
           />
-          {errors.firstName?.message && (
-            <p className="mt-1 text-sm text-red-600">{errors.firstName.message}</p>
-          )}
         </div>
 
         <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700">
-            Last Name
-          </label>
-          <input
-            type="text"
-            id="lastName"
+          <Input
+            label="Last Name"
             {...register('lastName', { required: 'Last name is required' })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            disabled={isSubmitting}
+            error={errors.lastName?.message}
           />
-          {errors.lastName?.message && (
-            <p className="mt-1 text-sm text-red-600">{errors.lastName.message}</p>
-          )}
         </div>
       </div>
 
       <div>
-        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
-          Phone Number
-        </label>
-        <input
+        <Input
+          label="Phone Number"
           type="tel"
-          id="phoneNumber"
           {...register('phoneNumber')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          disabled={isSubmitting}
+          error={errors.phoneNumber?.message}
         />
       </div>
 
       <div>
-        <label htmlFor="bio" className="block text-sm font-medium text-gray-700">
-          Bio
-        </label>
-        <textarea
-          id="bio"
-          rows={4}
+        <TextArea
+          label="Bio"
           {...register('bio')}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-          disabled={isSubmitting}
+          error={errors.bio?.message}
+          rows={4}
+          placeholder="Tell us about yourself..."
         />
       </div>
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Interests</label>
-        <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-          {AVAILABLE_INTERESTS.map(interest => (
+        <div className="mt-2 flex flex-wrap gap-2">
+          {AVAILABLE_INTERESTS.map((interest) => (
             <button
               key={interest}
               type="button"
               onClick={() => toggleInterest(interest)}
-              className={`inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${
-                selectedInterests.includes(interest)
+              className={`rounded-full px-3 py-1 text-sm font-medium ${
+                selectedInterests?.includes(interest)
                   ? 'bg-primary-100 text-primary-800'
                   : 'bg-gray-100 text-gray-800'
-              } hover:bg-primary-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500`}
-              disabled={isSubmitting}
+              } hover:bg-primary-200`}
             >
               {interest}
             </button>
@@ -174,22 +140,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate, onCanc
         </div>
       </div>
 
-      <div className="flex justify-end space-x-3">
-        <button
-          type="button"
-          onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          disabled={isSubmitting}
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
-          disabled={isSubmitting}
-        >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
+      <div className="flex justify-end space-x-4">
+        <Button type="submit" variant="primary" loading={isSubmitting}>
+          Save Changes
+        </Button>
       </div>
     </form>
   );

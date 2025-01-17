@@ -1,13 +1,15 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafetyAlert } from '@/hooks/useSafetyAlert';
+import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 import { Layout } from '@/components/layout/Layout';
 import { SafetyCenter } from '@/components/safety/SafetyCenter';
-import { EmergencyContacts } from '@/components/safety/EmergencyContacts';
-import { SafetyChecks } from '@/components/safety/SafetyChecks';
+import { EmergencyContactList } from '@/components/safety/EmergencyContactList';
+import { SafetyCheckList } from '@/components/safety/SafetyCheckList';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Alert } from '@/components/ui/Alert';
 import { Tab } from '@headlessui/react';
+import type { SafetyAlert, SafetyCheck } from '@/types/safety';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -35,7 +37,7 @@ export default function Safety() {
   if (authLoading || safetyLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
+        <LoadingSpinner size="lg" color="primary" />
       </div>
     );
   }
@@ -55,16 +57,12 @@ export default function Safety() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-md bg-red-50 p-4">
-            <div className="flex">
-              <div className="ml-3">
-                <h3 className="text-sm font-medium text-red-800">Error</h3>
-                <div className="mt-2 text-sm text-red-700">
-                  <p>{error}</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <Alert
+            type="error"
+            title="Error"
+            message={error}
+            className="mb-6"
+          />
         )}
 
         <Tab.Group>
@@ -112,18 +110,30 @@ export default function Safety() {
           <Tab.Panels className="mt-6">
             <Tab.Panel>
               <SafetyCenter
-                alerts={alerts}
                 onTriggerAlert={triggerEmergencyAlert}
                 onDismissAlert={dismissAlert}
               />
             </Tab.Panel>
             <Tab.Panel>
-              <EmergencyContacts userId={user.id} />
+              <EmergencyContactList
+                contacts={user?.emergencyContacts || []}
+                onEdit={(contact) => {
+                  // Handle contact edit
+                  console.log('Editing contact:', contact);
+                }}
+                onDelete={(contactId) => {
+                  // Handle contact delete
+                  console.log('Deleting contact:', contactId);
+                }}
+              />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyChecks
-                safetyChecks={safetyChecks}
-                onResolve={resolveSafetyCheck}
+              <SafetyCheckList
+                checks={safetyChecks}
+                onResolve={(checkId: string) => {
+                  // Adapt the onResolve function to match the expected signature
+                  return resolveSafetyCheck(checkId, 'safe');
+                }}
               />
             </Tab.Panel>
           </Tab.Panels>

@@ -1,3 +1,5 @@
+import { User } from './user';
+
 export type IncidentType =
   | 'harassment'
   | 'inappropriate'
@@ -42,21 +44,42 @@ export interface Evidence {
   createdAt: string;
 }
 
+export interface SafetyAlert {
+  id: string;
+  userId: string;
+  type: 'emergency' | 'warning' | 'info';
+  message: string;
+  createdAt: Date;
+  resolvedAt?: Date;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface SafetyCheck {
+  id: string;
+  userId: string;
+  type: 'meetup' | 'checkin' | 'custom';
+  status: 'pending' | 'completed' | 'missed';
+  scheduledFor: Date;
+  completedAt?: Date;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  notes?: string;
+}
+
 export interface EmergencyContact {
   id: string;
+  userId: string;
   name: string;
   relationship: string;
   phoneNumber: string;
-  email: string;
-  notifyOn: {
-    sosAlert: boolean;
-    meetupStart: boolean;
-    meetupEnd: boolean;
-  };
-  verificationStatus: VerificationStatus;
-  verifiedAt?: string;
-  createdAt: string;
-  updatedAt: string;
+  email?: string;
+  isVerified: boolean;
+  isPrimary: boolean;
 }
 
 export interface UserBlock {
@@ -85,25 +108,18 @@ export interface EmergencyAlert {
   resolvedAt?: string;
 }
 
-export interface SafetyCheck {
-  id: string;
+export interface SafetySettings {
   userId: string;
-  meetingId?: string;
-  scheduledTime: string;
-  status: IncidentStatus;
-  response?: 'safe' | 'unsafe';
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  };
-  notes?: string;
-  notifiedContacts: string[];
-  createdAt: string;
-  updatedAt: string;
+  autoCheckIn: boolean;
+  checkInInterval: number; // in minutes
+  emergencyServices: boolean;
+  locationSharing: boolean;
+  notifyContacts: boolean;
+  safetyRadius: number; // in meters
+  customSafetyPhrases: string[];
 }
 
-export interface SafetySettings {
+export interface SafetySettingsOld {
   emergencyContacts: EmergencyContact[];
   autoShareLocation: boolean;
   meetupCheckins: boolean;

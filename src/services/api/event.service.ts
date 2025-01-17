@@ -93,11 +93,15 @@ class EventService {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response: AxiosResponse<{ imageUrl: string }> = await api.post(`/events/${eventId}/image`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    const response: AxiosResponse<{ imageUrl: string }> = await api.post(
+      `/events/${eventId}/image`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
 
     return response.data.imageUrl;
   }

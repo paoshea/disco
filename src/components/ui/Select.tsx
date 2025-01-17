@@ -16,7 +16,10 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 }
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
-  ({ className, label, error, helperText, fullWidth = false, options, placeholder, ...props }, ref) => {
+  (
+    { className, label, error, helperText, fullWidth = false, options, placeholder, ...props },
+    ref
+  ) => {
     return (
       <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')}>
         {label && <label className="text-sm font-medium text-gray-700">{label}</label>}

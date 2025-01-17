@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { safetyService } from '@/services/api/safety.service';
 import { EmergencyAlert, SafetyCheck } from '@/types/safety';
 
@@ -51,9 +51,8 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       setSafetyChecks(checksData);
       setError(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch safety data';
-      setError(errorMessage);
       console.error('Error fetching safety data:', err);
+      setError('Failed to fetch safety data');
     } finally {
       setIsLoading(false);
     }
@@ -61,102 +60,98 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
   useEffect(() => {
     fetchSafetyData();
-
-    const intervalId = setInterval(fetchSafetyData, pollingInterval);
-
-    return () => clearInterval(intervalId);
+    const interval = setInterval(fetchSafetyData, pollingInterval);
+    return () => clearInterval(interval);
   }, [fetchSafetyData, pollingInterval]);
 
-  const triggerEmergencyAlert = async (location?: GeolocationCoordinates) => {
-    if (!user?.id) {
-      throw new Error('User must be logged in to trigger alert');
-    }
+  const triggerEmergencyAlert = useCallback(
+    async (location?: GeolocationCoordinates) => {
+      if (!user?.id) return;
 
-    setIsLoading(true);
-    setError(null);
+      try {
+        setIsLoading(true);
+        const alert = await safetyService.triggerEmergencyAlert(user.id, {
+          type: 'sos',
+          location: location
+            ? {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                accuracy: location.accuracy,
+              }
+            : undefined,
+          status: 'pending',
+          contactedEmergencyServices: false,
+          notifiedContacts: [],
+        });
 
-    try {
-      const alert = await safetyService.createEmergencyAlert(user.id, {
-        type: 'sos',
-        location: location
-          ? {
-              latitude: location.latitude,
-              longitude: location.longitude,
-              accuracy: location.accuracy,
-            }
-          : undefined,
-      });
-
-      setAlerts(prev => [...prev, alert]);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to trigger emergency alert';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resolveSafetyCheck = async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
-    if (!user?.id) {
-      throw new Error('User must be logged in to resolve safety check');
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const updatedCheck = await safetyService.updateSafetyCheck(user.id, checkId, {
-        response: status,
-        notes,
-        status: 'resolved',
-      });
-
-      setSafetyChecks(prev =>
-        prev.map(check => (check.id === checkId ? updatedCheck : check))
-      );
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to resolve safety check';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const dismissAlert = async (alertId: string) => {
-    if (!user?.id) {
-      throw new Error('User must be logged in to dismiss alert');
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      await safetyService.dismissEmergencyAlert(user.id, alertId);
-      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to dismiss alert';
-      setError(errorMessage);
-      throw new Error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <SafetyAlertContext.Provider
-      value={{
-        alerts,
-        safetyChecks,
-        isLoading,
-        error,
-        triggerEmergencyAlert,
-        resolveSafetyCheck,
-        dismissAlert,
-      }}
-    >
-      {children}
-    </SafetyAlertContext.Provider>
+        setAlerts((prev) => [alert, ...prev]);
+        setError(null);
+      } catch (err) {
+        console.error('Error triggering emergency alert:', err);
+        setError('Failed to trigger emergency alert');
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id]
   );
+
+  const resolveSafetyCheck = useCallback(
+    async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
+      if (!user?.id) return;
+
+      try {
+        setIsLoading(true);
+        const updatedCheck = await safetyService.resolveSafetyCheck(user.id, checkId, {
+          status,
+          notes,
+        });
+
+        setSafetyChecks((prev) =>
+          prev.map((check) => (check.id === checkId ? updatedCheck : check))
+        );
+        setError(null);
+      } catch (err) {
+        console.error('Error resolving safety check:', err);
+        setError('Failed to resolve safety check');
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id]
+  );
+
+  const dismissAlert = useCallback(
+    async (alertId: string) => {
+      if (!user?.id) return;
+
+      try {
+        setIsLoading(true);
+        await safetyService.dismissEmergencyAlert(user.id, alertId);
+        setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
+        setError(null);
+      } catch (err) {
+        console.error('Error dismissing alert:', err);
+        setError('Failed to dismiss alert');
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [user?.id]
+  );
+
+  const value = {
+    alerts,
+    safetyChecks,
+    isLoading,
+    error,
+    triggerEmergencyAlert,
+    resolveSafetyCheck,
+    dismissAlert,
+  };
+
+  return <SafetyAlertContext.Provider value={value}>{children}</SafetyAlertContext.Provider>;
 };

@@ -28,9 +28,9 @@ export const MatchList: React.FC = () => {
 
   const handleAcceptMatch = async (matchId: string): Promise<void> => {
     if (processingMatchIds.has(matchId)) return;
-    
+
     setProcessingMatchIds(prev => new Set(prev).add(matchId));
-    
+
     try {
       await matchService.acceptMatch(matchId);
       setMatches(prevMatches =>
@@ -52,9 +52,9 @@ export const MatchList: React.FC = () => {
 
   const handleDeclineMatch = async (matchId: string): Promise<void> => {
     if (processingMatchIds.has(matchId)) return;
-    
+
     setProcessingMatchIds(prev => new Set(prev).add(matchId));
-    
+
     try {
       await matchService.declineMatch(matchId);
       setMatches(prevMatches =>

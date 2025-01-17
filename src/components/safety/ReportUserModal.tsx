@@ -29,16 +29,16 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
       setIsSubmitting(true);
       const report = {
         reporterId: user.id,
-        reportedId: reportedUser.id,
+        reportedUserId: reportedUser.id,
         meetingId,
         type,
-        description,
+        description: description.trim(),
         evidence: [],
         status: 'pending' as const,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
-      await safetyService.createSafetyReport(report);
+      await safetyService.createSafetyReport(user.id, report);
       onClose();
     } catch (error) {
       console.error('Error submitting report:', error);

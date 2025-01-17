@@ -1,8 +1,14 @@
 import { EmergencyContact as UserEmergencyContact } from '@/types/user';
-import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
+import { EmergencyContact as SafetyEmergencyContact, VerificationStatus } from '@/types/safety';
 
 type NotificationEvent = 'sosAlert' | 'meetupStart' | 'meetupEnd';
 type SafetyNotificationEvent = 'sos' | 'meetup';
+
+interface NotificationPreferences {
+  sosAlert: boolean;
+  meetupStart: boolean;
+  meetupEnd: boolean;
+}
 
 /**
  * Maps user notification events to safety notification events
@@ -88,10 +94,13 @@ export const toSafetyContact = (
     id: contact.id,
     userId,
     name: contact.name,
-    phone: contact.phoneNumber,
-    email: contact.email,
-    relation: contact.relationship,
+    phoneNumber: contact.phoneNumber,
+    email: contact.email || '',
+    relationship: contact.relationship,
+    isVerified: contact.verificationStatus === 'verified',
+    isPrimary: contact.isPrimary || false,
     notifyOn: uniqueNotifyOn,
+    verificationStatus: 'unverified' as VerificationStatus,
     createdAt: now,
     updatedAt: now,
   };
@@ -105,23 +114,25 @@ export const toSafetyContact = (
 export const toUserContact = (contact: SafetyEmergencyContact): UserEmergencyContact => {
   // Ensure email is never null/undefined
   const email = contact.email || '';
-  
+
   // Ensure relationship is never null/undefined
   const relationship = contact.relation || '';
 
   // Create notification preferences object
-  const notifyOn = {
+  const notifyOn: NotificationPreferences = {
     sosAlert: contact.notifyOn.includes('sos'),
     meetupStart: contact.notifyOn.includes('meetup'),
     meetupEnd: contact.notifyOn.includes('meetup'),
-  } satisfies Record<NotificationEvent, boolean>;
+  };
 
   return {
     id: contact.id,
     name: contact.name,
     relationship,
-    phoneNumber: contact.phone,
+    phoneNumber: contact.phoneNumber,
     email,
+    isPrimary: contact.isPrimary,
+    isVerified: contact.isVerified,
     notifyOn,
   };
 };

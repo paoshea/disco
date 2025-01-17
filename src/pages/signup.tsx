@@ -4,38 +4,40 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
-  confirmPassword: z.string(),
-  firstName: z.string().min(1, 'First name is required'),
-  lastName: z.string().min(1, 'Last name is required'),
-  phoneNumber: z
-    .string()
-    .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
-    .optional(),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const signupSchema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      ),
+    confirmPassword: z.string(),
+    firstName: z.string().min(1, 'First name is required'),
+    lastName: z.string().min(1, 'Last name is required'),
+    phoneNumber: z
+      .string()
+      .regex(/^\+?[1-9]\d{1,14}$/, 'Invalid phone number')
+      .optional(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
 const SignupPage = () => {
   const router = useRouter();
-  const { signup, user, isLoading, error } = useAuth();
+  const { register: signup, user, isLoading, error } = useAuth();
   const {
     register,
     handleSubmit,
@@ -83,10 +85,7 @@ const SignupPage = () => {
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               Already have an account?{' '}
-              <Link
-                href="/login"
-                className="font-medium text-primary-600 hover:text-primary-500"
-              >
+              <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
                 Sign in
               </Link>
             </p>
@@ -146,9 +145,7 @@ const SignupPage = () => {
               <div className="rounded-md bg-red-50 p-4">
                 <div className="flex">
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      Registration failed
-                    </h3>
+                    <h3 className="text-sm font-medium text-red-800">Registration failed</h3>
                     <div className="mt-2 text-sm text-red-700">
                       <p>{error}</p>
                     </div>
@@ -158,11 +155,11 @@ const SignupPage = () => {
             )}
 
             <div>
-              <Button
-                type="submit"
-                fullWidth
-                disabled={isSubmitting}
+              <Button 
+                type="submit" 
+                disabled={isSubmitting} 
                 loading={isSubmitting}
+                className="w-full"
               >
                 Create account
               </Button>

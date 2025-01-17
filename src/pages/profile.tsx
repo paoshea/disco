@@ -14,7 +14,7 @@ function classNames(...classes: string[]) {
 
 export default function Profile() {
   const router = useRouter();
-  const { user, isLoading, logout } = useAuth();
+  const { user, isLoading, error, logout, updateProfile, sendVerificationEmail } = useAuth();
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -28,6 +28,14 @@ export default function Profile() {
       router.push('/login');
     } catch (err) {
       console.error('Logout failed:', err);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    try {
+      await sendVerificationEmail();
+    } catch (err) {
+      console.error('Failed to send verification email:', err);
     }
   };
 
@@ -47,11 +55,28 @@ export default function Profile() {
     <Layout>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-          <Button variant="outline" onClick={handleLogout}>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
+            {!user.emailVerified && (
+              <div className="mt-2">
+                <p className="text-sm text-yellow-600">
+                  Your email is not verified.{' '}
+                  <button
+                    onClick={handleVerifyEmail}
+                    className="font-medium text-yellow-700 hover:text-yellow-600"
+                  >
+                    Resend verification email
+                  </button>
+                </p>
+              </div>
+            )}
+          </div>
+          <Button variant="secondary" onClick={handleLogout}>
             Sign out
           </Button>
         </div>
+
+        {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -84,10 +109,10 @@ export default function Profile() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <ProfileEdit user={user} />
+              <ProfileEdit user={user} onUpdate={updateProfile} />
             </Tab.Panel>
             <Tab.Panel>
-              <ProfileSettings />
+              <ProfileSettings user={user} />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

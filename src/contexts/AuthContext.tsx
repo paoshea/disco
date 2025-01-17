@@ -2,34 +2,23 @@ import React, { createContext, useContext, useState, useCallback, useEffect } fr
 import { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
 import { userService } from '@/services/api/user.service';
+import type { RegisterData } from '@/hooks/useAuth';
 
-interface AuthContextType {
+export interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
 }
 
-interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-}
-
-const AuthContext = createContext<AuthContextType | null>(null);
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
-};
+export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -38,8 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const loadUser = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
+      if (!authService.isAuthenticated()) {
         setUser(null);
         return;
       }
@@ -50,8 +38,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.error('Error loading user:', err);
       setUser(null);
-      localStorage.removeItem('token');
-      setError('Session expired. Please login again.');
+      setError('Failed to load user data');
     } finally {
       setIsLoading(false);
     }
@@ -61,93 +48,130 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadUser();
   }, [loadUser]);
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true);
-    setError(null);
-
+  const login = useCallback(async (email: string, password: string) => {
     try {
-      const { token, user: userData } = await authService.login(email, password);
-      localStorage.setItem('token', token);
-      setUser(userData);
+      setIsLoading(true);
+      setError(null);
+      await authService.login(email, password);
+      await loadUser();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to login';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error('Login error:', err);
+      setError('Invalid email or password');
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [loadUser]);
 
-  const logout = async () => {
-    setIsLoading(true);
-    setError(null);
-
+  const logout = useCallback(async () => {
     try {
+      setIsLoading(true);
+      setError(null);
       await authService.logout();
-      localStorage.removeItem('token');
       setUser(null);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to logout';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error('Logout error:', err);
+      setError('Failed to logout');
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const register = async (data: RegisterData) => {
-    setIsLoading(true);
-    setError(null);
-
+  const register = useCallback(async (data: RegisterData) => {
     try {
-      const { token, user: userData } = await authService.register({
-        ...data,
-        name: `${data.firstName} ${data.lastName}`,
-      });
-      localStorage.setItem('token', token);
-      setUser(userData);
+      setIsLoading(true);
+      setError(null);
+      await authService.register(data);
+      await login(data.email, data.password);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to register';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error('Registration error:', err);
+      setError('Failed to register user');
+      throw err;
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [login]);
 
-  const updateProfile = async (data: Partial<User>) => {
-    if (!user) {
-      throw new Error('No user logged in');
-    }
-
-    setIsLoading(true);
-    setError(null);
-
+  const updateProfile = useCallback(async (data: Partial<User>) => {
     try {
-      const updatedUser = await userService.updateProfile(data);
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      setIsLoading(true);
+      setError(null);
+      const updatedUser = await userService.updateProfile(user.id, data);
       setUser(updatedUser);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to update profile';
-      setError(errorMessage);
-      throw new Error(errorMessage);
+      console.error('Profile update error:', err);
+      setError('Failed to update profile');
+      throw err;
     } finally {
       setIsLoading(false);
     }
+  }, [user?.id]);
+
+  const resetPassword = useCallback(async (email: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await authService.resetPassword(email);
+    } catch (err) {
+      console.error('Password reset error:', err);
+      setError('Failed to send password reset email');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const verifyEmail = useCallback(async (token: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await authService.verifyEmail(token);
+      await loadUser();
+    } catch (err) {
+      console.error('Email verification error:', err);
+      setError('Failed to verify email');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [loadUser]);
+
+  const sendVerificationEmail = useCallback(async () => {
+    try {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+
+      setIsLoading(true);
+      setError(null);
+      await authService.sendVerificationEmail(user.id);
+    } catch (err) {
+      console.error('Send verification email error:', err);
+      setError('Failed to send verification email');
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user?.id]);
+
+  const value = {
+    user,
+    isLoading,
+    error,
+    isAuthenticated: !!user,
+    login,
+    logout,
+    register,
+    updateProfile,
+    resetPassword,
+    verifyEmail,
+    sendVerificationEmail,
   };
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isLoading,
-        error,
-        login,
-        logout,
-        register,
-        updateProfile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

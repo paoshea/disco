@@ -7,10 +7,20 @@ import { SafetyAlertNotification } from '@/components/safety/SafetyAlertNotifica
 import { AppRoutes } from '@/routes';
 
 export const App: React.FC = () => {
+  const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
+  if (!wsUrl) {
+    console.error('WebSocket URL not configured. Please set NEXT_PUBLIC_WEBSOCKET_URL environment variable.');
+    return null;
+  }
+
   return (
     <BrowserRouter>
       <AuthProvider>
-        <WebSocketProvider>
+        <WebSocketProvider 
+          url={wsUrl}
+          reconnectInterval={5000}
+          maxReconnectAttempts={5}
+        >
           <SafetyAlertProvider>
             <AppRoutes />
             <SafetyAlertNotification />

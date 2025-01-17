@@ -4,12 +4,14 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  emailVerified: boolean;
   phoneNumber?: string;
   avatar?: string;
   bio?: string;
   interests: string[];
   status: 'online' | 'offline' | 'away' | 'busy';
   emergencyContacts: EmergencyContact[];
+  verificationStatus: 'unverified' | 'pending' | 'verified' | 'rejected';
   lastSeen?: string;
   createdAt: string;
   updatedAt: string;

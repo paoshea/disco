@@ -60,7 +60,7 @@ class SocketService {
       this.reconnectAttempts = 0;
     });
 
-    this.socket.on('disconnect', (reason) => {
+    this.socket.on('disconnect', reason => {
       console.log('WebSocket disconnected:', reason);
       if (reason === 'io server disconnect') {
         // Server initiated disconnect, attempt to reconnect
@@ -68,7 +68,7 @@ class SocketService {
       }
     });
 
-    this.socket.on('connect_error', (error) => {
+    this.socket.on('connect_error', error => {
       console.error('Connection error:', error);
       this.reconnectAttempts++;
       if (this.reconnectAttempts >= this.maxReconnectAttempts) {
@@ -114,7 +114,7 @@ class SocketService {
     const handlers = this.handlers.get(event);
     if (!handlers) return;
 
-    const promises = Array.from(handlers).map(async (handler) => {
+    const promises = Array.from(handlers).map(async handler => {
       try {
         await handler(data);
       } catch (error) {

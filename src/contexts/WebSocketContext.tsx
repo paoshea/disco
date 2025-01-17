@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
-import { useAuth } from './AuthContext';
+import { useAuth } from '@/hooks/useAuth';
 import { socketService, WebSocketEvent, WebSocketMessage } from '@/services/socket.service';
 
 interface WebSocketContextType {
@@ -48,84 +48,86 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
           token: localStorage.getItem('token'),
           userId: user?.id,
         },
+        reconnection: true,
+        reconnectionAttempts: maxReconnectAttempts,
+        reconnectionDelay: reconnectInterval,
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to WebSocket';
-      setError(errorMessage);
       console.error('WebSocket connection error:', err);
-    }
-  };
-
-  const handleConnectionError = (err: Error) => {
-    setIsConnected(false);
-    setError(`Connection error: ${err.message}`);
-    
-    if (reconnectAttempts.current < maxReconnectAttempts) {
-      reconnectTimeoutId.current = setTimeout(() => {
-        reconnectAttempts.current += 1;
-        connect();
-      }, reconnectInterval);
-    } else {
-      setError('Max reconnection attempts reached. Please refresh the page.');
+      setError('Failed to connect to WebSocket server');
     }
   };
 
   useEffect(() => {
-    if (!user?.id) return;
-
-    connect();
-
     const handleConnect = () => {
       setIsConnected(true);
       setError(null);
       reconnectAttempts.current = 0;
+      if (reconnectTimeoutId.current) {
+        clearTimeout(reconnectTimeoutId.current);
+        reconnectTimeoutId.current = undefined;
+      }
     };
 
     const handleDisconnect = () => {
       setIsConnected(false);
-      setError('Disconnected from server');
+      if (reconnectAttempts.current < maxReconnectAttempts) {
+        reconnectTimeoutId.current = setTimeout(() => {
+          reconnectAttempts.current += 1;
+          connect();
+        }, reconnectInterval);
+      } else {
+        setError('Maximum reconnection attempts reached');
+      }
     };
 
-    socketService.on('connect', handleConnect);
-    socketService.on('disconnect', handleDisconnect);
-    socketService.on('error', handleConnectionError);
+    const handleError = (data: Record<string, any>) => {
+      const error = data instanceof Error ? data : new Error(data.message || 'Unknown WebSocket error');
+      console.error('WebSocket error:', error);
+      setError(error.message);
+    };
 
+    // Subscribe to connection events
+    const unsubscribeConnect = socketService.subscribe('connect', handleConnect);
+    const unsubscribeDisconnect = socketService.subscribe('disconnect', handleDisconnect);
+    const unsubscribeError = socketService.subscribe('error', handleError);
+
+    // Initial connection
+    connect();
+
+    // Cleanup
     return () => {
       if (reconnectTimeoutId.current) {
         clearTimeout(reconnectTimeoutId.current);
       }
+      unsubscribeConnect();
+      unsubscribeDisconnect();
+      unsubscribeError();
       socketService.disconnect();
-      socketService.off('connect', handleConnect);
-      socketService.off('disconnect', handleDisconnect);
-      socketService.off('error', handleConnectionError);
     };
-  }, [user?.id, url, reconnectInterval, maxReconnectAttempts]);
+  }, [url, reconnectInterval, maxReconnectAttempts, user?.id]);
 
   const send = <T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>) => {
     if (!isConnected) {
-      throw new Error('WebSocket is not connected');
+      console.warn('Cannot send message: WebSocket not connected');
+      return;
     }
-    socketService.emit(event, data);
+    socketService.send(event, data);
   };
 
   const subscribe = <T extends WebSocketEvent>(
     event: T,
     callback: (data: WebSocketMessage<T>) => void
   ) => {
-    socketService.on(event, callback);
-    return () => socketService.off(event, callback);
+    return socketService.subscribe(event, callback);
   };
 
-  return (
-    <WebSocketContext.Provider
-      value={{
-        isConnected,
-        error,
-        send,
-        subscribe,
-      }}
-    >
-      {children}
-    </WebSocketContext.Provider>
-  );
+  const value = {
+    isConnected,
+    error,
+    send,
+    subscribe,
+  };
+
+  return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
 };

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
-import { User, EmergencyContact } from '@/types/user';
+import { User } from '@/types/user';
+import { SafetySettings } from '@/types/safety';
 
 interface SafetyFeaturesProps {
   user: User;
-  onUpdateEmergencyContacts: (contacts: EmergencyContact[]) => Promise<void>;
-  onUpdateSafetySettings: (settings: any) => Promise<void>;
+  settings: SafetySettings;
+  onUpdateSettings: (settings: Partial<SafetySettings>) => Promise<void>;
   onTriggerSOS: () => Promise<void>;
 }
 
 export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
   user,
-  onUpdateEmergencyContacts,
-  onUpdateSafetySettings,
+  settings,
+  onUpdateSettings,
   onTriggerSOS,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -27,6 +28,14 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
     } finally {
       setLoading(false);
       setShowSOSConfirm(false);
+    }
+  };
+
+  const handleSettingChange = async (key: keyof SafetySettings, value: boolean) => {
+    try {
+      await onUpdateSettings({ [key]: value });
+    } catch (error) {
+      console.error('Failed to update safety setting:', error);
     }
   };
 
@@ -50,13 +59,14 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
               <button
                 onClick={handleSOSTrigger}
                 disabled={loading}
-                className="inline-flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 disabled:opacity-50"
               >
                 {loading ? 'Sending Alert...' : 'Confirm SOS'}
               </button>
               <button
                 onClick={() => setShowSOSConfirm(false)}
-                className="inline-flex justify-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+                disabled={loading}
+                className="text-gray-600 hover:text-gray-900"
               >
                 Cancel
               </button>
@@ -65,125 +75,90 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
         ) : (
           <button
             onClick={() => setShowSOSConfirm(true)}
-            className="inline-flex justify-center py-3 px-6 border border-transparent text-base font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            className="w-full bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             Trigger SOS Alert
           </button>
         )}
       </div>
 
-      {/* Safety Checklist */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Safety Checklist</h3>
+      {/* Safety Features */}
+      <div>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Safety Features</h3>
         <div className="space-y-4">
+          {/* Verification Status */}
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-900">Phone Number Verified</p>
-              <p className="text-sm text-gray-500">Add an extra layer of security</p>
-            </div>
-            {user.verificationStatus.phone ? (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                Verified
-              </span>
-            ) : (
-              <button className="text-sm text-primary-600 hover:text-primary-500">
-                Verify Now
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Identity Verification</p>
-              <p className="text-sm text-gray-500">Verify your identity with a government ID</p>
-            </div>
-            {user.verificationStatus.identity ? (
-              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-                Verified
-              </span>
-            ) : (
-              <button className="text-sm text-primary-600 hover:text-primary-500">
-                Verify Now
-              </button>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Emergency Contacts</p>
+              <h4 className="text-sm font-medium text-gray-900">Account Verification</h4>
               <p className="text-sm text-gray-500">
-                {user.emergencyContacts.length} contact(s) added
+                {user.verificationStatus === 'verified'
+                  ? 'Your account is verified'
+                  : 'Verify your account to unlock additional safety features'}
               </p>
             </div>
-            <button className="text-sm text-primary-600 hover:text-primary-500">
-              Manage Contacts
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Safety Settings */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Safety Settings</h3>
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Location Sharing</p>
-              <p className="text-sm text-gray-500">Automatically share location during meetups</p>
-            </div>
-            <button
-              type="button"
-              className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 bg-primary-600"
-              role="switch"
-              aria-checked="true"
-            >
-              <span className="translate-x-5 pointer-events-none relative inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200">
-                <span
-                  className="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity"
-                  aria-hidden="true"
-                ></span>
-              </span>
-            </button>
+            {user.verificationStatus !== 'verified' && (
+              <button
+                onClick={() => {/* Handle verification */}}
+                className="bg-primary-600 text-white px-4 py-2 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              >
+                Verify Account
+              </button>
+            )}
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Meetup Check-ins</p>
-              <p className="text-sm text-gray-500">Require check-ins during meetups</p>
+          {/* Safety Settings */}
+          <div className="space-y-4">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="autoShareLocation"
+                checked={settings.autoShareLocation}
+                onChange={(e) => handleSettingChange('autoShareLocation', e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="autoShareLocation" className="ml-3 text-sm text-gray-700">
+                Automatically share location during emergencies
+              </label>
             </div>
-            <button
-              type="button"
-              className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 bg-gray-200"
-              role="switch"
-              aria-checked="false"
-            >
-              <span className="translate-x-0 pointer-events-none relative inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200">
-                <span
-                  className="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity opacity-100"
-                  aria-hidden="true"
-                ></span>
-              </span>
-            </button>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-900">Verified Users Only</p>
-              <p className="text-sm text-gray-500">Only match with verified users</p>
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="meetupCheckins"
+                checked={settings.meetupCheckins}
+                onChange={(e) => handleSettingChange('meetupCheckins', e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="meetupCheckins" className="ml-3 text-sm text-gray-700">
+                Enable meetup check-ins
+              </label>
             </div>
-            <button
-              type="button"
-              className="relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 bg-primary-600"
-              role="switch"
-              aria-checked="true"
-            >
-              <span className="translate-x-5 pointer-events-none relative inline-block h-5 w-5 rounded-full bg-white shadow transform ring-0 transition ease-in-out duration-200">
-                <span
-                  className="absolute inset-0 h-full w-full flex items-center justify-center transition-opacity"
-                  aria-hidden="true"
-                ></span>
-              </span>
-            </button>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="sosAlertEnabled"
+                checked={settings.sosAlertEnabled}
+                onChange={(e) => handleSettingChange('sosAlertEnabled', e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="sosAlertEnabled" className="ml-3 text-sm text-gray-700">
+                Enable SOS alerts
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="requireVerifiedMatch"
+                checked={settings.requireVerifiedMatch}
+                onChange={(e) => handleSettingChange('requireVerifiedMatch', e.target.checked)}
+                className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+              />
+              <label htmlFor="requireVerifiedMatch" className="ml-3 text-sm text-gray-700">
+                Only match with verified users
+              </label>
+            </div>
           </div>
         </div>
       </div>

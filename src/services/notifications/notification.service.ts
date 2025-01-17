@@ -91,9 +91,9 @@ export class NotificationService {
         data: options.data,
       });
 
-      notification.onclick = async (event) => {
+      notification.onclick = async event => {
         event.preventDefault();
-        
+
         if (options.data?.type) {
           const handler = this.handlers.get(options.data.type);
           if (handler) {
@@ -128,7 +128,11 @@ export class NotificationService {
     this.handlers.delete(type);
   }
 
-  public async showMatchNotification(match: { id: string; name: string; profileImage?: string }): Promise<void> {
+  public async showMatchNotification(match: {
+    id: string;
+    name: string;
+    profileImage?: string;
+  }): Promise<void> {
     await this.show({
       title: 'New Match!',
       body: `You matched with ${match.name}`,
@@ -141,7 +145,12 @@ export class NotificationService {
     });
   }
 
-  public async showMessageNotification(message: { id: string; senderId: string; senderName: string; content: string }): Promise<void> {
+  public async showMessageNotification(message: {
+    id: string;
+    senderId: string;
+    senderName: string;
+    content: string;
+  }): Promise<void> {
     await this.show({
       title: `Message from ${message.senderName}`,
       body: message.content,
@@ -153,11 +162,21 @@ export class NotificationService {
     });
   }
 
-  public async showSafetyAlertNotification(alert: { id: string; userId: string; type: string; message: string }): Promise<void> {
+  public async showSafetyAlertNotification(alert: {
+    id: string;
+    userId: string;
+    type: string;
+    message: string;
+  }): Promise<void> {
     await this.show({
       title: 'Safety Alert',
       body: alert.message,
-      data: { type: 'safety_alert', alertId: alert.id, userId: alert.userId, alertType: alert.type },
+      data: {
+        type: 'safety_alert',
+        alertId: alert.id,
+        userId: alert.userId,
+        alertType: alert.type,
+      },
       onClick: () => {
         window.focus();
         window.location.href = `/safety/alerts/${alert.id}`;
