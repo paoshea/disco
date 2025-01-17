@@ -48,9 +48,15 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
 
       // Upload evidence files if any
       const evidenceUrls = await Promise.all(
-        files.map(async file => {
-          const response = await safetyService.uploadEvidence(file);
-          return response.url;
+        files.map(async (file: File, index: number) => {
+          const formData = new FormData();
+          formData.append('file', file);
+          const response = await fetch('/api/safety/upload/evidence', {
+            method: 'POST',
+            body: formData,
+          });
+          const data = await response.json();
+          return data;
         })
       );
 
@@ -58,9 +64,13 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         type: data.type,
         description: data.description,
         reportedUserId,
-        evidence: evidenceUrls.map(url => ({
+        evidence: evidenceUrls.map((data, index) => ({
+          id: data.id,
+          alertId: data.alertId || '',
           type: 'image',
-          url,
+          url: data.url,
+          description: files[index].name,
+          createdAt: new Date().toISOString()
         })),
       });
     } catch (err) {
@@ -77,14 +87,20 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
-      <Select label="Report Type" {...register('type')} error={errors.type?.message}>
-        <option value="">Select a reason for reporting</option>
-        <option value="harassment">Harassment</option>
-        <option value="inappropriate">Inappropriate Content</option>
-        <option value="spam">Spam</option>
-        <option value="scam">Scam</option>
-        <option value="other">Other</option>
-      </Select>
+      <Select 
+        label="Report Type" 
+        {...register('type')} 
+        error={errors.type?.message}
+        name="type"
+        options={[
+          { value: '', label: 'Select a reason for reporting' },
+          { value: 'harassment', label: 'Harassment' },
+          { value: 'inappropriate', label: 'Inappropriate Content' },
+          { value: 'spam', label: 'Spam' },
+          { value: 'scam', label: 'Scam' },
+          { value: 'other', label: 'Other' }
+        ]}
+      />
 
       <TextArea
         label="Description"
@@ -92,6 +108,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         error={errors.description?.message}
         placeholder="Please provide details about the incident..."
         rows={4}
+        name="description"
       />
 
       <div>

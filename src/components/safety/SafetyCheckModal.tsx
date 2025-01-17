@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
-import type { SafetyCheckModalProps } from '@/types/safety';
+import type { SafetyCheckNew } from '@/types/safety';
 import { Dialog } from '@headlessui/react';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/forms/TextArea';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+
+interface SafetyCheckModalProps {
+  check: SafetyCheckNew;
+  isOpen: boolean;
+  onClose: () => void;
+  onResolve: (checkId: string, status: 'safe' | 'unsafe', notes?: string) => Promise<void>;
+}
 
 export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
   check,
@@ -34,7 +41,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
   return (
     <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-10 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
-        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+        <div className="fixed inset-0 bg-black opacity-30" />
 
         <div className="relative mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
           <Dialog.Title className="text-lg font-medium text-gray-900">
@@ -42,11 +49,12 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
           </Dialog.Title>
 
           <div className="mt-4">
-            <p className="text-sm text-gray-500">{check.description}</p>
+            <p className="text-sm text-gray-500">{check.description || 'Please confirm your safety status'}</p>
 
             {error && <ErrorMessage message={error} className="mt-4" />}
 
             <TextArea
+              name="notes"
               label="Additional Notes"
               value={notes}
               onChange={e => setNotes(e.target.value)}
@@ -66,7 +74,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
               </Button>
               <Button
                 type="button"
-                variant="success"
+                variant="primary"
                 onClick={() => handleResolve('safe')}
                 disabled={isSubmitting}
               >

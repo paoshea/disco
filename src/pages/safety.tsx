@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert } from '@/components/ui/Alert';
 import { Tab } from '@headlessui/react';
 import { safetyService } from '@/services/api/safety.service';
-import type { SafetyAlert, SafetyCheck } from '@/types/safety';
+import type { SafetyAlertNew as SafetyAlert, SafetyCheckNew as SafetyCheck } from '@/types/safety';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -72,7 +72,14 @@ export default function Safety() {
           </p>
         </div>
 
-        {error && <Alert type="error" message={error} className="mb-6" />}
+        {error && (
+          <Alert 
+            type="error" 
+            title="Error"
+            message={error} 
+            className="mb-6" 
+          />
+        )}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -119,17 +126,71 @@ export default function Safety() {
           <Tab.Panels className="mt-6">
             <Tab.Panel>
               <SafetyCenter
-                user={user}
-                alerts={alerts}
-                onTriggerAlert={triggerEmergencyAlert}
-                onDismissAlert={dismissAlert}
+                userId={user.id}
+                onSettingsChange={async (settings) => {
+                  try {
+                    await safetyService.updateSettings(user.id, {
+                      locationSharing: settings.autoShareLocation,
+                      automaticCheckins: settings.meetupCheckins,
+                      emergencyContactNotifications: settings.sosAlertEnabled,
+                      safetyRadius: 100,
+                      notificationPreferences: {
+                        email: true,
+                        push: true,
+                        sms: true
+                      }
+                    });
+                  } catch (err) {
+                    console.error('Error updating safety settings:', err);
+                    setError(err instanceof Error ? err.message : 'Failed to update safety settings');
+                  }
+                }}
               />
             </Tab.Panel>
             <Tab.Panel>
-              <EmergencyContactList userId={user.id} />
+              <EmergencyContactList 
+                contacts={[]} 
+                onEdit={async (contact) => {
+                  try {
+                    await safetyService.updateEmergencyContact(user.id, contact.id, contact);
+                  } catch (err) {
+                    console.error('Error updating contact:', err);
+                    setError(err instanceof Error ? err.message : 'Failed to update contact');
+                  }
+                }}
+                onDelete={async (contactId) => {
+                  try {
+                    await safetyService.deleteEmergencyContact(user.id, contactId);
+                  } catch (err) {
+                    console.error('Error deleting contact:', err);
+                    setError(err instanceof Error ? err.message : 'Failed to delete contact');
+                  }
+                }}
+              />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyCheckList checks={safetyChecks} onResolveCheck={resolveSafetyCheck} />
+              <SafetyCheckList 
+                checks={safetyChecks.map(check => ({
+                  id: check.id,
+                  userId: check.userId,
+                  status: check.status === 'completed' ? 'safe' : check.status === 'missed' ? 'missed' : 'pending',
+                  scheduledTime: check.scheduledFor,
+                  location: check.location,
+                  notes: check.description,
+                  notifiedContacts: [],
+                  createdAt: check.createdAt,
+                  updatedAt: check.updatedAt,
+                  completedAt: check.completedAt
+                }))}
+                onComplete={async (checkId: string) => {
+                  try {
+                    await resolveSafetyCheck(checkId, 'safe');
+                  } catch (err) {
+                    console.error('Error completing safety check:', err);
+                    setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+                  }
+                }}
+              />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
