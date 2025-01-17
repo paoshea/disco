@@ -14,7 +14,11 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
   userId,
   onUpdate,
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<UserSettings>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UserSettings>({
     defaultValues: initialSettings,
   });
 

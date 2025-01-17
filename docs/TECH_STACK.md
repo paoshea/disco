@@ -9,6 +9,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
 ### Mobile Applications
 
 #### iOS App
+
 - **Language**: Swift 5.9
 - **Architecture Pattern**: MVVM-C (Model-View-ViewModel with Coordinator)
 - **Key Frameworks**:
@@ -20,6 +21,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - SwiftUI for modern UI components
 
 #### Android App
+
 - **Language**: Kotlin
 - **Architecture Pattern**: MVVM with Clean Architecture
 - **Key Frameworks**:
@@ -33,6 +35,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
 ### Backend Services
 
 #### Core API Service
+
 - **Language**: Go
 - **Framework**: Gin
 - **Features**:
@@ -41,6 +44,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - Low latency for real-time operations
 
 #### Location Processing Service
+
 - **Language**: Rust
 - **Features**:
   - Efficient spatial calculations
@@ -48,6 +52,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - Geohashing for quick proximity searches
 
 #### User Management Service
+
 - **Language**: Node.js
 - **Framework**: NestJS
 - **Features**:
@@ -56,6 +61,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - Preferences handling
 
 #### Real-time Matching Service
+
 - **Language**: Elixir
 - **Framework**: Phoenix
 - **Features**:
@@ -66,6 +72,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
 ### Databases
 
 #### Primary Data Store
+
 - **Technology**: PostgreSQL 15
 - **Extensions**:
   - PostGIS for geospatial queries
@@ -73,6 +80,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - pg_crypto for encryption
 
 #### Cache Layer
+
 - **Technology**: Redis
 - **Usage**:
   - Session management
@@ -81,6 +89,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - Temporary data storage
 
 #### Search Engine
+
 - **Technology**: Elasticsearch
 - **Usage**:
   - User discovery
@@ -90,6 +99,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
 ### Infrastructure & DevOps
 
 #### Cloud Provider
+
 - **Primary**: AWS
 - **Key Services**:
   - EKS for container orchestration
@@ -100,6 +110,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - AWS Shield for DDoS protection
 
 #### Monitoring & Analytics
+
 - **Tools**:
   - Prometheus for metrics
   - Grafana for visualization
@@ -108,6 +119,7 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
   - Sentry for error tracking
 
 #### CI/CD
+
 - **Pipeline**: GitHub Actions
 - **Container Registry**: Amazon ECR
 - **Configuration Management**: Terraform
@@ -118,12 +130,14 @@ DISCO! is built on a microservices architecture to ensure scalability, maintaina
 ### Location Services Architecture
 
 1. **Location Update Flow**
+
 ```
-Mobile App → API Gateway → Location Processing Service → Redis Cache → 
+Mobile App → API Gateway → Location Processing Service → Redis Cache →
 Matching Service → Notification Service
 ```
 
 2. **Geofencing Implementation**
+
 - Geohash-based proximity detection
 - Dynamic radius adjustment
 - Battery-efficient location updates
@@ -132,26 +146,30 @@ Matching Service → Notification Service
 ### Real-time Matching System
 
 1. **Matching Algorithm Components**
+
 - Spatial indexing using PostGIS
 - Interest-based weighted scoring
 - Time window compatibility
 - Safety score consideration
 
 2. **Notification Pipeline**
+
 ```
-Match Detection → Safety Check → Push Notification Service → 
+Match Detection → Safety Check → Push Notification Service →
 Mobile App
 ```
 
 ### Security Architecture
 
 1. **Data Protection**
+
 - End-to-end encryption for messages
 - Location data encryption at rest
 - Temporary data storage with automatic deletion
 - Zero-knowledge proof for location verification
 
 2. **Authentication System**
+
 - OAuth 2.0 with PKCE
 - JWT for session management
 - Biometric authentication support
@@ -160,12 +178,14 @@ Mobile App
 ### Privacy Implementation
 
 1. **Location Privacy**
+
 - Approximate location sharing
 - Private zones implementation
 - Temporary location caching
 - Delayed location updates
 
 2. **Data Lifecycle**
+
 - Automatic data expiration
 - Configurable retention policies
 - GDPR compliance tooling
@@ -174,12 +194,14 @@ Mobile App
 ## Scaling Considerations
 
 ### Horizontal Scaling
+
 - Kubernetes-based microservices
 - Regional deployment strategy
 - Load balancing across zones
 - Database sharding strategy
 
 ### Performance Optimization
+
 - CDN for static assets
 - Redis caching layer
 - Database query optimization
@@ -188,12 +210,14 @@ Mobile App
 ## Development Workflow
 
 ### Local Development
+
 - Docker Compose for local services
 - Mock location services
 - Automated testing suite
 - Hot reload capabilities
 
 ### Testing Strategy
+
 - Unit tests with high coverage
 - Integration tests for critical paths
 - Performance testing suite
@@ -202,12 +226,14 @@ Mobile App
 ## Security Measures
 
 ### Application Security
+
 - OWASP compliance
 - Regular security audits
 - Penetration testing
 - Vulnerability scanning
 
 ### Data Security
+
 - Encryption at rest and in transit
 - Regular backup strategy
 - Disaster recovery plan
@@ -216,12 +242,14 @@ Mobile App
 ## Monitoring & Alerting
 
 ### Key Metrics
+
 - Location service latency
 - Matching service performance
 - User engagement metrics
 - Error rates and types
 
 ### Alert Systems
+
 - PagerDuty integration
 - Automated incident response
 - Escalation policies
@@ -230,12 +258,14 @@ Mobile App
 ## Future Considerations
 
 ### Planned Technical Improvements
+
 - ML-based matching optimization
 - Enhanced battery optimization
 - Blockchain-based trust system
 - AR features for meetup spots
 
 ### Scalability Roadmap
+
 - Multi-region deployment
 - Enhanced caching strategy
 - Improved matching algorithms

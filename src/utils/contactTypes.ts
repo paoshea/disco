@@ -7,7 +7,7 @@ import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
  * - Contains relationship information
  * - Has structured notification preferences
  * - Does not track creation/update timestamps
- * 
+ *
  * @example
  * {
  *   id: "123",
@@ -30,7 +30,7 @@ import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
  * - Has simple notification array
  * - Tracks creation and update times
  * - Uses 'phone' instead of 'phoneNumber'
- * 
+ *
  * @example
  * {
  *   id: "123",
@@ -53,7 +53,7 @@ export const toSafetyContact = (
   userId: string
 ): SafetyEmergencyContact => {
   const now = new Date().toISOString();
-  
+
   // Convert notification preferences to array
   const notifyOn = Object.entries(contact.notifyOn)
     .filter(([_, enabled]) => enabled)
@@ -78,7 +78,7 @@ export const toSafetyContact = (
     relation: contact.relationship,
     notifyOn,
     createdAt: now,
-    updatedAt: now
+    updatedAt: now,
   };
 };
 
@@ -95,7 +95,7 @@ export const toUserContact = (contact: SafetyEmergencyContact): UserEmergencyCon
     notifyOn: {
       sosAlert: contact.notifyOn.includes('sos'),
       meetupStart: contact.notifyOn.includes('meetup'),
-      meetupEnd: contact.notifyOn.includes('meetup')
-    }
+      meetupEnd: contact.notifyOn.includes('meetup'),
+    },
   };
 };

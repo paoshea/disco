@@ -32,14 +32,16 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
   const loadContacts = async () => {
     try {
       const contactsData = await safetyService.getEmergencyContacts(user!.id);
-      setContacts(contactsData.map(contact => ({
-        id: contact.id,
-        name: contact.name,
-        relationship: contact.relationship,
-        phoneNumber: contact.phoneNumber,
-        email: contact.email,
-        notifyOn: contact.notifyOn
-      })));
+      setContacts(
+        contactsData.map(contact => ({
+          id: contact.id,
+          name: contact.name,
+          relationship: contact.relationship,
+          phoneNumber: contact.phoneNumber,
+          email: contact.email,
+          notifyOn: contact.notifyOn,
+        }))
+      );
     } catch (error) {
       console.error('Error loading emergency contacts:', error);
     } finally {
@@ -60,15 +62,15 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
     try {
       if (editingContact) {
         const updated = await safetyService.updateEmergencyContact(editingContact.id, data);
-        setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
+        setContacts(prev => prev.map(c => (c.id === updated.id ? updated : c)));
       } else {
         const created = await safetyService.createEmergencyContact({
           ...data,
           notifyOn: {
             sosAlert: true,
             meetupStart: true,
-            meetupEnd: true
-          }
+            meetupEnd: true,
+          },
         } as EmergencyContact);
         setContacts(prev => [...prev, created]);
       }
@@ -88,17 +90,22 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
     }
   };
 
-  const handleCreateReport = async (data: Partial<SafetyReport>) => {
+  const handleCreateReport = async (data: Partial<SafetyReport>): Promise<void> => {
     try {
+      if (!data.reportedId) {
+        throw new Error('reportedId is required');
+      }
+
       const report = {
         ...data,
         reporterId: user!.id,
+        reportedId: data.reportedId,
         type: data.type!,
         description: data.description!,
         evidence: [],
         status: 'pending' as const,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       const created = await safetyService.createSafetyReport(report);
       setReports(prev => [...prev, created]);
@@ -120,9 +127,7 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Emergency Contacts</h2>
-          <Button onClick={() => setShowContactForm(true)}>
-            Add Contact
-          </Button>
+          <Button onClick={() => setShowContactForm(true)}>Add Contact</Button>
         </div>
 
         <EmergencyContactList
@@ -138,9 +143,7 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Safety Reports</h2>
-          <Button onClick={() => setShowReportForm(true)}>
-            Submit Report
-          </Button>
+          <Button onClick={() => setShowReportForm(true)}>Submit Report</Button>
         </div>
 
         {reports.length > 0 ? (
@@ -192,10 +195,7 @@ const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
         onClose={() => setShowReportForm(false)}
         title="Submit Safety Report"
       >
-        <SafetyReportForm
-          onSubmit={handleCreateReport}
-          onCancel={() => setShowReportForm(false)}
-        />
+        <SafetyReportForm onSubmit={handleCreateReport} onCancel={() => setShowReportForm(false)} />
       </Modal>
     </div>
   );

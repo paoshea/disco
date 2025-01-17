@@ -12,26 +12,17 @@ export const Footer: React.FC = () => {
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
-                  href="/about"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/about" className="text-base text-gray-500 hover:text-gray-900">
                   About
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/careers"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/careers" className="text-base text-gray-500 hover:text-gray-900">
                   Careers
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/press"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/press" className="text-base text-gray-500 hover:text-gray-900">
                   Press
                 </Link>
               </li>
@@ -43,57 +34,37 @@ export const Footer: React.FC = () => {
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
-                  href="/help"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/help" className="text-base text-gray-500 hover:text-gray-900">
                   Help Center
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/safety"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/safety" className="text-base text-gray-500 hover:text-gray-900">
                   Safety Center
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/community"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/community" className="text-base text-gray-500 hover:text-gray-900">
                   Community Guidelines
                 </Link>
               </li>
             </ul>
           </div>
           <div>
-            <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-              Legal
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-400 tracking-wider uppercase">Legal</h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
-                  href="/privacy"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/privacy" className="text-base text-gray-500 hover:text-gray-900">
                   Privacy Policy
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/terms"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/terms" className="text-base text-gray-500 hover:text-gray-900">
                   Terms of Service
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/cookies"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/cookies" className="text-base text-gray-500 hover:text-gray-900">
                   Cookie Policy
                 </Link>
               </li>
@@ -105,10 +76,7 @@ export const Footer: React.FC = () => {
             </h3>
             <ul className="mt-4 space-y-4">
               <li>
-                <Link
-                  href="/contact"
-                  className="text-base text-gray-500 hover:text-gray-900"
-                >
+                <Link href="/contact" className="text-base text-gray-500 hover:text-gray-900">
                   Contact Us
                 </Link>
               </li>

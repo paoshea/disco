@@ -36,7 +36,7 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
         evidence: [],
         status: 'pending' as const,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
       await safetyService.createSafetyReport(report);
       onClose();
@@ -48,30 +48,25 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={onClose}
-      className="fixed inset-0 z-10 overflow-y-auto"
-    >
+    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-10 overflow-y-auto">
       <div className="min-h-screen px-4 text-center">
-        <Dialog.Overlay className="fixed inset-0 bg-black/30" />
-        
+        <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+
+        <span className="inline-block h-screen align-middle" aria-hidden="true">
+          &#8203;
+        </span>
+
         <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-          <Dialog.Title
-            as="h3"
-            className="text-lg font-medium leading-6 text-gray-900"
-          >
+          <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
             Report User
           </Dialog.Title>
 
           <form onSubmit={handleSubmit} className="mt-4">
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Type of Report
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Type of Report</label>
               <select
                 value={type}
-                onChange={(e) => setType(e.target.value as SafetyReport['type'])}
+                onChange={e => setType(e.target.value as SafetyReport['type'])}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="harassment">Harassment</option>
@@ -85,12 +80,10 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
             </div>
 
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
                 value={description}
-                onChange={(e) => setDescription(e.target.value)}
+                onChange={e => setDescription(e.target.value)}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 rows={4}
                 required

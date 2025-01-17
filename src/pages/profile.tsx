@@ -99,11 +99,7 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        <ProfileSettings 
-          user={user} 
-          settings={settings} 
-          onSave={handleSaveSettings} 
-        />
+        <ProfileSettings user={user} settings={settings} onSave={handleSaveSettings} />
       </div>
     </Layout>
   );

@@ -13,7 +13,7 @@ module.exports = {
     'next',
     'prettier',
     'plugin:@typescript-eslint/recommended',
-    'plugin:@typescript-eslint/recommended-requiring-type-checking'
+    'plugin:@typescript-eslint/recommended-requiring-type-checking',
   ],
   plugins: ['prettier', '@typescript-eslint'],
   rules: {
@@ -26,11 +26,11 @@ module.exports = {
     '@typescript-eslint/no-unsafe-member-access': 'warn',
     '@typescript-eslint/no-unsafe-call': 'warn',
     '@typescript-eslint/no-unsafe-return': 'warn',
-    'react/react-in-jsx-scope': 'off'
+    'react/react-in-jsx-scope': 'off',
   },
   settings: {
     react: {
-      version: 'detect'
-    }
-  }
-}
+      version: 'detect',
+    },
+  },
+};

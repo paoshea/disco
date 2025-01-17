@@ -6,7 +6,7 @@ services:
       context: ./services/core-api
       dockerfile: Dockerfile
     ports:
-      - "8080:8080"
+      - '8080:8080'
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -24,7 +24,7 @@ services:
       context: ./services/location-service
       dockerfile: Dockerfile
     ports:
-      - "8081:8081"
+      - '8081:8081'
     environment:
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -35,7 +35,7 @@ services:
       context: ./services/user-service
       dockerfile: Dockerfile
     ports:
-      - "3000:3000"
+      - '3000:3000'
     environment:
       - DB_HOST=postgres
       - DB_PORT=5432
@@ -50,7 +50,7 @@ services:
       context: ./services/matching-service
       dockerfile: Dockerfile
     ports:
-      - "4000:4000"
+      - '4000:4000'
     environment:
       - REDIS_URL=redis://redis:6379
     depends_on:
@@ -59,7 +59,7 @@ services:
   postgres:
     image: postgres:15-alpine
     ports:
-      - "5432:5432"
+      - '5432:5432'
     environment:
       - POSTGRES_USER=disco_user
       - POSTGRES_PASSWORD=disco_password
@@ -70,7 +70,7 @@ services:
   redis:
     image: redis:7-alpine
     ports:
-      - "6379:6379"
+      - '6379:6379'
     volumes:
       - redis_data:/data
 

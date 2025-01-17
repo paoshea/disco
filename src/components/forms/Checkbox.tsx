@@ -32,9 +32,7 @@ export const Checkbox: React.FC<CheckboxProps> = ({
         <label htmlFor={name} className="font-medium text-gray-700">
           {label}
         </label>
-        {error && (
-          <p className="mt-1 text-sm text-red-600">{error}</p>
-        )}
+        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
     </div>
   );

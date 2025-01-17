@@ -13,31 +13,35 @@ export interface FileUploadProps {
 }
 
 export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
-  ({ 
-    label, 
-    error, 
-    fullWidth = false, 
-    accept,
-    maxSize = 5 * 1024 * 1024, // 5MB default
-    multiple = false,
-    onFilesSelected 
-  }, ref) => {
-    const onDrop = useCallback((acceptedFiles: File[]) => {
-      onFilesSelected(acceptedFiles);
-    }, [onFilesSelected]);
+  (
+    {
+      label,
+      error,
+      fullWidth = false,
+      accept,
+      maxSize = 5 * 1024 * 1024, // 5MB default
+      multiple = false,
+      onFilesSelected,
+    },
+    ref
+  ) => {
+    const onDrop = useCallback(
+      (acceptedFiles: File[]) => {
+        onFilesSelected(acceptedFiles);
+      },
+      [onFilesSelected]
+    );
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       onDrop,
       accept,
       maxSize,
-      multiple
+      multiple,
     });
 
     return (
       <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')} ref={ref}>
-        {label && (
-          <label className="text-sm font-medium text-gray-700">{label}</label>
-        )}
+        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
         <div
           {...getRootProps()}
           className={cn(
@@ -53,9 +57,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
               <p className="text-primary-600">Drop the files here...</p>
             ) : (
               <>
-                <p className="text-gray-600">
-                  Drag & drop files here, or click to select files
-                </p>
+                <p className="text-gray-600">Drag & drop files here, or click to select files</p>
                 <p className="text-sm text-gray-500 mt-1">
                   {multiple ? 'Files' : 'File'} should be less than{' '}
                   {Math.round(maxSize / 1024 / 1024)}MB

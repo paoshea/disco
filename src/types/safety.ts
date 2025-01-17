@@ -1,4 +1,4 @@
-export type IncidentType = 
+export type IncidentType =
   | 'harassment'
   | 'inappropriate'
   | 'impersonation'
@@ -7,10 +7,7 @@ export type IncidentType =
   | 'safety_check'
   | 'other';
 
-export type IncidentStatus = 
-  | 'pending'
-  | 'resolved'
-  | 'dismissed';
+export type IncidentStatus = 'pending' | 'resolved' | 'dismissed';
 
 export interface SafetyReport {
   id: string;

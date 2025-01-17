@@ -40,11 +40,13 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
         await safetyService.triggerEmergencyAlert({
           userId,
           type: 'safety_check',
-          location: location ? {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            accuracy: location.accuracy || 0,
-          } : undefined,
+          location: location
+            ? {
+                latitude: location.latitude,
+                longitude: location.longitude,
+                accuracy: location.accuracy || 0,
+              }
+            : undefined,
           status: 'active',
           message: `User reported unsafe during safety check for meeting ${meetingId}`,
           createdAt: new Date().toISOString(),
@@ -58,20 +60,22 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
   };
 
   const getCurrentLocation = async () => {
-    return new Promise<{ latitude: number; longitude: number; accuracy: number }>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          resolve({
-            latitude: position.coords.latitude,
-            longitude: position.coords.longitude,
-            accuracy: position.coords.accuracy,
-          });
-        },
-        (error) => {
-          reject(error);
-        }
-      );
-    });
+    return new Promise<{ latitude: number; longitude: number; accuracy: number }>(
+      (resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(
+          position => {
+            resolve({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              accuracy: position.coords.accuracy,
+            });
+          },
+          error => {
+            reject(error);
+          }
+        );
+      }
+    );
   };
 
   return (
@@ -119,7 +123,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
                 <textarea
                   id="notes"
                   value={notes}
-                  onChange={(e) => setNotes(e.target.value)}
+                  onChange={e => setNotes(e.target.value)}
                   rows={3}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
                   placeholder="Add any relevant details..."

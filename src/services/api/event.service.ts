@@ -77,10 +77,7 @@ class EventService {
     return response.data;
   }
 
-  async updateSafetyGuidelines(
-    eventId: string,
-    guidelines: string[]
-  ): Promise<Event> {
+  async updateSafetyGuidelines(eventId: string, guidelines: string[]): Promise<Event> {
     const response = await api.put(`/events/${eventId}/safety-guidelines`, {
       guidelines,
     });

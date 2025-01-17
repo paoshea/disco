@@ -9,11 +9,7 @@ interface ChatWindowProps {
   recipientName: string;
 }
 
-export const ChatWindow: React.FC<ChatWindowProps> = ({
-  matchId,
-  recipientId,
-  recipientName,
-}) => {
+export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, recipientName }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -77,20 +73,16 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       {/* Chat Header */}
       <div className="px-4 py-3 border-b border-gray-200">
         <h3 className="text-lg font-medium text-gray-900">{recipientName}</h3>
-        {isTyping && (
-          <p className="text-sm text-gray-500">Typing...</p>
-        )}
+        {isTyping && <p className="text-sm text-gray-500">Typing...</p>}
       </div>
 
       {/* Messages */}
       <div className="flex-1 p-4 overflow-y-auto">
         <div className="space-y-4">
-          {messages.map((message) => (
+          {messages.map(message => (
             <div
               key={message.id}
-              className={`flex ${
-                message.senderId === user!.id ? 'justify-end' : 'justify-start'
-              }`}
+              className={`flex ${message.senderId === user!.id ? 'justify-end' : 'justify-start'}`}
             >
               <div
                 className={`max-w-xs px-4 py-2 rounded-lg ${

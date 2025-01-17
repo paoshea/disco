@@ -13,7 +13,7 @@ export class SocketService {
 
     this.socket = io(url, {
       transports: ['websocket'],
-      autoConnect: true
+      autoConnect: true,
     });
 
     // Reconnect existing event handlers

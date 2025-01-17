@@ -1,8 +1,7 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/utils/cn';
 
-export interface TextAreaProps
-  extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextAreaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   error?: string;
   fullWidth?: boolean;
@@ -12,9 +11,7 @@ export const TextArea = forwardRef<HTMLTextAreaElement, TextAreaProps>(
   ({ className, label, error, fullWidth = false, ...props }, ref) => {
     return (
       <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')}>
-        {label && (
-          <label className="text-sm font-medium text-gray-700">{label}</label>
-        )}
+        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
         <textarea
           className={cn(
             'rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm',

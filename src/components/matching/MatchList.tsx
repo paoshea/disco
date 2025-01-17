@@ -28,11 +28,11 @@ export const MatchList: React.FC = () => {
   const handleAcceptMatch = async (matchId: string) => {
     try {
       await matchService.acceptMatch(matchId);
-      setMatches(matches.map(match => 
-        match.id === matchId 
-          ? { ...match, connectionStatus: 'accepted' }
-          : match
-      ));
+      setMatches(
+        matches.map(match =>
+          match.id === matchId ? { ...match, connectionStatus: 'accepted' } : match
+        )
+      );
     } catch (error) {
       console.error('Failed to accept match:', error);
     }
@@ -41,11 +41,11 @@ export const MatchList: React.FC = () => {
   const handleDeclineMatch = async (matchId: string) => {
     try {
       await matchService.declineMatch(matchId);
-      setMatches(matches.map(match => 
-        match.id === matchId 
-          ? { ...match, connectionStatus: 'declined' }
-          : match
-      ));
+      setMatches(
+        matches.map(match =>
+          match.id === matchId ? { ...match, connectionStatus: 'declined' } : match
+        )
+      );
     } catch (error) {
       console.error('Failed to decline match:', error);
     }
@@ -77,19 +77,17 @@ export const MatchList: React.FC = () => {
     return (
       <div className="text-center py-8">
         <h3 className="text-lg font-medium text-gray-900">No matches yet</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Keep exploring to find your perfect match!
-        </p>
+        <p className="mt-2 text-sm text-gray-500">Keep exploring to find your perfect match!</p>
       </div>
     );
   }
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {matches.map((match) => (
-        <MatchCard 
-          key={match.id} 
-          match={match} 
+      {matches.map(match => (
+        <MatchCard
+          key={match.id}
+          match={match}
           onAccept={() => handleAcceptMatch(match.id)}
           onDecline={() => handleDeclineMatch(match.id)}
         />

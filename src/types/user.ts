@@ -2,6 +2,7 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
   avatar?: string;
   status: 'online' | 'offline' | 'away' | 'busy';
   emergencyContacts: EmergencyContact[];

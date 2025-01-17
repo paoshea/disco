@@ -26,12 +26,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
       const wsUrl = `${protocol}//${window.location.host}/api/ws?userId=${user.id}`;
       ws.current = new WebSocket(wsUrl);
 
-      ws.current.onmessage = (event) => {
+      ws.current.onmessage = event => {
         try {
           const { type, data } = JSON.parse(event.data);
           const eventListeners = listeners.current.get(type);
           if (eventListeners) {
-            eventListeners.forEach((callback) => callback(data));
+            eventListeners.forEach(callback => callback(data));
           }
         } catch (error) {
           console.error('WebSocket message error:', error);
@@ -75,9 +75,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }
   };
 
   return (
-    <WebSocketContext.Provider value={{ send, on, off }}>
-      {children}
-    </WebSocketContext.Provider>
+    <WebSocketContext.Provider value={{ send, on, off }}>{children}</WebSocketContext.Provider>
   );
 };
 

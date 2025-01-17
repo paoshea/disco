@@ -11,9 +11,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ className, label, error, fullWidth = false, ...props }, ref) => {
     return (
       <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')}>
-        {label && (
-          <label className="text-sm font-medium text-gray-700">{label}</label>
-        )}
+        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
         <input
           className={cn(
             'rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm',

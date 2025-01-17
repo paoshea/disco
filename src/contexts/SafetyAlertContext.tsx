@@ -38,9 +38,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
         ]);
         setActiveAlerts(alerts);
         // Convert user contacts to safety contacts
-        const safetyContacts = contacts.map(contact => 
-          toSafetyContact(contact, user.id)
-        );
+        const safetyContacts = contacts.map(contact => toSafetyContact(contact, user.id));
         setEmergencyContacts(safetyContacts);
       } catch (error) {
         console.error('Error loading safety data:', error);
@@ -54,7 +52,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
 
     const handleEmergencyAlert = (alert: EmergencyAlert) => {
       setActiveAlerts(prev => [...prev, alert]);
-      
+
       // Play alert sound
       const audio = new Audio('/sounds/emergency-alert.mp3');
       audio.play().catch(console.error);
@@ -75,9 +73,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
     const handleContactUpdate = (contact: UserEmergencyContact) => {
       // Convert user contact to safety contact
       const safetyContact = toSafetyContact(contact, user.id);
-      setEmergencyContacts(prev => 
-        prev.map(c => c.id === safetyContact.id ? safetyContact : c)
-      );
+      setEmergencyContacts(prev => prev.map(c => (c.id === safetyContact.id ? safetyContact : c)));
     };
 
     socketService.subscribe('emergency_alert', handleEmergencyAlert);
@@ -95,7 +91,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
     try {
       const newAlert = await safetyService.triggerEmergencyAlert(alert);
       setActiveAlerts(prev => [...prev, newAlert]);
-      
+
       // Broadcast via WebSocket
       socketService.emit('emergency_alert', newAlert);
     } catch (error) {
@@ -108,7 +104,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
     try {
       await safetyService.resolveEmergencyAlert(alertId);
       setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
-      
+
       // Broadcast via WebSocket
       socketService.emit('alert_resolved', alertId);
     } catch (error) {

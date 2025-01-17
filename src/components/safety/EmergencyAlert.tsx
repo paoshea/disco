@@ -9,10 +9,7 @@ interface EmergencyAlertProps {
   onCancel: () => void;
 }
 
-export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
-  onTrigger,
-  onCancel,
-}) => {
+export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onTrigger, onCancel }) => {
   const [isTriggering, setIsTriggering] = useState(false);
   const [message, setMessage] = useState('');
   const { location, error: locationError } = useGeolocation();
@@ -28,11 +25,13 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
       await onTrigger({
         type: 'emergency',
         message,
-        location: location ? {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          accuracy: location.accuracy || 0,
-        } : undefined,
+        location: location
+          ? {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              accuracy: location.accuracy || 0,
+            }
+          : undefined,
         status: 'active',
       });
     } catch (error) {
@@ -45,20 +44,18 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
   return (
     <div className="space-y-6">
       <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-        <h3 className="text-lg font-semibold text-red-800">
-          Emergency Alert
-        </h3>
+        <h3 className="text-lg font-semibold text-red-800">Emergency Alert</h3>
         <p className="mt-1 text-sm text-red-600">
-          This will immediately notify your emergency contacts and our safety team.
-          If you're in immediate danger, please contact emergency services directly.
+          This will immediately notify your emergency contacts and our safety team. If you're in
+          immediate danger, please contact emergency services directly.
         </p>
       </div>
 
       {locationError && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <p className="text-sm text-yellow-700">
-            Unable to get your location. Your emergency contacts will still be notified,
-            but we won't be able to share your location with them.
+            Unable to get your location. Your emergency contacts will still be notified, but we
+            won't be able to share your location with them.
           </p>
         </div>
       )}
@@ -86,7 +83,7 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
           className="w-full h-24 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
           placeholder="Add any details about your situation..."
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={e => setMessage(e.target.value)}
         />
       </div>
 
@@ -100,19 +97,17 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
         >
           Trigger Emergency Alert
         </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={isTriggering}
-        >
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isTriggering}>
           Cancel
         </Button>
       </div>
 
       <div className="text-center">
         <p className="text-sm text-gray-500">
-          Emergency Services: <a href="tel:911" className="text-primary-600 font-semibold">911</a>
+          Emergency Services:{' '}
+          <a href="tel:911" className="text-primary-600 font-semibold">
+            911
+          </a>
         </p>
       </div>
     </div>

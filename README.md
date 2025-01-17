@@ -1,4 +1,5 @@
 # DISCO! 🕺
+
 ### Spark Spontaneous Social Connections
 
 DISCO! is a revolutionary social discovery platform that brings back the magic of serendipitous encounters in our increasingly digital world. By facilitating opt-in, proximity-based connections, DISCO! helps you meet like-minded people in your vicinity while maintaining complete control over your privacy and safety.
@@ -6,11 +7,13 @@ DISCO! is a revolutionary social discovery platform that brings back the magic o
 ## 🌟 Key Features
 
 ### Spontaneous Discovery
+
 - Real-time notifications when other DISCO! users who match your interests are nearby
 - Smart matching based on shared interests, activities, and social preferences
 - Flexible radius settings from 100ft to 1 mile to control your discovery zone
 
 ### Privacy First
+
 - Zero personal data storage by default
 - End-to-end encrypted communications
 - Precise location data is never shared with other users
@@ -18,6 +21,7 @@ DISCO! is a revolutionary social discovery platform that brings back the magic o
 - Optional verified identity system through trusted third-party providers
 
 ### Safety Features
+
 - Meet in public places only - integration with Google Places API to suggest safe meeting spots
 - Real-time safety check-ins during meetups
 - Emergency contact system with one-tap activation
@@ -25,6 +29,7 @@ DISCO! is a revolutionary social discovery platform that brings back the magic o
 - AI-powered content and behavior monitoring
 
 ### Smart Filtering
+
 - Customizable interest tags to find people who share your passions
 - Activity-based matching (coffee, lunch, quick chat, workspace sharing)
 - Time-window preferences (e.g., only during lunch hours)
@@ -54,18 +59,21 @@ DISCO! is a revolutionary social discovery platform that brings back the magic o
 ## 🔒 Privacy & Security
 
 ### Data Collection
+
 - Only stores essential profile information
 - Location data is processed in real-time and never stored
 - Chat history is automatically deleted after 24 hours
 - All personal data is encrypted at rest and in transit
 
 ### User Control
+
 - Toggle discovery mode on/off at any time
 - Block users instantly
 - Control what profile information is visible
 - Set custom privacy zones where discovery is automatically disabled
 
 ### Safety Measures
+
 - Verified phone numbers required
 - Optional ID verification for enhanced trust
 - AI-powered screening of chat messages
@@ -102,6 +110,7 @@ We regularly update DISCO! with new features and security enhancements. Follow o
 ## 🌍 Current Availability
 
 Phase 1 Launch Cities:
+
 - New York City
 - San Francisco
 - London
@@ -127,4 +136,4 @@ DISCO! is a registered trademark. All rights reserved.
 
 ---
 
-*DISCO! - Where Serendipity Meets Safety*
+_DISCO! - Where Serendipity Meets Safety_

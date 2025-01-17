@@ -28,7 +28,7 @@ export const MapView: React.FC<MapViewProps> = ({
       });
 
       const google = await loader.load();
-      
+
       if (mapRef.current && !mapInstanceRef.current) {
         mapInstanceRef.current = new google.maps.Map(mapRef.current, {
           center,
@@ -100,10 +100,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
   return (
     <div className="relative w-full h-full min-h-[400px]">
-      <div
-        ref={mapRef}
-        className="absolute inset-0 rounded-lg shadow-md"
-      />
+      <div ref={mapRef} className="absolute inset-0 rounded-lg shadow-md" />
     </div>
   );
 };

@@ -29,12 +29,12 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
         phoneNumber: userData.phoneNumber,
       });
     } else {
-      setStep((prev) => prev + 1);
+      setStep(prev => prev + 1);
     }
   };
 
   const handleBack = () => {
-    setStep((prev) => prev - 1);
+    setStep(prev => prev - 1);
   };
 
   const renderStep = () => {
@@ -50,9 +50,7 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
               <input
                 type="text"
                 value={userData.displayName}
-                onChange={(e) =>
-                  setUserData({ ...userData, displayName: e.target.value })
-                }
+                onChange={e => setUserData({ ...userData, displayName: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
@@ -64,15 +62,11 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Contact Information</h2>
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Phone Number
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Phone Number</label>
               <input
                 type="tel"
                 value={userData.phoneNumber}
-                onChange={(e) =>
-                  setUserData({ ...userData, phoneNumber: e.target.value })
-                }
+                onChange={e => setUserData({ ...userData, phoneNumber: e.target.value })}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
             </div>
@@ -87,7 +81,7 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
               <label className="block text-sm font-medium text-gray-700">Bio</label>
               <textarea
                 value={userData.bio}
-                onChange={(e) => setUserData({ ...userData, bio: e.target.value })}
+                onChange={e => setUserData({ ...userData, bio: e.target.value })}
                 rows={4}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               />
@@ -104,35 +98,29 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
                 Select your interests
               </label>
               <div className="mt-2 space-y-2">
-                {['Sports', 'Music', 'Art', 'Technology', 'Travel'].map(
-                  (interest) => (
-                    <label key={interest} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={userData.interests.includes(interest)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setUserData({
-                              ...userData,
-                              interests: [...userData.interests, interest],
-                            });
-                          } else {
-                            setUserData({
-                              ...userData,
-                              interests: userData.interests.filter(
-                                (i) => i !== interest
-                              ),
-                            });
-                          }
-                        }}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">
-                        {interest}
-                      </span>
-                    </label>
-                  )
-                )}
+                {['Sports', 'Music', 'Art', 'Technology', 'Travel'].map(interest => (
+                  <label key={interest} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={userData.interests.includes(interest)}
+                      onChange={e => {
+                        if (e.target.checked) {
+                          setUserData({
+                            ...userData,
+                            interests: [...userData.interests, interest],
+                          });
+                        } else {
+                          setUserData({
+                            ...userData,
+                            interests: userData.interests.filter(i => i !== interest),
+                          });
+                        }
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                    />
+                    <span className="ml-2 text-sm text-gray-700">{interest}</span>
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -147,7 +135,7 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
     <div className="max-w-lg mx-auto p-6">
       <div className="mb-8">
         <div className="flex justify-between">
-          {[1, 2, 3, 4].map((number) => (
+          {[1, 2, 3, 4].map(number => (
             <div
               key={number}
               className={`w-1/4 h-1 rounded-full ${

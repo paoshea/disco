@@ -23,12 +23,7 @@ const containerStyle = {
   height: '100%',
 };
 
-export const MapView: React.FC<MapViewProps> = ({
-  center,
-  zoom = 14,
-  markers = [],
-  onClick,
-}) => {
+export const MapView: React.FC<MapViewProps> = ({ center, zoom = 14, markers = [], onClick }) => {
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -64,11 +59,7 @@ export const MapView: React.FC<MapViewProps> = ({
       }}
     >
       {markers.map((marker, index) => (
-        <Marker
-          key={index}
-          position={marker.position}
-          title={marker.title}
-        />
+        <Marker key={index} position={marker.position} title={marker.title} />
       ))}
     </GoogleMap>
   );

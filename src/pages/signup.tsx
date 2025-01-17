@@ -117,9 +117,7 @@ const SignupPage = () => {
                   autoComplete="email"
                   required
                   value={credentials.email}
-                  onChange={(e) =>
-                    setCredentials({ ...credentials, email: e.target.value })
-                  }
+                  onChange={e => setCredentials({ ...credentials, email: e.target.value })}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
                 />
@@ -135,9 +133,7 @@ const SignupPage = () => {
                   autoComplete="username"
                   required
                   value={credentials.username}
-                  onChange={(e) =>
-                    setCredentials({ ...credentials, username: e.target.value })
-                  }
+                  onChange={e => setCredentials({ ...credentials, username: e.target.value })}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   placeholder="Username"
                 />
@@ -153,9 +149,7 @@ const SignupPage = () => {
                   autoComplete="new-password"
                   required
                   value={credentials.password}
-                  onChange={(e) =>
-                    setCredentials({ ...credentials, password: e.target.value })
-                  }
+                  onChange={e => setCredentials({ ...credentials, password: e.target.value })}
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
                 />
@@ -171,7 +165,7 @@ const SignupPage = () => {
                   autoComplete="new-password"
                   required
                   value={credentials.confirmPassword}
-                  onChange={(e) =>
+                  onChange={e =>
                     setCredentials({ ...credentials, confirmPassword: e.target.value })
                   }
                   className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 focus:z-10 sm:text-sm"

@@ -9,11 +9,7 @@ interface MatchCardProps {
   onDecline: (matchId: string) => void;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({
-  match,
-  onAccept,
-  onDecline,
-}) => {
+export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline }) => {
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative h-64">
@@ -39,7 +35,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         <div className="mt-2">
           <h4 className="text-sm font-medium text-gray-700">Common Interests</h4>
           <div className="flex flex-wrap gap-2 mt-1">
-            {match.commonInterests.map((interest) => (
+            {match.commonInterests.map(interest => (
               <span
                 key={interest}
                 className="px-2 py-1 text-sm bg-primary-100 text-primary-800 rounded-full"
@@ -51,18 +47,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         </div>
 
         <div className="mt-4 space-x-2">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => onAccept(match.id)}
-          >
+          <Button variant="primary" size="sm" onClick={() => onAccept(match.id)}>
             Accept
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onDecline(match.id)}
-          >
+          <Button variant="outline" size="sm" onClick={() => onDecline(match.id)}>
             Decline
           </Button>
         </div>

@@ -23,7 +23,7 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
 
   return (
     <div className="space-y-4">
-      {contacts.map((contact) => (
+      {contacts.map(contact => (
         <div
           key={contact.id}
           className="bg-white shadow rounded-lg p-4 flex justify-between items-start"
@@ -34,22 +34,14 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
               <p>{contact.phoneNumber}</p>
               <p>{contact.email}</p>
               <p>{contact.relationship}</p>
-              <p className="mt-1">
-                Notified on: {getNotificationText(contact.notifyOn)}
-              </p>
+              <p className="mt-1">Notified on: {getNotificationText(contact.notifyOn)}</p>
             </div>
           </div>
           <div className="flex space-x-2">
-            <Button
-              variant="secondary"
-              onClick={() => onEdit(contact)}
-            >
+            <Button variant="secondary" onClick={() => onEdit(contact)}>
               Edit
             </Button>
-            <Button
-              variant="danger"
-              onClick={() => onDelete(contact.id)}
-            >
+            <Button variant="danger" onClick={() => onDelete(contact.id)}>
               Delete
             </Button>
           </div>

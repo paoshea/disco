@@ -37,15 +37,9 @@ export const SafetyAlertNotification: React.FC = () => {
         <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-gray-900">
-          Emergency Alert: {alert.type}
-        </p>
-        {alert.message && (
-          <p className="mt-1 text-sm text-gray-500">{alert.message}</p>
-        )}
-        <p className="mt-1 text-xs text-gray-400">
-          Triggered at {formatTime(alert.createdAt)}
-        </p>
+        <p className="text-sm font-medium text-gray-900">Emergency Alert: {alert.type}</p>
+        {alert.message && <p className="mt-1 text-sm text-gray-500">{alert.message}</p>}
+        <p className="mt-1 text-xs text-gray-400">Triggered at {formatTime(alert.createdAt)}</p>
         {alert.location && (
           <button
             onClick={() => setShowMap(alert.id)}
@@ -57,11 +51,7 @@ export const SafetyAlertNotification: React.FC = () => {
         )}
       </div>
       <div className="flex-shrink-0">
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => handleResolve(alert.id)}
-        >
+        <Button variant="secondary" size="sm" onClick={() => handleResolve(alert.id)}>
           Resolve
         </Button>
       </div>
@@ -72,7 +62,7 @@ export const SafetyAlertNotification: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 right-4 space-y-4 z-50">
-      {activeAlerts.map((alert) => (
+      {activeAlerts.map(alert => (
         <div
           key={alert.id}
           className={`max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto ring-1 ring-black ring-opacity-5 ${

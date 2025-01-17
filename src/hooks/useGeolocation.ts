@@ -45,11 +45,7 @@ export const useGeolocation = () => {
       maximumAge: 0,
     };
 
-    const watchId = navigator.geolocation.watchPosition(
-      handleSuccess,
-      handleError,
-      options
-    );
+    const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, options);
 
     return () => {
       navigator.geolocation.clearWatch(watchId);

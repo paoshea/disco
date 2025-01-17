@@ -129,9 +129,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">Location Sharing</p>
-              <p className="text-sm text-gray-500">
-                Automatically share location during meetups
-              </p>
+              <p className="text-sm text-gray-500">Automatically share location during meetups</p>
             </div>
             <button
               type="button"
@@ -151,9 +149,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">Meetup Check-ins</p>
-              <p className="text-sm text-gray-500">
-                Require check-ins during meetups
-              </p>
+              <p className="text-sm text-gray-500">Require check-ins during meetups</p>
             </div>
             <button
               type="button"
@@ -173,9 +169,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-gray-900">Verified Users Only</p>
-              <p className="text-sm text-gray-500">
-                Only match with verified users
-              </p>
+              <p className="text-sm text-gray-500">Only match with verified users</p>
             </div>
             <button
               type="button"

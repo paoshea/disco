@@ -13,15 +13,8 @@ export const Header: React.FC = () => {
         <div className="flex justify-between h-16">
           <div className="flex">
             <Link href="/" className="flex items-center">
-              <Image
-                src="/images/logo.svg"
-                alt="DISCO!"
-                width={32}
-                height={32}
-              />
-              <span className="ml-2 text-xl font-bold text-primary-600">
-                DISCO!
-              </span>
+              <Image src="/images/logo.svg" alt="DISCO!" width={32} height={32} />
+              <span className="ml-2 text-xl font-bold text-primary-600">DISCO!</span>
             </Link>
           </div>
 
@@ -32,10 +25,7 @@ export const Header: React.FC = () => {
               <UserMenu user={user} />
             ) : (
               <div className="space-x-4">
-                <Link
-                  href="/auth/login"
-                  className="text-gray-600 hover:text-gray-900"
-                >
+                <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">
                   Log in
                 </Link>
                 <Link

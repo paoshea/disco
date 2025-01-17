@@ -71,7 +71,7 @@ export class NotificationService {
     }
 
     // Handle notification click for registered handlers
-    notification.onclick = (event) => {
+    notification.onclick = event => {
       event.preventDefault();
       if (options.data?.type && this.handlers.has(options.data.type)) {
         this.handlers.get(options.data.type)?.(notification);
@@ -91,11 +91,7 @@ export class NotificationService {
     this.handlers.delete(type);
   }
 
-  public async showMatchNotification(match: {
-    id: string;
-    name: string;
-    profileImage?: string;
-  }) {
+  public async showMatchNotification(match: { id: string; name: string; profileImage?: string }) {
     await this.show({
       title: 'New Match!',
       body: `You matched with ${match.name}`,

@@ -7,11 +7,7 @@ interface ProfileSettingsProps {
   onSave: (settings: UserSettings) => Promise<void>;
 }
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
-  user,
-  settings,
-  onSave,
-}) => {
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, settings, onSave }) => {
   const [editedSettings, setEditedSettings] = useState(settings);
   const [loading, setLoading] = useState(false);
 
@@ -28,7 +24,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
-      
+
       <form onSubmit={handleSubmit} className="space-y-6">
         <div>
           <h3 className="text-lg font-medium text-gray-900 mb-4">Discovery Preferences</h3>
@@ -42,7 +38,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                 min="1"
                 max="10"
                 value={editedSettings.discoveryRadius}
-                onChange={(e) =>
+                onChange={e =>
                   setEditedSettings({
                     ...editedSettings,
                     discoveryRadius: parseInt(e.target.value),
@@ -62,7 +58,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     min="18"
                     max="100"
                     value={editedSettings.ageRange.min}
-                    onChange={(e) =>
+                    onChange={e =>
                       setEditedSettings({
                         ...editedSettings,
                         ageRange: {
@@ -81,7 +77,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                     min="18"
                     max="100"
                     value={editedSettings.ageRange.max}
-                    onChange={(e) =>
+                    onChange={e =>
                       setEditedSettings({
                         ...editedSettings,
                         ageRange: {
@@ -108,7 +104,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   type="checkbox"
                   id={`notification-${key}`}
                   checked={value}
-                  onChange={(e) =>
+                  onChange={e =>
                     setEditedSettings({
                       ...editedSettings,
                       notifications: {
@@ -139,7 +135,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   type="checkbox"
                   id={`privacy-${key}`}
                   checked={value}
-                  onChange={(e) =>
+                  onChange={e =>
                     setEditedSettings({
                       ...editedSettings,
                       privacy: {
@@ -154,7 +150,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
                   htmlFor={`privacy-${key}`}
                   className="ml-3 block text-sm font-medium text-gray-700"
                 >
-                  Show {key.split(/(?=[A-Z])/).join(' ').toLowerCase()}
+                  Show{' '}
+                  {key
+                    .split(/(?=[A-Z])/)
+                    .join(' ')
+                    .toLowerCase()}
                 </label>
               </div>
             ))}

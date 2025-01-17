@@ -17,7 +17,11 @@ interface ProfileFormData {
 }
 
 export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<ProfileFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<ProfileFormData>({
     defaultValues: {
       firstName: user.firstName,
       lastName: user.lastName,
@@ -110,20 +114,25 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       <div>
         <label className="block text-sm font-medium text-gray-700">Interests</label>
         <div className="mt-2 space-y-2">
-          {['Music', 'Sports', 'Art', 'Technology', 'Travel', 'Food', 'Movies', 'Books'].map((interest) => (
-            <div key={interest} className="flex items-center">
-              <input
-                type="checkbox"
-                id={`interest-${interest}`}
-                value={interest}
-                {...register('interests')}
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              />
-              <label htmlFor={`interest-${interest}`} className="ml-2 block text-sm text-gray-700">
-                {interest}
-              </label>
-            </div>
-          ))}
+          {['Music', 'Sports', 'Art', 'Technology', 'Travel', 'Food', 'Movies', 'Books'].map(
+            interest => (
+              <div key={interest} className="flex items-center">
+                <input
+                  type="checkbox"
+                  id={`interest-${interest}`}
+                  value={interest}
+                  {...register('interests')}
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <label
+                  htmlFor={`interest-${interest}`}
+                  className="ml-2 block text-sm text-gray-700"
+                >
+                  {interest}
+                </label>
+              </div>
+            )
+          )}
         </div>
       </div>
 

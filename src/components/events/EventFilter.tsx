@@ -21,10 +21,7 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export const EventFilter: React.FC<EventFilterProps> = ({
-  initialFilters,
-  onUpdate,
-}) => {
+export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpdate }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<EventFilters>(initialFilters);
 
@@ -55,9 +52,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
           </div>
 
           <div className="relative bg-white rounded-lg max-w-md w-full mx-4 p-6">
-            <Dialog.Title className="text-lg font-medium text-gray-900">
-              Event Filters
-            </Dialog.Title>
+            <Dialog.Title className="text-lg font-medium text-gray-900">Event Filters</Dialog.Title>
 
             <div className="mt-4 space-y-6">
               <Select
@@ -65,7 +60,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 name="category"
                 options={categories}
                 value={filters.categories?.[0] || ''}
-                onChange={(e) =>
+                onChange={e =>
                   setFilters({
                     ...filters,
                     categories: e.target.value ? [e.target.value as EventCategory] : undefined,
@@ -79,7 +74,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   name="startDate"
                   type="date"
                   value={filters.startDate}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFilters({
                       ...filters,
                       startDate: e.target.value,
@@ -92,7 +87,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   type="date"
                   value={filters.endDate}
                   min={filters.startDate}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFilters({
                       ...filters,
                       endDate: e.target.value,
@@ -105,7 +100,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 label="Show only free events"
                 name="isFree"
                 checked={filters.isFree}
-                onChange={(e) =>
+                onChange={e =>
                   setFilters({
                     ...filters,
                     isFree: e.target.checked,
@@ -120,7 +115,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   type="number"
                   min="0"
                   value={filters.maxPrice?.toString()}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFilters({
                       ...filters,
                       maxPrice: parseInt(e.target.value),
@@ -134,7 +129,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 name="location"
                 placeholder="Enter city or address"
                 value={filters.location}
-                onChange={(e) =>
+                onChange={e =>
                   setFilters({
                     ...filters,
                     location: e.target.value,
@@ -149,7 +144,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   type="number"
                   min="1"
                   value={filters.radius?.toString()}
-                  onChange={(e) =>
+                  onChange={e =>
                     setFilters({
                       ...filters,
                       radius: parseInt(e.target.value),
@@ -162,7 +157,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 label="Show only events with available spots"
                 name="hasAvailableSpots"
                 checked={filters.hasAvailableSpots}
-                onChange={(e) =>
+                onChange={e =>
                   setFilters({
                     ...filters,
                     hasAvailableSpots: e.target.checked,
@@ -172,16 +167,10 @@ export const EventFilter: React.FC<EventFilterProps> = ({
             </div>
 
             <div className="mt-6 flex justify-end space-x-3">
-              <Button
-                variant="outline"
-                onClick={() => setIsOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setIsOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-              >
+              <Button variant="primary" onClick={handleSave}>
                 Apply Filters
               </Button>
             </div>

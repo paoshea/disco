@@ -17,21 +17,23 @@ const reportTypes = [
   { value: 'harassment', label: 'Harassment' },
   { value: 'suspicious_activity', label: 'Suspicious Activity' },
   { value: 'emergency', label: 'Emergency' },
-  { value: 'other', label: 'Other' }
+  { value: 'other', label: 'Other' },
 ];
 
 export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
   onSubmit,
   onCancel,
-  initialData
+  initialData,
 }) => {
-  const { register, handleSubmit, formState: { errors } } = useForm<SafetyReport>({
-    defaultValues: initialData
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SafetyReport>({
+    defaultValues: initialData,
   });
 
-  const [files, setFiles] = useState<Evidence[]>(
-    initialData?.evidence || []
-  );
+  const [files, setFiles] = useState<Evidence[]>(initialData?.evidence || []);
 
   const handleFileUpload = async (uploadedFiles: File[]) => {
     // TODO: Implement file upload to storage service
@@ -40,7 +42,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
       reportId: initialData?.id || '',
       type: file.type,
       url: URL.createObjectURL(file),
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     }));
     setFiles(prev => [...prev, ...newEvidence]);
   };
@@ -48,7 +50,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
   const handleFormSubmit = async (data: SafetyReport) => {
     await onSubmit({
       ...data,
-      evidence: files
+      evidence: files,
     });
   };
 
@@ -78,7 +80,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         accept={{
           'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
           'video/*': ['.mp4', '.mov', '.avi'],
-          'audio/*': ['.mp3', '.wav']
+          'audio/*': ['.mp3', '.wav'],
         }}
         multiple
         onFilesSelected={handleFileUpload}
@@ -86,11 +88,9 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
 
       {files.length > 0 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">
-            Uploaded Files
-          </label>
+          <label className="text-sm font-medium text-gray-700">Uploaded Files</label>
           <ul className="space-y-1">
-            {files.map((file) => (
+            {files.map(file => (
               <li key={file.id} className="text-sm text-gray-600">
                 {file.type} - {file.url}
               </li>
@@ -103,9 +103,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         <Button type="button" variant="secondary" onClick={onCancel}>
           Cancel
         </Button>
-        <Button type="submit">
-          {initialData ? 'Update' : 'Submit'} Report
-        </Button>
+        <Button type="submit">{initialData ? 'Update' : 'Submit'} Report</Button>
       </div>
     </form>
   );

@@ -33,9 +33,7 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
   const handleJoinEvent = async (eventId: string) => {
     try {
       const updatedEvent = await eventService.joinEvent(eventId);
-      setEvents(events.map(event => 
-        event.id === eventId ? updatedEvent : event
-      ));
+      setEvents(events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to join event:', error);
     }
@@ -44,9 +42,7 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
   const handleLeaveEvent = async (eventId: string) => {
     try {
       const updatedEvent = await eventService.leaveEvent(eventId);
-      setEvents(events.map(event => 
-        event.id === eventId ? updatedEvent : event
-      ));
+      setEvents(events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to leave event:', error);
     }
@@ -87,7 +83,7 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
 
   return (
     <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {events.map((event) => (
+      {events.map(event => (
         <EventCard
           key={event.id}
           event={event}

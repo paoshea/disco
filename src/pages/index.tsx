@@ -26,11 +26,7 @@ const HomePage: NextPage = () => {
       <div className="max-w-2xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Nearby Connections</h1>
         <div className="space-y-6">
-          <MatchCard
-            match={mockMatch}
-            onAccept={handleAccept}
-            onDecline={handleDecline}
-          />
+          <MatchCard match={mockMatch} onAccept={handleAccept} onDecline={handleDecline} />
         </div>
       </div>
     </Layout>

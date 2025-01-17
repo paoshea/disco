@@ -9,7 +9,10 @@ class SafetyService {
     return response.data;
   }
 
-  async updateEmergencyContact(id: string, contact: Partial<EmergencyContact>): Promise<EmergencyContact> {
+  async updateEmergencyContact(
+    id: string,
+    contact: Partial<EmergencyContact>
+  ): Promise<EmergencyContact> {
     const response = await api.put(`/safety/emergency-contacts/${id}`, contact);
     return response.data;
   }
@@ -24,7 +27,9 @@ class SafetyService {
   }
 
   // Safety Reports
-  async createSafetyReport(report: Omit<SafetyReport, 'id' | 'createdAt' | 'updatedAt'>): Promise<SafetyReport> {
+  async createSafetyReport(
+    report: Omit<SafetyReport, 'id' | 'createdAt' | 'updatedAt'>
+  ): Promise<SafetyReport> {
     const response = await api.post('/safety/reports', report);
     return response.data;
   }

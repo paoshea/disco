@@ -13,16 +13,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
     <Menu as="div" className="relative inline-block text-left">
       <Menu.Button className="flex items-center space-x-2">
         {user.avatar ? (
-          <img
-            src={user.avatar}
-            alt={user.name}
-            className="h-8 w-8 rounded-full"
-          />
+          <img src={user.avatar} alt={user.name} className="h-8 w-8 rounded-full" />
         ) : (
           <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-600">
-              {user.name.charAt(0)}
-            </span>
+            <span className="text-sm font-medium text-gray-600">{user.name.charAt(0)}</span>
           </div>
         )}
         <span className="text-sm font-medium text-gray-700">{user.name}</span>
@@ -34,9 +28,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <a
                 href="/profile"
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block px-4 py-2 text-sm text-gray-700`}
+                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
               >
                 Profile
               </a>
@@ -46,9 +38,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <a
                 href="/settings"
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block px-4 py-2 text-sm text-gray-700`}
+                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
               >
                 Settings
               </a>

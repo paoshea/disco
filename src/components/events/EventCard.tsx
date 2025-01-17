@@ -26,44 +26,37 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       {event.coverImage && (
         <div className="relative h-48">
-          <Image
-            src={event.coverImage}
-            alt={event.title}
-            layout="fill"
-            objectFit="cover"
-          />
+          <Image src={event.coverImage} alt={event.title} layout="fill" objectFit="cover" />
         </div>
       )}
       <div className="p-4">
         <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
-        
+
         <div className="mt-2 space-y-2">
           <div className="flex items-center text-sm text-gray-500">
             <CalendarIcon className="h-5 w-5 mr-2 text-gray-400" />
-            <span>
-              {format(new Date(event.startTime), 'MMM d, yyyy h:mm a')}
-            </span>
+            <span>{format(new Date(event.startTime), 'MMM d, yyyy h:mm a')}</span>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-500">
             <MapPinIcon className="h-5 w-5 mr-2 text-gray-400" />
             <span>{event.location}</span>
           </div>
-          
+
           <div className="flex items-center text-sm text-gray-500">
             <UserGroupIcon className="h-5 w-5 mr-2 text-gray-400" />
             <span>{event.participants.length} attending</span>
           </div>
         </div>
 
-        <p className="mt-2 text-sm text-gray-600 line-clamp-2">
-          {event.description}
-        </p>
+        <p className="mt-2 text-sm text-gray-600 line-clamp-2">{event.description}</p>
 
         <div className="mt-4 flex items-center justify-between">
-          <span className={`text-sm font-medium ${
-            event.isFree ? 'text-green-600' : 'text-primary-600'
-          }`}>
+          <span
+            className={`text-sm font-medium ${
+              event.isFree ? 'text-green-600' : 'text-primary-600'
+            }`}
+          >
             {event.isFree ? 'Free' : `$${event.price}`}
           </span>
 
@@ -81,9 +74,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
         </div>
 
         {!isUpcoming && (
-          <p className="mt-2 text-sm text-red-600">
-            This event has already taken place
-          </p>
+          <p className="mt-2 text-sm text-red-600">This event has already taken place</p>
         )}
       </div>
     </div>
