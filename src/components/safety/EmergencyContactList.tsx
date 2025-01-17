@@ -1,31 +1,24 @@
-import React, { useState } from 'react';
-import { EmergencyContact } from '@/types/safety';
-import { toUserContact, toSafetyContact } from '@/utils/contactTypes';
+import React from 'react';
+import { EmergencyContact } from '@/types/user';
 import { Button } from '@/components/ui/Button';
-import { safetyService } from '@/services/api/safety.service';
 
 interface EmergencyContactListProps {
   contacts: EmergencyContact[];
   onEdit: (contact: EmergencyContact) => void;
-  onDelete: (contactId: string) => Promise<void>;
+  onDelete: (id: string) => void;
 }
 
 export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
   contacts,
   onEdit,
-  onDelete
+  onDelete,
 }) => {
-  const [isDeleting, setIsDeleting] = useState<string | null>(null);
-
-  const handleDelete = async (contactId: string) => {
-    try {
-      setIsDeleting(contactId);
-      await onDelete(contactId);
-    } catch (error) {
-      console.error('Error deleting contact:', error);
-    } finally {
-      setIsDeleting(null);
-    }
+  const getNotificationText = (notifyOn: EmergencyContact['notifyOn']): string => {
+    const notifications = [];
+    if (notifyOn.sosAlert) notifications.push('SOS Alerts');
+    if (notifyOn.meetupStart) notifications.push('Meetup Start');
+    if (notifyOn.meetupEnd) notifications.push('Meetup End');
+    return notifications.join(', ');
   };
 
   return (
@@ -33,24 +26,19 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
       {contacts.map((contact) => (
         <div
           key={contact.id}
-          className="flex items-center justify-between p-4 bg-white rounded-lg shadow"
+          className="bg-white shadow rounded-lg p-4 flex justify-between items-start"
         >
           <div>
-            <h3 className="font-medium">{contact.name}</h3>
-            <p className="text-sm text-gray-600">{contact.phone}</p>
-            {contact.email && (
-              <p className="text-sm text-gray-600">{contact.email}</p>
-            )}
-            {contact.relation && (
-              <p className="text-sm text-gray-500">({contact.relation})</p>
-            )}
-            <div className="mt-1">
-              <p className="text-xs text-gray-500">
-                Notified for: {contact.notifyOn.join(', ')}
+            <h3 className="text-lg font-medium text-gray-900">{contact.name}</h3>
+            <div className="mt-1 text-sm text-gray-500">
+              <p>{contact.phoneNumber}</p>
+              <p>{contact.email}</p>
+              <p>{contact.relationship}</p>
+              <p className="mt-1">
+                Notified on: {getNotificationText(contact.notifyOn)}
               </p>
             </div>
           </div>
-
           <div className="flex space-x-2">
             <Button
               variant="secondary"
@@ -60,14 +48,16 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
             </Button>
             <Button
               variant="danger"
-              onClick={() => handleDelete(contact.id)}
-              loading={isDeleting === contact.id}
+              onClick={() => onDelete(contact.id)}
             >
               Delete
             </Button>
           </div>
         </div>
       ))}
+      {contacts.length === 0 && (
+        <p className="text-gray-500 text-center py-4">No emergency contacts added yet.</p>
+      )}
     </div>
   );
 };

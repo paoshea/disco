@@ -9,11 +9,8 @@ export type IncidentType =
 
 export type IncidentStatus = 
   | 'pending'
-  | 'reviewing'
   | 'resolved'
-  | 'dismissed'
-  | 'completed'
-  | 'active';
+  | 'dismissed';
 
 export interface SafetyReport {
   id: string;
@@ -22,13 +19,13 @@ export interface SafetyReport {
   meetingId?: string;
   type: IncidentType;
   description: string;
-  evidence: Evidence[];
+  evidence: string[];
   status: IncidentStatus;
+  resolution?: string;
+  location?: string;
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
-  resolution?: string;
-  location?: string;
 }
 
 export interface Evidence {
@@ -41,14 +38,15 @@ export interface Evidence {
 
 export interface EmergencyContact {
   id: string;
-  userId: string;
   name: string;
-  phone: string;
-  email?: string;
-  relation?: string;
-  notifyOn: string[];
-  createdAt: string;
-  updatedAt: string;
+  relationship: string;
+  phoneNumber: string;
+  email: string;
+  notifyOn: {
+    sosAlert: boolean;
+    meetupStart: boolean;
+    meetupEnd: boolean;
+  };
 }
 
 export interface UserBlock {

@@ -1,89 +1,122 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { EmergencyContact, SafetyReport } from '@/types/safety';
 import { safetyService } from '@/services/api/safety.service';
+import { EmergencyContact } from '@/types/user';
+import { SafetyReport } from '@/types/safety';
 import { EmergencyContactList } from './EmergencyContactList';
 import { EmergencyContactForm } from './EmergencyContactForm';
 import { SafetyReportForm } from './SafetyReportForm';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 
-const SafetyCenter: React.FC = () => {
+interface SafetyCenterProps {
+  className?: string;
+}
+
+const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
   const { user } = useAuth();
   const [contacts, setContacts] = useState<EmergencyContact[]>([]);
-  const [reports, setReports] = useState<SafetyReport[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  const [showContactForm, setShowContactForm] = useState(false);
   const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [reports, setReports] = useState<SafetyReport[]>([]);
+  const [showContactForm, setShowContactForm] = useState(false);
   const [showReportForm, setShowReportForm] = useState(false);
 
   useEffect(() => {
-    if (!user?.id) return;
-    loadData();
-  }, [user?.id]);
+    if (user) {
+      loadContacts();
+      loadReports();
+    }
+  }, [user]);
 
-  const loadData = async () => {
+  const loadContacts = async () => {
     try {
-      setLoading(true);
-      const [contactsData, reportsData] = await Promise.all([
-        safetyService.getEmergencyContacts(user!.id),
-        safetyService.getSafetyReports(user!.id)
-      ]);
-      setContacts(contactsData);
-      setReports(reportsData);
-    } catch (err) {
-      setError('Failed to load safety data');
-      console.error(err);
+      const contactsData = await safetyService.getEmergencyContacts(user!.id);
+      setContacts(contactsData.map(contact => ({
+        id: contact.id,
+        name: contact.name,
+        relationship: contact.relationship,
+        phoneNumber: contact.phoneNumber,
+        email: contact.email,
+        notifyOn: contact.notifyOn
+      })));
+    } catch (error) {
+      console.error('Error loading emergency contacts:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  const handleContactSubmit = async (data: Partial<EmergencyContact>) => {
+  const loadReports = async () => {
+    try {
+      const reportsData = await safetyService.getSafetyReports(user!.id);
+      setReports(reportsData);
+    } catch (error) {
+      console.error('Error loading safety reports:', error);
+    }
+  };
+
+  const handleSaveContact = async (data: Partial<EmergencyContact>) => {
     try {
       if (editingContact) {
         const updated = await safetyService.updateEmergencyContact(editingContact.id, data);
         setContacts(prev => prev.map(c => c.id === updated.id ? updated : c));
       } else {
-        const created = await safetyService.createEmergencyContact(data);
+        const created = await safetyService.createEmergencyContact({
+          ...data,
+          notifyOn: {
+            sosAlert: true,
+            meetupStart: true,
+            meetupEnd: true
+          }
+        } as EmergencyContact);
         setContacts(prev => [...prev, created]);
       }
-      setShowContactForm(false);
       setEditingContact(null);
-    } catch (err) {
-      console.error('Failed to save contact:', err);
+      setShowContactForm(false);
+    } catch (error) {
+      console.error('Error saving emergency contact:', error);
     }
   };
 
-  const handleContactDelete = async (contactId: string) => {
+  const handleDeleteContact = async (contactId: string) => {
     try {
       await safetyService.deleteEmergencyContact(contactId);
       setContacts(prev => prev.filter(c => c.id !== contactId));
-    } catch (err) {
-      console.error('Failed to delete contact:', err);
+    } catch (error) {
+      console.error('Error deleting emergency contact:', error);
     }
   };
 
-  const handleReportSubmit = async (data: Partial<SafetyReport>) => {
+  const handleCreateReport = async (data: Partial<SafetyReport>) => {
     try {
-      const created = await safetyService.createSafetyReport({
+      const report = {
         ...data,
-        reporterId: user!.id
-      });
+        reporterId: user!.id,
+        type: data.type!,
+        description: data.description!,
+        evidence: [],
+        status: 'pending' as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      const created = await safetyService.createSafetyReport(report);
       setReports(prev => [...prev, created]);
       setShowReportForm(false);
-    } catch (err) {
-      console.error('Failed to submit report:', err);
+    } catch (error) {
+      console.error('Error creating safety report:', error);
+      throw error;
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error}</div>;
+  if (!user) {
+    return null;
+  }
+
+  if (isLoading) return <div>Loading...</div>;
 
   return (
-    <div className="space-y-8">
+    <div className={className}>
       <section>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">Emergency Contacts</h2>
@@ -98,7 +131,7 @@ const SafetyCenter: React.FC = () => {
             setEditingContact(contact);
             setShowContactForm(true);
           }}
-          onDelete={handleContactDelete}
+          onDelete={handleDeleteContact}
         />
       </section>
 
@@ -146,7 +179,7 @@ const SafetyCenter: React.FC = () => {
       >
         <EmergencyContactForm
           initialData={editingContact || undefined}
-          onSubmit={handleContactSubmit}
+          onSubmit={handleSaveContact}
           onCancel={() => {
             setShowContactForm(false);
             setEditingContact(null);
@@ -160,7 +193,7 @@ const SafetyCenter: React.FC = () => {
         title="Submit Safety Report"
       >
         <SafetyReportForm
-          onSubmit={handleReportSubmit}
+          onSubmit={handleCreateReport}
           onCancel={() => setShowReportForm(false)}
         />
       </Modal>

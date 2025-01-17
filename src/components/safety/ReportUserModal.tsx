@@ -27,15 +27,18 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
     e.preventDefault();
     try {
       setIsSubmitting(true);
-      await safetyService.createSafetyReport({
+      const report = {
         reporterId: user.id,
         reportedId: reportedUser.id,
         meetingId,
         type,
         description,
         evidence: [],
-        status: 'pending'
-      });
+        status: 'pending' as const,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      await safetyService.createSafetyReport(report);
       onClose();
     } catch (error) {
       console.error('Error submitting report:', error);
@@ -51,7 +54,8 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
       className="fixed inset-0 z-10 overflow-y-auto"
     >
       <div className="min-h-screen px-4 text-center">
-        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/30" />
+        
         <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
           <Dialog.Title
             as="h3"
@@ -68,11 +72,14 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
               <select
                 value={type}
                 onChange={(e) => setType(e.target.value as SafetyReport['type'])}
-                className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
               >
                 <option value="harassment">Harassment</option>
-                <option value="suspicious_activity">Suspicious Activity</option>
+                <option value="inappropriate">Inappropriate Behavior</option>
+                <option value="impersonation">Impersonation</option>
+                <option value="scam">Scam</option>
                 <option value="emergency">Emergency</option>
+                <option value="safety_check">Safety Check</option>
                 <option value="other">Other</option>
               </select>
             </div>
@@ -84,9 +91,9 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
                 rows={4}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                placeholder="Please provide details about the incident..."
+                required
               />
             </div>
 
@@ -94,16 +101,16 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
-                disabled={isSubmitting || !description.trim()}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
               >
-                Submit Report
+                {isSubmitting ? 'Submitting...' : 'Submit Report'}
               </button>
             </div>
           </form>

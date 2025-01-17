@@ -4,7 +4,7 @@ import { api } from './api';
 
 class SafetyService {
   // Emergency Contact Management
-  async addEmergencyContact(contact: Omit<EmergencyContact, 'id'>): Promise<EmergencyContact> {
+  async createEmergencyContact(contact: Omit<EmergencyContact, 'id'>): Promise<EmergencyContact> {
     const response = await api.post('/safety/emergency-contacts', contact);
     return response.data;
   }
@@ -14,12 +14,23 @@ class SafetyService {
     return response.data;
   }
 
-  async removeEmergencyContact(contactId: string): Promise<void> {
+  async deleteEmergencyContact(contactId: string): Promise<void> {
     await api.delete(`/safety/emergency-contacts/${contactId}`);
   }
 
   async getEmergencyContacts(userId: string): Promise<EmergencyContact[]> {
     const response = await api.get(`/safety/emergency-contacts/${userId}`);
+    return response.data;
+  }
+
+  // Safety Reports
+  async createSafetyReport(report: Omit<SafetyReport, 'id' | 'createdAt' | 'updatedAt'>): Promise<SafetyReport> {
+    const response = await api.post('/safety/reports', report);
+    return response.data;
+  }
+
+  async getSafetyReports(userId: string): Promise<SafetyReport[]> {
+    const response = await api.get(`/safety/reports/${userId}`);
     return response.data;
   }
 
@@ -47,37 +58,6 @@ class SafetyService {
 
   async getSafetyChecks(meetingId: string): Promise<SafetyCheck[]> {
     const response = await api.get(`/safety/checks/${meetingId}`);
-    return response.data;
-  }
-
-  async respondToSafetyCheck(id: string, response: 'safe' | 'unsafe', location?: { latitude: number; longitude: number; accuracy: number }): Promise<SafetyCheck> {
-    const payload = { response, location };
-    const res = await api.post(`/safety/checks/${id}/respond`, payload);
-    return res.data;
-  }
-
-  // Safety Reports
-  async getSafetyReports(userId: string): Promise<SafetyReport[]> {
-    const response = await api.get(`/safety/reports/${userId}`);
-    return response.data;
-  }
-
-  async createSafetyReport(report: Omit<SafetyReport, 'id'>): Promise<SafetyReport> {
-    const response = await api.post('/safety/reports', report);
-    return response.data;
-  }
-
-  async updateSafetyReport(id: string, report: Partial<SafetyReport>): Promise<SafetyReport> {
-    const response = await api.put(`/safety/reports/${id}`, report);
-    return response.data;
-  }
-
-  async uploadEvidence(reportId: string, file: File): Promise<{ url: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await api.post(`/safety/reports/${reportId}/evidence`, formData, {
-      headers: { 'Content-Type': 'multipart/form-data' }
-    });
     return response.data;
   }
 }

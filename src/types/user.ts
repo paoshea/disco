@@ -1,29 +1,13 @@
 export interface User {
   id: string;
+  name: string;
   email: string;
-  username: string;
-  firstName: string;
-  lastName: string;
-  bio: string;
-  interests: string[];
-  profileImage?: string;
-  dateOfBirth: string;
-  phoneNumber: string;
+  avatar?: string;
+  status: 'online' | 'offline' | 'away' | 'busy';
   emergencyContacts: EmergencyContact[];
-  verificationStatus: {
-    email: boolean;
-    phone: boolean;
-    identity: boolean;
-  };
-  location?: {
-    latitude: number;
-    longitude: number;
-    lastUpdate: string;
-  };
+  lastSeen?: string;
   createdAt: string;
   updatedAt: string;
-  onboardingCompleted: boolean;
-  onboardingStep: number;
 }
 
 export interface EmergencyContact {
@@ -37,30 +21,6 @@ export interface EmergencyContact {
     meetupStart: boolean;
     meetupEnd: boolean;
   };
-}
-
-export interface UserSettings {
-  discoveryRadius: number;
-  ageRange: {
-    min: number;
-    max: number;
-  };
-  notifications: {
-    matches: boolean;
-    messages: boolean;
-    nearbyUsers: boolean;
-    safetyAlerts: boolean;
-  };
-  privacy: {
-    showLocation: boolean;
-    showAge: boolean;
-    showLastActive: boolean;
-    showVerificationStatus: boolean;
-  };
-  safety: {
-    autoShareLocation: boolean;
-    meetupCheckins: boolean;
-    sosAlertEnabled: boolean;
-    requireVerifiedMatch: boolean;
-  };
+  createdAt?: string;
+  updatedAt?: string;
 }
