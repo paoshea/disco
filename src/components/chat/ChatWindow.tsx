@@ -1,177 +1,152 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Message, TypingStatus } from '@/types/chat';
+import { Message } from '@/types/chat';
 import { useWebSocket } from '@/contexts/WebSocketContext';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
+import { chatService } from '@/services/api/chat.service';
+import { Button } from '@/components/ui/Button';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 interface ChatWindowProps {
-  matchId: string;
-  recipientId: string;
-  recipientName: string;
+  chatId: string;
+  participants: string[];
+  onSendMessage: (content: string) => Promise<void>;
+  isConnected: boolean;
 }
 
-interface MessagePayload {
-  id: string;
-  matchId: string;
-  senderId: string;
-  recipientId: string;
-  content: string;
-  timestamp: string;
-}
-
-interface TypingPayload {
-  userId: string;
-  matchId: string;
-  isTyping: boolean;
-}
-
-interface ChatMessagePayload extends Omit<Message, 'id' | 'timestamp'> {
-  matchId: string;
-  senderId: string;
-  recipientId: string;
-  content: string;
-}
-
-export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, recipientName }) => {
-  const { user, isLoading } = useAuth();
-  const { send, subscribe } = useWebSocket();
+export const ChatWindow: React.FC<ChatWindowProps> = ({
+  chatId,
+  participants,
+  onSendMessage,
+  isConnected,
+}) => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { user } = useAuth();
 
-  useEffect(() => {
-    if (!user?.id) return;
-
-    // Initialize chat connection
-    send('chat:join', { matchId });
-
-    // Listen for new messages
-    const unsubscribeMessage = subscribe<'chat:message'>(
-      'chat:message',
-      (data: MessagePayload) => {
-        const message: Message = {
-          id: data.id,
-          matchId: data.matchId,
-          senderId: data.senderId,
-          recipientId: data.recipientId,
-          content: data.content,
-          timestamp: data.timestamp,
-        };
-        setMessages(prev => [...prev, message]);
-      }
-    );
-
-    // Listen for typing status
-    const unsubscribeTyping = subscribe<'chat:typing'>(
-      'chat:typing',
-      (data: TypingPayload) => {
-        const typingStatus: TypingStatus = {
-          userId: data.userId,
-          matchId: data.matchId,
-          isTyping: data.isTyping,
-        };
-        if (typingStatus.userId === recipientId) {
-          setIsTyping(typingStatus.isTyping);
-        }
-      }
-    );
-
-    return () => {
-      send('chat:leave', { matchId });
-      unsubscribeMessage();
-      unsubscribeTyping();
-    };
-  }, [matchId, recipientId, user?.id, send, subscribe]);
-
-  useEffect(() => {
+  const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const fetchMessages = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const chatMessages = await chatService.getChatMessages(chatId);
+        setMessages(chatMessages);
+      } catch (err) {
+        console.error('Error fetching messages:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while fetching messages'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchMessages();
+  }, [chatId]);
+
+  useEffect(() => {
+    scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newMessage.trim() || !user?.id) return;
+    if (!newMessage.trim() || !isConnected) return;
 
-    const message: ChatMessagePayload = {
-      matchId,
-      senderId: user.id,
-      recipientId,
-      content: newMessage.trim(),
-    };
-
-    send('chat:message', message);
-    setNewMessage('');
+    try {
+      await onSendMessage(newMessage.trim());
+      setNewMessage('');
+    } catch (err) {
+      console.error('Error sending message:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while sending the message'
+      );
+    }
   };
 
-  const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!user?.id) return;
-
-    setNewMessage(e.target.value);
-    send('chat:typing', {
-      matchId,
-      userId: user.id,
-      isTyping: e.target.value.length > 0,
-    } as TypingPayload);
+  const getOtherParticipant = () => {
+    return participants.find(id => id !== user?.id) || '';
   };
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <LoadingSpinner size="md" />
+      </div>
+    );
   }
 
-  if (!user) {
-    return <div>Please log in to chat</div>;
+  if (error) {
+    return (
+      <div className="p-4">
+        <ErrorMessage message={error} />
+      </div>
+    );
   }
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-lg">
-      {/* Chat Header */}
-      <div className="px-4 py-3 border-b border-gray-200">
-        <h3 className="text-lg font-medium text-gray-900">{recipientName}</h3>
-        {isTyping && <p className="text-sm text-gray-500">Typing...</p>}
+    <div className="flex h-full flex-col">
+      <div className="border-b border-gray-200 p-4">
+        <h2 className="text-lg font-semibold">Chat with {getOtherParticipant()}</h2>
+        {!isConnected && (
+          <p className="text-sm text-red-500">
+            Disconnected - Messages will be sent when reconnected
+          </p>
+        )}
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 p-4 overflow-y-auto">
-        <div className="space-y-4">
-          {messages.map(message => (
-            <div
-              key={message.id}
-              className={`flex ${message.senderId === user.id ? 'justify-end' : 'justify-start'}`}
-            >
-              <div
-                className={`max-w-xs px-4 py-2 rounded-lg ${
-                  message.senderId === user.id
-                    ? 'bg-primary-500 text-white'
-                    : 'bg-gray-100 text-gray-900'
-                }`}
-              >
-                <p>{message.content}</p>
-                <p className="text-xs mt-1 opacity-75">
-                  {new Date(message.timestamp).toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-          ))}
-          <div ref={messagesEndRef} />
-        </div>
-      </div>
-
-      {/* Message Input */}
-      <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
-        <div className="flex space-x-4">
-          <textarea
-            value={newMessage}
-            onChange={handleTyping}
-            placeholder="Type a message..."
-            className="flex-1 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-            rows={1}
-          />
-          <button
-            type="submit"
-            disabled={!newMessage.trim()}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+      <div className="flex-1 overflow-y-auto p-4">
+        {messages.map((message) => (
+          <div
+            key={message.id}
+            className={`mb-4 flex ${
+              message.senderId === user?.id ? 'justify-end' : 'justify-start'
+            }`}
           >
-            Send
-          </button>
+            <div
+              className={`rounded-lg px-4 py-2 ${
+                message.senderId === user?.id
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-900'
+              }`}
+            >
+              <p>{message.content}</p>
+              <p className="mt-1 text-xs opacity-75">
+                {new Date(message.timestamp).toLocaleTimeString()}
+              </p>
+            </div>
+          </div>
+        ))}
+        <div ref={messagesEndRef} />
+      </div>
+
+      <form onSubmit={handleSubmit} className="border-t border-gray-200 p-4">
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            placeholder="Type a message..."
+            className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none"
+          />
+          <Button
+            type="submit"
+            disabled={!isConnected || !newMessage.trim()}
+            className="whitespace-nowrap"
+          >
+            Send Message
+          </Button>
         </div>
       </form>
     </div>

@@ -1,120 +1,65 @@
-import React, { useState, useEffect } from 'react';
-import { SafetyAlert } from '@/types/safety';
-import { safetyService } from '@/services/api/safety.service';
-import { EmergencyContactForm } from './EmergencyContactForm';
-import { SafetyAlertNotification } from './SafetyAlertNotification';
+import React from 'react';
+import type { SafetyCenterProps } from '@/types/safety';
+import { EmergencyAlert } from './EmergencyAlert';
 import { SafetyFeatures } from './SafetyFeatures';
+import { SafetyAlertNotification } from './SafetyAlertNotification';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 
-interface SafetyCenterProps {
-  userId: string;
-}
+export const SafetyCenter: React.FC<SafetyCenterProps> = ({
+  user,
+  alerts,
+  onTriggerAlert,
+  onDismissAlert,
+}) => {
+  const { isLoading, error } = useSafetyAlert();
 
-export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId }) => {
-  const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  if (isLoading) {
+    return (
+      <div className="flex h-64 items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    const fetchAlerts = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        const userAlerts = await safetyService.getAlerts(userId);
-        setAlerts(userAlerts);
-      } catch (err) {
-        console.error('Error fetching safety alerts:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while fetching alerts. Please try again.'
-        );
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void fetchAlerts();
-  }, [userId]);
-
-  const handleDismissAlert = async (alertId: string) => {
-    try {
-      setError(null);
-      await safetyService.dismissAlert(alertId);
-      setAlerts((prevAlerts) => prevAlerts.filter((alert) => alert.id !== alertId));
-    } catch (err) {
-      console.error('Error dismissing alert:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while dismissing the alert. Please try again.'
-      );
-    }
-  };
-
-  const handleDismissAlertWrapper = (alertId: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    void handleDismissAlert(alertId);
-  };
-
-  const handleEmergencyContact = async (data: { name: string; phone: string }) => {
-    try {
-      setError(null);
-      await safetyService.addEmergencyContact(userId, data);
-      // Optionally refresh the contacts list here
-    } catch (err) {
-      console.error('Error adding emergency contact:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while adding the emergency contact. Please try again.'
-      );
-    }
-  };
-
-  const handleEmergencyContactWrapper = (e: React.FormEvent) => {
-    e.preventDefault();
-    void handleEmergencyContact({ name: '', phone: '' }); // Replace with actual form data
-  };
+  if (error) {
+    return <ErrorMessage message={error} />;
+  }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Safety Center</h1>
+    <div className="space-y-8">
+      <section>
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
+        <EmergencyAlert
+          user={user}
+          onTriggerAlert={onTriggerAlert}
+        />
+      </section>
 
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-700">{error}</p>
+      {alerts.length > 0 && (
+        <section>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">
+            Active Alerts
+          </h2>
+          <div className="space-y-4">
+            {alerts.map((alert) => (
+              <SafetyAlertNotification
+                key={alert.id}
+                alert={alert}
+                onDismiss={() => onDismissAlert(alert.id)}
+              />
+            ))}
           </div>
-        )}
+        </section>
+      )}
 
-        {isLoading ? (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto"></div>
-          </div>
-        ) : (
-          <>
-            {alerts.length > 0 && (
-              <div className="mb-8 space-y-4">
-                <h2 className="text-lg font-medium text-gray-900">Active Alerts</h2>
-                {alerts.map((alert) => (
-                  <SafetyAlertNotification
-                    key={alert.id}
-                    alert={alert}
-                    onDismiss={handleDismissAlertWrapper(alert.id)}
-                  />
-                ))}
-              </div>
-            )}
-
-            <SafetyFeatures userId={userId} />
-
-            <div className="mt-8">
-              <h2 className="text-lg font-medium text-gray-900 mb-4">Emergency Contacts</h2>
-              <EmergencyContactForm onSubmit={handleEmergencyContactWrapper} onCancel={() => {}} />
-            </div>
-          </>
-        )}
-      </div>
+      <section>
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">
+          Safety Features
+        </h2>
+        <SafetyFeatures user={user} />
+      </section>
     </div>
   );
 };

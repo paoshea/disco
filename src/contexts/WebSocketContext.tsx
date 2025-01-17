@@ -1,12 +1,13 @@
 import React, { createContext, useContext, useEffect, useCallback, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/contexts/AuthContext';
 import { WebSocketMessage } from '@/types/websocket';
 
 interface WebSocketContextType {
-  connected: boolean;
+  isConnected: boolean;
   error: string | null;
-  sendMessage: (message: WebSocketMessage) => void;
-  subscribe: (channel: string, callback: (message: WebSocketMessage) => void) => () => void;
+  send: (message: WebSocketMessage<any>) => void;
+  disconnect: () => void;
+  reconnect: () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
@@ -22,25 +23,20 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 }) => {
   const { user } = useAuth();
   const [socket, setSocket] = useState<WebSocket | null>(null);
-  const [connected, setConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [subscribers, setSubscribers] = useState<Map<string, Set<(message: WebSocketMessage) => void>>>(
-    new Map()
-  );
 
   const connect = useCallback(() => {
     try {
-      if (!user?.id) return;
-
-      const ws = new WebSocket(`${url}?token=${user.id}`);
+      const ws = new WebSocket(`${url}?token=${user?.id}`);
 
       ws.onopen = () => {
-        setConnected(true);
+        setIsConnected(true);
         setError(null);
       };
 
       ws.onclose = () => {
-        setConnected(false);
+        setIsConnected(false);
         setError('WebSocket connection closed');
         // Attempt to reconnect after 5 seconds
         setTimeout(() => connect(), 5000);
@@ -53,95 +49,67 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
       ws.onmessage = (event) => {
         try {
-          const message: WebSocketMessage = JSON.parse(event.data);
-          const { channel } = message;
-
-          if (channel && subscribers.has(channel)) {
-            const channelSubscribers = subscribers.get(channel);
-            channelSubscribers?.forEach((callback) => callback(message));
-          }
+          const message: WebSocketMessage<any> = JSON.parse(event.data);
+          console.log('WebSocket message received:', message);
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);
         }
       };
 
       setSocket(ws);
-
-      return () => {
-        ws.close();
-      };
     } catch (err) {
-      console.error('Error connecting to WebSocket:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while connecting to WebSocket'
-      );
+      setError(err instanceof Error ? err.message : 'Failed to connect to WebSocket');
+      console.error('WebSocket connection error:', err);
     }
-  }, [url, user?.id, subscribers]);
+  }, [url, user?.id]);
 
-  useEffect(() => {
-    const cleanup = connect();
-    return () => cleanup?.();
-  }, [connect]);
+  const disconnect = useCallback(() => {
+    if (socket) {
+      socket.close();
+      setSocket(null);
+      setIsConnected(false);
+    }
+  }, [socket]);
 
-  const sendMessage = useCallback(
-    (message: WebSocketMessage) => {
+  const reconnect = useCallback(() => {
+    disconnect();
+    connect();
+  }, [connect, disconnect]);
+
+  const send = useCallback(
+    (message: WebSocketMessage<any>) => {
       if (!socket || socket.readyState !== WebSocket.OPEN) {
-        console.error('WebSocket is not connected');
+        setError('WebSocket is not connected');
         return;
       }
 
       try {
         socket.send(JSON.stringify(message));
       } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to send message');
         console.error('Error sending WebSocket message:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while sending message'
-        );
       }
     },
     [socket]
   );
 
-  const subscribe = useCallback(
-    (channel: string, callback: (message: WebSocketMessage) => void) => {
-      setSubscribers((prev) => {
-        const channelSubscribers = prev.get(channel) || new Set();
-        channelSubscribers.add(callback);
-        return new Map(prev).set(channel, channelSubscribers);
-      });
+  useEffect(() => {
+    connect();
+    return () => {
+      disconnect();
+    };
+  }, [connect, disconnect]);
 
-      return () => {
-        setSubscribers((prev) => {
-          const channelSubscribers = prev.get(channel);
-          if (channelSubscribers) {
-            channelSubscribers.delete(callback);
-            if (channelSubscribers.size === 0) {
-              const newMap = new Map(prev);
-              newMap.delete(channel);
-              return newMap;
-            }
-            return new Map(prev).set(channel, channelSubscribers);
-          }
-          return prev;
-        });
-      };
-    },
-    []
-  );
+  const value = {
+    isConnected,
+    error,
+    send,
+    disconnect,
+    reconnect,
+  };
 
   return (
-    <WebSocketContext.Provider
-      value={{
-        connected,
-        error,
-        sendMessage,
-        subscribe,
-      }}
-    >
+    <WebSocketContext.Provider value={value}>
       {children}
     </WebSocketContext.Provider>
   );

@@ -1,12 +1,13 @@
 import { AxiosResponse } from 'axios';
 import { User, UserSettings, UserPreferences } from '@/types/user';
-import { api } from './api';
+import { apiClient } from './api.client';
 
 interface ImageUploadResponse {
   imageUrl: string;
 }
 
 interface UserUpdateData {
+  id?: string;
   name?: string;
   email?: string;
   avatar?: File;
@@ -18,65 +19,68 @@ interface UserUpdateData {
 }
 
 class UserService {
+  private readonly baseUrl = '/users';
+
   async getCurrentUser(): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await api.get('/users/me');
+      const response: AxiosResponse<User> = await apiClient.get(`${this.baseUrl}/me`);
       return response.data;
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
-  async getProfile(userId: string): Promise<User> {
+  async getProfile(userId?: string): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await api.get(`/users/${userId}`);
+      const endpoint = userId ? `${this.baseUrl}/${userId}` : `${this.baseUrl}/profile`;
+      const response: AxiosResponse<User> = await apiClient.get(endpoint);
       return response.data;
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
-  async getProfile(): Promise<User> {
+  async updateProfile(data: Partial<User> | UserUpdateData): Promise<User> {
     try {
-      const response = await api.get<{ user: User }>('/users/profile');
-      return response.data.user;
-    } catch (err) {
-      throw this.handleError(err);
-    }
-  }
+      if ('avatar' in data && data.avatar instanceof File) {
+        // Handle file upload case
+        const formData = new FormData();
+        formData.append('avatar', data.avatar);
 
-  async updateProfile(userData: Partial<User>): Promise<User> {
-    try {
-      if (!userData.id) {
-        throw new Error('User ID is required for update');
-      }
-      const response: AxiosResponse<User> = await api.put(`/users/${userData.id}`, userData);
-      return response.data;
-    } catch (err) {
-      throw this.handleError(err);
-    }
-  }
+        // Append other fields to FormData
+        Object.entries(data).forEach(([key, value]) => {
+          if (key !== 'avatar') {
+            if (key === 'preferences' && typeof value === 'object') {
+              formData.append(key, JSON.stringify(value));
+            } else if (value !== undefined) {
+              formData.append(key, String(value));
+            }
+          }
+        });
 
-  async updateProfile(data: UserUpdateData): Promise<User> {
-    try {
-      const formData = new FormData();
-
-      Object.entries(data).forEach(([key, value]) => {
-        if (key === 'avatar' && value instanceof File) {
-          formData.append('avatar', value);
-        } else if (key === 'preferences' && typeof value === 'object') {
-          formData.append('preferences', JSON.stringify(value));
-        } else if (value !== undefined) {
-          formData.append(key, String(value));
+        const response: AxiosResponse<User> = await apiClient.put(
+          `${this.baseUrl}/profile`,
+          formData,
+          {
+            headers: {
+              'Content-Type': 'multipart/form-data',
+            },
+          }
+        );
+        return response.data;
+      } else {
+        // Handle regular update case
+        const userId = 'id' in data && data.id;
+        if (!userId) {
+          throw new Error('User ID is required for update');
         }
-      });
 
-      const response = await api.put<{ user: User }>('/users/profile', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-      return response.data.user;
+        const response: AxiosResponse<User> = await apiClient.put(
+          `${this.baseUrl}/${userId}`,
+          data
+        );
+        return response.data;
+      }
     } catch (err) {
       throw this.handleError(err);
     }
@@ -84,7 +88,7 @@ class UserService {
 
   async updateSettings(userId: string, settings: UserSettings): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await api.put(`/users/${userId}/settings`, settings);
+      const response: AxiosResponse<User> = await apiClient.put(`${this.baseUrl}/${userId}/settings`, settings);
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -93,7 +97,7 @@ class UserService {
 
   async verifyEmail(token: string): Promise<void> {
     try {
-      await api.post('/users/verify/email', { token });
+      await apiClient.post('/users/verify/email', { token });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -101,7 +105,7 @@ class UserService {
 
   async verifyPhone(code: string): Promise<void> {
     try {
-      await api.post('/users/verify/phone', { code });
+      await apiClient.post('/users/verify/phone', { code });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -109,7 +113,7 @@ class UserService {
 
   async requestPhoneVerification(): Promise<void> {
     try {
-      await api.post('/users/verify/phone/request');
+      await apiClient.post('/users/verify/phone/request');
     } catch (err) {
       throw this.handleError(err);
     }
@@ -120,7 +124,7 @@ class UserService {
       const formData = new FormData();
       formData.append('image', file);
 
-      const response: AxiosResponse<ImageUploadResponse> = await api.post(
+      const response: AxiosResponse<ImageUploadResponse> = await apiClient.post(
         '/users/profile-image',
         formData,
         {
@@ -138,7 +142,7 @@ class UserService {
 
   async searchUsers(query: string): Promise<User[]> {
     try {
-      const response: AxiosResponse<User[]> = await api.get('/users/search', {
+      const response: AxiosResponse<User[]> = await apiClient.get('/users/search', {
         params: { q: query },
       });
       return response.data;
@@ -149,7 +153,7 @@ class UserService {
 
   async updatePreferences(userId: string, preferences: UserPreferences): Promise<void> {
     try {
-      await api.put(`/users/${userId}/preferences`, preferences);
+      await apiClient.put(`/users/${userId}/preferences`, preferences);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -157,7 +161,7 @@ class UserService {
 
   async getPreferences(userId: string): Promise<UserPreferences> {
     try {
-      const response: AxiosResponse<UserPreferences> = await api.get(`/users/${userId}/preferences`);
+      const response: AxiosResponse<UserPreferences> = await apiClient.get(`/users/${userId}/preferences`);
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -166,7 +170,7 @@ class UserService {
 
   async getRecommendedUsers(): Promise<User[]> {
     try {
-      const response: AxiosResponse<User[]> = await api.get('/users/recommended');
+      const response: AxiosResponse<User[]> = await apiClient.get('/users/recommended');
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -175,7 +179,7 @@ class UserService {
 
   async blockUser(userId: string): Promise<void> {
     try {
-      await api.post(`/users/block/${userId}`);
+      await apiClient.post(`/users/block/${userId}`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -183,7 +187,7 @@ class UserService {
 
   async unblockUser(userId: string): Promise<void> {
     try {
-      await api.delete(`/users/block/${userId}`);
+      await apiClient.delete(`/users/block/${userId}`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -191,7 +195,7 @@ class UserService {
 
   async reportUser(userId: string, reason: string): Promise<void> {
     try {
-      await api.post(`/users/report/${userId}`, { reason });
+      await apiClient.post(`/users/report/${userId}`, { reason });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -199,7 +203,7 @@ class UserService {
 
   async deleteAccount(): Promise<void> {
     try {
-      await api.delete('/users/account');
+      await apiClient.delete('/users/account');
     } catch (err) {
       throw this.handleError(err);
     }
@@ -207,7 +211,7 @@ class UserService {
 
   async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
     try {
-      await api.put('/users/password', {
+      await apiClient.put('/users/password', {
         currentPassword,
         newPassword,
       });
@@ -222,17 +226,18 @@ class UserService {
     sms?: boolean;
   }): Promise<void> {
     try {
-      await api.put('/users/notifications', settings);
+      await apiClient.put('/users/notifications', settings);
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
   private handleError(error: unknown): Error {
+    console.error('UserService Error:', error);
     if (error instanceof Error) {
       return error;
     }
-    return new Error('An unexpected error occurred');
+    return new Error('An unexpected error occurred while processing your request');
   }
 }
 

@@ -3,8 +3,8 @@ import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { WebSocketProvider } from '@/contexts/WebSocketContext';
 import { SafetyAlertProvider } from '@/contexts/SafetyAlertContext';
-import { SafetyAlertNotification } from '@/components/safety/SafetyAlertNotification';
-import { AppRoutes } from '@/routes';
+import { SafetyAlerts } from '@/components/safety/SafetyAlerts';
+import AppRoutes from '@/routes';
 
 export const App: React.FC = () => {
   const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
@@ -18,10 +18,10 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <WebSocketProvider url={wsUrl} reconnectInterval={5000} maxReconnectAttempts={5}>
+        <WebSocketProvider url={wsUrl}>
           <SafetyAlertProvider>
             <AppRoutes />
-            <SafetyAlertNotification />
+            <SafetyAlerts />
           </SafetyAlertProvider>
         </WebSocketProvider>
       </AuthProvider>

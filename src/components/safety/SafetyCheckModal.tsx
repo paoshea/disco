@@ -1,103 +1,87 @@
 import React, { useState } from 'react';
-import { Modal } from '@/components/ui/Modal';
+import type { SafetyCheckModalProps } from '@/types/safety';
+import { Dialog } from '@headlessui/react';
 import { Button } from '@/components/ui/Button';
 import { TextArea } from '@/components/forms/TextArea';
-import { useForm } from 'react-hook-form';
-
-interface SafetyCheckModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onComplete: (checkId: string, notes?: string) => Promise<void>;
-  checkId: string;
-}
-
-interface FormData {
-  notes: string;
-}
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
+  check,
   isOpen,
   onClose,
-  onComplete,
-  checkId,
+  onResolve,
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<FormData>();
 
-  const handleComplete = async (data: FormData) => {
+  const handleResolve = async (status: 'safe' | 'unsafe'): Promise<void> => {
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
       setError(null);
-      await onComplete(checkId, data.notes);
+      await onResolve(check.id, status, notes);
       onClose();
     } catch (err) {
-      console.error('Error completing safety check:', err);
+      console.error('Error resolving safety check:', err);
       setError(
         err instanceof Error
           ? err.message
-          : 'An error occurred while completing the safety check. Please try again.'
+          : 'An error occurred while resolving the safety check'
       );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleFormSubmitWrapper = (e: React.FormEvent) => {
-    e.preventDefault();
-    void handleSubmit(handleComplete)(e);
-  };
-
   return (
-    <Modal
-      isOpen={isOpen}
+    <Dialog
+      open={isOpen}
       onClose={onClose}
-      title="Complete Safety Check"
-      size="md"
+      className="fixed inset-0 z-10 overflow-y-auto"
     >
-      <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
-        {error && (
-          <div className="rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-700">{error}</p>
+      <div className="flex min-h-screen items-center justify-center px-4 text-center">
+        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+
+        <div className="relative mx-auto w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+          <Dialog.Title className="text-lg font-medium text-gray-900">
+            Safety Check Required
+          </Dialog.Title>
+
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">{check.description}</p>
+
+            {error && <ErrorMessage message={error} className="mt-4" />}
+
+            <TextArea
+              label="Additional Notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Add any relevant details about your safety status..."
+              className="mt-4"
+              rows={3}
+            />
+
+            <div className="mt-6 flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="danger"
+                onClick={() => handleResolve('unsafe')}
+                disabled={isSubmitting}
+              >
+                Report Unsafe
+              </Button>
+              <Button
+                type="button"
+                variant="success"
+                onClick={() => handleResolve('safe')}
+                disabled={isSubmitting}
+              >
+                Confirm Safe
+              </Button>
+            </div>
           </div>
-        )}
-
-        <div>
-          <p className="text-sm text-gray-500 mb-4">
-            Please confirm that you&apos;re safe and add any additional notes if needed.
-          </p>
-
-          <TextArea<FormData>
-            label="Notes (Optional)"
-            name="notes"
-            register={register}
-            error={errors.notes?.message}
-            placeholder="Add any additional information about your safety status..."
-          />
         </div>
-
-        <div className="flex justify-end space-x-4">
-          <Button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            variant="secondary"
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            disabled={isLoading}
-            variant="primary"
-          >
-            {isLoading ? 'Confirming...' : 'Confirm Safety'}
-          </Button>
-        </div>
-      </form>
-    </Modal>
+      </div>
+    </Dialog>
   );
 };

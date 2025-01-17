@@ -1,6 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { User } from '@/types/user';
+import type { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
+
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+}
 
 export interface AuthContextType {
   user: User | null;
@@ -8,7 +14,7 @@ export interface AuthContextType {
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  signup: (userData: Partial<User>) => Promise<void>;
+  signup: (data: RegisterData) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
 }
@@ -43,19 +49,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     void initAuth();
   }, []);
 
+  const handleAuthError = (err: unknown, operation: string) => {
+    console.error(`${operation} error:`, err);
+    const errorMessage = err instanceof Error 
+      ? err.message 
+      : `An error occurred during ${operation.toLowerCase()}.`;
+    setError(errorMessage);
+    throw err;
+  };
+
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
-      const { token, user: userData } = await authService.login(email, password);
-      localStorage.setItem('token', token);
+      const userData = await authService.login(email, password);
       setUser(userData);
     } catch (err) {
-      console.error('Login error:', err);
-      setError(
-        err instanceof Error ? err.message : 'An error occurred during login.'
-      );
-      throw err;
+      handleAuthError(err, 'Login');
     } finally {
       setLoading(false);
     }
@@ -66,51 +76,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLoading(true);
       setError(null);
       await authService.logout();
-      localStorage.removeItem('token');
       setUser(null);
     } catch (err) {
-      console.error('Logout error:', err);
-      setError(
-        err instanceof Error ? err.message : 'An error occurred during logout.'
-      );
-      throw err;
+      handleAuthError(err, 'Logout');
     } finally {
       setLoading(false);
     }
   };
 
-  const signup = async (userData: Partial<User>) => {
+  const signup = async (data: RegisterData) => {
     try {
       setLoading(true);
       setError(null);
-      const { token, user: newUser } = await authService.signup(userData);
-      localStorage.setItem('token', token);
-      setUser(newUser);
+      const userData = await authService.register(data);
+      setUser(userData);
     } catch (err) {
-      console.error('Signup error:', err);
-      setError(
-        err instanceof Error ? err.message : 'An error occurred during signup.'
-      );
-      throw err;
+      handleAuthError(err, 'Signup');
     } finally {
       setLoading(false);
     }
   };
 
   const updateProfile = async (updates: Partial<User>) => {
+    if (!user?.id) {
+      throw new Error('No user logged in');
+    }
+
     try {
       setLoading(true);
       setError(null);
-      const updatedUser = await authService.updateProfile(updates);
+      const updatedUser = await authService.updateUser(user.id, updates);
       setUser(updatedUser);
     } catch (err) {
-      console.error('Profile update error:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while updating profile.'
-      );
-      throw err;
+      handleAuthError(err, 'Profile update');
     } finally {
       setLoading(false);
     }
@@ -120,27 +118,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       setError(null);
-      await authService.resetPassword(email);
+      await authService.requestPasswordReset(email);
     } catch (err) {
-      console.error('Error resetting password:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while resetting password.'
-      );
-      throw err;
+      handleAuthError(err, 'Password reset');
     } finally {
       setLoading(false);
     }
   };
 
-  return (
-    <AuthContext.Provider
-      value={{ user, loading, error, login, logout, signup, updateProfile, resetPassword }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const value = {
+    user,
+    loading,
+    error,
+    login,
+    logout,
+    signup,
+    updateProfile,
+    resetPassword,
+  };
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

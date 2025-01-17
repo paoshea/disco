@@ -71,6 +71,15 @@ class AuthService {
     }
   }
 
+  async updateUser(userId: string, updates: Partial<User>): Promise<User> {
+    try {
+      const response = await api.put<{ user: User }>(`/auth/users/${userId}`, updates);
+      return response.data.user;
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
   async requestPasswordReset(email: string): Promise<void> {
     try {
       await api.post('/auth/password-reset/request', { email });

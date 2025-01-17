@@ -1,9 +1,9 @@
 import React from 'react';
-import { UseFormRegister, FieldValues } from 'react-hook-form';
+import { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
-interface CheckboxProps<T extends FieldValues> extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CheckboxProps<T extends FieldValues> extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'name'> {
   label: string;
-  name: string;
+  name: Path<T>;
   error?: string;
   register?: UseFormRegister<T>;
   rules?: Partial<{
@@ -27,17 +27,17 @@ export const Checkbox = <T extends FieldValues>({
 }: CheckboxProps<T>): JSX.Element => {
   return (
     <div className="flex items-start">
-      <div className="flex items-center h-5">
+      <div className="flex h-5 items-center">
         <input
           type="checkbox"
-          id={name}
-          className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
+          id={name.toString()}
+          className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
           {...(register ? register(name, rules) : {})}
           {...props}
         />
       </div>
       <div className="ml-3 text-sm">
-        <label htmlFor={name} className="font-medium text-gray-700">
+        <label htmlFor={name.toString()} className="font-medium text-gray-700">
           {label}
         </label>
         {error && <p className="mt-1 text-sm text-red-600">{error}</p>}

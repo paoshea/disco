@@ -1,128 +1,131 @@
-import { Event } from '@/types/event';
-import { api } from './api';
-
-interface EventCreateData {
-  title: string;
-  description: string;
-  startDate: string;
-  endDate: string;
-  location: string;
-  maxParticipants?: number;
-  category: string;
-}
-
-interface EventUpdateData extends Partial<EventCreateData> {}
+import axios, { AxiosResponse } from 'axios';
+import { apiClient } from './api.client';
+import { 
+  Event, 
+  CreateEventInput,
+  EventFilters,
+  Location,
+  EventStatus,
+  EventParticipant 
+} from '@/types/event';
 
 class EventService {
-  async getEvents(): Promise<Event[]> {
-    try {
-      const response = await api.get<{ events: Event[] }>('/events');
-      return response.data.events;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  private readonly baseUrl = '/events';
+
+  async getEvents(filters?: EventFilters): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>(this.baseUrl, {
+      params: filters,
+    });
+    return response.data.events;
   }
 
-  async getEvent(id: string): Promise<Event> {
-    try {
-      const response = await api.get<{ event: Event }>(`/events/${id}`);
-      return response.data.event;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async getEvent(eventId: string): Promise<Event> {
+    const response = await apiClient.get<Event>(`${this.baseUrl}/${eventId}`);
+    return response.data;
   }
 
-  async createEvent(data: EventCreateData): Promise<Event> {
-    try {
-      const response = await api.post<{ event: Event }>('/events', data);
-      return response.data.event;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async createEvent(data: CreateEventInput): Promise<Event> {
+    const response = await apiClient.post<Event>(this.baseUrl, data);
+    return response.data;
   }
 
-  async updateEvent(id: string, data: EventUpdateData): Promise<Event> {
-    try {
-      const response = await api.put<{ event: Event }>(`/events/${id}`, data);
-      return response.data.event;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async updateEvent(
+    eventId: string,
+    data: Partial<CreateEventInput>
+  ): Promise<Event> {
+    const response = await apiClient.put<Event>(
+      `${this.baseUrl}/${eventId}`,
+      data
+    );
+    return response.data;
   }
 
-  async deleteEvent(id: string): Promise<void> {
-    try {
-      await api.delete(`/events/${id}`);
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async deleteEvent(eventId: string): Promise<void> {
+    await apiClient.delete(`${this.baseUrl}/${eventId}`);
   }
 
-  async joinEvent(id: string): Promise<Event> {
-    try {
-      const response = await api.post<{ event: Event }>(`/events/${id}/join`);
-      return response.data.event;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async joinEvent(eventId: string, userId: string): Promise<Event> {
+    const response = await apiClient.post<Event>(
+      `${this.baseUrl}/${eventId}/join`,
+      { userId }
+    );
+    return response.data;
   }
 
-  async leaveEvent(id: string): Promise<Event> {
-    try {
-      const response = await api.post<{ event: Event }>(`/events/${id}/leave`);
-      return response.data.event;
-    } catch (err) {
-      throw this.handleError(err);
-    }
+  async leaveEvent(eventId: string, userId: string): Promise<Event> {
+    const response = await apiClient.post<Event>(
+      `${this.baseUrl}/${eventId}/leave`,
+      { userId }
+    );
+    return response.data;
   }
 
-  async checkIn(eventId: string, coordinates?: { lat: number; lng: number }): Promise<void> {
-    await api.post(`/events/${eventId}/check-in`, coordinates);
+  async checkIn(eventId: string, location?: Location): Promise<void> {
+    await apiClient.post(`${this.baseUrl}/${eventId}/check-in`, { location });
   }
 
   async reportEvent(eventId: string, reason: string): Promise<void> {
-    await api.post(`/events/${eventId}/report`, { reason });
+    await apiClient.post(`${this.baseUrl}/${eventId}/report`, { reason });
   }
 
-  async getUpcomingEvents(params?: { page?: number; limit?: number; sortBy?: 'date' | 'popularity' | 'distance' }): Promise<Event[]> {
-    const response: any = await api.get('/events/upcoming', {
+  async getUpcomingEvents(params?: { 
+    page?: number; 
+    limit?: number; 
+    sortBy?: 'date' | 'popularity' | 'distance';
+    filters?: EventFilters;
+  }): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>(`${this.baseUrl}/upcoming`, {
       params,
     });
-    return response.data;
+    return response.data.events;
   }
 
-  async getEventsByType(type: string, params?: { page?: number; limit?: number; sortBy?: 'date' | 'popularity' | 'distance' }): Promise<Event[]> {
-    const response: any = await api.get(`/events/type/${type}`, {
-      params,
-    });
-    return response.data;
+  async getEventsByCategory(
+    category: string,
+    params?: {
+      page?: number;
+      limit?: number;
+      sortBy?: 'date' | 'popularity' | 'distance';
+      filters?: EventFilters;
+    }
+  ): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>(
+      `${this.baseUrl}/category/${category}`,
+      { params }
+    );
+    return response.data.events;
   }
 
-  async updateEventStatus(eventId: string, status: string): Promise<Event> {
-    const response: AxiosResponse<Event> = await api.put(`/events/${eventId}/status`, {
+  async updateEventStatus(eventId: string, status: EventStatus): Promise<Event> {
+    const response = await apiClient.put<Event>(`${this.baseUrl}/${eventId}/status`, {
       status,
     });
     return response.data;
   }
 
-  async getEventParticipants(eventId: string): Promise<string[]> {
-    const response: AxiosResponse<{ participants: string[] }> = await api.get(
-      `/events/${eventId}/participants`
+  async getEventParticipants(eventId: string): Promise<EventParticipant[]> {
+    const response = await apiClient.get<{ participants: EventParticipant[] }>(
+      `${this.baseUrl}/${eventId}/participants`
     );
     return response.data.participants;
   }
 
-  async getMyEvents(): Promise<Event[]> {
-    const response: AxiosResponse<Event[]> = await api.get('/events/my-events');
-    return response.data;
+  async getMyEvents(params?: {
+    status?: EventStatus[];
+    role?: 'organizer' | 'participant';
+  }): Promise<Event[]> {
+    const response = await apiClient.get<{ events: Event[] }>(`${this.baseUrl}/my-events`, {
+      params,
+    });
+    return response.data.events;
   }
 
   async uploadEventImage(eventId: string, file: File): Promise<string> {
     const formData = new FormData();
     formData.append('image', file);
 
-    const response: AxiosResponse<{ imageUrl: string }> = await api.post(
-      `/events/${eventId}/image`,
+    const response = await apiClient.post<{ imageUrl: string }>(
+      `${this.baseUrl}/${eventId}/image`,
       formData,
       {
         headers: {
@@ -130,19 +133,25 @@ class EventService {
         },
       }
     );
-
     return response.data.imageUrl;
   }
 
   async cancelEvent(eventId: string, reason: string): Promise<Event> {
-    const response: AxiosResponse<Event> = await api.post(`/events/${eventId}/cancel`, { reason });
+    const response = await apiClient.post<Event>(
+      `${this.baseUrl}/${eventId}/cancel`,
+      { reason }
+    );
     return response.data;
   }
 
-  async updateSafetyGuidelines(eventId: string, guidelines: string[]): Promise<Event> {
-    const response: AxiosResponse<Event> = await api.put(`/events/${eventId}/safety-guidelines`, {
-      guidelines,
-    });
+  async updateSafetyGuidelines(
+    eventId: string,
+    guidelines: string[]
+  ): Promise<Event> {
+    const response = await apiClient.put<Event>(
+      `${this.baseUrl}/${eventId}/safety-guidelines`,
+      { guidelines }
+    );
     return response.data;
   }
 

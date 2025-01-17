@@ -16,7 +16,7 @@ function classNames(...classes: string[]) {
 
 export default function Profile() {
   const router = useRouter();
-  const { user, isLoading: authLoading, error: authError, logout, updateProfile, sendVerificationEmail } = useAuth();
+  const { user: authUser, isLoading: authLoading, error: authError, logout, updateProfile, sendVerificationEmail } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState<User | null>(null);
@@ -24,7 +24,7 @@ export default function Profile() {
   useEffect(() => {
     const init = async () => {
       try {
-        if (!user) {
+        if (!authUser) {
           await router.push('/login');
           return;
         }
@@ -35,7 +35,7 @@ export default function Profile() {
     };
 
     void init();
-  }, [router, user]);
+  }, [router, authUser]);
 
   const loadProfileData = async () => {
     try {
@@ -96,7 +96,7 @@ export default function Profile() {
     );
   }
 
-  if (!user) {
+  if (!authUser || !profileData) {
     return null;
   }
 
@@ -106,7 +106,7 @@ export default function Profile() {
         <div className="flex items-center justify-between py-6">
           <div>
             <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-            {!user.emailVerified && (
+            {!authUser.emailVerified && (
               <div className="mt-2">
                 <p className="text-sm text-yellow-600">
                   Your email is not verified.{' '}
@@ -159,15 +159,15 @@ export default function Profile() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <ProfileEdit
-                user={profileData}
-                onUpdate={async (data) => {
-                  await handleUpdateProfile(data);
-                }}
-              />
+              {profileData && (
+                <ProfileEdit
+                  user={profileData}
+                  onUpdate={handleUpdateProfile}
+                />
+              )}
             </Tab.Panel>
             <Tab.Panel>
-              <ProfileSettings user={profileData} />
+              {profileData && <ProfileSettings user={profileData} />}
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

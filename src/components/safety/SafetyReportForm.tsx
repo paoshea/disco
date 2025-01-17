@@ -1,150 +1,134 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Button } from '@/components/ui/Button';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import type { SafetyReportFormProps } from '@/types/safety';
+import { safetyService } from '@/services/api/safety.service';
+import { TextField } from '@/components/forms/TextField';
 import { TextArea } from '@/components/forms/TextArea';
 import { Select } from '@/components/forms/Select';
-import { safetyService } from '@/services/api/safety.service';
+import { Button } from '@/components/ui/Button';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
-interface SafetyReportFormProps {
-  userId: string;
-  onSubmit: (report: any) => Promise<void>;
-  onCancel: () => void;
-}
+const reportSchema = z.object({
+  type: z.enum(['harassment', 'inappropriate', 'spam', 'scam', 'other']),
+  description: z.string().min(10, 'Please provide more details about the incident'),
+  evidence: z.array(z.string()).optional(),
+});
 
-interface FormData {
-  type: string;
-  description: string;
-  evidence: File[];
-}
+type ReportFormData = z.infer<typeof reportSchema>;
 
 export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
-  userId,
+  reportedUserId,
   onSubmit,
   onCancel,
 }) => {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [files, setFiles] = useState<File[]>([]);
+
   const {
     register,
     handleSubmit,
     formState: { errors },
-    setValue,
-  } = useForm<FormData>();
+  } = useForm<ReportFormData>({
+    resolver: zodResolver(reportSchema),
+  });
 
-  const handleFileUpload = async (files: FileList | null) => {
-    if (!files?.length) return;
-    try {
-      setIsLoading(true);
-      setError(null);
-      const uploadedFiles = await Promise.all(
-        Array.from(files).map((file) =>
-          safetyService.uploadEvidence(userId, file)
-        )
-      );
-      setValue('evidence', uploadedFiles);
-    } catch (err) {
-      console.error('Error uploading files:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while uploading files. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(Array.from(e.target.files));
     }
   };
 
-  const handleFormSubmit = async (data: FormData) => {
+  const handleFormSubmit = async (data: ReportFormData) => {
     try {
-      setIsLoading(true);
+      setIsSubmitting(true);
       setError(null);
+
+      // Upload evidence files if any
+      const evidenceUrls = await Promise.all(
+        files.map(async (file) => {
+          const response = await safetyService.uploadEvidence(file);
+          return response.url;
+        })
+      );
+
       await onSubmit({
-        ...data,
-        userId,
-        createdAt: new Date().toISOString(),
+        type: data.type,
+        description: data.description,
+        reportedUserId,
+        evidence: evidenceUrls.map((url) => ({
+          type: 'image',
+          url,
+        })),
       });
     } catch (err) {
-      console.error('Error submitting report:', err);
+      console.error('Error submitting safety report:', err);
       setError(
         err instanceof Error
           ? err.message
-          : 'An error occurred while submitting the report. Please try again.'
+          : 'An error occurred while submitting the report'
       );
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
-  };
-
-  const handleFormSubmitWrapper = (e: React.FormEvent) => {
-    e.preventDefault();
-    void handleSubmit(handleFormSubmit)(e);
   };
 
   return (
-    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
+    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+      {error && <ErrorMessage message={error} />}
 
-      <Select<FormData>
-        label="Type of Report"
-        name="type"
-        register={register}
-        rules={{ required: 'Please select a report type' }}
+      <Select
+        label="Report Type"
+        {...register('type')}
         error={errors.type?.message}
-        options={[
-          { value: 'harassment', label: 'Harassment' },
-          { value: 'inappropriate', label: 'Inappropriate Behavior' },
-          { value: 'spam', label: 'Spam' },
-          { value: 'other', label: 'Other' },
-        ]}
-      />
+      >
+        <option value="">Select a reason for reporting</option>
+        <option value="harassment">Harassment</option>
+        <option value="inappropriate">Inappropriate Content</option>
+        <option value="spam">Spam</option>
+        <option value="scam">Scam</option>
+        <option value="other">Other</option>
+      </Select>
 
-      <TextArea<FormData>
+      <TextArea
         label="Description"
-        name="description"
-        register={register}
-        rules={{
-          required: 'Please provide a description',
-          minLength: {
-            value: 20,
-            message: 'Please provide more details (minimum 20 characters)',
-          },
-        }}
+        {...register('description')}
         error={errors.description?.message}
-        placeholder="Please describe what happened..."
+        placeholder="Please provide details about the incident..."
+        rows={4}
       />
 
       <div>
         <label className="block text-sm font-medium text-gray-700">
           Evidence (Optional)
         </label>
-        <input
-          type="file"
-          multiple
-          onChange={(e) => void handleFileUpload(e.target.files)}
-          disabled={isLoading}
-          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
-        />
+        <div className="mt-1">
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={handleFileChange}
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+          />
+        </div>
+        <p className="mt-2 text-sm text-gray-500">
+          Upload any relevant images or screenshots
+        </p>
       </div>
 
       <div className="flex justify-end space-x-4">
         <Button
           type="button"
-          onClick={onCancel}
-          disabled={isLoading}
           variant="secondary"
+          onClick={onCancel}
+          disabled={isSubmitting}
         >
           Cancel
         </Button>
-        <Button
-          type="submit"
-          disabled={isLoading}
-          variant="primary"
-        >
-          {isLoading ? 'Submitting...' : 'Submit Report'}
+        <Button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting...' : 'Submit Report'}
         </Button>
       </div>
     </form>

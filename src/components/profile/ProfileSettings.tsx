@@ -2,227 +2,142 @@ import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { Switch } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
+import type { User, UserPreferences } from '@/types/user';
+import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/forms/Select';
 
-interface UserSettings {
-  emailNotifications: boolean;
-  pushNotifications: boolean;
-  smsNotifications: boolean;
-  darkMode: boolean;
-  twoFactorEnabled: boolean;
-  locationSharing: boolean;
-  profileVisibility: 'public' | 'private' | 'friends';
+interface ProfileSettingsProps {
+  user: User;
 }
 
-export const ProfileSettings: React.FC = () => {
+const defaultPreferences: UserPreferences = {
+  ageRange: {
+    min: 18,
+    max: 99,
+  },
+  maxDistance: 25,
+  interests: [],
+  eventTypes: [],
+  notifications: {
+    matches: true,
+    messages: true,
+    events: true,
+    safety: true,
+  }
+};
+
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { register, handleSubmit, setValue } = useForm<UserSettings>();
-  const [settings, setSettings] = useState<UserSettings>({
-    emailNotifications: false,
-    pushNotifications: false,
-    smsNotifications: false,
-    darkMode: false,
-    twoFactorEnabled: false,
-    locationSharing: false,
-    profileVisibility: 'private'
+  const { register, handleSubmit, setValue, watch } = useForm<UserPreferences>({
+    defaultValues: defaultPreferences,
   });
+  const [preferences, setPreferences] = useState<UserPreferences>(defaultPreferences);
 
   useEffect(() => {
-    const loadSettings = async () => {
+    const loadPreferences = async () => {
       try {
-        const userSettings = await userService.getSettings();
-        setSettings(userSettings);
+        const userPreferences = await userService.getPreferences(user.id);
+        setPreferences(userPreferences);
         
         // Update form values
-        Object.entries(userSettings).forEach(([key, value]) => {
-          setValue(key as keyof UserSettings, value);
+        Object.entries(userPreferences).forEach(([key, value]) => {
+          setValue(key as keyof UserPreferences, value);
         });
       } catch (error) {
-        console.error('Error loading settings:', error);
+        console.error('Error loading preferences:', error);
       }
     };
 
-    void loadSettings();
-  }, [setValue]);
+    void loadPreferences();
+  }, [setValue, user.id]);
 
-  const handleSettingChange = (setting: keyof UserSettings, value: boolean | string) => {
-    setSettings(prev => ({
-      ...prev,
-      [setting]: value
-    }));
-    setValue(setting, value);
-  };
-
-  const handleFormSubmit = async (data: UserSettings) => {
+  const onSubmit = async (data: UserPreferences) => {
+    setIsSubmitting(true);
     try {
-      setIsSubmitting(true);
-      await userService.updateSettings(data);
-      setSettings(data);
+      await userService.updatePreferences(user.id, data);
+      setPreferences(data);
     } catch (error) {
-      console.error('Error updating settings:', error);
+      console.error('Error updating preferences:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFormSubmitWrapper = (e: React.FormEvent) => {
-    e.preventDefault();
-    void handleSubmit(handleFormSubmit)(e);
-  };
-
   return (
-    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              Email Notifications
-            </Switch.Label>
-            <Switch
-              checked={settings.emailNotifications}
-              onChange={(checked) => handleSettingChange('emailNotifications', checked)}
-              className={`${
-                settings.emailNotifications ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.emailNotifications ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
-            </Switch>
+        <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Maximum Distance (miles)
+            </label>
+            <input
+              type="number"
+              {...register('maxDistance')}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+            />
           </div>
-        </Switch.Group>
-
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              Push Notifications
-            </Switch.Label>
-            <Switch
-              checked={settings.pushNotifications}
-              onChange={(checked) => handleSettingChange('pushNotifications', checked)}
-              className={`${
-                settings.pushNotifications ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.pushNotifications ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Age Range
+            </label>
+            <div className="mt-1 grid grid-cols-2 gap-4">
+              <input
+                type="number"
+                {...register('ageRange.min')}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                placeholder="Min"
               />
-            </Switch>
-          </div>
-        </Switch.Group>
-
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              SMS Notifications
-            </Switch.Label>
-            <Switch
-              checked={settings.smsNotifications}
-              onChange={(checked) => handleSettingChange('smsNotifications', checked)}
-              className={`${
-                settings.smsNotifications ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.smsNotifications ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+              <input
+                type="number"
+                {...register('ageRange.max')}
+                className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                placeholder="Max"
               />
-            </Switch>
+            </div>
           </div>
-        </Switch.Group>
-
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              Dark Mode
-            </Switch.Label>
-            <Switch
-              checked={settings.darkMode}
-              onChange={(checked) => handleSettingChange('darkMode', checked)}
-              className={`${
-                settings.darkMode ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.darkMode ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
-            </Switch>
-          </div>
-        </Switch.Group>
-
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              Two-Factor Authentication
-            </Switch.Label>
-            <Switch
-              checked={settings.twoFactorEnabled}
-              onChange={(checked) => handleSettingChange('twoFactorEnabled', checked)}
-              className={`${
-                settings.twoFactorEnabled ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
-            </Switch>
-          </div>
-        </Switch.Group>
-
-        <Switch.Group>
-          <div className="flex items-center justify-between">
-            <Switch.Label className="text-sm font-medium text-gray-700">
-              Location Sharing
-            </Switch.Label>
-            <Switch
-              checked={settings.locationSharing}
-              onChange={(checked) => handleSettingChange('locationSharing', checked)}
-              className={`${
-                settings.locationSharing ? 'bg-primary-600' : 'bg-gray-200'
-              } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
-            >
-              <span
-                className={`${
-                  settings.locationSharing ? 'translate-x-6' : 'translate-x-1'
-                } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-              />
-            </Switch>
-          </div>
-        </Switch.Group>
-
-        <div className="space-y-1">
-          <label htmlFor="profileVisibility" className="text-sm font-medium text-gray-700">
-            Profile Visibility
-          </label>
-          <select
-            id="profileVisibility"
-            value={settings.profileVisibility}
-            onChange={(e) => handleSettingChange('profileVisibility', e.target.value)}
-            className="mt-1 block w-full rounded-md border-gray-300 py-2 pl-3 pr-10 text-base focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm"
-          >
-            <option value="public">Public</option>
-            <option value="private">Private</option>
-            <option value="friends">Friends Only</option>
-          </select>
         </div>
       </div>
 
-      <div className="flex justify-end">
-        <button
+      <div className="space-y-4">
+        <h3 className="text-lg font-medium text-gray-900">Notification Settings</h3>
+        <div className="space-y-4">
+          {Object.entries(preferences.notifications).map(([key, value]) => (
+            <Switch.Group key={key} as="div" className="flex items-center justify-between">
+              <Switch.Label as="span" className="flex-grow">
+                <span className="text-sm font-medium text-gray-900">
+                  {key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, str => str.toUpperCase())}
+                </span>
+              </Switch.Label>
+              <Switch
+                checked={watch(`notifications.${key as keyof typeof preferences.notifications}`)}
+                onChange={v => setValue(`notifications.${key as keyof typeof preferences.notifications}`, v)}
+                className={`${
+                  value ? 'bg-primary-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
+              >
+                <span
+                  className={`${
+                    value ? 'translate-x-5' : 'translate-x-0'
+                  } pointer-events-none relative inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out`}
+                />
+              </Switch>
+            </Switch.Group>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <Button
           type="submit"
           disabled={isSubmitting}
-          className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+          className="inline-flex justify-center"
         >
-          {isSubmitting ? 'Saving...' : 'Save Changes'}
-        </button>
+          {isSubmitting ? 'Saving...' : 'Save Preferences'}
+        </Button>
       </div>
     </form>
   );

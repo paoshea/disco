@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
+import { SignupInput } from '@/types/auth';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -49,32 +50,28 @@ const SignupPage = () => {
   });
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        if (user) {
-          await router.push('/');
-        }
-      } catch (err) {
-        console.error('Navigation error:', err);
-      }
-    };
-
-    void init();
+    if (user) {
+      void router.push('/');
+    }
   }, [router, user]);
 
   const onSubmit = async (data: SignupFormData) => {
     try {
       setIsLoading(true);
       setError(null);
-      await signup({
+
+      const signupData: SignupInput = {
         email: data.email,
         password: data.password,
         firstName: data.firstName,
         lastName: data.lastName,
         phoneNumber: data.phoneNumber,
-      });
+      };
+
+      await signup(signupData);
       await router.push('/');
     } catch (err) {
+      console.error('Signup error:', err);
       setError(
         err instanceof Error
           ? err.message
@@ -102,87 +99,87 @@ const SignupPage = () => {
               Create your account
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/login" className="font-medium text-primary-600 hover:text-primary-500">
-                Sign in
+              Or{' '}
+              <Link
+                href="/login"
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
+                sign in to your account
               </Link>
             </p>
           </div>
 
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div className="space-y-4 rounded-md">
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <Input
-                  label="First name"
-                  autoComplete="given-name"
-                  error={errors.firstName?.message}
-                  {...register('firstName')}
-                />
-                <Input
-                  label="Last name"
-                  autoComplete="family-name"
-                  error={errors.lastName?.message}
-                  {...register('lastName')}
-                />
-              </div>
-
+            <div className="space-y-4 rounded-md shadow-sm">
               <Input
-                label="Email address"
+                label="Email"
                 type="email"
-                autoComplete="email"
-                error={errors.email?.message}
                 {...register('email')}
+                error={errors.email?.message}
               />
-
-              <Input
-                label="Phone number"
-                type="tel"
-                autoComplete="tel"
-                error={errors.phoneNumber?.message}
-                {...register('phoneNumber')}
-              />
-
               <Input
                 label="Password"
                 type="password"
-                autoComplete="new-password"
-                error={errors.password?.message}
                 {...register('password')}
+                error={errors.password?.message}
               />
-
               <Input
-                label="Confirm password"
+                label="Confirm Password"
                 type="password"
-                autoComplete="new-password"
-                error={errors.confirmPassword?.message}
                 {...register('confirmPassword')}
+                error={errors.confirmPassword?.message}
+              />
+              <Input
+                label="First Name"
+                {...register('firstName')}
+                error={errors.firstName?.message}
+              />
+              <Input
+                label="Last Name"
+                {...register('lastName')}
+                error={errors.lastName?.message}
+              />
+              <Input
+                label="Phone Number (optional)"
+                type="tel"
+                {...register('phoneNumber')}
+                error={errors.phoneNumber?.message}
               />
             </div>
 
-            {error && (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">Registration failed</h3>
-                    <div className="mt-2 text-sm text-red-700">
-                      <p>{error}</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <Button
-                type="submit"
-                disabled={isSubmitting || isLoading}
-                loading={isSubmitting || isLoading}
-                className="w-full"
-              >
-                Create account
-              </Button>
-            </div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isSubmitting || isLoading}
+            >
+              {isSubmitting || isLoading ? 'Creating Account...' : 'Sign Up'}
+            </Button>
           </form>
+
+          <div className="mt-6">
+            <p className="text-center text-sm text-gray-600">
+              By signing up, you agree to our{' '}
+              <Link
+                href="/terms"
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link
+                href="/privacy"
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
+                Privacy Policy
+              </Link>
+            </p>
+          </div>
         </div>
       </div>
     </Layout>

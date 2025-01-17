@@ -14,7 +14,106 @@ export type IncidentStatus = 'pending' | 'resolved' | 'dismissed';
 
 export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 
+export type SafetyAlertType = 'sos' | 'check-in' | 'location-share' | 'custom';
+export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
+export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
+
+export interface Location {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp?: string;
+}
+
+export interface EmergencyContact {
+  id: string;
+  userId: string;
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+  email?: string;
+  notifyOn: {
+    sosAlert: boolean;
+    meetupStart: boolean;
+    meetupEnd: boolean;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SafetyAlert {
+  id: string;
+  userId: string;
+  type: SafetyAlertType;
+  status: SafetyAlertStatus;
+  location?: Location;
+  message?: string;
+  contactedEmergencyServices: boolean;
+  notifiedContacts: string[];
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface SafetyCheck {
+  id: string;
+  userId: string;
+  status: SafetyCheckStatus;
+  scheduledTime: string;
+  location?: Location;
+  notes?: string;
+  notifiedContacts: string[];
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
+
 export interface SafetyReport {
+  id: string;
+  reporterId: string;
+  reportedUserId: string;
+  type: 'harassment' | 'inappropriate' | 'spam' | 'scam' | 'other';
+  description: string;
+  evidence?: Array<{
+    type: string;
+    url: string;
+  }>;
+  status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+  adminNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface SafetyReportFormProps {
+  reportedUserId: string;
+  onSubmit: (data: Omit<SafetyReport, 'id' | 'reporterId' | 'status' | 'adminNotes' | 'createdAt' | 'updatedAt' | 'resolvedAt'>) => Promise<void>;
+  onCancel: () => void;
+}
+
+export interface SafetyFeature {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  enabled: boolean;
+  requiresPermission?: boolean;
+  permissions?: string[];
+}
+
+export interface SafetySettings {
+  locationSharing: boolean;
+  automaticCheckins: boolean;
+  emergencyContactNotifications: boolean;
+  safetyRadius: number;
+  notificationPreferences: {
+    email: boolean;
+    push: boolean;
+    sms: boolean;
+  };
+}
+
+export interface SafetyReportOld {
   id: string;
   reporterId: string;
   reportedId: string;
@@ -45,7 +144,7 @@ export interface Evidence {
   createdAt: string;
 }
 
-export interface SafetyAlert {
+export interface SafetyAlertOld {
   id: string;
   userId: string;
   type: 'emergency' | 'warning' | 'info';
@@ -58,7 +157,7 @@ export interface SafetyAlert {
   };
 }
 
-export interface SafetyCheck {
+export interface SafetyCheckOld {
   id: string;
   userId: string;
   type: 'meetup' | 'checkin' | 'custom';
@@ -70,17 +169,6 @@ export interface SafetyCheck {
     longitude: number;
   };
   notes?: string;
-}
-
-export interface EmergencyContact {
-  id: string;
-  userId: string;
-  name: string;
-  relationship: string;
-  phoneNumber: string;
-  email?: string;
-  isVerified: boolean;
-  isPrimary: boolean;
 }
 
 export interface UserBlock {
@@ -107,17 +195,6 @@ export interface EmergencyAlert {
   notifiedContacts: string[];
   createdAt: string;
   resolvedAt?: string;
-}
-
-export interface SafetySettings {
-  userId: string;
-  autoCheckIn: boolean;
-  checkInInterval: number; // in minutes
-  emergencyServices: boolean;
-  locationSharing: boolean;
-  notifyContacts: boolean;
-  safetyRadius: number; // in meters
-  customSafetyPhrases: string[];
 }
 
 export interface SafetySettingsOld {

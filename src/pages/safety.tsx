@@ -9,6 +9,7 @@ import { SafetyCheckList } from '@/components/safety/SafetyCheckList';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert } from '@/components/ui/Alert';
 import { Tab } from '@headlessui/react';
+import { safetyService } from '@/services/api/safety.service';
 import type { SafetyAlert, SafetyCheck } from '@/types/safety';
 
 function classNames(...classes: string[]) {
@@ -36,21 +37,12 @@ export default function Safety() {
           await router.push('/login');
           return;
         }
-
-        setIsLoading(true);
-        setError(null);
-        const [alertsData, checksData] = await Promise.all([
-          safetyService.getAlerts(),
-          safetyService.getChecks(),
-        ]);
-        setAlerts(alertsData);
-        setChecks(checksData);
       } catch (err) {
-        console.error('Error loading safety data:', err);
+        console.error('Error initializing safety page:', err);
         setError(
           err instanceof Error
             ? err.message
-            : 'An error occurred while loading safety data.'
+            : 'An error occurred while loading the safety page.'
         );
       } finally {
         setIsLoading(false);
@@ -60,20 +52,10 @@ export default function Safety() {
     void init();
   }, [router, user, authLoading]);
 
-  if (isLoading || safetyLoading) {
+  if (isLoading || safetyLoading || authLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner size="lg" color="primary" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="text-sm text-red-700">{error}</div>
-        </div>
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -92,7 +74,7 @@ export default function Safety() {
           </p>
         </div>
 
-        {error && <Alert type="error" title="Error" message={error} className="mb-6" />}
+        {error && <Alert type="error" message={error} className="mb-6" />}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -138,28 +120,20 @@ export default function Safety() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <SafetyCenter onTriggerAlert={triggerEmergencyAlert} onDismissAlert={dismissAlert} />
+              <SafetyCenter
+                user={user}
+                alerts={alerts}
+                onTriggerAlert={triggerEmergencyAlert}
+                onDismissAlert={dismissAlert}
+              />
             </Tab.Panel>
             <Tab.Panel>
-              <EmergencyContactList
-                contacts={user?.emergencyContacts || []}
-                onEdit={contact => {
-                  // Handle contact edit
-                  console.log('Editing contact:', contact);
-                }}
-                onDelete={contactId => {
-                  // Handle contact delete
-                  console.log('Deleting contact:', contactId);
-                }}
-              />
+              <EmergencyContactList userId={user.id} />
             </Tab.Panel>
             <Tab.Panel>
               <SafetyCheckList
                 checks={safetyChecks}
-                onResolve={(checkId: string) => {
-                  // Adapt the onResolve function to match the expected signature
-                  return resolveSafetyCheck(checkId, 'safe');
-                }}
+                onResolveCheck={resolveSafetyCheck}
               />
             </Tab.Panel>
           </Tab.Panels>
