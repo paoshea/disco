@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
 
-interface RegisterData {
+export interface RegisterData {
   email: string;
   password: string;
   name: string;

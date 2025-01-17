@@ -19,11 +19,16 @@ export default function MatchingPage() {
       try {
         setLoading(true);
         setError(null);
-        const response = await matchService.getMatches({
-          latitude: position?.coords.latitude,
-          longitude: position?.coords.longitude,
-        });
-        setMatches(response.matches);
+        const response = await matchService.getMatches(
+          position?.coords
+            ? {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude,
+                radius: 50, // Default radius in kilometers
+              }
+            : undefined
+        );
+        setMatches(response.map(r => r.match));
       } catch (err) {
         console.error('Error fetching matches:', err);
         setError(
@@ -36,9 +41,7 @@ export default function MatchingPage() {
       }
     };
 
-    if (position?.coords) {
-      void fetchMatches();
-    }
+    void fetchMatches();
   }, [position]);
 
   const handleMatchClick = (matchId: string) => {

@@ -1,4 +1,4 @@
-import { Location } from './location';
+import type { Location } from './location';
 import { User } from './user';
 
 export type IncidentType =
@@ -17,13 +17,6 @@ export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'reject
 export type SafetyAlertType = 'sos' | 'check-in' | 'location-share' | 'custom';
 export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
 export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
-
-export interface Location {
-  latitude: number;
-  longitude: number;
-  accuracy?: number;
-  timestamp?: string;
-}
 
 export interface EmergencyContact {
   id: string;
@@ -87,12 +80,7 @@ export interface SafetyReport {
 
 export interface SafetyReportFormProps {
   reportedUserId: string;
-  onSubmit: (
-    data: Omit<
-      SafetyReport,
-      'id' | 'reporterId' | 'status' | 'adminNotes' | 'createdAt' | 'updatedAt' | 'resolvedAt'
-    >
-  ) => Promise<void>;
+  onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
   onCancel: () => void;
 }
 

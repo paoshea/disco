@@ -7,6 +7,12 @@ interface MatchResponse {
   score: number;
 }
 
+interface GetMatchesParams {
+  latitude?: number;
+  longitude?: number;
+  radius?: number;
+}
+
 interface MatchCreateData {
   userId: string;
   preferences: MatchPreferences;
@@ -18,10 +24,12 @@ interface MatchUpdateData {
 }
 
 class MatchService {
-  async getMatches(): Promise<MatchResponse[]> {
+  async getMatches(params?: GetMatchesParams): Promise<MatchResponse[]> {
     try {
-      const response: AxiosResponse<{ matches: MatchResponse[] }> = await api.get('/matches');
-      return response.data.matches;
+      const response: AxiosResponse<MatchResponse[]> = await api.get('/matches', {
+        params,
+      });
+      return response.data;
     } catch (err) {
       throw this.handleError(err);
     }
@@ -50,6 +58,22 @@ class MatchService {
   async dislikeProfile(userId: string): Promise<void> {
     try {
       await api.post(`/matches/dislike/${userId}`);
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async acceptMatch(matchId: string): Promise<void> {
+    try {
+      await api.post(`/matches/${matchId}/accept`);
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  async rejectMatch(matchId: string): Promise<void> {
+    try {
+      await api.post(`/matches/${matchId}/reject`);
     } catch (err) {
       throw this.handleError(err);
     }
@@ -91,7 +115,7 @@ class MatchService {
     }
   }
 
-  async acceptMatch(matchId: string): Promise<Match> {
+  async acceptMatchRequest(matchId: string): Promise<Match> {
     try {
       const response: AxiosResponse<Match> = await api.post(`/matches/${matchId}/accept`);
       return response.data;
@@ -100,7 +124,7 @@ class MatchService {
     }
   }
 
-  async declineMatch(matchId: string): Promise<void> {
+  async declineMatchRequest(matchId: string): Promise<void> {
     try {
       await api.post(`/matches/${matchId}/decline`);
     } catch (err) {

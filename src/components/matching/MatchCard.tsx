@@ -7,9 +7,17 @@ interface MatchCardProps {
   match: MatchPreview;
   onAccept: (matchId: string) => Promise<void>;
   onDecline: (matchId: string) => Promise<void>;
+  onClick?: () => void;
+  isProcessing?: boolean;
 }
 
-export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline }) => {
+export const MatchCard: React.FC<MatchCardProps> = ({
+  match,
+  onAccept,
+  onDecline,
+  onClick,
+  isProcessing = false,
+}) => {
   const handleAccept = async () => {
     try {
       await onAccept(match.id);
@@ -27,7 +35,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+    <div 
+      className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-105"
+      onClick={onClick}
+    >
       <div className="relative h-64">
         {match.profileImage ? (
           <Image
@@ -63,11 +74,27 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline
         </div>
 
         <div className="mt-4 space-x-2">
-          <Button variant="primary" size="sm" onClick={handleAccept}>
-            Accept
-          </Button>
-          <Button variant="outline" size="sm" onClick={handleDecline}>
+          <Button
+            onClick={e => {
+              e.stopPropagation();
+              void handleDecline();
+            }}
+            variant="outline"
+            size="sm"
+            disabled={isProcessing}
+          >
             Decline
+          </Button>
+          <Button
+            onClick={e => {
+              e.stopPropagation();
+              void handleAccept();
+            }}
+            variant="primary"
+            size="sm"
+            disabled={isProcessing}
+          >
+            Accept
           </Button>
         </div>
       </div>

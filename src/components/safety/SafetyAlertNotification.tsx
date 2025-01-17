@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon, ExclamationTriangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import type { SafetyAlert } from '@/types/safety';
+import type { SafetyAlert, SafetyAlertType } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 import { BaseMapView } from '@/components/map/BaseMapView';
 
@@ -29,6 +29,39 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
     }
   };
 
+  const getAlertTitle = () => {
+    switch (alert.type) {
+      case 'sos':
+        return 'Emergency Alert';
+      case 'check-in':
+        return 'Check-in Alert';
+      case 'location-share':
+        return 'Location Alert';
+      case 'custom':
+        return 'Custom Alert';
+      default:
+        return 'Safety Alert';
+    }
+  };
+
+  const getAlertDescription = () => {
+    if (alert.message) {
+      return alert.message;
+    }
+    switch (alert.type) {
+      case 'sos':
+        return 'Someone has triggered an emergency alert. Please check their location and respond accordingly.';
+      case 'check-in':
+        return 'A safety check-in has been requested.';
+      case 'location-share':
+        return 'A location has been shared for safety purposes.';
+      case 'custom':
+        return 'A custom safety alert has been triggered.';
+      default:
+        return 'A safety alert has been triggered.';
+    }
+  };
+
   return (
     <div className="relative rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
       <div className="flex items-start">
@@ -36,8 +69,8 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
           <ExclamationTriangleIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
         </div>
         <div className="ml-3 w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">{alert.title}</p>
-          <p className="mt-1 text-sm text-gray-500">{alert.description}</p>
+          <p className="text-sm font-medium text-gray-900">{getAlertTitle()}</p>
+          <p className="mt-1 text-sm text-gray-500">{getAlertDescription()}</p>
           {alert.location && (
             <div className="mt-2">
               <Button
@@ -52,7 +85,10 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
               {showMap && (
                 <div className="mt-2 h-48 w-full overflow-hidden rounded">
                   <BaseMapView
-                    center={[alert.location.latitude, alert.location.longitude]}
+                    center={{
+                      lat: alert.location.latitude,
+                      lng: alert.location.longitude,
+                    }}
                     zoom={15}
                   />
                 </div>
@@ -63,7 +99,7 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
         <div className="ml-4 flex flex-shrink-0">
           <Button
             type="button"
-            variant="ghost"
+            variant="secondary"
             onClick={handleDismiss}
             disabled={isLoading}
             className="inline-flex rounded-md text-gray-400 hover:text-gray-500"

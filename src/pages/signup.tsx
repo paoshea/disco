@@ -5,7 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '@/hooks/useAuth';
-import { SignupInput } from '@/types/auth';
+import type { RegisterData } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
@@ -60,12 +60,10 @@ const SignupPage = () => {
       setIsLoading(true);
       setError(null);
 
-      const signupData: SignupInput = {
+      const signupData: RegisterData = {
         email: data.email,
         password: data.password,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        phoneNumber: data.phoneNumber,
+        name: `${data.firstName} ${data.lastName}`,
       };
 
       await signup(signupData);

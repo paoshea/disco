@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { emergencyService } from '@/services/api/emergency.service';
-import { EmergencyAlertProps, SafetyAlert } from '@/types/safety';
+import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
 import { BaseMapView } from '@/components/map/BaseMapView';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -36,8 +36,21 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ userId, onAlertT
         timestamp: new Date().toISOString(),
       });
 
+      // Convert EmergencyAlert to SafetyAlertNew
+      const safetyAlert: SafetyAlertNew = {
+        ...alert,
+        type: 'sos',
+        status: 'active',
+        location: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+          accuracy: position.coords.accuracy,
+        },
+        updatedAt: new Date().toISOString(),
+      };
+
       if (onAlertTriggered) {
-        onAlertTriggered(alert);
+        onAlertTriggered(safetyAlert);
       }
     } catch (err) {
       console.error('Error triggering emergency alert:', err);
@@ -70,11 +83,15 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ userId, onAlertT
             zoom={15}
             markers={[
               {
+                id: 'current-location',
                 position: {
                   lat: position.coords.latitude,
                   lng: position.coords.longitude,
                 },
-                icon: '/images/current-location-marker.png',
+                icon: {
+                  url: '/images/current-location-marker.png',
+                  scaledSize: { width: 32, height: 32 },
+                },
                 title: 'Your Location',
               },
             ]}

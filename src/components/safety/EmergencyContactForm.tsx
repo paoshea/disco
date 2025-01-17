@@ -2,18 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { TextField } from '@/components/forms/TextField';
 import { emergencyService } from '@/services/api/emergency.service';
-
-interface EmergencyContact {
-  name: string;
-  relationship: string;
-  phoneNumber: string;
-  email: string;
-  notifyOn: {
-    sosAlert: boolean;
-    meetupStart: boolean;
-    meetupEnd: boolean;
-  };
-}
+import type { EmergencyContact } from '@/types/safety';
 
 interface EmergencyContactFormProps {
   onSubmit: (data: Partial<EmergencyContact>) => void;
@@ -48,7 +37,7 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
   const handleFormSubmit = async (data: EmergencyContact) => {
     try {
       setIsSubmitting(true);
-      await emergencyService.addContact(data);
+      await emergencyService.addEmergencyContact(data);
       onSubmit(data);
     } catch (error) {
       console.error('Error saving emergency contact:', error);
