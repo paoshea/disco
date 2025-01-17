@@ -15,8 +15,12 @@ export interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   signup: (data: RegisterData) => Promise<void>;
+  register: (data: RegisterData) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  sendVerificationEmail: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -57,7 +61,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     throw err;
   };
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -65,6 +69,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(userData);
     } catch (err) {
       handleAuthError(err, 'Login');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const register = async (data: RegisterData): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await authService.register(data);
+      setUser(response.user);
+      localStorage.setItem('token', response.token);
+    } catch (err) {
+      console.error('Registration error:', err);
+      setError(err instanceof Error ? err.message : 'Registration failed');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -83,14 +103,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (data: RegisterData) => {
+  const requestPasswordReset = async (email: string): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      const userData = await authService.register(data);
+      await authService.requestPasswordReset(email);
+    } catch (err) {
+      console.error('Password reset request error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to request password reset');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const resetPassword = async (token: string, password: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await authService.resetPassword(token, password);
+    } catch (err) {
+      console.error('Password reset error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to reset password');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const verifyEmail = async (token: string): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await authService.verifyEmail(token);
+      const userData = await authService.getCurrentUser();
       setUser(userData);
     } catch (err) {
-      handleAuthError(err, 'Signup');
+      console.error('Email verification error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to verify email');
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const sendVerificationEmail = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      await authService.sendVerificationEmail();
+    } catch (err) {
+      console.error('Send verification email error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to send verification email');
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -113,27 +178,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const resetPassword = async (email: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      await authService.requestPasswordReset(email);
-    } catch (err) {
-      handleAuthError(err, 'Password reset');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const value = {
     user,
     loading,
     error,
     login,
     logout,
-    signup,
+    signup: register,
+    register,
     updateProfile,
+    requestPasswordReset,
     resetPassword,
+    verifyEmail,
+    sendVerificationEmail
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

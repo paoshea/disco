@@ -2,12 +2,14 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { Event, EventFilters } from '@/types/event';
 import { EventCard } from './EventCard';
 import { eventService } from '@/services/api/event.service';
+import { useAuth } from '@/hooks/useAuth';
 
 interface EventListProps {
   filters?: EventFilters;
 }
 
 export const EventList: React.FC<EventListProps> = ({ filters }) => {
+  const { user } = useAuth();
   const [events, setEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,22 +33,26 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
   }, [fetchEvents]);
 
   const handleJoinEvent = useCallback(async (eventId: string) => {
+    if (!user?.id) return;
+
     try {
-      const updatedEvent = await eventService.joinEvent(eventId);
+      const updatedEvent = await eventService.joinEvent(eventId, user.id);
       setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to join event:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   const handleLeaveEvent = useCallback(async (eventId: string) => {
+    if (!user?.id) return;
+
     try {
-      const updatedEvent = await eventService.leaveEvent(eventId);
+      const updatedEvent = await eventService.leaveEvent(eventId, user.id);
       setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to leave event:', error);
     }
-  }, []);
+  }, [user?.id]);
 
   if (isLoading) {
     return (

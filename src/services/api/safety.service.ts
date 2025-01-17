@@ -3,7 +3,7 @@ import { apiClient } from './api.client';
 import {
   SafetyAlert,
   SafetyCheck,
-  SafetySettings,
+  SafetySettingsNew,
   SafetyReport,
   EmergencyContact,
   SafetyEvidence,
@@ -36,17 +36,21 @@ class SafetyService {
   private readonly baseUrl = '/safety';
 
   // Safety Settings
-  async getSettings(userId: string): Promise<SafetySettings> {
-    const response = await apiClient.get<SafetySettings>(`${this.baseUrl}/settings/${userId}`);
+  async getSettings(userId: string): Promise<SafetySettingsNew> {
+    const response = await apiClient.get<SafetySettingsNew>(`${this.baseUrl}/settings/${userId}`);
     return response.data;
   }
 
-  async updateSettings(userId: string, settings: Partial<SafetySettings>): Promise<SafetySettings> {
-    const response = await apiClient.put<SafetySettings>(
+  async updateSettings(userId: string, settings: Partial<SafetySettingsNew>): Promise<SafetySettingsNew> {
+    const response = await apiClient.put<SafetySettingsNew>(
       `${this.baseUrl}/settings/${userId}`,
       settings
     );
     return response.data;
+  }
+
+  async updateSafetyFeature(userId: string, feature: keyof SafetySettingsNew, enabled: boolean): Promise<SafetySettingsNew> {
+    return this.updateSettings(userId, { [feature]: enabled });
   }
 
   // Emergency Contact Management

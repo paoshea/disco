@@ -1,38 +1,24 @@
 import React, { useState } from 'react';
-import type { SafetyFeaturesProps } from '@/types/safety';
+import type { SafetyFeaturesProps, SafetySettingsNew } from '@/types/safety';
 import { Switch } from '@/components/ui/Switch';
 import { Button } from '@/components/ui/Button';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { safetyService } from '@/services/api/safety.service';
 
-export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user }) => {
+export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, onSettingsChange }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleToggleFeature = async (feature: string, enabled: boolean) => {
+  const handleToggleFeature = async (feature: keyof SafetySettingsNew, enabled: boolean) => {
     try {
       setIsUpdating(true);
       setError(null);
-      await safetyService.updateSafetyFeature(user.id, feature, enabled);
+      const updatedSettings = await safetyService.updateSafetyFeature(user.id, feature, enabled);
+      onSettingsChange(updatedSettings);
     } catch (err) {
       console.error('Error updating safety feature:', err);
       setError(
         err instanceof Error ? err.message : 'An error occurred while updating safety features'
-      );
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const handleEmergencyContactUpdate = async () => {
-    try {
-      setIsUpdating(true);
-      setError(null);
-      await safetyService.updateEmergencyContacts(user.id);
-    } catch (err) {
-      console.error('Error updating emergency contacts:', err);
-      setError(
-        err instanceof Error ? err.message : 'An error occurred while updating emergency contacts'
       );
     } finally {
       setIsUpdating(false);
@@ -52,50 +38,53 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user }) => {
             </p>
           </div>
           <Switch
-            checked={user.safetySettings.locationSharing}
-            onChange={enabled => handleToggleFeature('locationSharing', enabled)}
+            checked={settings.autoShareLocation}
+            onChange={(enabled) => handleToggleFeature('autoShareLocation', enabled)}
             disabled={isUpdating}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Automatic Check-ins</h3>
+            <h3 className="text-lg font-medium text-gray-900">Meetup Check-ins</h3>
             <p className="text-sm text-gray-500">
-              Automatically request check-ins during high-risk activities
+              Automatically check in when arriving at meetup locations
             </p>
           </div>
           <Switch
-            checked={user.safetySettings.automaticCheckins}
-            onChange={enabled => handleToggleFeature('automaticCheckins', enabled)}
+            checked={settings.meetupCheckins}
+            onChange={(enabled) => handleToggleFeature('meetupCheckins', enabled)}
             disabled={isUpdating}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Emergency Notifications</h3>
+            <h3 className="text-lg font-medium text-gray-900">SOS Alert</h3>
             <p className="text-sm text-gray-500">
-              Send notifications to emergency contacts during alerts
+              Enable quick access to emergency SOS alerts
             </p>
           </div>
           <Switch
-            checked={user.safetySettings.emergencyNotifications}
-            onChange={enabled => handleToggleFeature('emergencyNotifications', enabled)}
+            checked={settings.sosAlertEnabled}
+            onChange={(enabled) => handleToggleFeature('sosAlertEnabled', enabled)}
             disabled={isUpdating}
           />
         </div>
-      </div>
 
-      <div className="mt-8">
-        <Button
-          onClick={handleEmergencyContactUpdate}
-          disabled={isUpdating}
-          variant="secondary"
-          className="w-full"
-        >
-          Update Emergency Contacts
-        </Button>
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Verified Match Required</h3>
+            <p className="text-sm text-gray-500">
+              Only allow meetups with verified users
+            </p>
+          </div>
+          <Switch
+            checked={settings.requireVerifiedMatch}
+            onChange={(enabled) => handleToggleFeature('requireVerifiedMatch', enabled)}
+            disabled={isUpdating}
+          />
+        </div>
       </div>
     </div>
   );

@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { XMarkIcon, ExclamationTriangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
-import type { SafetyAlert, SafetyAlertType } from '@/types/safety';
+import type { SafetyAlertNew } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 import { BaseMapView } from '@/components/map/BaseMapView';
+import type { LatLng } from '@/components/map/BaseMapView';
 
 interface SafetyAlertNotificationProps {
-  alert: SafetyAlert;
+  alert: SafetyAlertNew;
   onDismiss: () => Promise<void>;
 }
 
@@ -33,10 +34,10 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
     switch (alert.type) {
       case 'sos':
         return 'Emergency Alert';
-      case 'check-in':
-        return 'Check-in Alert';
-      case 'location-share':
+      case 'location':
         return 'Location Alert';
+      case 'meetup':
+        return 'Meetup Alert';
       case 'custom':
         return 'Custom Alert';
       default:
@@ -45,74 +46,82 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
   };
 
   const getAlertDescription = () => {
-    if (alert.message) {
-      return alert.message;
+    if (alert.description) {
+      return alert.description;
     }
     switch (alert.type) {
       case 'sos':
-        return 'Someone has triggered an emergency alert. Please check their location and respond accordingly.';
-      case 'check-in':
-        return 'A safety check-in has been requested.';
-      case 'location-share':
-        return 'A location has been shared for safety purposes.';
+        return 'Emergency assistance needed!';
+      case 'location':
+        return 'Location check requested';
+      case 'meetup':
+        return 'Meetup safety check';
       case 'custom':
-        return 'A custom safety alert has been triggered.';
+        return 'Safety alert';
       default:
-        return 'A safety alert has been triggered.';
+        return 'Safety alert';
+    }
+  };
+
+  const getAlertIcon = () => {
+    switch (alert.type) {
+      case 'sos':
+        return <ExclamationTriangleIcon className="h-6 w-6 text-red-500" />;
+      case 'location':
+      case 'meetup':
+        return <MapPinIcon className="h-6 w-6 text-blue-500" />;
+      default:
+        return <ExclamationTriangleIcon className="h-6 w-6 text-yellow-500" />;
     }
   };
 
   return (
-    <div className="relative rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
-      <div className="flex items-start">
-        <div className="flex-shrink-0">
-          <ExclamationTriangleIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
-        </div>
-        <div className="ml-3 w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">{getAlertTitle()}</p>
+    <div className="rounded-lg bg-white p-4 shadow-lg">
+      <div className="flex items-start space-x-4">
+        <div className="flex-shrink-0">{getAlertIcon()}</div>
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-medium text-gray-900">{getAlertTitle()}</h3>
           <p className="mt-1 text-sm text-gray-500">{getAlertDescription()}</p>
           {alert.location && (
             <div className="mt-2">
               <Button
-                size="sm"
                 variant="secondary"
+                size="sm"
                 onClick={() => setShowMap(!showMap)}
-                className="inline-flex items-center"
               >
-                <MapPinIcon className="mr-1.5 h-4 w-4" />
-                {showMap ? 'Hide Location' : 'View Location'}
+                {showMap ? 'Hide Map' : 'View Location'}
               </Button>
               {showMap && (
-                <div className="mt-2 h-48 w-full overflow-hidden rounded">
+                <div className="mt-2 h-48 w-full rounded-md overflow-hidden">
                   <BaseMapView
-                    center={{
-                      lat: alert.location.latitude,
-                      lng: alert.location.longitude,
-                    }}
+                    center={{ lat: alert.location.latitude, lng: alert.location.longitude }}
                     zoom={15}
+                    markers={[
+                      {
+                        id: alert.id,
+                        position: { lat: alert.location.latitude, lng: alert.location.longitude },
+                        title: getAlertTitle(),
+                      },
+                    ]}
                   />
                 </div>
               )}
             </div>
           )}
         </div>
-        <div className="ml-4 flex flex-shrink-0">
+        <div className="flex-shrink-0">
           <Button
-            type="button"
             variant="secondary"
+            size="sm"
             onClick={handleDismiss}
             disabled={isLoading}
-            className="inline-flex rounded-md text-gray-400 hover:text-gray-500"
           >
-            <span className="sr-only">Dismiss</span>
-            <XMarkIcon className="h-5 w-5" aria-hidden="true" />
+            <XMarkIcon className="h-5 w-5" />
           </Button>
         </div>
       </div>
       {error && (
-        <p className="mt-2 text-sm text-red-600" role="alert">
-          {error}
-        </p>
+        <p className="mt-2 text-sm text-red-600">{error}</p>
       )}
     </div>
   );

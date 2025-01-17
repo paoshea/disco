@@ -43,11 +43,11 @@ class AuthService {
     }
   }
 
-  async register(data: RegisterData): Promise<User> {
+  async register(data: RegisterData): Promise<LoginResponse> {
     try {
       const response = await api.post<LoginResponse>('/auth/register', data);
       this.setAuthToken(response.data.token);
-      return response.data.user;
+      return response.data;
     } catch (err) {
       throw this.handleError(err);
     }

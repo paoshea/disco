@@ -66,7 +66,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
             {alerts.map(alert => (
               <SafetyAlertNotification
                 key={alert.id}
-                alert={convertToSafetyAlert(alert)}
+                alert={alert}
                 onDismiss={() => dismissAlert(alert.id)}
               />
             ))}

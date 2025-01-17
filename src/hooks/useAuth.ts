@@ -1,15 +1,17 @@
 import { useContext } from 'react';
-import { AuthContext, AuthContextType } from '@/contexts/AuthContext';
+import { AuthContext, AuthContextType, RegisterData } from '@/contexts/AuthContext';
 import type { User } from '@/types/user';
 
-export interface UseAuthReturn extends Omit<AuthContextType, 'resetPassword'> {
+export interface UseAuthReturn {
   user: User | null;
+  loading: boolean;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
+  signup: (data: RegisterData) => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
@@ -17,13 +19,7 @@ export interface UseAuthReturn extends Omit<AuthContextType, 'resetPassword'> {
   sendVerificationEmail: () => Promise<void>;
 }
 
-export interface RegisterData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-}
+export type { RegisterData };
 
 export const useAuth = (): UseAuthReturn => {
   const context = useContext(AuthContext);
@@ -33,6 +29,7 @@ export const useAuth = (): UseAuthReturn => {
   return {
     ...context,
     user: context.user,
+    isLoading: context.loading,
     isAuthenticated: !!context.user,
   };
 };

@@ -130,15 +130,18 @@ export default function Safety() {
                 onSettingsChange={async (settings) => {
                   try {
                     await safetyService.updateSettings(user.id, {
-                      locationSharing: settings.autoShareLocation,
-                      automaticCheckins: settings.meetupCheckins,
-                      emergencyContactNotifications: settings.sosAlertEnabled,
-                      safetyRadius: 100,
-                      notificationPreferences: {
-                        email: true,
-                        push: true,
-                        sms: true
-                      }
+                      autoShareLocation: settings.autoShareLocation,
+                      meetupCheckins: settings.meetupCheckins,
+                      sosAlertEnabled: settings.sosAlertEnabled,
+                      requireVerifiedMatch: settings.requireVerifiedMatch,
+                      emergencyContacts: (user.emergencyContacts || []).map(contact => ({
+                        ...contact,
+                        userId: user.id,
+                        phoneNumber: contact.phoneNumber || '',
+                        email: contact.email || '',
+                        createdAt: contact.createdAt || new Date().toISOString(),
+                        updatedAt: contact.updatedAt || new Date().toISOString()
+                      }))
                     });
                   } catch (err) {
                     console.error('Error updating safety settings:', err);
@@ -173,11 +176,11 @@ export default function Safety() {
                 checks={safetyChecks.map(check => ({
                   id: check.id,
                   userId: check.userId,
-                  status: check.status === 'completed' ? 'safe' : check.status === 'missed' ? 'missed' : 'pending',
-                  scheduledTime: check.scheduledFor,
+                  type: check.type || 'custom',
+                  status: check.status === 'completed' ? 'completed' : check.status === 'missed' ? 'missed' : 'pending',
+                  scheduledFor: check.scheduledFor,
                   location: check.location,
-                  notes: check.description,
-                  notifiedContacts: [],
+                  description: check.description,
                   createdAt: check.createdAt,
                   updatedAt: check.updatedAt,
                   completedAt: check.completedAt

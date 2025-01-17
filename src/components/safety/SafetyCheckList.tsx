@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { SafetyCheck } from '@/types/safety';
+import { SafetyCheckNew } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 import { SafetyCheckModal } from './SafetyCheckModal';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SafetyCheckListProps {
-  checks: SafetyCheck[];
+  checks: SafetyCheckNew[];
   onComplete: (checkId: string) => Promise<void>;
 }
 
 export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComplete }) => {
-  const [selectedCheck, setSelectedCheck] = useState<SafetyCheck | null>(null);
+  const [selectedCheck, setSelectedCheck] = useState<SafetyCheckNew | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,9 +32,29 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
     }
   };
 
-  const handleCompleteWrapper = (checkId: string) => (e: React.MouseEvent) => {
+  const handleResolve = async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      if (status === 'safe') {
+        await onComplete(checkId);
+      }
+      setSelectedCheck(null);
+    } catch (err) {
+      console.error('Error resolving safety check:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while resolving the safety check. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCompleteWrapper = (check: SafetyCheckNew) => (e: React.MouseEvent) => {
     e.preventDefault();
-    void handleComplete(checkId);
+    setSelectedCheck(check);
   };
 
   if (!checks.length) {
@@ -58,23 +78,33 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
         >
           <div>
             <h3 className="text-sm font-medium text-gray-900">
-              {check.type === 'meetup' ? 'Meetup Safety Check' : 'Regular Safety Check'}
+              {check.type === 'meetup' ? 'Meetup Safety Check' : 
+               check.type === 'location' ? 'Location Safety Check' : 'Custom Safety Check'}
             </h3>
             <p className="text-sm text-gray-500">
-              {formatDistanceToNow(check.scheduledFor, { addSuffix: true })}
+              {formatDistanceToNow(new Date(check.scheduledFor), { addSuffix: true })}
             </p>
-            {check.notes && <p className="mt-1 text-sm text-gray-600">{check.notes}</p>}
+            {check.description && <p className="mt-1 text-sm text-gray-600">{check.description}</p>}
           </div>
           <Button
-            onClick={handleCompleteWrapper(check.id)}
+            onClick={handleCompleteWrapper(check)}
             disabled={isLoading}
             variant="primary"
             size="sm"
           >
-            {isLoading ? 'Completing...' : 'Complete'}
+            Complete Check
           </Button>
         </div>
       ))}
+
+      {selectedCheck && (
+        <SafetyCheckModal
+          check={selectedCheck}
+          isOpen={true}
+          onClose={() => setSelectedCheck(null)}
+          onResolve={handleResolve}
+        />
+      )}
     </div>
   );
 };
