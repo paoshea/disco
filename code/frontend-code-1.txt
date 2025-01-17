@@ -1,0 +1,517 @@
+# Configuration Files
+
+# tsconfig.json
+```json
+{
+  "compilerOptions": {
+    "target": "es5",
+    "lib": ["dom", "dom.iterable", "esnext"],
+    "allowJs": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "forceConsistentCasingInFileNames": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "module": "esnext",
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve",
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"],
+      "@components/*": ["src/components/*"],
+      "@features/*": ["src/features/*"],
+      "@services/*": ["src/services/*"],
+      "@utils/*": ["src/utils/*"],
+      "@hooks/*": ["src/hooks/*"],
+      "@store/*": ["src/store/*"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}
+```
+
+# tailwind.config.js
+```javascript
+module.exports = {
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx}',
+    './src/components/**/*.{js,ts,jsx,tsx}',
+    './src/features/**/*.{js,ts,jsx,tsx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        primary: {
+          50: '#f0f9ff',
+          100: '#e0f2fe',
+          200: '#bae6fd',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
+          800: '#075985',
+          900: '#0c4a6e',
+        },
+      },
+      spacing: {
+        '128': '32rem',
+      },
+    },
+  },
+  plugins: [],
+}
+```
+
+# Types
+
+# src/types/user.ts
+```typescript
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  profileImage?: string;
+  preferences: UserPreferences;
+  location?: UserLocation;
+  status: UserStatus;
+  createdAt: Date;
+}
+
+export interface UserPreferences {
+  discoveryRadius: number;
+  privacyEnabled: boolean;
+  notificationSettings: {
+    matches: boolean;
+    messages: boolean;
+  };
+  interests: string[];
+}
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  lastUpdated: Date;
+}
+
+export type UserStatus = 'online' | 'offline' | 'away' | 'busy';
+```
+
+# src/types/match.ts
+```typescript
+export interface Match {
+  id: string;
+  users: [string, string];
+  status: MatchStatus;
+  matchScore: number;
+  createdAt: Date;
+  lastInteraction?: Date;
+}
+
+export type MatchStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+
+export interface MatchPreview {
+  userId: string;
+  name: string;
+  distance: number;
+  matchScore: number;
+  commonInterests: string[];
+}
+```
+
+# Services
+
+# src/services/api/client.ts
+```typescript
+import axios from 'axios';
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+export const apiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('auth_token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    if (error.response?.status === 401) {
+      // Handle token refresh or logout
+      window.location.href = '/auth/login';
+    }
+    return Promise.reject(error);
+  }
+);
+```
+
+# src/services/api/user.service.ts
+```typescript
+import { apiClient } from './client';
+import { User, UserPreferences } from '@/types/user';
+
+export const userService = {
+  async getCurrentUser(): Promise<User> {
+    const { data } = await apiClient.get<User>('/users/me');
+    return data;
+  },
+
+  async updatePreferences(preferences: Partial<UserPreferences>): Promise<User> {
+    const { data } = await apiClient.patch<User>('/users/preferences', preferences);
+    return data;
+  },
+
+  async updateLocation(latitude: number, longitude: number): Promise<void> {
+    await apiClient.post('/users/location', { latitude, longitude });
+  },
+};
+```
+
+# src/services/websocket/socket.service.ts
+```typescript
+import { io, Socket } from 'socket.io-client';
+import { Match, MatchPreview } from '@/types/match';
+
+export class SocketService {
+  private socket: Socket | null = null;
+  private handlers: Map<string, Function[]> = new Map();
+
+  connect(token: string) {
+    this.socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    this.setupListeners();
+  }
+
+  private setupListeners() {
+    if (!this.socket) return;
+
+    this.socket.on('match:new', (match: MatchPreview) => {
+      this.emit('match:new', match);
+    });
+
+    this.socket.on('match:accepted', (match: Match) => {
+      this.emit('match:accepted', match);
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('Disconnected from websocket');
+    });
+  }
+
+  on(event: string, handler: Function) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, []);
+    }
+    this.handlers.get(event)?.push(handler);
+  }
+
+  private emit(event: string, data: any) {
+    this.handlers.get(event)?.forEach(handler => handler(data));
+  }
+
+  disconnect() {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
+  }
+}
+
+export const socketService = new SocketService();
+```
+
+# Store
+
+# src/store/store.ts
+```typescript
+import { configureStore } from '@reduxjs/toolkit';
+import { userReducer } from './slices/userSlice';
+import { matchReducer } from './slices/matchSlice';
+import { locationMiddleware } from './middleware/locationMiddleware';
+
+export const store = configureStore({
+  reducer: {
+    user: userReducer,
+    matches: matchReducer,
+  },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(locationMiddleware),
+});
+
+export type RootState = ReturnType<typeof store.getState>;
+export type AppDispatch = typeof store.dispatch;
+```
+
+# src/store/slices/userSlice.ts
+```typescript
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { User } from '@/types/user';
+import { userService } from '@/services/api/user.service';
+
+interface UserState {
+  currentUser: User | null;
+  loading: boolean;
+  error: string | null;
+}
+
+const initialState: UserState = {
+  currentUser: null,
+  loading: false,
+  error: null,
+};
+
+export const fetchCurrentUser = createAsyncThunk(
+  'user/fetchCurrent',
+  async () => {
+    return await userService.getCurrentUser();
+  }
+);
+
+export const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {
+    updateUserLocation: (state, action) => {
+      if (state.currentUser) {
+        state.currentUser.location = action.payload;
+      }
+    },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.currentUser = action.payload;
+        state.loading = false;
+      })
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.error = action.error.message || 'Failed to fetch user';
+        state.loading = false;
+      });
+  },
+});
+
+export const { updateUserLocation } = userSlice.actions;
+export const userReducer = userSlice.reducer;
+```
+
+# Hooks
+
+# src/hooks/useGeolocation.ts
+```typescript
+import { useState, useEffect } from 'react';
+import { useDispatch } from 'react-redux';
+import { updateUserLocation } from '@/store/slices/userSlice';
+import { userService } from '@/services/api/user.service';
+
+interface GeolocationState {
+  latitude: number | null;
+  longitude: number | null;
+  error: string | null;
+}
+
+export const useGeolocation = () => {
+  const dispatch = useDispatch();
+  const [state, setState] = useState<GeolocationState>({
+    latitude: null,
+    longitude: null,
+    error: null,
+  });
+
+  useEffect(() => {
+    if (!navigator.geolocation) {
+      setState(prev => ({
+        ...prev,
+        error: 'Geolocation is not supported',
+      }));
+      return;
+    }
+
+    const watchId = navigator.geolocation.watchPosition(
+      async (position) => {
+        const { latitude, longitude } = position.coords;
+        setState({
+          latitude,
+          longitude,
+          error: null,
+        });
+
+        // Update location in backend
+        try {
+          await userService.updateLocation(latitude, longitude);
+          dispatch(updateUserLocation({ latitude, longitude }));
+        } catch (error) {
+          console.error('Failed to update location:', error);
+        }
+      },
+      (error) => {
+        setState(prev => ({
+          ...prev,
+          error: error.message,
+        }));
+      },
+      {
+        enableHighAccuracy: true,
+        maximumAge: 30000, // 30 seconds
+        timeout: 27000, // 27 seconds
+      }
+    );
+
+    return () => {
+      navigator.geolocation.clearWatch(watchId);
+    };
+  }, [dispatch]);
+
+  return state;
+};
+```
+
+# Components
+
+# src/components/map/MapView.tsx
+```typescript
+import React, { useEffect, useRef } from 'react';
+import mapboxgl from 'mapbox-gl';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { Match } from '@/types/match';
+
+interface MapViewProps {
+  matches: Match[];
+  onMarkerClick: (matchId: string) => void;
+}
+
+mapboxgl.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+
+export const MapView: React.FC<MapViewProps> = ({ matches, onMarkerClick }) => {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const map = useRef<mapboxgl.Map | null>(null);
+  const { latitude, longitude, error } = useGeolocation();
+
+  useEffect(() => {
+    if (!mapContainer.current || map.current) return;
+
+    map.current = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: 'mapbox://styles/mapbox/streets-v11',
+      center: [longitude || -74.006, latitude || 40.7128],
+      zoom: 12,
+    });
+
+    // Add navigation control
+    map.current.addControl(new mapboxgl.NavigationControl());
+
+    return () => {
+      map.current?.remove();
+    };
+  }, [latitude, longitude]);
+
+  useEffect(() => {
+    if (!map.current || !latitude || !longitude) return;
+
+    map.current.setCenter([longitude, latitude]);
+
+    // Add user marker
+    new mapboxgl.Marker({ color: '#FF0000' })
+      .setLngLat([longitude, latitude])
+      .addTo(map.current);
+
+    // Add match markers
+    matches.forEach(match => {
+      const el = document.createElement('div');
+      el.className = 'match-marker';
+      el.addEventListener('click', () => onMarkerClick(match.id));
+
+      new mapboxgl.Marker(el)
+        .setLngLat([match.longitude, match.latitude])
+        .addTo(map.current!);
+    });
+  }, [matches, latitude, longitude, onMarkerClick]);
+
+  if (error) {
+    return <div className="text-red-500">Error: {error}</div>;
+  }
+
+  return (
+    <div 
+      ref={mapContainer} 
+      className="w-full h-128 rounded-lg shadow-lg"
+    />
+  );
+};
+```
+
+# src/components/matching/MatchCard.tsx
+```typescript
+import React from 'react';
+import Image from 'next/image';
+import { MatchPreview } from '@/types/match';
+
+interface MatchCardProps {
+  match: MatchPreview;
+  onAccept: (matchId: string) => void;
+  onDecline: (matchId: string) => void;
+}
+
+export const MatchCard: React.FC<MatchCardProps> = ({
+  match,
+  onAccept,
+  onDecline,
+}) => {
+  return (
+    <div className="bg-white rounded-lg shadow-md overflow-hidden">
+      <div className="relative h-64">
+        {match.profileImage ? (
+          <Image
+            src={match.profileImage}
+            alt={match.name}
+            layout="fill"
+            objectFit="cover"
+          />
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
+            <span className="text-2xl text-gray-400">No Image</span>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4">
+        <h3 className="text-xl font-semibold">{match.name}</h3>
+        <p className="text-gray-600">{match.distance}km away</p>
+
+        <div className="mt-2">
+          <h4 className="text-sm font-medium text-gray-700">Common Interests</h4>
+          <div className="flex flex-wrap gap-2 mt-1">
+            {match.commonInterests.map((interest) => (
+              <span
+                key={interest}
+                className="px-2 py-1 text-sm bg-primary-100 text-primary-800 rounded-full"
+              >
+                {interest}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-4 flex gap-4">
+          <button
+            onClick={() => onDecline(match.id)}
+            className="flex-1 py-2 px-4 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray

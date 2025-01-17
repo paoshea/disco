@@ -1,0 +1,405 @@
+# src/types/safety.ts
+```typescript
+export interface EmergencyContact {
+  id: string;
+  userId: string;
+  name: string;
+  phone: string;
+  relationship: string;
+}
+
+export interface EmergencyAlert {
+  id: string;
+  userId: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  timestamp: Date;
+}
+
+export interface SafetyCheck {
+  id: string;
+  meetingId: string;
+  userId: string;
+  scheduledTime: Date;
+  status: 'pending' | 'completed' | 'missed';
+  response?: 'safe' | 'unsafe';
+  notes?: string;
+}
+
+export interface SafetyReport {
+  id: string;
+  reporterId: string;
+  reportedUserId: string;
+  meetingId?: string;
+  type: 'inappropriate' | 'harassment' | 'safety' | 'other';
+  description: string;
+  evidence?: string[];
+  status: 'submitted' | 'reviewing' | 'resolved' | 'dismissed';
+  timestamp: Date;
+  resolution?: string;
+}
+```
+
+# src/components/safety/SafetyCheckModal.tsx
+```typescript
+import React, { useState } from 'react';
+import { Dialog } from '@headlessui/react';
+import { SafetyCheck } from '@/types/safety';
+import { safetyService } from '@/services/safety/safety.service';
+
+interface SafetyCheckModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  meetingId: string;
+  userId: string;
+}
+
+export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
+  isOpen,
+  onClose,
+  meetingId,
+  userId,
+}) => {
+  const [response, setResponse] = useState<'safe' | 'unsafe'>();
+  const [notes, setNotes] = useState('');
+
+  const handleSubmit = async () => {
+    if (!response) return;
+
+    try {
+      await safetyService.submitSafetyCheck({
+        meetingId,
+        userId,
+        response,
+        notes,
+        status: 'completed',
+        scheduledTime: new Date(),
+      });
+
+      if (response === 'unsafe') {
+        await safetyService.triggerEmergencyAlert({
+          userId,
+          location: await getCurrentLocation(),
+          timestamp: new Date(),
+        });
+      }
+
+      onClose();
+    } catch (error) {
+      console.error('Failed to submit safety check:', error);
+    }
+  };
+
+  const getCurrentLocation = async () => {
+    return new Promise<{ latitude: number; longitude: number }>((resolve, reject) => {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+        },
+        (error) => {
+          reject(error);
+        }
+      );
+    });
+  };
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-50">
+      <div className="min-h-screen px-4 text-center">
+        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+
+        <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+          <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+            Safety Check
+          </Dialog.Title>
+
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">
+              Please confirm your safety status. Your response will be kept confidential.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div className="flex space-x-4">
+                <button
+                  onClick={() => setResponse('safe')}
+                  className={`flex-1 py-2 px-4 rounded-lg border ${
+                    response === 'safe'
+                      ? 'bg-green-500 text-white border-transparent'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  I'm Safe
+                </button>
+                <button
+                  onClick={() => setResponse('unsafe')}
+                  className={`flex-1 py-2 px-4 rounded-lg border ${
+                    response === 'unsafe'
+                      ? 'bg-red-500 text-white border-transparent'
+                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Need Help
+                </button>
+              </div>
+
+              <div>
+                <label htmlFor="notes" className="block text-sm font-medium text-gray-700">
+                  Additional Notes (Optional)
+                </label>
+                <textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={3}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Add any relevant details..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={!response}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Submit
+            </button>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  );
+};
+```
+
+# src/components/safety/ReportUserModal.tsx
+```typescript
+import React, { useState } from 'react';
+import { Dialog } from '@headlessui/react';
+import { SafetyReport } from '@/types/safety';
+import { safetyService } from '@/services/safety/safety.service';
+
+interface ReportUserModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  reportedUserId: string;
+  meetingId?: string;
+}
+
+export const ReportUserModal: React.FC<ReportUserModalProps> = ({
+  isOpen,
+  onClose,
+  reportedUserId,
+  meetingId,
+}) => {
+  const [reportType, setReportType] = useState<SafetyReport['type']>('inappropriate');
+  const [description, setDescription] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      await safetyService.submitReport({
+        reportedUserId,
+        meetingId,
+        type: reportType,
+        description,
+        status: 'submitted',
+        timestamp: new Date(),
+      });
+      onClose();
+    } catch (error) {
+      console.error('Failed to submit report:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const reportTypes = [
+    { id: 'inappropriate', label: 'Inappropriate Behavior' },
+    { id: 'harassment', label: 'Harassment' },
+    { id: 'safety', label: 'Safety Concern' },
+    { id: 'other', label: 'Other' },
+  ] as const;
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-50">
+      <div className="min-h-screen px-4 text-center">
+        <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
+
+        <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
+          <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+            Report User
+          </Dialog.Title>
+
+          <div className="mt-4">
+            <p className="text-sm text-gray-500">
+              Your report will be reviewed by our safety team. All reports are confidential.
+            </p>
+
+            <div className="mt-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">
+                  Report Type
+                </label>
+                <select
+                  value={reportType}
+                  onChange={(e) => setReportType(e.target.value as SafetyReport['type'])}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                >
+                  {reportTypes.map((type) => (
+                    <option key={type.id} value={type.id}>
+                      {type.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description
+                </label>
+                <textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  rows={4}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  placeholder="Please provide details about your concern..."
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-6 flex justify-end space-x-3">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 rounded-lg border border-gray-300"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting || !description.trim()}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Report'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Dialog>
+  );
+};
+```
+
+# src/hooks/useSafetyChecks.ts
+```typescript
+import { useState, useEffect } from 'react';
+import { SafetyCheck } from '@/types/safety';
+import { safetyService } from '@/services/safety/safety.service';
+import { useAuth } from './useAuth';
+
+export const useSafetyChecks = (meetingId: string) => {
+  const { user } = useAuth();
+  const [checks, setChecks] = useState<SafetyCheck[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchChecks = async () => {
+      try {
+        const response = await safetyService.getSafetyChecks(meetingId);
+        setChecks(response);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load safety checks');
+        console.error('Error fetching safety checks:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (meetingId && user) {
+      fetchChecks();
+    }
+  }, [meetingId, user]);
+
+  const scheduleCheck = async (checkTime: Date) => {
+    try {
+      const newCheck = await safetyService.scheduleSafetyCheck(meetingId, checkTime);
+      setChecks([...checks, newCheck]);
+      return newCheck;
+    } catch (error) {
+      console.error('Failed to schedule safety check:', error);
+      throw error;
+    }
+  };
+
+  const respondToCheck = async (checkId: string, response: 'safe' | 'unsafe', notes?: string) => {
+    try {
+      const updatedCheck = await safetyService.submitSafetyCheck({
+        id: checkId,
+        meetingId,
+        userId: user!.id,
+        response,
+        notes,
+        status: 'completed',
+        scheduledTime: new Date(),
+      });
+
+      setChecks(checks.map(check => 
+        check.id === checkId ? updatedCheck : check
+      ));
+
+      return updatedCheck;
+    } catch (error) {
+      console.error('Failed to respond to safety check:', error);
+      throw error;
+    }
+  };
+
+  return {
+    checks,
+    loading,
+    error,
+    scheduleCheck,
+    respondToCheck,
+  };
+};
+```
+
+These components and types implement a comprehensive safety system including:
+
+1. Emergency Contact Management
+2. Real-time Safety Checks
+3. User Reporting System
+4. Safety Status Monitoring
+5. Emergency Alert System
+
+The safety features are designed to be:
+- Easy to access in emergencies
+- Privacy-focused
+- Integrated with location services
+- Connected to emergency contacts
+- Proactive with scheduled checks
+
+Would you like me to add:
+1. More safety monitoring features?
+2. Additional reporting capabilities?
+3. Integration with emergency services?
+4. Enhanced privacy controls?
