@@ -35,7 +35,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   };
 
   return (
-    <div 
+    <div
       className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transition-transform hover:scale-105"
       onClick={onClick}
     >

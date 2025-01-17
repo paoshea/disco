@@ -5,7 +5,11 @@ import { Button } from '@/components/ui/Button';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { safetyService } from '@/services/api/safety.service';
 
-export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, onSettingsChange }) => {
+export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
+  user,
+  settings,
+  onSettingsChange,
+}) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +43,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, 
           </div>
           <Switch
             checked={settings.autoShareLocation}
-            onChange={(enabled) => handleToggleFeature('autoShareLocation', enabled)}
+            onChange={enabled => handleToggleFeature('autoShareLocation', enabled)}
             disabled={isUpdating}
           />
         </div>
@@ -53,7 +57,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, 
           </div>
           <Switch
             checked={settings.meetupCheckins}
-            onChange={(enabled) => handleToggleFeature('meetupCheckins', enabled)}
+            onChange={enabled => handleToggleFeature('meetupCheckins', enabled)}
             disabled={isUpdating}
           />
         </div>
@@ -61,13 +65,11 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-900">SOS Alert</h3>
-            <p className="text-sm text-gray-500">
-              Enable quick access to emergency SOS alerts
-            </p>
+            <p className="text-sm text-gray-500">Enable quick access to emergency SOS alerts</p>
           </div>
           <Switch
             checked={settings.sosAlertEnabled}
-            onChange={(enabled) => handleToggleFeature('sosAlertEnabled', enabled)}
+            onChange={enabled => handleToggleFeature('sosAlertEnabled', enabled)}
             disabled={isUpdating}
           />
         </div>
@@ -75,13 +77,11 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user, settings, 
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-lg font-medium text-gray-900">Verified Match Required</h3>
-            <p className="text-sm text-gray-500">
-              Only allow meetups with verified users
-            </p>
+            <p className="text-sm text-gray-500">Only allow meetups with verified users</p>
           </div>
           <Switch
             checked={settings.requireVerifiedMatch}
-            onChange={(enabled) => handleToggleFeature('requireVerifiedMatch', enabled)}
+            onChange={enabled => handleToggleFeature('requireVerifiedMatch', enabled)}
             disabled={isUpdating}
           />
         </div>

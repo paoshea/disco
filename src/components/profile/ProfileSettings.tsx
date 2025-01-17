@@ -68,7 +68,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           },
         };
         setSettings(settings);
-        
+
         // Handle nested objects when setting form values
         const setNestedValues = (obj: any, prefix = '') => {
           Object.entries(obj).forEach(([key, value]) => {
@@ -80,7 +80,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             }
           });
         };
-        
+
         setNestedValues(settings);
       } catch (error) {
         console.error('Error loading settings:', error);
@@ -130,9 +130,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Age Range
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Age Range</label>
             <div className="mt-1 grid grid-cols-2 gap-4">
               <input
                 type="number"
@@ -163,9 +161,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </Switch.Label>
               <Switch
                 checked={watch(`privacy.${key as keyof typeof settings.privacy}`)}
-                onChange={v =>
-                  setValue(`privacy.${key as keyof typeof settings.privacy}`, v)
-                }
+                onChange={v => setValue(`privacy.${key as keyof typeof settings.privacy}`, v)}
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
@@ -223,9 +219,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </Switch.Label>
               <Switch
                 checked={watch(`safety.${key as keyof typeof settings.safety}`)}
-                onChange={v =>
-                  setValue(`safety.${key as keyof typeof settings.safety}`, v)
-                }
+                onChange={v => setValue(`safety.${key as keyof typeof settings.safety}`, v)}
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}

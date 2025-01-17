@@ -11,9 +11,12 @@ import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 const convertToSafetyAlert = (alert: SafetyAlertNew): SafetyAlert => ({
   id: alert.id,
   userId: alert.userId,
-  type: alert.type === 'location' ? 'location-share' : 
-        alert.type === 'meetup' ? 'check-in' : 
-        alert.type as 'sos' | 'custom',
+  type:
+    alert.type === 'location'
+      ? 'location-share'
+      : alert.type === 'meetup'
+        ? 'check-in'
+        : (alert.type as 'sos' | 'custom'),
   status: alert.status === 'active' ? 'pending' : alert.status,
   location: alert.location,
   message: alert.description,
@@ -21,13 +24,10 @@ const convertToSafetyAlert = (alert: SafetyAlertNew): SafetyAlert => ({
   notifiedContacts: [],
   createdAt: alert.createdAt,
   updatedAt: alert.updatedAt,
-  resolvedAt: alert.resolvedAt
+  resolvedAt: alert.resolvedAt,
 });
 
-export const SafetyCenter: React.FC<SafetyCenterProps> = ({
-  userId,
-  onSettingsChange,
-}) => {
+export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsChange }) => {
   const { alerts, isLoading, error, dismissAlert, addAlert } = useSafetyAlert();
 
   if (isLoading) {
@@ -46,8 +46,8 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
     <div className="space-y-8">
       <section>
         <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
-        <EmergencyAlert 
-          userId={userId} 
+        <EmergencyAlert
+          userId={userId}
           onAlertTriggered={alert => {
             if (alert.type === 'sos') {
               addAlert({
@@ -55,7 +55,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
                 description: alert.description || 'Emergency alert triggered',
               });
             }
-          }} 
+          }}
         />
       </section>
 
@@ -76,7 +76,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
 
       <section>
         <h2 className="mb-4 text-xl font-semibold text-gray-900">Safety Features</h2>
-        <SafetyFeatures 
+        <SafetyFeatures
           user={{
             id: userId,
             name: '',
@@ -89,14 +89,14 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
             emergencyContacts: [],
             verificationStatus: 'unverified',
             createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
           }}
           settings={{
             autoShareLocation: false,
             meetupCheckins: false,
             sosAlertEnabled: true,
             requireVerifiedMatch: false,
-            emergencyContacts: []
+            emergencyContacts: [],
           }}
           onSettingsChange={onSettingsChange || (() => {})}
         />

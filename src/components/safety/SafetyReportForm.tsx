@@ -70,7 +70,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
           type: 'image',
           url: data.url,
           description: files[index].name,
-          createdAt: new Date().toISOString()
+          createdAt: new Date().toISOString(),
         })),
       });
     } catch (err) {
@@ -87,9 +87,9 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
-      <Select 
-        label="Report Type" 
-        {...register('type')} 
+      <Select
+        label="Report Type"
+        {...register('type')}
         error={errors.type?.message}
         name="type"
         options={[
@@ -98,7 +98,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
           { value: 'inappropriate', label: 'Inappropriate Content' },
           { value: 'spam', label: 'Spam' },
           { value: 'scam', label: 'Scam' },
-          { value: 'other', label: 'Other' }
+          { value: 'other', label: 'Other' },
         ]}
       />
 

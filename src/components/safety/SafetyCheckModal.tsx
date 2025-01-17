@@ -49,7 +49,9 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
           </Dialog.Title>
 
           <div className="mt-4">
-            <p className="text-sm text-gray-500">{check.description || 'Please confirm your safety status'}</p>
+            <p className="text-sm text-gray-500">
+              {check.description || 'Please confirm your safety status'}
+            </p>
 
             {error && <ErrorMessage message={error} className="mt-4" />}
 

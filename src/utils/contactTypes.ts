@@ -1,5 +1,6 @@
 import { EmergencyContact as UserEmergencyContact } from '@/types/user';
 import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
+import { EmergencyContactNew } from '@/types/safety';
 
 type NotificationEvent = 'sosAlert' | 'meetupStart' | 'meetupEnd';
 type SafetyNotificationEvent = 'sos' | 'meetup';
@@ -63,16 +64,17 @@ interface NotificationPreferences {
 export const toSafetyContact = (
   contact: UserEmergencyContact,
   userId: string
-): SafetyEmergencyContact => {
+): EmergencyContactNew => {
   return {
     id: contact.id,
     userId,
     name: contact.name,
-    phoneNumber: contact.phoneNumber,
-    email: contact.email || '',
+    phone: contact.phoneNumber,
+    email: contact.email,
     relationship: contact.relationship,
     isVerified: false,
-    isPrimary: false,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
   };
 };
 

@@ -61,11 +61,7 @@ export const MatchList: React.FC<MatchListProps> = ({ matches, onMatchClick }) =
   }
 
   if (matches.length === 0) {
-    return (
-      <div className="text-gray-500 text-center py-8">
-        No matches found. Keep exploring!
-      </div>
-    );
+    return <div className="text-gray-500 text-center py-8">No matches found. Keep exploring!</div>;
   }
 
   return (

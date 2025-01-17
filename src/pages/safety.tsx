@@ -72,14 +72,7 @@ export default function Safety() {
           </p>
         </div>
 
-        {error && (
-          <Alert 
-            type="error" 
-            title="Error"
-            message={error} 
-            className="mb-6" 
-          />
-        )}
+        {error && <Alert type="error" title="Error" message={error} className="mb-6" />}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -127,7 +120,7 @@ export default function Safety() {
             <Tab.Panel>
               <SafetyCenter
                 userId={user.id}
-                onSettingsChange={async (settings) => {
+                onSettingsChange={async settings => {
                   try {
                     await safetyService.updateSettings(user.id, {
                       autoShareLocation: settings.autoShareLocation,
@@ -140,20 +133,22 @@ export default function Safety() {
                         phoneNumber: contact.phoneNumber || '',
                         email: contact.email || '',
                         createdAt: contact.createdAt || new Date().toISOString(),
-                        updatedAt: contact.updatedAt || new Date().toISOString()
-                      }))
+                        updatedAt: contact.updatedAt || new Date().toISOString(),
+                      })),
                     });
                   } catch (err) {
                     console.error('Error updating safety settings:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to update safety settings');
+                    setError(
+                      err instanceof Error ? err.message : 'Failed to update safety settings'
+                    );
                   }
                 }}
               />
             </Tab.Panel>
             <Tab.Panel>
-              <EmergencyContactList 
-                contacts={[]} 
-                onEdit={async (contact) => {
+              <EmergencyContactList
+                contacts={[]}
+                onEdit={async contact => {
                   try {
                     await safetyService.updateEmergencyContact(user.id, contact.id, contact);
                   } catch (err) {
@@ -161,7 +156,7 @@ export default function Safety() {
                     setError(err instanceof Error ? err.message : 'Failed to update contact');
                   }
                 }}
-                onDelete={async (contactId) => {
+                onDelete={async contactId => {
                   try {
                     await safetyService.deleteEmergencyContact(user.id, contactId);
                   } catch (err) {
@@ -172,25 +167,32 @@ export default function Safety() {
               />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyCheckList 
+              <SafetyCheckList
                 checks={safetyChecks.map(check => ({
                   id: check.id,
                   userId: check.userId,
                   type: check.type || 'custom',
-                  status: check.status === 'completed' ? 'completed' : check.status === 'missed' ? 'missed' : 'pending',
+                  status:
+                    check.status === 'completed'
+                      ? 'completed'
+                      : check.status === 'missed'
+                        ? 'missed'
+                        : 'pending',
                   scheduledFor: check.scheduledFor,
                   location: check.location,
                   description: check.description,
                   createdAt: check.createdAt,
                   updatedAt: check.updatedAt,
-                  completedAt: check.completedAt
+                  completedAt: check.completedAt,
                 }))}
                 onComplete={async (checkId: string) => {
                   try {
                     await resolveSafetyCheck(checkId, 'safe');
                   } catch (err) {
                     console.error('Error completing safety check:', err);
-                    setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+                    setError(
+                      err instanceof Error ? err.message : 'Failed to complete safety check'
+                    );
                   }
                 }}
               />

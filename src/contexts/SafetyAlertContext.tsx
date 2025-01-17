@@ -46,17 +46,21 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
     const defaultLocation: Location = {
       latitude: 0,
       longitude: 0,
-      accuracy: 0
+      accuracy: 0,
     };
 
     return {
       ...alert,
-      type: alert.type === 'check-in' || alert.type === 'location-share' ? 'location' : 
-            alert.type === 'sos' ? 'sos' : 'custom',
+      type:
+        alert.type === 'check-in' || alert.type === 'location-share'
+          ? 'location'
+          : alert.type === 'sos'
+            ? 'sos'
+            : 'custom',
       status: alert.status === 'pending' ? 'active' : alert.status,
       location: alert.location || defaultLocation,
       description: alert.message,
-      evidence: []
+      evidence: [],
     };
   };
 
@@ -72,13 +76,20 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       ]);
 
       setAlerts(alertsData.map(convertToSafetyAlertNew));
-      setSafetyChecks(checksData.map(check => ({
-        ...check,
-        type: 'location',
-        scheduledFor: check.scheduledTime,
-        status: check.status === 'safe' ? 'completed' : check.status === 'unsafe' ? 'missed' : 'pending',
-        description: check.notes
-      })));
+      setSafetyChecks(
+        checksData.map(check => ({
+          ...check,
+          type: 'location',
+          scheduledFor: check.scheduledTime,
+          status:
+            check.status === 'safe'
+              ? 'completed'
+              : check.status === 'unsafe'
+                ? 'missed'
+                : 'pending',
+          description: check.notes,
+        }))
+      );
     } catch (err) {
       console.error('Error fetching safety data:', err);
       setError(
@@ -130,16 +141,25 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
         setError(null);
         const updatedCheck = await safetyService.resolveSafetyCheck(user.id, checkId, {
           status,
-          notes
+          notes,
         });
         setSafetyChecks(prev =>
-          prev.map(check => (check.id === checkId ? {
-            ...updatedCheck,
-            type: 'location',
-            scheduledFor: updatedCheck.scheduledTime,
-            status: updatedCheck.status === 'safe' ? 'completed' : updatedCheck.status === 'unsafe' ? 'missed' : 'pending',
-            description: updatedCheck.notes
-          } : check))
+          prev.map(check =>
+            check.id === checkId
+              ? {
+                  ...updatedCheck,
+                  type: 'location',
+                  scheduledFor: updatedCheck.scheduledTime,
+                  status:
+                    updatedCheck.status === 'safe'
+                      ? 'completed'
+                      : updatedCheck.status === 'unsafe'
+                        ? 'missed'
+                        : 'pending',
+                  description: updatedCheck.notes,
+                }
+              : check
+          )
         );
       } catch (err) {
         console.error('Error resolving safety check:', err);
@@ -193,9 +213,9 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       try {
         setError(null);
         const updatedAlert = await safetyService.resolveAlert(alertId);
-        setAlerts(prev => prev.map(alert => 
-          alert.id === alertId ? convertToSafetyAlertNew(updatedAlert) : alert
-        ));
+        setAlerts(prev =>
+          prev.map(alert => (alert.id === alertId ? convertToSafetyAlertNew(updatedAlert) : alert))
+        );
       } catch (err) {
         console.error('Error resolving alert:', err);
         throw err instanceof Error ? err : new Error('Failed to resolve alert');

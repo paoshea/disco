@@ -32,27 +32,33 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
     void fetchEvents();
   }, [fetchEvents]);
 
-  const handleJoinEvent = useCallback(async (eventId: string) => {
-    if (!user?.id) return;
+  const handleJoinEvent = useCallback(
+    async (eventId: string) => {
+      if (!user?.id) return;
 
-    try {
-      const updatedEvent = await eventService.joinEvent(eventId, user.id);
-      setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
-    } catch (error) {
-      console.error('Failed to join event:', error);
-    }
-  }, [user?.id]);
+      try {
+        const updatedEvent = await eventService.joinEvent(eventId, user.id);
+        setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
+      } catch (error) {
+        console.error('Failed to join event:', error);
+      }
+    },
+    [user?.id]
+  );
 
-  const handleLeaveEvent = useCallback(async (eventId: string) => {
-    if (!user?.id) return;
+  const handleLeaveEvent = useCallback(
+    async (eventId: string) => {
+      if (!user?.id) return;
 
-    try {
-      const updatedEvent = await eventService.leaveEvent(eventId, user.id);
-      setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
-    } catch (error) {
-      console.error('Failed to leave event:', error);
-    }
-  }, [user?.id]);
+      try {
+        const updatedEvent = await eventService.leaveEvent(eventId, user.id);
+        setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
+      } catch (error) {
+        console.error('Failed to leave event:', error);
+      }
+    },
+    [user?.id]
+  );
 
   if (isLoading) {
     return (

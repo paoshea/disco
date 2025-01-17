@@ -41,7 +41,10 @@ class SafetyService {
     return response.data;
   }
 
-  async updateSettings(userId: string, settings: Partial<SafetySettingsNew>): Promise<SafetySettingsNew> {
+  async updateSettings(
+    userId: string,
+    settings: Partial<SafetySettingsNew>
+  ): Promise<SafetySettingsNew> {
     const response = await apiClient.put<SafetySettingsNew>(
       `${this.baseUrl}/settings/${userId}`,
       settings
@@ -49,7 +52,11 @@ class SafetyService {
     return response.data;
   }
 
-  async updateSafetyFeature(userId: string, feature: keyof SafetySettingsNew, enabled: boolean): Promise<SafetySettingsNew> {
+  async updateSafetyFeature(
+    userId: string,
+    feature: keyof SafetySettingsNew,
+    enabled: boolean
+  ): Promise<SafetySettingsNew> {
     return this.updateSettings(userId, { [feature]: enabled });
   }
 

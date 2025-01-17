@@ -78,8 +78,11 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
         >
           <div>
             <h3 className="text-sm font-medium text-gray-900">
-              {check.type === 'meetup' ? 'Meetup Safety Check' : 
-               check.type === 'location' ? 'Location Safety Check' : 'Custom Safety Check'}
+              {check.type === 'meetup'
+                ? 'Meetup Safety Check'
+                : check.type === 'location'
+                  ? 'Location Safety Check'
+                  : 'Custom Safety Check'}
             </h3>
             <p className="text-sm text-gray-500">
               {formatDistanceToNow(new Date(check.scheduledFor), { addSuffix: true })}

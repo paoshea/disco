@@ -84,11 +84,7 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
           <p className="mt-1 text-sm text-gray-500">{getAlertDescription()}</p>
           {alert.location && (
             <div className="mt-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setShowMap(!showMap)}
-              >
+              <Button variant="secondary" size="sm" onClick={() => setShowMap(!showMap)}>
                 {showMap ? 'Hide Map' : 'View Location'}
               </Button>
               {showMap && (
@@ -110,19 +106,12 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
           )}
         </div>
         <div className="flex-shrink-0">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleDismiss}
-            disabled={isLoading}
-          >
+          <Button variant="secondary" size="sm" onClick={handleDismiss} disabled={isLoading}>
             <XMarkIcon className="h-5 w-5" />
           </Button>
         </div>
       </div>
-      {error && (
-        <p className="mt-2 text-sm text-red-600">{error}</p>
-      )}
+      {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
     </div>
   );
 };
