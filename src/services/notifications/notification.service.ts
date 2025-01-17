@@ -1,20 +1,28 @@
-type Permission = 'default' | 'granted' | 'denied';
+type NotificationPermission = 'default' | 'granted' | 'denied';
 
-interface NotificationOptions {
+interface NotificationData {
+  type: string;
+  [key: string]: unknown;
+}
+
+interface NotificationOptions<T extends NotificationData = NotificationData> {
   title: string;
   body: string;
   icon?: string;
-  data?: any;
+  data?: T;
   onClick?: () => void;
 }
 
+type NotificationHandler = (notification: Notification) => void | Promise<void>;
+
 export class NotificationService {
   private static instance: NotificationService;
-  private permission: Permission = 'default';
-  private handlers: Map<string, (notification: Notification) => void> = new Map();
+  private permission: NotificationPermission = 'default';
+  private handlers: Map<string, NotificationHandler> = new Map();
+  private readonly storageKey = 'notification_permission';
 
   private constructor() {
-    this.init();
+    void this.init();
   }
 
   public static getInstance(): NotificationService {
@@ -24,33 +32,49 @@ export class NotificationService {
     return NotificationService.instance;
   }
 
-  private async init() {
-    if (!('Notification' in window)) {
+  private async init(): Promise<void> {
+    if (!this.isSupported()) {
       console.warn('This browser does not support notifications');
       return;
     }
 
-    this.permission = Notification.permission;
+    // Load saved permission from storage
+    const savedPermission = localStorage.getItem(this.storageKey) as NotificationPermission | null;
+    if (savedPermission) {
+      this.permission = savedPermission;
+    } else {
+      this.permission = Notification.permission;
+      localStorage.setItem(this.storageKey, this.permission);
+    }
 
     if (this.permission === 'default') {
-      const permission = await Notification.requestPermission();
-      this.permission = permission;
+      await this.requestPermission();
     }
   }
 
-  public async requestPermission(): Promise<Permission> {
-    if (!('Notification' in window)) {
+  private isSupported(): boolean {
+    return 'Notification' in window;
+  }
+
+  public async requestPermission(): Promise<NotificationPermission> {
+    if (!this.isSupported()) {
       console.warn('This browser does not support notifications');
       return 'denied';
     }
 
-    const permission = await Notification.requestPermission();
-    this.permission = permission;
-    return permission;
+    try {
+      const permission = await Notification.requestPermission();
+      this.permission = permission;
+      localStorage.setItem(this.storageKey, permission);
+      return permission;
+    } catch (error) {
+      console.error('Error requesting notification permission:', error);
+      return 'denied';
+    }
   }
 
-  public async show(options: NotificationOptions): Promise<void> {
-    if (!('Notification' in window)) {
+  public async show<T extends NotificationData>(options: NotificationOptions<T>): Promise<void> {
+    if (!this.isSupported()) {
       console.warn('This browser does not support notifications');
       return;
     }
@@ -60,38 +84,51 @@ export class NotificationService {
       return;
     }
 
-    const notification = new Notification(options.title, {
-      body: options.body,
-      icon: options.icon,
-      data: options.data,
-    });
+    try {
+      const notification = new Notification(options.title, {
+        body: options.body,
+        icon: options.icon,
+        data: options.data,
+      });
 
-    if (options.onClick) {
-      notification.onclick = options.onClick;
+      notification.onclick = async (event) => {
+        event.preventDefault();
+        
+        if (options.data?.type) {
+          const handler = this.handlers.get(options.data.type);
+          if (handler) {
+            try {
+              await handler(notification);
+            } catch (error) {
+              console.error(`Error in notification handler for type ${options.data.type}:`, error);
+            }
+          }
+        }
+
+        if (options.onClick) {
+          try {
+            options.onClick();
+          } catch (error) {
+            console.error('Error in onClick handler:', error);
+          }
+        }
+
+        notification.close();
+      };
+    } catch (error) {
+      console.error('Error showing notification:', error);
     }
-
-    // Handle notification click for registered handlers
-    notification.onclick = event => {
-      event.preventDefault();
-      if (options.data?.type && this.handlers.has(options.data.type)) {
-        this.handlers.get(options.data.type)?.(notification);
-      }
-      if (options.onClick) {
-        options.onClick();
-      }
-      notification.close();
-    };
   }
 
-  public registerHandler(type: string, handler: (notification: Notification) => void) {
+  public registerHandler(type: string, handler: NotificationHandler): void {
     this.handlers.set(type, handler);
   }
 
-  public unregisterHandler(type: string) {
+  public unregisterHandler(type: string): void {
     this.handlers.delete(type);
   }
 
-  public async showMatchNotification(match: { id: string; name: string; profileImage?: string }) {
+  public async showMatchNotification(match: { id: string; name: string; profileImage?: string }): Promise<void> {
     await this.show({
       title: 'New Match!',
       body: `You matched with ${match.name}`,
@@ -104,37 +141,29 @@ export class NotificationService {
     });
   }
 
-  public async showMessageNotification(message: {
-    matchId: string;
-    senderName: string;
-    content: string;
-    senderImage?: string;
-  }) {
+  public async showMessageNotification(message: { id: string; senderId: string; senderName: string; content: string }): Promise<void> {
     await this.show({
       title: `Message from ${message.senderName}`,
       body: message.content,
-      icon: message.senderImage,
-      data: { type: 'message', matchId: message.matchId },
+      data: { type: 'message', messageId: message.id, senderId: message.senderId },
       onClick: () => {
         window.focus();
-        window.location.href = `/chat/${message.matchId}`;
+        window.location.href = `/messages/${message.senderId}`;
       },
     });
   }
 
-  public async showSafetyAlert(alert: {
-    id: string;
-    type: 'emergency' | 'warning';
-    message: string;
-  }) {
+  public async showSafetyAlertNotification(alert: { id: string; userId: string; type: string; message: string }): Promise<void> {
     await this.show({
-      title: alert.type === 'emergency' ? '🚨 Emergency Alert' : '⚠️ Safety Warning',
+      title: 'Safety Alert',
       body: alert.message,
-      data: { type: 'safety', alertId: alert.id },
+      data: { type: 'safety_alert', alertId: alert.id, userId: alert.userId, alertType: alert.type },
       onClick: () => {
         window.focus();
-        window.location.href = '/safety';
+        window.location.href = `/safety/alerts/${alert.id}`;
       },
     });
   }
 }
+
+export const notificationService = NotificationService.getInstance();

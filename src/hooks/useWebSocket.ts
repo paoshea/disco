@@ -1,75 +1,140 @@
-import { useEffect, useRef, useCallback } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useAuth } from './useAuth';
 
-type WebSocketEventHandler = (data: any) => void;
-
-interface WebSocketHook {
-  on: (event: string, handler: WebSocketEventHandler) => void;
-  off: (event: string, handler: WebSocketEventHandler) => void;
-  send: (event: string, data: any) => void;
+interface WebSocketOptions {
+  url: string;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
+  protocols?: string | string[];
+  onMessage?: (data: WebSocketData) => void;
+  onConnect?: () => void;
+  onDisconnect?: () => void;
+  onError?: (error: Event) => void;
 }
 
-export const useWebSocket = (): WebSocketHook | null => {
+interface WebSocketData {
+  type: string;
+  payload: unknown;
+}
+
+interface WebSocketState {
+  isConnected: boolean;
+  error: Error | null;
+  lastMessage: WebSocketData | null;
+}
+
+export const useWebSocket = ({
+  url,
+  reconnectInterval = 5000,
+  maxReconnectAttempts = 5,
+  protocols,
+  onMessage,
+  onConnect,
+  onDisconnect,
+  onError,
+}: WebSocketOptions) => {
   const { user } = useAuth();
+  const [state, setState] = useState<WebSocketState>({
+    isConnected: false,
+    error: null,
+    lastMessage: null,
+  });
+
   const ws = useRef<WebSocket | null>(null);
-  const eventHandlers = useRef<Map<string, Set<WebSocketEventHandler>>>(new Map());
+  const reconnectAttempts = useRef(0);
+  const reconnectTimeoutId = useRef<NodeJS.Timeout>();
 
   const connect = useCallback(() => {
-    if (!user?.id) return;
-
-    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/ws?userId=${user.id}`;
-
-    ws.current = new WebSocket(wsUrl);
-
-    ws.current.onmessage = event => {
-      try {
-        const { type, data } = JSON.parse(event.data);
-        const handlers = eventHandlers.current.get(type);
-        if (handlers) {
-          handlers.forEach(handler => handler(data));
-        }
-      } catch (error) {
-        console.error('WebSocket message parsing error:', error);
+    try {
+      const token = localStorage.getItem('token');
+      const wsUrl = new URL(url);
+      if (token && user?.id) {
+        wsUrl.searchParams.append('token', token);
+        wsUrl.searchParams.append('userId', user.id);
       }
-    };
 
-    ws.current.onclose = () => {
-      // Attempt to reconnect after a delay
-      setTimeout(connect, 3000);
-    };
+      ws.current = new WebSocket(wsUrl.toString(), protocols);
 
-    ws.current.onerror = error => {
-      console.error('WebSocket error:', error);
-      ws.current?.close();
-    };
-  }, [user?.id]);
+      ws.current.onopen = () => {
+        setState(prev => ({ ...prev, isConnected: true, error: null }));
+        reconnectAttempts.current = 0;
+        onConnect?.();
+      };
+
+      ws.current.onclose = () => {
+        setState(prev => ({ ...prev, isConnected: false }));
+        onDisconnect?.();
+
+        if (reconnectAttempts.current < maxReconnectAttempts) {
+          reconnectTimeoutId.current = setTimeout(() => {
+            reconnectAttempts.current += 1;
+            connect();
+          }, reconnectInterval);
+        } else {
+          setState(prev => ({
+            ...prev,
+            error: new Error('Max reconnection attempts reached'),
+          }));
+        }
+      };
+
+      ws.current.onerror = (event: Event) => {
+        setState(prev => ({
+          ...prev,
+          error: new Error('WebSocket connection error'),
+        }));
+        onError?.(event);
+      };
+
+      ws.current.onmessage = (event: MessageEvent) => {
+        try {
+          const data: WebSocketData = JSON.parse(event.data);
+          setState(prev => ({ ...prev, lastMessage: data }));
+          onMessage?.(data);
+        } catch (err) {
+          console.error('Failed to parse WebSocket message:', err);
+          setState(prev => ({
+            ...prev,
+            error: new Error('Failed to parse WebSocket message'),
+          }));
+        }
+      };
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to connect to WebSocket');
+      setState(prev => ({ ...prev, error }));
+    }
+  }, [url, protocols, maxReconnectAttempts, reconnectInterval, user?.id, onConnect, onDisconnect, onError, onMessage]);
+
+  const disconnect = useCallback(() => {
+    if (reconnectTimeoutId.current) {
+      clearTimeout(reconnectTimeoutId.current);
+    }
+
+    if (ws.current) {
+      ws.current.close();
+      ws.current = null;
+    }
+
+    setState(prev => ({ ...prev, isConnected: false }));
+  }, []);
+
+  const send = useCallback((type: string, payload: unknown) => {
+    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+      throw new Error('WebSocket is not connected');
+    }
+
+    ws.current.send(JSON.stringify({ type, payload }));
+  }, []);
 
   useEffect(() => {
     connect();
-    return () => {
-      ws.current?.close();
-    };
-  }, [connect]);
+    return () => disconnect();
+  }, [connect, disconnect]);
 
-  const on = useCallback((event: string, handler: WebSocketEventHandler) => {
-    if (!eventHandlers.current.has(event)) {
-      eventHandlers.current.set(event, new Set());
-    }
-    eventHandlers.current.get(event)?.add(handler);
-  }, []);
-
-  const off = useCallback((event: string, handler: WebSocketEventHandler) => {
-    eventHandlers.current.get(event)?.delete(handler);
-  }, []);
-
-  const send = useCallback((event: string, data: any) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: event, data }));
-    }
-  }, []);
-
-  if (!ws.current) return null;
-
-  return { on, off, send };
+  return {
+    ...state,
+    send,
+    disconnect,
+    reconnect: connect,
+  };
 };

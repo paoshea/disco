@@ -1,15 +1,11 @@
 import { io, Socket } from 'socket.io-client';
-import { Message } from '../types/chat';
 
 export class SocketService {
   private socket: Socket | null = null;
-  private eventHandlers: Map<string, ((...args: any[]) => void)[]> = new Map();
+  private eventHandlers: Map<string, Function[]> = new Map();
 
-  connect(url: string): void {
-    if (this.socket) {
-      console.warn('Socket connection already exists');
-      return;
-    }
+  constructor() {
+    const url = process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'http://localhost:8080';
 
     this.socket = io(url, {
       transports: ['websocket'],
@@ -17,71 +13,57 @@ export class SocketService {
     });
 
     // Reconnect existing event handlers
-    this.eventHandlers.forEach((handlers, event) => {
-      handlers.forEach(handler => {
-        this.socket?.on(event, handler);
+    this.socket.on('connect', () => {
+      this.eventHandlers.forEach((handlers, event) => {
+        handlers.forEach(handler => {
+          this.socket?.on(event, handler);
+        });
       });
     });
   }
 
-  disconnect(): void {
-    if (!this.socket) {
-      console.warn('No socket connection exists');
-      return;
+  public on<T = any>(event: string, handler: (data: T) => void): void {
+    if (!this.socket) return;
+
+    // Store handler for reconnection
+    if (!this.eventHandlers.has(event)) {
+      this.eventHandlers.set(event, []);
     }
+    this.eventHandlers.get(event)?.push(handler);
 
-    this.socket.disconnect();
-    this.socket = null;
-  }
-
-  on(event: string, handler: (...args: any[]) => void): void {
-    if (!this.socket) {
-      console.warn('No socket connection exists');
-      return;
-    }
-
-    // Store the handler
-    const handlers = this.eventHandlers.get(event) || [];
-    handlers.push(handler);
-    this.eventHandlers.set(event, handlers);
-
-    // Attach the handler
     this.socket.on(event, handler);
   }
 
-  off(event: string, handler: (...args: any[]) => void): void {
-    if (!this.socket) {
-      console.warn('No socket connection exists');
-      return;
-    }
+  public off<T = any>(event: string, handler?: (data: T) => void): void {
+    if (!this.socket) return;
 
-    // Remove the handler from storage
-    const handlers = this.eventHandlers.get(event) || [];
-    const index = handlers.indexOf(handler);
-    if (index !== -1) {
-      handlers.splice(index, 1);
-      if (handlers.length === 0) {
-        this.eventHandlers.delete(event);
-      } else {
-        this.eventHandlers.set(event, handlers);
+    if (handler) {
+      // Remove specific handler
+      this.socket.off(event, handler);
+      const handlers = this.eventHandlers.get(event);
+      if (handlers) {
+        const index = handlers.indexOf(handler);
+        if (index > -1) {
+          handlers.splice(index, 1);
+        }
       }
+    } else {
+      // Remove all handlers for this event
+      this.socket.off(event);
+      this.eventHandlers.delete(event);
     }
-
-    // Detach the handler
-    this.socket.off(event, handler);
   }
 
-  emit(event: string, ...args: any[]): void {
-    if (!this.socket) {
-      console.warn('No socket connection exists');
-      return;
-    }
-
-    this.socket.emit(event, ...args);
+  public emit<T = any>(event: string, data: T): void {
+    if (!this.socket) return;
+    this.socket.emit(event, data);
   }
 
-  isConnected(): boolean {
-    return this.socket?.connected || false;
+  public disconnect(): void {
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+    }
   }
 }
 

@@ -1,56 +1,89 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 interface GeolocationState {
-  latitude: number;
-  longitude: number;
-  accuracy: number;
-  error?: GeolocationPositionError;
+  position: GeolocationPosition | null;
+  error: GeolocationError | null;
+  isLoading: boolean;
 }
 
-export const useGeolocation = () => {
-  const [location, setLocation] = useState<GeolocationState | null>(null);
-  const [error, setError] = useState<GeolocationPositionError | null>(null);
+interface GeolocationOptions extends Omit<PositionOptions, 'timeout'> {
+  timeout?: number;
+  watchPosition?: boolean;
+}
+
+interface GeolocationError {
+  code: number;
+  message: string;
+}
+
+export const useGeolocation = (options: GeolocationOptions = {}) => {
+  const [state, setState] = useState<GeolocationState>({
+    position: null,
+    error: null,
+    isLoading: true,
+  });
+
+  const { watchPosition = false, timeout = 10000, ...positionOptions } = options;
+
+  const handleSuccess = useCallback((position: GeolocationPosition) => {
+    setState({
+      position,
+      error: null,
+      isLoading: false,
+    });
+  }, []);
+
+  const handleError = useCallback((error: GeolocationPositionError) => {
+    setState({
+      position: null,
+      error: {
+        code: error.code,
+        message: error.message,
+      },
+      isLoading: false,
+    });
+  }, []);
 
   useEffect(() => {
     if (!navigator.geolocation) {
-      const err = new Error('Geolocation is not supported');
-      const geolocationError = {
-        code: 2, // POSITION_UNAVAILABLE
-        message: err.message,
-        PERMISSION_DENIED: 1,
-        POSITION_UNAVAILABLE: 2,
-        TIMEOUT: 3,
-      } as GeolocationPositionError;
-      setError(geolocationError);
+      setState({
+        position: null,
+        error: {
+          code: 0,
+          message: 'Geolocation is not supported by this browser',
+        },
+        isLoading: false,
+      });
       return;
     }
 
-    const handleSuccess = (position: GeolocationPosition) => {
-      setLocation({
-        latitude: position.coords.latitude,
-        longitude: position.coords.longitude,
-        accuracy: position.coords.accuracy,
-      });
-      setError(null);
+    const geoOptions: PositionOptions = {
+      ...positionOptions,
+      timeout,
     };
 
-    const handleError = (error: GeolocationPositionError) => {
-      setError(error);
-      setLocation(null);
-    };
+    let watchId: number | undefined;
 
-    const options: PositionOptions = {
-      enableHighAccuracy: true,
-      timeout: 5000,
-      maximumAge: 0,
-    };
-
-    const watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, options);
+    if (watchPosition) {
+      watchId = navigator.geolocation.watchPosition(
+        handleSuccess,
+        handleError,
+        geoOptions
+      );
+    } else {
+      navigator.geolocation.getCurrentPosition(
+        handleSuccess,
+        handleError,
+        geoOptions
+      );
+    }
 
     return () => {
-      navigator.geolocation.clearWatch(watchId);
+      if (watchId !== undefined) {
+        navigator.geolocation.clearWatch(watchId);
+      }
     };
-  }, []);
+  }, [watchPosition, timeout, handleSuccess, handleError, positionOptions]);
 
-  return { location, error };
+  return state;
 };

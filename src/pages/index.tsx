@@ -1,36 +1,42 @@
-import type { NextPage } from 'next';
+import { useEffect } from 'react';
+import { useRouter } from 'next/router';
+import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
-import { MatchCard } from '@/components/matching/MatchCard';
-import { MatchPreview } from '@/types/match';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
-const HomePage: NextPage = () => {
-  // This is just mock data for now
-  const mockMatch: MatchPreview = {
-    id: '1',
-    name: 'John Doe',
-    distance: 0.5,
-    commonInterests: ['Music', 'Coffee', 'Tech'],
-    lastActive: new Date().toISOString(),
-  };
+export default function Home() {
+  const router = useRouter();
+  const { user, isLoading } = useAuth();
 
-  const handleAccept = (matchId: string) => {
-    console.log('Accepted match:', matchId);
-  };
+  useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/login');
+    } else if (!isLoading && user) {
+      router.push('/profile');
+    }
+  }, [user, isLoading, router]);
 
-  const handleDecline = (matchId: string) => {
-    console.log('Declined match:', matchId);
-  };
+  if (isLoading) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <Layout>
-      <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">Nearby Connections</h1>
-        <div className="space-y-6">
-          <MatchCard match={mockMatch} onAccept={handleAccept} onDecline={handleDecline} />
-        </div>
+      <div className="flex min-h-screen flex-col items-center justify-center py-2">
+        <main className="flex w-full flex-1 flex-col items-center justify-center px-20 text-center">
+          <h1 className="text-6xl font-bold">
+            Welcome to{' '}
+            <span className="text-primary-600">Disco</span>
+          </h1>
+          <p className="mt-3 text-2xl">
+            Redirecting you to the appropriate page...
+          </p>
+        </main>
       </div>
     </Layout>
   );
-};
-
-export default HomePage;
+}

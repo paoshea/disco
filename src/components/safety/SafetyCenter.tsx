@@ -1,204 +1,200 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { safetyService } from '@/services/api/safety.service';
-import { EmergencyContact } from '@/types/user';
-import { SafetyReport } from '@/types/safety';
+import { SafetySettings, EmergencyContact, VerificationStatus } from '@/types/safety';
 import { EmergencyContactList } from './EmergencyContactList';
 import { EmergencyContactForm } from './EmergencyContactForm';
-import { SafetyReportForm } from './SafetyReportForm';
-import { Button } from '@/components/ui/Button';
-import { Modal } from '@/components/ui/Modal';
+import { SafetyFeatures } from './SafetyFeatures';
+import { SafetyCheckModal } from './SafetyCheckModal';
 
-interface SafetyCenterProps {
-  className?: string;
-}
-
-const SafetyCenter: React.FC<SafetyCenterProps> = ({ className }) => {
+export const SafetyCenter: React.FC = () => {
   const { user } = useAuth();
-  const [contacts, setContacts] = useState<EmergencyContact[]>([]);
-  const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [reports, setReports] = useState<SafetyReport[]>([]);
+  const [settings, setSettings] = useState<SafetySettings | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [showSafetyCheck, setShowSafetyCheck] = useState(false);
   const [showContactForm, setShowContactForm] = useState(false);
-  const [showReportForm, setShowReportForm] = useState(false);
+  const [editingContact, setEditingContact] = useState<EmergencyContact | null>(null);
+
+  const fetchSafetySettings = useCallback(async () => {
+    if (!user?.id) return;
+
+    try {
+      const data = await safetyService.getSettings(user.id);
+      setSettings(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load safety settings');
+      console.error('Error fetching safety settings:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user) {
-      loadContacts();
-      loadReports();
-    }
-  }, [user]);
+    fetchSafetySettings();
+  }, [fetchSafetySettings]);
 
-  const loadContacts = async () => {
+  const handleUpdateSettings = async (updates: Partial<SafetySettings>) => {
+    if (!user?.id || !settings) return;
+
     try {
-      const contactsData = await safetyService.getEmergencyContacts(user!.id);
-      setContacts(
-        contactsData.map(contact => ({
-          id: contact.id,
-          name: contact.name,
-          relationship: contact.relationship,
-          phoneNumber: contact.phoneNumber,
-          email: contact.email,
-          notifyOn: contact.notifyOn,
-        }))
-      );
-    } catch (error) {
-      console.error('Error loading emergency contacts:', error);
-    } finally {
-      setIsLoading(false);
+      const updatedSettings = await safetyService.updateSettings(user.id, {
+        ...settings,
+        ...updates,
+      });
+      setSettings(updatedSettings);
+      setError(null);
+    } catch (err) {
+      setError('Failed to update safety settings');
+      console.error('Error updating safety settings:', err);
     }
   };
 
-  const loadReports = async () => {
-    try {
-      const reportsData = await safetyService.getSafetyReports(user!.id);
-      setReports(reportsData);
-    } catch (error) {
-      console.error('Error loading safety reports:', error);
-    }
-  };
+  const handleAddContact = async (contact: Omit<EmergencyContact, 'id' | 'verificationStatus' | 'verifiedAt' | 'createdAt' | 'updatedAt'>) => {
+    if (!user?.id || !settings) return;
 
-  const handleSaveContact = async (data: Partial<EmergencyContact>) => {
     try {
-      if (editingContact) {
-        const updated = await safetyService.updateEmergencyContact(editingContact.id, data);
-        setContacts(prev => prev.map(c => (c.id === updated.id ? updated : c)));
-      } else {
-        const created = await safetyService.createEmergencyContact({
-          ...data,
-          notifyOn: {
-            sosAlert: true,
-            meetupStart: true,
-            meetupEnd: true,
-          },
-        } as EmergencyContact);
-        setContacts(prev => [...prev, created]);
-      }
-      setEditingContact(null);
+      const newContact = await safetyService.addEmergencyContact(user.id, {
+        ...contact,
+        verificationStatus: 'pending' as VerificationStatus,
+      });
+      
+      setSettings({
+        ...settings,
+        emergencyContacts: [...settings.emergencyContacts, newContact],
+      });
       setShowContactForm(false);
-    } catch (error) {
-      console.error('Error saving emergency contact:', error);
+      setError(null);
+    } catch (err) {
+      setError('Failed to add emergency contact');
+      console.error('Error adding emergency contact:', err);
+    }
+  };
+
+  const handleUpdateContact = async (contactId: string, updates: Partial<EmergencyContact>) => {
+    if (!user?.id || !settings) return;
+
+    try {
+      const updatedContact = await safetyService.updateEmergencyContact(user.id, contactId, updates);
+      setSettings({
+        ...settings,
+        emergencyContacts: settings.emergencyContacts.map(contact =>
+          contact.id === contactId ? updatedContact : contact
+        ),
+      });
+      setEditingContact(null);
+      setError(null);
+    } catch (err) {
+      setError('Failed to update emergency contact');
+      console.error('Error updating emergency contact:', err);
     }
   };
 
   const handleDeleteContact = async (contactId: string) => {
+    if (!user?.id || !settings) return;
+
     try {
-      await safetyService.deleteEmergencyContact(contactId);
-      setContacts(prev => prev.filter(c => c.id !== contactId));
-    } catch (error) {
-      console.error('Error deleting emergency contact:', error);
+      await safetyService.deleteEmergencyContact(user.id, contactId);
+      setSettings({
+        ...settings,
+        emergencyContacts: settings.emergencyContacts.filter(contact => contact.id !== contactId),
+      });
+      setError(null);
+    } catch (err) {
+      setError('Failed to delete emergency contact');
+      console.error('Error deleting emergency contact:', err);
     }
   };
 
-  const handleCreateReport = async (data: Partial<SafetyReport>): Promise<void> => {
-    try {
-      if (!data.reportedId) {
-        throw new Error('reportedId is required');
-      }
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent" />
+      </div>
+    );
+  }
 
-      const report = {
-        ...data,
-        reporterId: user!.id,
-        reportedId: data.reportedId,
-        type: data.type!,
-        description: data.description!,
-        evidence: [],
-        status: 'pending' as const,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      };
-      const created = await safetyService.createSafetyReport(report);
-      setReports(prev => [...prev, created]);
-      setShowReportForm(false);
-    } catch (error) {
-      console.error('Error creating safety report:', error);
-      throw error;
-    }
-  };
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600 mb-4">{error}</p>
+        <button
+          onClick={fetchSafetySettings}
+          className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
 
-  if (!user) {
+  if (!settings) {
     return null;
   }
 
-  if (isLoading) return <div>Loading...</div>;
-
   return (
-    <div className={className}>
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Emergency Contacts</h2>
-          <Button onClick={() => setShowContactForm(true)}>Add Contact</Button>
+    <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Safety Center</h2>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage your safety settings and emergency contacts
+          </p>
         </div>
 
-        <EmergencyContactList
-          contacts={contacts}
-          onEdit={contact => {
-            setEditingContact(contact);
-            setShowContactForm(true);
-          }}
-          onDelete={handleDeleteContact}
-        />
-      </section>
-
-      <section>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold">Safety Reports</h2>
-          <Button onClick={() => setShowReportForm(true)}>Submit Report</Button>
-        </div>
-
-        {reports.length > 0 ? (
-          <div className="space-y-4">
-            {reports.map(report => (
-              <div key={report.id} className="p-4 bg-white rounded-lg shadow">
-                <div className="flex justify-between">
-                  <h3 className="font-medium">{report.type}</h3>
-                  <span className="text-sm text-gray-500">
-                    {new Date(report.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <p className="mt-2 text-gray-600">{report.description}</p>
-                {report.evidence && report.evidence.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-500">
-                      Evidence: {report.evidence.length} files
-                    </p>
-                  </div>
-                )}
-              </div>
-            ))}
+        {error && (
+          <div className="rounded-md bg-red-50 p-4">
+            <p className="text-sm text-red-700">{error}</p>
           </div>
-        ) : (
-          <p className="text-gray-500">No safety reports submitted yet.</p>
         )}
-      </section>
 
-      <Modal
-        isOpen={showContactForm}
-        onClose={() => {
-          setShowContactForm(false);
-          setEditingContact(null);
-        }}
-        title={editingContact ? 'Edit Contact' : 'Add Contact'}
-      >
-        <EmergencyContactForm
-          initialData={editingContact || undefined}
-          onSubmit={handleSaveContact}
-          onCancel={() => {
-            setShowContactForm(false);
-            setEditingContact(null);
-          }}
+        <SafetyFeatures
+          settings={settings}
+          onUpdateSettings={handleUpdateSettings}
+          verificationStatus={settings.verificationStatus}
         />
-      </Modal>
 
-      <Modal
-        isOpen={showReportForm}
-        onClose={() => setShowReportForm(false)}
-        title="Submit Safety Report"
-      >
-        <SafetyReportForm onSubmit={handleCreateReport} onCancel={() => setShowReportForm(false)} />
-      </Modal>
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Emergency Contacts</h3>
+            <button
+              onClick={() => setShowContactForm(true)}
+              className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              Add Contact
+            </button>
+          </div>
+
+          <EmergencyContactList
+            contacts={settings.emergencyContacts}
+            onEdit={setEditingContact}
+            onDelete={handleDeleteContact}
+          />
+        </div>
+      </div>
+
+      {showContactForm && (
+        <EmergencyContactForm
+          onSubmit={handleAddContact}
+          onCancel={() => setShowContactForm(false)}
+        />
+      )}
+
+      {editingContact && (
+        <EmergencyContactForm
+          contact={editingContact}
+          onSubmit={updates => handleUpdateContact(editingContact.id, updates)}
+          onCancel={() => setEditingContact(null)}
+        />
+      )}
+
+      {showSafetyCheck && (
+        <SafetyCheckModal
+          onClose={() => setShowSafetyCheck(false)}
+          onComplete={fetchSafetySettings}
+        />
+      )}
     </div>
   );
 };
-
-export default SafetyCenter;

@@ -1,11 +1,12 @@
+import { AxiosResponse } from 'axios';
 import { EmergencyContact } from '@/types/user';
-import { EmergencyAlert, SafetyCheck, SafetyReport } from '@/types/safety';
+import { EmergencyAlert, SafetyCheck, SafetyReport, AlertStatus } from '@/types/safety';
 import { api } from './api';
 
 class SafetyService {
   // Emergency Contact Management
   async createEmergencyContact(contact: Omit<EmergencyContact, 'id'>): Promise<EmergencyContact> {
-    const response = await api.post('/safety/emergency-contacts', contact);
+    const response: AxiosResponse<EmergencyContact> = await api.post('/safety/emergency-contacts', contact);
     return response.data;
   }
 
@@ -13,7 +14,7 @@ class SafetyService {
     id: string,
     contact: Partial<EmergencyContact>
   ): Promise<EmergencyContact> {
-    const response = await api.put(`/safety/emergency-contacts/${id}`, contact);
+    const response: AxiosResponse<EmergencyContact> = await api.put(`/safety/emergency-contacts/${id}`, contact);
     return response.data;
   }
 
@@ -22,7 +23,7 @@ class SafetyService {
   }
 
   async getEmergencyContacts(userId: string): Promise<EmergencyContact[]> {
-    const response = await api.get(`/safety/emergency-contacts/${userId}`);
+    const response: AxiosResponse<EmergencyContact[]> = await api.get(`/safety/emergency-contacts/${userId}`);
     return response.data;
   }
 
@@ -30,39 +31,43 @@ class SafetyService {
   async createSafetyReport(
     report: Omit<SafetyReport, 'id' | 'createdAt' | 'updatedAt'>
   ): Promise<SafetyReport> {
-    const response = await api.post('/safety/reports', report);
+    const response: AxiosResponse<SafetyReport> = await api.post('/safety/reports', report);
     return response.data;
   }
 
   async getSafetyReports(userId: string): Promise<SafetyReport[]> {
-    const response = await api.get(`/safety/reports/${userId}`);
+    const response: AxiosResponse<SafetyReport[]> = await api.get(`/safety/reports/${userId}`);
     return response.data;
   }
 
   // Emergency Alerts
   async getActiveAlerts(userId: string): Promise<EmergencyAlert[]> {
-    const response = await api.get(`/safety/emergency-alert/active/${userId}`);
+    const response: AxiosResponse<EmergencyAlert[]> = await api.get(`/safety/emergency-alert/active/${userId}`);
     return response.data;
   }
 
   async triggerEmergencyAlert(alert: Omit<EmergencyAlert, 'id'>): Promise<EmergencyAlert> {
-    const response = await api.post('/safety/emergency-alert', alert);
+    const response: AxiosResponse<EmergencyAlert> = await api.post('/safety/emergency-alert', alert);
     return response.data;
   }
 
-  async resolveEmergencyAlert(id: string): Promise<EmergencyAlert> {
-    const response = await api.put(`/safety/emergency-alert/${id}/resolve`);
+  async resolveEmergencyAlert(alertId: string): Promise<EmergencyAlert> {
+    const response: AxiosResponse<EmergencyAlert> = await api.put(`/safety/emergency-alert/${alertId}`, {
+      status: AlertStatus.RESOLVED,
+    });
     return response.data;
   }
 
   // Safety Checks
-  async submitSafetyCheck(check: Omit<SafetyCheck, 'id'>): Promise<SafetyCheck> {
-    const response = await api.post('/safety/checks', check);
+  async getSafetyChecks(userId: string): Promise<SafetyCheck[]> {
+    const response: AxiosResponse<SafetyCheck[]> = await api.get(`/safety/checks/${userId}`);
     return response.data;
   }
 
-  async getSafetyChecks(meetingId: string): Promise<SafetyCheck[]> {
-    const response = await api.get(`/safety/checks/${meetingId}`);
+  async respondToSafetyCheck(checkId: string, isOkay: boolean): Promise<SafetyCheck> {
+    const response: AxiosResponse<SafetyCheck> = await api.put(`/safety/checks/${checkId}/respond`, {
+      isOkay,
+    });
     return response.data;
   }
 }

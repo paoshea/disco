@@ -1,88 +1,131 @@
-import React, { createContext, useContext, useEffect, useRef } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth } from './AuthContext';
+import { socketService, WebSocketEvent, WebSocketMessage } from '@/services/socket.service';
 
 interface WebSocketContextType {
-  send: (event: string, data: any) => void;
-  on: (event: string, callback: (data: any) => void) => void;
-  off: (event: string, callback: (data: any) => void) => void;
+  isConnected: boolean;
+  error: string | null;
+  send: <T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>) => void;
+  subscribe: <T extends WebSocketEvent>(
+    event: T,
+    callback: (data: WebSocketMessage<T>) => void
+  ) => () => void;
 }
 
-const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
+const WebSocketContext = createContext<WebSocketContextType | null>(null);
+
+export const useWebSocket = () => {
+  const context = useContext(WebSocketContext);
+  if (!context) {
+    throw new Error('useWebSocket must be used within a WebSocketProvider');
+  }
+  return context;
+};
 
 interface WebSocketProviderProps {
   children: React.ReactNode;
+  url: string;
+  reconnectInterval?: number;
+  maxReconnectAttempts?: number;
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ children }) => {
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
+  children,
+  url,
+  reconnectInterval = 5000,
+  maxReconnectAttempts = 5,
+}) => {
   const { user } = useAuth();
-  const ws = useRef<WebSocket | null>(null);
-  const listeners = useRef<Map<string, Set<(data: any) => void>>>(new Map());
+  const [isConnected, setIsConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const reconnectAttempts = useRef(0);
+  const reconnectTimeoutId = useRef<NodeJS.Timeout>();
+
+  const connect = () => {
+    try {
+      socketService.connect(url, {
+        auth: {
+          token: localStorage.getItem('token'),
+          userId: user?.id,
+        },
+      });
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to connect to WebSocket';
+      setError(errorMessage);
+      console.error('WebSocket connection error:', err);
+    }
+  };
+
+  const handleConnectionError = (err: Error) => {
+    setIsConnected(false);
+    setError(`Connection error: ${err.message}`);
+    
+    if (reconnectAttempts.current < maxReconnectAttempts) {
+      reconnectTimeoutId.current = setTimeout(() => {
+        reconnectAttempts.current += 1;
+        connect();
+      }, reconnectInterval);
+    } else {
+      setError('Max reconnection attempts reached. Please refresh the page.');
+    }
+  };
 
   useEffect(() => {
     if (!user?.id) return;
 
-    const connect = () => {
-      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-      const wsUrl = `${protocol}//${window.location.host}/api/ws?userId=${user.id}`;
-      ws.current = new WebSocket(wsUrl);
-
-      ws.current.onmessage = event => {
-        try {
-          const { type, data } = JSON.parse(event.data);
-          const eventListeners = listeners.current.get(type);
-          if (eventListeners) {
-            eventListeners.forEach(callback => callback(data));
-          }
-        } catch (error) {
-          console.error('WebSocket message error:', error);
-        }
-      };
-
-      ws.current.onclose = () => {
-        // Reconnect after 1 second
-        setTimeout(connect, 1000);
-      };
-    };
-
     connect();
 
-    return () => {
-      ws.current?.close();
+    const handleConnect = () => {
+      setIsConnected(true);
+      setError(null);
+      reconnectAttempts.current = 0;
     };
-  }, [user?.id]);
 
-  const send = (event: string, data: any) => {
-    if (ws.current?.readyState === WebSocket.OPEN) {
-      ws.current.send(JSON.stringify({ type: event, data }));
-    }
-  };
+    const handleDisconnect = () => {
+      setIsConnected(false);
+      setError('Disconnected from server');
+    };
 
-  const on = (event: string, callback: (data: any) => void) => {
-    if (!listeners.current.has(event)) {
-      listeners.current.set(event, new Set());
-    }
-    listeners.current.get(event)!.add(callback);
-  };
+    socketService.on('connect', handleConnect);
+    socketService.on('disconnect', handleDisconnect);
+    socketService.on('error', handleConnectionError);
 
-  const off = (event: string, callback: (data: any) => void) => {
-    const eventListeners = listeners.current.get(event);
-    if (eventListeners) {
-      eventListeners.delete(callback);
-      if (eventListeners.size === 0) {
-        listeners.current.delete(event);
+    return () => {
+      if (reconnectTimeoutId.current) {
+        clearTimeout(reconnectTimeoutId.current);
       }
+      socketService.disconnect();
+      socketService.off('connect', handleConnect);
+      socketService.off('disconnect', handleDisconnect);
+      socketService.off('error', handleConnectionError);
+    };
+  }, [user?.id, url, reconnectInterval, maxReconnectAttempts]);
+
+  const send = <T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>) => {
+    if (!isConnected) {
+      throw new Error('WebSocket is not connected');
     }
+    socketService.emit(event, data);
+  };
+
+  const subscribe = <T extends WebSocketEvent>(
+    event: T,
+    callback: (data: WebSocketMessage<T>) => void
+  ) => {
+    socketService.on(event, callback);
+    return () => socketService.off(event, callback);
   };
 
   return (
-    <WebSocketContext.Provider value={{ send, on, off }}>{children}</WebSocketContext.Provider>
+    <WebSocketContext.Provider
+      value={{
+        isConnected,
+        error,
+        send,
+        subscribe,
+      }}
+    >
+      {children}
+    </WebSocketContext.Provider>
   );
-};
-
-export const useWebSocket = () => {
-  const context = useContext(WebSocketContext);
-  if (context === undefined) {
-    throw new Error('useWebSocket must be used within a WebSocketProvider');
-  }
-  return context;
 };

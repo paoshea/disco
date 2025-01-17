@@ -71,3 +71,5 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
     );
   }
 );
+
+FileUpload.displayName = 'FileUpload';

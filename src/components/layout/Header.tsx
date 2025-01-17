@@ -5,7 +5,16 @@ import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
 
 export const Header: React.FC = () => {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      // Router will handle redirect after logout
+    } catch (error) {
+      console.error('Error logging out:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm">
@@ -22,7 +31,7 @@ export const Header: React.FC = () => {
             {isLoading ? (
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
             ) : user ? (
-              <UserMenu user={user} />
+              <UserMenu user={user} onLogout={handleLogout} />
             ) : (
               <div className="space-x-4">
                 <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">

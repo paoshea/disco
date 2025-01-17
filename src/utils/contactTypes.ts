@@ -1,6 +1,18 @@
 import { EmergencyContact as UserEmergencyContact } from '@/types/user';
 import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
 
+type NotificationEvent = 'sosAlert' | 'meetupStart' | 'meetupEnd';
+type SafetyNotificationEvent = 'sos' | 'meetup';
+
+/**
+ * Maps user notification events to safety notification events
+ */
+const EVENT_MAP: Record<NotificationEvent, SafetyNotificationEvent> = {
+  sosAlert: 'sos',
+  meetupStart: 'meetup',
+  meetupEnd: 'meetup',
+};
+
 /**
  * User Emergency Contact (from user profile)
  * - Used in user profiles and general contact management
@@ -47,6 +59,9 @@ import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
 
 /**
  * Converts a user emergency contact to a safety emergency contact
+ * @param contact - The user emergency contact to convert
+ * @param userId - The ID of the user associated with this contact
+ * @returns A safety emergency contact with the same information
  */
 export const toSafetyContact = (
   contact: UserEmergencyContact,
@@ -54,20 +69,20 @@ export const toSafetyContact = (
 ): SafetyEmergencyContact => {
   const now = new Date().toISOString();
 
-  // Convert notification preferences to array
+  // Convert notification preferences to array and filter out unknown events
   const notifyOn = Object.entries(contact.notifyOn)
+    .filter((entry): entry is [NotificationEvent, boolean] => {
+      const [key, value] = entry;
+      return (
+        typeof value === 'boolean' &&
+        (key === 'sosAlert' || key === 'meetupStart' || key === 'meetupEnd')
+      );
+    })
     .filter(([_, enabled]) => enabled)
-    .map(([event]) => {
-      switch (event) {
-        case 'sosAlert':
-          return 'sos';
-        case 'meetupStart':
-        case 'meetupEnd':
-          return 'meetup';
-        default:
-          return event;
-      }
-    });
+    .map(([event]) => EVENT_MAP[event]);
+
+  // Remove duplicates
+  const uniqueNotifyOn = Array.from(new Set(notifyOn));
 
   return {
     id: contact.id,
@@ -76,7 +91,7 @@ export const toSafetyContact = (
     phone: contact.phoneNumber,
     email: contact.email,
     relation: contact.relationship,
-    notifyOn,
+    notifyOn: uniqueNotifyOn,
     createdAt: now,
     updatedAt: now,
   };
@@ -84,18 +99,29 @@ export const toSafetyContact = (
 
 /**
  * Converts a safety emergency contact to a user emergency contact
+ * @param contact - The safety emergency contact to convert
+ * @returns A user emergency contact with the same information
  */
 export const toUserContact = (contact: SafetyEmergencyContact): UserEmergencyContact => {
+  // Ensure email is never null/undefined
+  const email = contact.email || '';
+  
+  // Ensure relationship is never null/undefined
+  const relationship = contact.relation || '';
+
+  // Create notification preferences object
+  const notifyOn = {
+    sosAlert: contact.notifyOn.includes('sos'),
+    meetupStart: contact.notifyOn.includes('meetup'),
+    meetupEnd: contact.notifyOn.includes('meetup'),
+  } satisfies Record<NotificationEvent, boolean>;
+
   return {
     id: contact.id,
     name: contact.name,
-    relationship: contact.relation || '',
+    relationship,
     phoneNumber: contact.phone,
-    email: contact.email || '',
-    notifyOn: {
-      sosAlert: contact.notifyOn.includes('sos'),
-      meetupStart: contact.notifyOn.includes('meetup'),
-      meetupEnd: contact.notifyOn.includes('meetup'),
-    },
+    email,
+    notifyOn,
   };
 };

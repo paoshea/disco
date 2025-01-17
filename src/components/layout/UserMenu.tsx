@@ -1,7 +1,6 @@
 import React from 'react';
 import { Menu } from '@headlessui/react';
 import { User } from '@/types/user';
-import { useAuth } from '@/hooks/useAuth';
 
 interface UserMenuProps {
   user: User;
@@ -48,9 +47,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <button
                 onClick={onLogout}
-                className={`${
-                  active ? 'bg-gray-100' : ''
-                } block w-full px-4 py-2 text-left text-sm text-gray-700`}
+                className={`${active ? 'bg-gray-100' : ''} block w-full text-left px-4 py-2 text-sm text-gray-700`}
               >
                 Sign out
               </button>

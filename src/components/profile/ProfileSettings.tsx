@@ -1,176 +1,253 @@
 import React, { useState } from 'react';
-import { User, UserSettings } from '@/types/user';
+import { useForm } from 'react-hook-form';
+import { UserSettings } from '@/types/user';
+import { userService } from '@/services/api/user.service';
 
 interface ProfileSettingsProps {
-  user: User;
-  settings: UserSettings;
-  onSave: (settings: UserSettings) => Promise<void>;
+  userId: string;
+  initialSettings: UserSettings;
+  onUpdate: (settings: UserSettings) => void;
+  onCancel: () => void;
 }
 
-export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, settings, onSave }) => {
-  const [editedSettings, setEditedSettings] = useState(settings);
-  const [loading, setLoading] = useState(false);
+export const ProfileSettings: React.FC<ProfileSettingsProps> = ({
+  userId,
+  initialSettings,
+  onUpdate,
+  onCancel,
+}) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UserSettings>({
+    defaultValues: initialSettings,
+  });
+
+  const onSubmit = async (data: UserSettings) => {
+    setIsSubmitting(true);
+    setError(null);
+
     try {
-      await onSave(editedSettings);
+      await userService.updateSettings(userId, data);
+      onUpdate(data);
+    } catch (err) {
+      setError('Failed to update settings. Please try again.');
+      console.error('Error updating settings:', err);
     } finally {
-      setLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-bold mb-6">Profile Settings</h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Discovery Preferences</h3>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Discovery Radius (km)
-              </label>
-              <input
-                type="range"
-                min="1"
-                max="10"
-                value={editedSettings.discoveryRadius}
-                onChange={e =>
-                  setEditedSettings({
-                    ...editedSettings,
-                    discoveryRadius: parseInt(e.target.value),
-                  })
-                }
-                className="mt-1 block w-full"
-              />
-              <span className="text-sm text-gray-500">{editedSettings.discoveryRadius} km</span>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Age Range</label>
-              <div className="flex gap-4 mt-1">
-                <div>
-                  <input
-                    type="number"
-                    min="18"
-                    max="100"
-                    value={editedSettings.ageRange.min}
-                    onChange={e =>
-                      setEditedSettings({
-                        ...editedSettings,
-                        ageRange: {
-                          ...editedSettings.ageRange,
-                          min: parseInt(e.target.value),
-                        },
-                      })
-                    }
-                    className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                  />
-                  <span className="text-sm text-gray-500">Min</span>
-                </div>
-                <div>
-                  <input
-                    type="number"
-                    min="18"
-                    max="100"
-                    value={editedSettings.ageRange.max}
-                    onChange={e =>
-                      setEditedSettings({
-                        ...editedSettings,
-                        ageRange: {
-                          ...editedSettings.ageRange,
-                          max: parseInt(e.target.value),
-                        },
-                      })
-                    }
-                    className="block w-20 rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                  />
-                  <span className="text-sm text-gray-500">Max</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
+      )}
 
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Notifications</h3>
-          <div className="space-y-4">
-            {Object.entries(editedSettings.notifications).map(([key, value]) => (
-              <div key={key} className="flex items-center">
-                <input
-                  type="checkbox"
-                  id={`notification-${key}`}
-                  checked={value}
-                  onChange={e =>
-                    setEditedSettings({
-                      ...editedSettings,
-                      notifications: {
-                        ...editedSettings.notifications,
-                        [key]: e.target.checked,
-                      },
-                    })
-                  }
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
-                />
-                <label
-                  htmlFor={`notification-${key}`}
-                  className="ml-3 block text-sm font-medium text-gray-700"
-                >
-                  {key.charAt(0).toUpperCase() + key.slice(1)} notifications
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
+        <div className="mt-4 space-y-4">
+          <div>
+            <label htmlFor="discoveryRadius" className="block text-sm font-medium text-gray-700">
+              Discovery Radius (km)
+            </label>
+            <input
+              type="number"
+              id="discoveryRadius"
+              {...register('discoveryRadius', {
+                required: 'Discovery radius is required',
+                min: { value: 1, message: 'Minimum radius is 1km' },
+                max: { value: 100, message: 'Maximum radius is 100km' },
+              })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            {errors.discoveryRadius?.message && (
+              <p className="mt-1 text-sm text-red-600">{errors.discoveryRadius.message}</p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Age Range</label>
+            <div className="mt-2 grid grid-cols-2 gap-4">
+              <div>
+                <label htmlFor="ageMin" className="block text-sm text-gray-500">
+                  Minimum Age
                 </label>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Privacy</h3>
-          <div className="space-y-4">
-            {Object.entries(editedSettings.privacy).map(([key, value]) => (
-              <div key={key} className="flex items-center">
                 <input
-                  type="checkbox"
-                  id={`privacy-${key}`}
-                  checked={value}
-                  onChange={e =>
-                    setEditedSettings({
-                      ...editedSettings,
-                      privacy: {
-                        ...editedSettings.privacy,
-                        [key]: e.target.checked,
-                      },
-                    })
-                  }
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  type="number"
+                  id="ageMin"
+                  {...register('ageRange.min', {
+                    required: 'Minimum age is required',
+                    min: { value: 18, message: 'Must be at least 18' },
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  disabled={isSubmitting}
                 />
-                <label
-                  htmlFor={`privacy-${key}`}
-                  className="ml-3 block text-sm font-medium text-gray-700"
-                >
-                  Show{' '}
-                  {key
-                    .split(/(?=[A-Z])/)
-                    .join(' ')
-                    .toLowerCase()}
-                </label>
+                {errors.ageRange?.min?.message && (
+                  <p className="mt-1 text-sm text-red-600">{errors.ageRange.min.message}</p>
+                )}
               </div>
-            ))}
+              <div>
+                <label htmlFor="ageMax" className="block text-sm text-gray-500">
+                  Maximum Age
+                </label>
+                <input
+                  type="number"
+                  id="ageMax"
+                  {...register('ageRange.max', {
+                    required: 'Maximum age is required',
+                    min: { value: 18, message: 'Must be at least 18' },
+                  })}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                  disabled={isSubmitting}
+                />
+                {errors.ageRange?.max?.message && (
+                  <p className="mt-1 text-sm text-red-600">{errors.ageRange.max.message}</p>
+                )}
+              </div>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={loading}
-            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
-          >
-            {loading ? 'Saving...' : 'Save Settings'}
-          </button>
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Privacy Settings</h3>
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showOnlineStatus"
+              {...register('privacy.showOnlineStatus')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showOnlineStatus" className="ml-2 block text-sm text-gray-700">
+              Show online status to matches
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showLastSeen"
+              {...register('privacy.showLastSeen')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showLastSeen" className="ml-2 block text-sm text-gray-700">
+              Show last seen status
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showLocation"
+              {...register('privacy.showLocation')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showLocation" className="ml-2 block text-sm text-gray-700">
+              Show location to matches
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="showAge"
+              {...register('privacy.showAge')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="showAge" className="ml-2 block text-sm text-gray-700">
+              Show age to matches
+            </label>
+          </div>
         </div>
-      </form>
-    </div>
+      </div>
+
+      <div>
+        <h3 className="text-lg font-medium text-gray-900">Notification Settings</h3>
+        <div className="mt-4 space-y-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyMatches"
+              {...register('notifications.matches')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyMatches" className="ml-2 block text-sm text-gray-700">
+              New match notifications
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyMessages"
+              {...register('notifications.messages')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyMessages" className="ml-2 block text-sm text-gray-700">
+              Message notifications
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifyMeetups"
+              {...register('notifications.meetupReminders')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifyMeetups" className="ml-2 block text-sm text-gray-700">
+              Meetup reminders
+            </label>
+          </div>
+
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              id="notifySafety"
+              {...register('notifications.safetyAlerts')}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+              disabled={isSubmitting}
+            />
+            <label htmlFor="notifySafety" className="ml-2 block text-sm text-gray-700">
+              Safety alerts
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex justify-end space-x-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+          disabled={isSubmitting}
+        >
+          Cancel
+        </button>
+        <button
+          type="submit"
+          className="inline-flex justify-center px-4 py-2 text-sm font-medium text-white bg-primary-600 border border-transparent rounded-md shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
+    </form>
   );
 };

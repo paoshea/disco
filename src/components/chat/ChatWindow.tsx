@@ -9,6 +9,18 @@ interface ChatWindowProps {
   recipientName: string;
 }
 
+interface ChatTypingData {
+  userId: string;
+  isTyping: boolean;
+}
+
+interface ChatMessageData extends Omit<Message, 'id' | 'timestamp'> {
+  matchId: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+}
+
 export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, recipientName }) => {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -18,29 +30,28 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
 
   useEffect(() => {
     // Initialize chat connection
-    socketService.emit('chat:join', { matchId });
+    socketService.emit<{ matchId: string }>('chat:join', { matchId });
 
     // Listen for new messages
-    socketService.on(`chat:${matchId}`, (message: Message) => {
+    socketService.on<Message>(`chat:${matchId}`, (message) => {
       setMessages(prev => [...prev, message]);
     });
 
     // Listen for typing status
-    socketService.on(`chat:${matchId}:typing`, (data: { userId: string; isTyping: boolean }) => {
+    socketService.on<ChatTypingData>(`chat:${matchId}:typing`, (data) => {
       if (data.userId === recipientId) {
         setIsTyping(data.isTyping);
       }
     });
 
     return () => {
-      socketService.emit('chat:leave', { matchId });
+      socketService.emit<{ matchId: string }>('chat:leave', { matchId });
       socketService.off(`chat:${matchId}`);
       socketService.off(`chat:${matchId}:typing`);
     };
   }, [matchId, recipientId]);
 
   useEffect(() => {
-    // Scroll to bottom when new messages arrive
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
@@ -48,20 +59,20 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
     e.preventDefault();
     if (!newMessage.trim()) return;
 
-    const message: Omit<Message, 'id' | 'timestamp'> = {
+    const message: ChatMessageData = {
       matchId,
       senderId: user!.id,
       recipientId,
       content: newMessage.trim(),
     };
 
-    socketService.emit('chat:message', message);
+    socketService.emit<ChatMessageData>('chat:message', message);
     setNewMessage('');
   };
 
   const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setNewMessage(e.target.value);
-    socketService.emit('chat:typing', {
+    socketService.emit<ChatTypingData>('chat:typing', {
       matchId,
       userId: user!.id,
       isTyping: e.target.value.length > 0,
@@ -112,13 +123,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
             value={newMessage}
             onChange={handleTyping}
             placeholder="Type a message..."
-            className="flex-1 min-h-[40px] max-h-32 p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+            className="flex-1 min-h-[2.5rem] max-h-32 p-2 border border-gray-300 rounded-lg resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             rows={1}
           />
           <button
             type="submit"
             disabled={!newMessage.trim()}
-            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="px-4 py-2 text-white bg-primary-500 rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Send
           </button>

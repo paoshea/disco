@@ -1,19 +1,20 @@
-import { Match, MatchPreferences } from '@/types/match';
+import { AxiosResponse } from 'axios';
+import { Match, MatchPreferences, MatchStatus } from '@/types/match';
 import { api } from './api';
 
 class MatchService {
   async getMatches(): Promise<Match[]> {
-    const response = await api.get('/matches');
+    const response: AxiosResponse<Match[]> = await api.get('/matches');
     return response.data;
   }
 
   async getMatch(matchId: string): Promise<Match> {
-    const response = await api.get(`/matches/${matchId}`);
+    const response: AxiosResponse<Match> = await api.get(`/matches/${matchId}`);
     return response.data;
   }
 
   async likeProfile(userId: string): Promise<Match | null> {
-    const response = await api.post(`/matches/like/${userId}`);
+    const response: AxiosResponse<Match | null> = await api.post(`/matches/like/${userId}`);
     return response.data;
   }
 
@@ -29,18 +30,20 @@ class MatchService {
     await api.put('/matches/preferences', preferences);
   }
 
-  async getRecommendations(): Promise<Match[]> {
-    const response = await api.get('/matches/recommendations');
+  async getRecommendations(limit: number = 10): Promise<Match[]> {
+    const response: AxiosResponse<Match[]> = await api.get('/matches/recommendations', {
+      params: { limit },
+    });
     return response.data;
   }
 
   async getPendingMatches(): Promise<Match[]> {
-    const response = await api.get('/matches/pending');
+    const response: AxiosResponse<Match[]> = await api.get('/matches/pending');
     return response.data;
   }
 
   async acceptMatch(matchId: string): Promise<Match> {
-    const response = await api.post(`/matches/${matchId}/accept`);
+    const response: AxiosResponse<Match> = await api.post(`/matches/${matchId}/accept`);
     return response.data;
   }
 
@@ -48,12 +51,17 @@ class MatchService {
     await api.post(`/matches/${matchId}/decline`);
   }
 
-  async pauseMatching(): Promise<void> {
-    await api.post('/matches/pause');
+  async pauseMatching(duration?: number): Promise<void> {
+    await api.post('/matches/pause', { duration });
   }
 
   async resumeMatching(): Promise<void> {
     await api.post('/matches/resume');
+  }
+
+  async getMatchStatus(): Promise<MatchStatus> {
+    const response: AxiosResponse<{ status: MatchStatus }> = await api.get('/matches/status');
+    return response.data.status;
   }
 
   async reportMatch(matchId: string, reason: string): Promise<void> {

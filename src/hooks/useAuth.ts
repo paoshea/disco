@@ -1,19 +1,9 @@
-import { useState, useEffect, createContext, useContext } from 'react';
-import { User } from '@/types/user';
-
-interface AuthContextType {
-  user: User | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  signup: (userData: Partial<User>) => Promise<void>;
-}
-
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+import { useContext } from 'react';
+import { AuthContext } from '@/contexts/AuthContext';
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

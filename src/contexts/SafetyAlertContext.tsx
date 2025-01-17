@@ -1,146 +1,162 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { EmergencyAlert, EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
-import { EmergencyContact as UserEmergencyContact } from '@/types/user';
+import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { useAuth } from './AuthContext';
 import { safetyService } from '@/services/api/safety.service';
-import { toSafetyContact } from '@/utils/contactTypes';
-import { socketService } from '@/services/websocket/socket.service';
+import { EmergencyAlert, SafetyCheck } from '@/types/safety';
 
-interface SafetyAlertContextType {
-  activeAlerts: EmergencyAlert[];
-  emergencyContacts: SafetyEmergencyContact[];
-  triggerAlert: (alert: Omit<EmergencyAlert, 'id'>) => Promise<void>;
-  resolveAlert: (alertId: string) => Promise<void>;
-  addAlert: (alert: EmergencyAlert) => void;
-  removeAlert: (alertId: string) => void;
+interface SafetyContextType {
+  alerts: EmergencyAlert[];
+  safetyChecks: SafetyCheck[];
+  isLoading: boolean;
+  error: string | null;
+  triggerEmergencyAlert: (location?: GeolocationCoordinates) => Promise<void>;
+  resolveSafetyCheck: (checkId: string, status: 'safe' | 'unsafe', notes?: string) => Promise<void>;
+  dismissAlert: (alertId: string) => Promise<void>;
 }
-
-const SafetyAlertContext = createContext<SafetyAlertContextType | undefined>(undefined);
 
 interface SafetyAlertProviderProps {
   children: React.ReactNode;
+  pollingInterval?: number;
 }
 
-export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ children }) => {
+const SafetyAlertContext = createContext<SafetyContextType | null>(null);
+
+export const useSafetyAlert = () => {
+  const context = useContext(SafetyAlertContext);
+  if (!context) {
+    throw new Error('useSafetyAlert must be used within a SafetyAlertProvider');
+  }
+  return context;
+};
+
+export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
+  children,
+  pollingInterval = 30000, // Default to 30 seconds
+}) => {
   const { user } = useAuth();
-  const [activeAlerts, setActiveAlerts] = useState<EmergencyAlert[]>([]);
-  const [emergencyContacts, setEmergencyContacts] = useState<SafetyEmergencyContact[]>([]);
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
+  const [safetyChecks, setSafetyChecks] = useState<SafetyCheck[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
+  const fetchSafetyData = useCallback(async () => {
     if (!user?.id) return;
 
-    const loadData = async () => {
-      try {
-        if (!user?.id) return;
-        const [alerts, contacts] = await Promise.all([
-          safetyService.getActiveAlerts(user.id),
-          safetyService.getEmergencyContacts(user.id),
-        ]);
-        setActiveAlerts(alerts);
-        // Convert user contacts to safety contacts
-        const safetyContacts = contacts.map(contact => toSafetyContact(contact, user.id));
-        setEmergencyContacts(safetyContacts);
-      } catch (error) {
-        console.error('Error loading safety data:', error);
-      }
-    };
-    loadData();
+    try {
+      const [alertsData, checksData] = await Promise.all([
+        safetyService.getEmergencyAlerts(user.id),
+        safetyService.getSafetyChecks(user.id),
+      ]);
+
+      setAlerts(alertsData);
+      setSafetyChecks(checksData);
+      setError(null);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch safety data';
+      setError(errorMessage);
+      console.error('Error fetching safety data:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, [user?.id]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    fetchSafetyData();
 
-    const handleEmergencyAlert = (alert: EmergencyAlert) => {
-      setActiveAlerts(prev => [...prev, alert]);
+    const intervalId = setInterval(fetchSafetyData, pollingInterval);
 
-      // Play alert sound
-      const audio = new Audio('/sounds/emergency-alert.mp3');
-      audio.play().catch(console.error);
+    return () => clearInterval(intervalId);
+  }, [fetchSafetyData, pollingInterval]);
 
-      // Show browser notification if permitted
-      if (Notification.permission === 'granted') {
-        new Notification('Emergency Alert', {
-          body: alert.message || 'Emergency alert triggered',
-          icon: '/icons/emergency.png',
-        });
-      }
-    };
+  const triggerEmergencyAlert = async (location?: GeolocationCoordinates) => {
+    if (!user?.id) {
+      throw new Error('User must be logged in to trigger alert');
+    }
 
-    const handleAlertResolution = (alertId: string) => {
-      setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
-    };
+    setIsLoading(true);
+    setError(null);
 
-    const handleContactUpdate = (contact: UserEmergencyContact) => {
-      // Convert user contact to safety contact
-      const safetyContact = toSafetyContact(contact, user.id);
-      setEmergencyContacts(prev => prev.map(c => (c.id === safetyContact.id ? safetyContact : c)));
-    };
-
-    socketService.subscribe('emergency_alert', handleEmergencyAlert);
-    socketService.subscribe('alert_resolved', handleAlertResolution);
-    socketService.subscribe('contact_updated', handleContactUpdate);
-
-    return () => {
-      socketService.unsubscribe('emergency_alert', handleEmergencyAlert);
-      socketService.unsubscribe('alert_resolved', handleAlertResolution);
-      socketService.unsubscribe('contact_updated', handleContactUpdate);
-    };
-  }, [user?.id]);
-
-  const triggerAlert = async (alert: Omit<EmergencyAlert, 'id'>) => {
     try {
-      const newAlert = await safetyService.triggerEmergencyAlert(alert);
-      setActiveAlerts(prev => [...prev, newAlert]);
+      const alert = await safetyService.createEmergencyAlert(user.id, {
+        type: 'sos',
+        location: location
+          ? {
+              latitude: location.latitude,
+              longitude: location.longitude,
+              accuracy: location.accuracy,
+            }
+          : undefined,
+      });
 
-      // Broadcast via WebSocket
-      socketService.emit('emergency_alert', newAlert);
-    } catch (error) {
-      console.error('Error triggering alert:', error);
-      throw error;
+      setAlerts(prev => [...prev, alert]);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to trigger emergency alert';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const resolveAlert = async (alertId: string) => {
-    try {
-      await safetyService.resolveEmergencyAlert(alertId);
-      setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
+  const resolveSafetyCheck = async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
+    if (!user?.id) {
+      throw new Error('User must be logged in to resolve safety check');
+    }
 
-      // Broadcast via WebSocket
-      socketService.emit('alert_resolved', alertId);
-    } catch (error) {
-      console.error('Error resolving alert:', error);
-      throw error;
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const updatedCheck = await safetyService.updateSafetyCheck(user.id, checkId, {
+        response: status,
+        notes,
+        status: 'resolved',
+      });
+
+      setSafetyChecks(prev =>
+        prev.map(check => (check.id === checkId ? updatedCheck : check))
+      );
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to resolve safety check';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const addAlert = (alert: EmergencyAlert) => {
-    setActiveAlerts(prev => [...prev, alert]);
-  };
+  const dismissAlert = async (alertId: string) => {
+    if (!user?.id) {
+      throw new Error('User must be logged in to dismiss alert');
+    }
 
-  const removeAlert = (alertId: string) => {
-    setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      await safetyService.dismissEmergencyAlert(user.id, alertId);
+      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to dismiss alert';
+      setError(errorMessage);
+      throw new Error(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <SafetyAlertContext.Provider
       value={{
-        activeAlerts,
-        emergencyContacts,
-        triggerAlert,
-        resolveAlert,
-        addAlert,
-        removeAlert,
+        alerts,
+        safetyChecks,
+        isLoading,
+        error,
+        triggerEmergencyAlert,
+        resolveSafetyCheck,
+        dismissAlert,
       }}
     >
       {children}
     </SafetyAlertContext.Provider>
   );
-};
-
-export const useSafetyAlerts = () => {
-  const context = useContext(SafetyAlertContext);
-  if (context === undefined) {
-    throw new Error('useSafetyAlerts must be used within a SafetyAlertProvider');
-  }
-  return context;
 };

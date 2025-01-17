@@ -7,6 +7,7 @@ export const MatchList: React.FC = () => {
   const [matches, setMatches] = useState<Match[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [processingMatchIds, setProcessingMatchIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const fetchMatches = async () => {
@@ -25,29 +26,51 @@ export const MatchList: React.FC = () => {
     fetchMatches();
   }, []);
 
-  const handleAcceptMatch = async (matchId: string) => {
+  const handleAcceptMatch = async (matchId: string): Promise<void> => {
+    if (processingMatchIds.has(matchId)) return;
+    
+    setProcessingMatchIds(prev => new Set(prev).add(matchId));
+    
     try {
       await matchService.acceptMatch(matchId);
-      setMatches(
-        matches.map(match =>
+      setMatches(prevMatches =>
+        prevMatches.map(match =>
           match.id === matchId ? { ...match, connectionStatus: 'accepted' } : match
         )
       );
     } catch (error) {
       console.error('Failed to accept match:', error);
+      setError('Failed to accept match. Please try again.');
+    } finally {
+      setProcessingMatchIds(prev => {
+        const next = new Set(prev);
+        next.delete(matchId);
+        return next;
+      });
     }
   };
 
-  const handleDeclineMatch = async (matchId: string) => {
+  const handleDeclineMatch = async (matchId: string): Promise<void> => {
+    if (processingMatchIds.has(matchId)) return;
+    
+    setProcessingMatchIds(prev => new Set(prev).add(matchId));
+    
     try {
       await matchService.declineMatch(matchId);
-      setMatches(
-        matches.map(match =>
+      setMatches(prevMatches =>
+        prevMatches.map(match =>
           match.id === matchId ? { ...match, connectionStatus: 'declined' } : match
         )
       );
     } catch (error) {
       console.error('Failed to decline match:', error);
+      setError('Failed to decline match. Please try again.');
+    } finally {
+      setProcessingMatchIds(prev => {
+        const next = new Set(prev);
+        next.delete(matchId);
+        return next;
+      });
     }
   };
 
@@ -88,8 +111,8 @@ export const MatchList: React.FC = () => {
         <MatchCard
           key={match.id}
           match={match}
-          onAccept={() => handleAcceptMatch(match.id)}
-          onDecline={() => handleDeclineMatch(match.id)}
+          onAccept={handleAcceptMatch}
+          onDecline={handleDeclineMatch}
         />
       ))}
     </div>

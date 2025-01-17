@@ -1,15 +1,15 @@
-import axios from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 
-const api = axios.create({
+const api: AxiosInstance = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-api.interceptors.request.use(config => {
+api.interceptors.request.use((config: AxiosRequestConfig) => {
   const token = localStorage.getItem('auth_token');
-  if (token) {
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;

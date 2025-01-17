@@ -5,11 +5,27 @@ import { Button } from '@/components/forms';
 
 interface MatchCardProps {
   match: MatchPreview;
-  onAccept: (matchId: string) => void;
-  onDecline: (matchId: string) => void;
+  onAccept: (matchId: string) => Promise<void>;
+  onDecline: (matchId: string) => Promise<void>;
 }
 
 export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline }) => {
+  const handleAccept = async () => {
+    try {
+      await onAccept(match.id);
+    } catch (error) {
+      console.error('Error accepting match:', error);
+    }
+  };
+
+  const handleDecline = async () => {
+    try {
+      await onDecline(match.id);
+    } catch (error) {
+      console.error('Error declining match:', error);
+    }
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-md overflow-hidden">
       <div className="relative h-64">
@@ -47,10 +63,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({ match, onAccept, onDecline
         </div>
 
         <div className="mt-4 space-x-2">
-          <Button variant="primary" size="sm" onClick={() => onAccept(match.id)}>
+          <Button variant="primary" size="sm" onClick={handleAccept}>
             Accept
           </Button>
-          <Button variant="outline" size="sm" onClick={() => onDecline(match.id)}>
+          <Button variant="outline" size="sm" onClick={handleDecline}>
             Decline
           </Button>
         </div>
