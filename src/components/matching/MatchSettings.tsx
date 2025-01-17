@@ -83,10 +83,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
             <input
               type="number"
               id="discoveryRadius"
-              {...register('discoveryRadius', { 
+              {...register('discoveryRadius', {
                 valueAsNumber: true,
                 min: { value: 1, message: 'Radius must be at least 1km' },
-                max: { value: 100, message: 'Radius cannot exceed 100km' }
+                max: { value: 100, message: 'Radius cannot exceed 100km' },
               })}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               disabled={isSubmitting}
@@ -109,7 +109,7 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
                   {...register('ageRange.min', {
                     valueAsNumber: true,
                     min: { value: 18, message: 'Must be at least 18 years old' },
-                    max: { value: 100, message: 'Must be less than 100 years old' }
+                    max: { value: 100, message: 'Must be less than 100 years old' },
                   })}
                   placeholder="Min age"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -129,7 +129,7 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
                   {...register('ageRange.max', {
                     valueAsNumber: true,
                     min: { value: 18, message: 'Must be at least 18 years old' },
-                    max: { value: 100, message: 'Must be less than 100 years old' }
+                    max: { value: 100, message: 'Must be less than 100 years old' },
                   })}
                   placeholder="Max age"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"

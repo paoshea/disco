@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -37,7 +37,9 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 const SignupPage = () => {
   const router = useRouter();
-  const { register: signup, user, isLoading, error } = useAuth();
+  const { signup, user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const {
     register,
     handleSubmit,
@@ -47,13 +49,23 @@ const SignupPage = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      router.push('/');
-    }
-  }, [user, router]);
+    const init = async () => {
+      try {
+        if (user) {
+          await router.push('/');
+        }
+      } catch (err) {
+        console.error('Navigation error:', err);
+      }
+    };
+
+    void init();
+  }, [router, user]);
 
   const onSubmit = async (data: SignupFormData) => {
     try {
+      setIsLoading(true);
+      setError(null);
       await signup({
         email: data.email,
         password: data.password,
@@ -61,9 +73,15 @@ const SignupPage = () => {
         lastName: data.lastName,
         phoneNumber: data.phoneNumber,
       });
-      router.push('/');
+      await router.push('/');
     } catch (err) {
-      console.error('Registration failed:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during signup. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -155,10 +173,10 @@ const SignupPage = () => {
             )}
 
             <div>
-              <Button 
-                type="submit" 
-                disabled={isSubmitting} 
-                loading={isSubmitting}
+              <Button
+                type="submit"
+                disabled={isSubmitting || isLoading}
+                loading={isSubmitting || isLoading}
                 className="w-full"
               >
                 Create account

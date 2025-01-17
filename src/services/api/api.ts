@@ -1,72 +1,110 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-// Define API response types
-export interface ApiResponse<T = any> {
-  data: T;
-  status: number;
-  message?: string;
+interface ApiError extends Error {
+  status?: number;
+  data?: any;
 }
 
-export interface ApiError {
-  status: number;
-  message: string;
-  errors?: Record<string, string[]>;
-}
-
-// Create axios instance with default config
-const api: AxiosInstance = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080',
+interface ApiConfig extends AxiosRequestConfig {
+  baseURL: string;
+  timeout: number;
   headers: {
-    'Content-Type': 'application/json',
-  },
-  timeout: 10000, // 10 seconds
-});
+    'Content-Type': string;
+    Authorization?: string;
+  };
+}
 
-// Request interceptor
-api.interceptors.request.use(
-  (config: InternalAxiosRequestConfig) => {
-    const token = localStorage.getItem('auth_token');
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
+class ApiService {
+  private instance: AxiosInstance;
+
+  constructor() {
+    const config: ApiConfig = {
+      baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
+      timeout: 15000,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    this.instance = axios.create(config);
+
+    this.instance.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('token');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => {
+        return Promise.reject(this.handleError(error));
+      }
+    );
+
+    this.instance.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        return Promise.reject(this.handleError(error));
+      }
+    );
   }
-);
 
-// Response interceptor
-api.interceptors.response.use(
-  (response) => {
-    return response;
-  },
-  (error) => {
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      const apiError: ApiError = {
-        status: error.response.status,
-        message: error.response.data.message || 'An error occurred',
-        errors: error.response.data.errors,
-      };
-      return Promise.reject(apiError);
-    } else if (error.request) {
-      // The request was made but no response was received
-      const apiError: ApiError = {
-        status: 0,
-        message: 'No response received from server',
-      };
-      return Promise.reject(apiError);
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      const apiError: ApiError = {
-        status: 0,
-        message: error.message || 'Request setup error',
-      };
-      return Promise.reject(apiError);
+  async get<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    try {
+      return await this.instance.get<T>(url, config);
+    } catch (error) {
+      throw this.handleError(error);
     }
   }
-);
 
-export { api };
+  async post<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> {
+    try {
+      return await this.instance.post<T>(url, data, config);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async put<T>(
+    url: string,
+    data?: any,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<T>> {
+    try {
+      return await this.instance.put<T>(url, data, config);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
+    try {
+      return await this.instance.delete<T>(url, config);
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  private handleError(error: unknown): ApiError {
+    if (axios.isAxiosError(error)) {
+      const apiError: ApiError = new Error(
+        error.response?.data?.message || error.message || 'An unexpected error occurred'
+      );
+      apiError.status = error.response?.status;
+      apiError.data = error.response?.data;
+      return apiError;
+    }
+
+    if (error instanceof Error) {
+      return error;
+    }
+
+    return new Error('An unexpected error occurred');
+  }
+}
+
+export const api = new ApiService();

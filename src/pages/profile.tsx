@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
@@ -7,6 +7,8 @@ import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 import { Tab } from '@headlessui/react';
+import { userService } from '@/services/api/user.service';
+import type { User } from '@/types/user';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -14,20 +16,67 @@ function classNames(...classes: string[]) {
 
 export default function Profile() {
   const router = useRouter();
-  const { user, isLoading, error, logout, updateProfile, sendVerificationEmail } = useAuth();
+  const { user, isLoading: authLoading, error: authError, logout, updateProfile, sendVerificationEmail } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [profileData, setProfileData] = useState<User | null>(null);
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
+    const init = async () => {
+      try {
+        if (!user) {
+          await router.push('/login');
+          return;
+        }
+        await loadProfileData();
+      } catch (err) {
+        console.error('Profile initialization error:', err);
+      }
+    };
+
+    void init();
+  }, [router, user]);
+
+  const loadProfileData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await userService.getProfile();
+      setProfileData(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while loading profile data.'
+      );
+    } finally {
+      setIsLoading(false);
     }
-  }, [user, isLoading, router]);
+  };
+
+  const handleUpdateProfile = async (data: Partial<User>) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updatedProfile = await userService.updateProfile(data);
+      setProfileData(updatedProfile);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while updating profile.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogout = async () => {
     try {
       await logout();
-      router.push('/login');
+      await router.push('/login');
     } catch (err) {
-      console.error('Logout failed:', err);
+      console.error('Logout error:', err);
     }
   };
 
@@ -39,7 +88,7 @@ export default function Profile() {
     }
   };
 
-  if (isLoading) {
+  if (authLoading || isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -76,6 +125,7 @@ export default function Profile() {
           </Button>
         </div>
 
+        {authError && <p className="mb-4 text-sm text-red-600">{authError}</p>}
         {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
         <Tab.Group>
@@ -109,10 +159,15 @@ export default function Profile() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <ProfileEdit user={user} onUpdate={updateProfile} />
+              <ProfileEdit
+                user={profileData}
+                onUpdate={async (data) => {
+                  await handleUpdateProfile(data);
+                }}
+              />
             </Tab.Panel>
             <Tab.Panel>
-              <ProfileSettings user={user} />
+              <ProfileSettings user={profileData} />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

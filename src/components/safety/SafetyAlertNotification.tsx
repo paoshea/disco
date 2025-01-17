@@ -3,25 +3,54 @@ import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
 import { EmergencyAlert } from '@/types/safety';
 import { XMarkIcon, ExclamationTriangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import { Button } from '@/components/ui/Button';
-import { MapView } from '@/components/map/MapView';
+import { BaseMapView } from '@/components/map/BaseMapView';
+
+interface SafetyAlertNotificationProps {
+  alert: EmergencyAlert;
+  onDismiss: () => void;
+  onAction?: (action: string) => void;
+}
 
 export const SafetyAlertNotification: React.FC = () => {
   const { activeAlerts, resolveAlert } = useSafetyAlerts();
   const [showMap, setShowMap] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Request notification permission if not granted
-    if (Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
+    const requestNotificationPermission = async () => {
+      try {
+        if (Notification.permission === 'default') {
+          await Notification.requestPermission();
+        }
+      } catch (err) {
+        console.error('Error requesting notification permission:', err);
+      }
+    };
+
+    void requestNotificationPermission();
   }, []);
 
   const handleResolve = async (alertId: string) => {
     try {
+      setIsLoading(true);
+      setError(null);
       await resolveAlert(alertId);
-    } catch (error) {
-      console.error('Error resolving alert:', error);
+    } catch (err) {
+      console.error('Error resolving alert:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while resolving the alert. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
     }
+  };
+
+  const handleResolveWrapper = (alertId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    void handleResolve(alertId);
   };
 
   const formatTime = (date: string) => {
@@ -51,8 +80,8 @@ export const SafetyAlertNotification: React.FC = () => {
         )}
       </div>
       <div className="flex-shrink-0">
-        <Button variant="secondary" size="sm" onClick={() => handleResolve(alert.id)}>
-          Resolve
+        <Button variant="secondary" size="sm" onClick={handleResolveWrapper(alert.id)}>
+          {isLoading ? 'Processing...' : 'Resolve'}
         </Button>
       </div>
     </div>
@@ -72,7 +101,7 @@ export const SafetyAlertNotification: React.FC = () => {
           <div className="p-4">
             {showMap === alert.id && alert.location ? (
               <div className="h-64 mb-4">
-                <MapView
+                <BaseMapView
                   center={{
                     lat: alert.location.latitude,
                     lng: alert.location.longitude,
@@ -80,11 +109,16 @@ export const SafetyAlertNotification: React.FC = () => {
                   zoom={15}
                   markers={[
                     {
+                      id: alert.id,
                       position: {
                         lat: alert.location.latitude,
                         lng: alert.location.longitude,
                       },
                       title: 'Alert Location',
+                      icon: {
+                        url: '/images/alert-marker.png',
+                        scaledSize: { width: 32, height: 32 },
+                      },
                     },
                   ]}
                 />

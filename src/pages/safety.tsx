@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
@@ -18,26 +18,62 @@ function classNames(...classes: string[]) {
 export default function Safety() {
   const router = useRouter();
   const { user, isLoading: authLoading } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const {
     alerts,
     safetyChecks,
     isLoading: safetyLoading,
-    error,
     triggerEmergencyAlert,
     resolveSafetyCheck,
     dismissAlert,
   } = useSafetyAlert();
 
   useEffect(() => {
-    if (!authLoading && !user) {
-      router.push('/login');
-    }
-  }, [user, authLoading, router]);
+    const init = async () => {
+      try {
+        if (!authLoading && !user) {
+          await router.push('/login');
+          return;
+        }
 
-  if (authLoading || safetyLoading) {
+        setIsLoading(true);
+        setError(null);
+        const [alertsData, checksData] = await Promise.all([
+          safetyService.getAlerts(),
+          safetyService.getChecks(),
+        ]);
+        setAlerts(alertsData);
+        setChecks(checksData);
+      } catch (err) {
+        console.error('Error loading safety data:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while loading safety data.'
+        );
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    void init();
+  }, [router, user, authLoading]);
+
+  if (isLoading || safetyLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" color="primary" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="p-4">
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="text-sm text-red-700">{error}</div>
+        </div>
       </div>
     );
   }
@@ -56,14 +92,7 @@ export default function Safety() {
           </p>
         </div>
 
-        {error && (
-          <Alert
-            type="error"
-            title="Error"
-            message={error}
-            className="mb-6"
-          />
-        )}
+        {error && <Alert type="error" title="Error" message={error} className="mb-6" />}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -109,19 +138,16 @@ export default function Safety() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <SafetyCenter
-                onTriggerAlert={triggerEmergencyAlert}
-                onDismissAlert={dismissAlert}
-              />
+              <SafetyCenter onTriggerAlert={triggerEmergencyAlert} onDismissAlert={dismissAlert} />
             </Tab.Panel>
             <Tab.Panel>
               <EmergencyContactList
                 contacts={user?.emergencyContacts || []}
-                onEdit={(contact) => {
+                onEdit={contact => {
                   // Handle contact edit
                   console.log('Editing contact:', contact);
                 }}
-                onDelete={(contactId) => {
+                onDelete={contactId => {
                   // Handle contact delete
                   console.log('Deleting contact:', contactId);
                 }}

@@ -91,30 +91,33 @@ export class NotificationService {
         data: options.data,
       });
 
-      notification.onclick = async event => {
-        event.preventDefault();
+      await new Promise<void>((resolve) => {
+        notification.onclick = async event => {
+          event.preventDefault();
 
-        if (options.data?.type) {
-          const handler = this.handlers.get(options.data.type);
-          if (handler) {
-            try {
-              await handler(notification);
-            } catch (error) {
-              console.error(`Error in notification handler for type ${options.data.type}:`, error);
+          if (options.data?.type) {
+            const handler = this.handlers.get(options.data.type);
+            if (handler) {
+              try {
+                await handler(notification);
+              } catch (error) {
+                console.error(`Error in notification handler for type ${options.data.type}:`, error);
+              }
             }
           }
-        }
 
-        if (options.onClick) {
-          try {
-            options.onClick();
-          } catch (error) {
-            console.error('Error in onClick handler:', error);
+          if (options.onClick) {
+            try {
+              options.onClick();
+            } catch (error) {
+              console.error('Error in onClick handler:', error);
+            }
           }
-        }
 
-        notification.close();
-      };
+          notification.close();
+          resolve();
+        };
+      });
     } catch (error) {
       console.error('Error showing notification:', error);
     }

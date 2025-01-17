@@ -19,6 +19,8 @@ export interface Match extends MatchPreview {
   verificationStatus: 'verified' | 'unverified';
 }
 
+export type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
+
 export interface MatchPreferences {
   maxDistance: number;
   minAge: number;

@@ -11,6 +11,8 @@ export type EventCategory =
   | 'games'
   | 'other';
 
+export type EventType = 'social' | 'virtual' | 'hybrid';
+
 export type EventStatus = 'scheduled' | 'cancelled' | 'completed';
 
 export type ParticipantStatus = 'confirmed' | 'waitlisted' | 'cancelled';

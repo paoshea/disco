@@ -1,3 +1,4 @@
+import { Location } from './location';
 import { User } from './user';
 
 export type IncidentType =
@@ -129,4 +130,109 @@ export interface SafetySettingsOld {
   verificationStatus: VerificationStatus;
   verifiedAt?: string;
   lastSafetyCheck?: string;
+}
+
+export interface SafetySettingsNew {
+  autoShareLocation: boolean;
+  meetupCheckins: boolean;
+  sosAlertEnabled: boolean;
+  requireVerifiedMatch: boolean;
+  emergencyContacts: EmergencyContact[];
+}
+
+export interface EmergencyContactNew {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string;
+  relationship: string;
+  isVerified: boolean;
+  userId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SafetyAlertNew {
+  id: string;
+  userId: string;
+  user?: User;
+  type: 'sos' | 'meetup' | 'location' | 'custom';
+  status: 'active' | 'resolved' | 'dismissed';
+  location: Location;
+  description?: string;
+  evidence?: SafetyEvidence[];
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface SafetyEvidence {
+  id: string;
+  alertId: string;
+  type: 'image' | 'video' | 'audio' | 'text';
+  url: string;
+  description?: string;
+  createdAt: string;
+}
+
+export interface SafetyCheckNew {
+  id: string;
+  userId: string;
+  type: 'meetup' | 'location' | 'custom';
+  status: 'pending' | 'completed' | 'missed';
+  scheduledFor: string;
+  completedAt?: string;
+  location?: Location;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SafetyReportNew {
+  id: string;
+  reporterId: string;
+  reportedUserId: string;
+  type: 'harassment' | 'inappropriate' | 'spam' | 'scam' | 'other';
+  description: string;
+  evidence?: SafetyEvidence[];
+  status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface SafetyAlertContextType {
+  alerts: SafetyAlertNew[];
+  loading: boolean;
+  error: string | null;
+  addAlert: (alert: Partial<SafetyAlertNew>) => Promise<void>;
+  dismissAlert: (alertId: string) => Promise<void>;
+  resolveAlert: (alertId: string) => Promise<void>;
+}
+
+export interface SafetyCenterProps {
+  userId: string;
+  onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
+}
+
+export interface SafetyCheckListProps {
+  checks: SafetyCheckNew[];
+  onCheckComplete?: (checkId: string) => void;
+}
+
+export interface SafetyFeaturesProps {
+  user: User;
+  settings: SafetySettingsNew;
+  onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
+}
+
+export interface EmergencyAlertProps {
+  userId: string;
+  onAlertTriggered?: (alert: SafetyAlertNew) => void;
+}
+
+export interface SafetyReportFormProps {
+  reportedUserId: string;
+  onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
+  onCancel: () => void;
 }

@@ -1,177 +1,152 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
-import { userService } from '@/services/api/user.service';
-import type { RegisterData } from '@/hooks/useAuth';
 
 export interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
+  loading: boolean;
   error: string | null;
-  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
+  signup: (userData: Partial<User>) => Promise<void>;
+  updateProfile: (updates: Partial<User>) => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
-  verifyEmail: (token: string) => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const loadUser = useCallback(async () => {
-    try {
-      if (!authService.isAuthenticated()) {
-        setUser(null);
-        return;
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (token) {
+          const userData = await authService.getCurrentUser();
+          setUser(userData);
+        }
+      } catch (err) {
+        console.error('Error initializing auth:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while initializing authentication.'
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const userData = await userService.getCurrentUser();
-      setUser(userData);
-      setError(null);
-    } catch (err) {
-      console.error('Error loading user:', err);
-      setUser(null);
-      setError('Failed to load user data');
-    } finally {
-      setIsLoading(false);
-    }
+    void initAuth();
   }, []);
 
-  useEffect(() => {
-    loadUser();
-  }, [loadUser]);
-
-  const login = useCallback(async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
-      await authService.login(email, password);
-      await loadUser();
+      const { token, user: userData } = await authService.login(email, password);
+      localStorage.setItem('token', token);
+      setUser(userData);
     } catch (err) {
       console.error('Login error:', err);
-      setError('Invalid email or password');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during login.'
+      );
       throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [loadUser]);
+  };
 
-  const logout = useCallback(async () => {
+  const logout = async () => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       await authService.logout();
+      localStorage.removeItem('token');
       setUser(null);
     } catch (err) {
       console.error('Logout error:', err);
-      setError('Failed to logout');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during logout.'
+      );
       throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
+  };
 
-  const register = useCallback(async (data: RegisterData) => {
+  const signup = async (userData: Partial<User>) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
-      await authService.register(data);
-      await login(data.email, data.password);
+      const { token, user: newUser } = await authService.signup(userData);
+      localStorage.setItem('token', token);
+      setUser(newUser);
     } catch (err) {
-      console.error('Registration error:', err);
-      setError('Failed to register user');
+      console.error('Signup error:', err);
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during signup.'
+      );
       throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [login]);
+  };
 
-  const updateProfile = useCallback(async (data: Partial<User>) => {
+  const updateProfile = async (updates: Partial<User>) => {
     try {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
-      const updatedUser = await userService.updateProfile(user.id, data);
+      const updatedUser = await authService.updateProfile(updates);
       setUser(updatedUser);
     } catch (err) {
       console.error('Profile update error:', err);
-      setError('Failed to update profile');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while updating profile.'
+      );
       throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [user?.id]);
+  };
 
-  const resetPassword = useCallback(async (email: string) => {
+  const resetPassword = async (email: string) => {
     try {
-      setIsLoading(true);
+      setLoading(true);
       setError(null);
       await authService.resetPassword(email);
     } catch (err) {
-      console.error('Password reset error:', err);
-      setError('Failed to send password reset email');
+      console.error('Error resetting password:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while resetting password.'
+      );
       throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, []);
-
-  const verifyEmail = useCallback(async (token: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await authService.verifyEmail(token);
-      await loadUser();
-    } catch (err) {
-      console.error('Email verification error:', err);
-      setError('Failed to verify email');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [loadUser]);
-
-  const sendVerificationEmail = useCallback(async () => {
-    try {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-
-      setIsLoading(true);
-      setError(null);
-      await authService.sendVerificationEmail(user.id);
-    } catch (err) {
-      console.error('Send verification email error:', err);
-      setError('Failed to send verification email');
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
-
-  const value = {
-    user,
-    isLoading,
-    error,
-    isAuthenticated: !!user,
-    login,
-    logout,
-    register,
-    updateProfile,
-    resetPassword,
-    verifyEmail,
-    sendVerificationEmail,
   };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{ user, loading, error, login, logout, signup, updateProfile, resetPassword }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
 };

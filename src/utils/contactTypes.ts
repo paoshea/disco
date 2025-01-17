@@ -1,5 +1,5 @@
 import { EmergencyContact as UserEmergencyContact } from '@/types/user';
-import { EmergencyContact as SafetyEmergencyContact, VerificationStatus } from '@/types/safety';
+import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
 
 type NotificationEvent = 'sosAlert' | 'meetupStart' | 'meetupEnd';
 type SafetyNotificationEvent = 'sos' | 'meetup';
@@ -9,15 +9,6 @@ interface NotificationPreferences {
   meetupStart: boolean;
   meetupEnd: boolean;
 }
-
-/**
- * Maps user notification events to safety notification events
- */
-const EVENT_MAP: Record<NotificationEvent, SafetyNotificationEvent> = {
-  sosAlert: 'sos',
-  meetupStart: 'meetup',
-  meetupEnd: 'meetup',
-};
 
 /**
  * User Emergency Contact (from user profile)
@@ -73,23 +64,6 @@ export const toSafetyContact = (
   contact: UserEmergencyContact,
   userId: string
 ): SafetyEmergencyContact => {
-  const now = new Date().toISOString();
-
-  // Convert notification preferences to array and filter out unknown events
-  const notifyOn = Object.entries(contact.notifyOn)
-    .filter((entry): entry is [NotificationEvent, boolean] => {
-      const [key, value] = entry;
-      return (
-        typeof value === 'boolean' &&
-        (key === 'sosAlert' || key === 'meetupStart' || key === 'meetupEnd')
-      );
-    })
-    .filter(([_, enabled]) => enabled)
-    .map(([event]) => EVENT_MAP[event]);
-
-  // Remove duplicates
-  const uniqueNotifyOn = Array.from(new Set(notifyOn));
-
   return {
     id: contact.id,
     userId,
@@ -97,12 +71,8 @@ export const toSafetyContact = (
     phoneNumber: contact.phoneNumber,
     email: contact.email || '',
     relationship: contact.relationship,
-    isVerified: contact.verificationStatus === 'verified',
-    isPrimary: contact.isPrimary || false,
-    notifyOn: uniqueNotifyOn,
-    verificationStatus: 'unverified' as VerificationStatus,
-    createdAt: now,
-    updatedAt: now,
+    isVerified: false,
+    isPrimary: false,
   };
 };
 
@@ -112,27 +82,39 @@ export const toSafetyContact = (
  * @returns A user emergency contact with the same information
  */
 export const toUserContact = (contact: SafetyEmergencyContact): UserEmergencyContact => {
-  // Ensure email is never null/undefined
-  const email = contact.email || '';
-
-  // Ensure relationship is never null/undefined
-  const relationship = contact.relation || '';
-
   // Create notification preferences object
-  const notifyOn: NotificationPreferences = {
-    sosAlert: contact.notifyOn.includes('sos'),
-    meetupStart: contact.notifyOn.includes('meetup'),
-    meetupEnd: contact.notifyOn.includes('meetup'),
+  const notifyPrefs: NotificationPreferences = {
+    sosAlert: false,
+    meetupStart: false,
+    meetupEnd: false,
   };
 
   return {
     id: contact.id,
     name: contact.name,
-    relationship,
+    relationship: contact.relationship,
     phoneNumber: contact.phoneNumber,
-    email,
-    isPrimary: contact.isPrimary,
-    isVerified: contact.isVerified,
-    notifyOn,
+    email: contact.email || '',
+    notifyOn: notifyPrefs,
   };
 };
+
+export type ContactStatus = 'pending' | 'verified' | 'rejected';
+
+export interface ContactEvent {
+  type: string;
+  contact: SafetyEmergencyContact;
+  timestamp: string;
+}
+
+export const CONTACT_STATUSES = {
+  PENDING: 'pending',
+  VERIFIED: 'verified',
+  REJECTED: 'rejected',
+} as const;
+
+export const CONTACT_TYPES = {
+  PRIMARY: 'primary',
+  SECONDARY: 'secondary',
+  EMERGENCY: 'emergency',
+} as const;

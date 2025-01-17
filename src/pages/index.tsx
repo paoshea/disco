@@ -9,11 +9,19 @@ export default function Home() {
   const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/login');
-    } else if (!isLoading && user) {
-      router.push('/profile');
-    }
+    const init = async () => {
+      try {
+        if (!isLoading && !user) {
+          await router.push('/login');
+        } else if (!isLoading && user) {
+          await router.push('/profile');
+        }
+      } catch (err) {
+        console.error('Navigation error:', err);
+      }
+    };
+
+    void init();
   }, [user, isLoading, router]);
 
   if (isLoading) {

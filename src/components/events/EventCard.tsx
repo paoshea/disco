@@ -57,7 +57,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
               event.isFree ? 'text-green-600' : 'text-primary-600'
             }`}
           >
-            {event.isFree ? 'Free' : `$${event.price}`}
+            {event.isFree ? 'Free' : `$${event.price?.toFixed(2) ?? 0}`}
           </span>
 
           <button
@@ -67,7 +67,7 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
               isJoined
                 ? 'bg-red-100 text-red-700 hover:bg-red-200'
                 : 'bg-primary-500 text-white hover:bg-primary-600'
-            } ${!isUpcoming && 'opacity-50 cursor-not-allowed'}`}
+            } ${!isUpcoming ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {isJoined ? 'Leave Event' : 'Join Event'}
           </button>

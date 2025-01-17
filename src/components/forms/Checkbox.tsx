@@ -1,31 +1,39 @@
 import React from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormRegister, FieldValues } from 'react-hook-form';
 
-interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface CheckboxProps<T extends FieldValues> extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   name: string;
   error?: string;
-  register?: UseFormRegister<any>;
-  rules?: Record<string, any>;
+  register?: UseFormRegister<T>;
+  rules?: Partial<{
+    required: boolean | string;
+    pattern: RegExp;
+    min: number;
+    max: number;
+    minLength: number;
+    maxLength: number;
+    validate: (value: boolean) => boolean | string;
+  }>;
 }
 
-export const Checkbox: React.FC<CheckboxProps> = ({
+export const Checkbox = <T extends FieldValues>({
   label,
   name,
   error,
   register,
   rules,
   ...props
-}) => {
+}: CheckboxProps<T>): JSX.Element => {
   return (
     <div className="flex items-start">
       <div className="flex items-center h-5">
         <input
           type="checkbox"
           id={name}
+          className="focus:ring-primary-500 h-4 w-4 text-primary-600 border-gray-300 rounded"
           {...(register ? register(name, rules) : {})}
           {...props}
-          className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
         />
       </div>
       <div className="ml-3 text-sm">

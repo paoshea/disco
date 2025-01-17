@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -20,6 +20,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 const LoginPage = () => {
   const router = useRouter();
   const { login, user, isLoading, error } = useAuth();
+  const [loginError, setLoginError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
@@ -29,18 +30,38 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
-    if (user) {
-      router.push('/profile');
-    }
-  }, [user, router]);
+    const init = async () => {
+      try {
+        if (user) {
+          await router.push('/profile');
+        }
+      } catch (err) {
+        console.error('Navigation error:', err);
+      }
+    };
+
+    void init();
+  }, [router, user]);
 
   const onSubmit = async (data: LoginFormData) => {
     try {
+      setLoginError(null);
       await login(data.email, data.password);
-      router.push('/profile');
+      await router.push('/profile');
     } catch (err) {
-      // Error is handled by the AuthContext
-      console.error('Login failed:', err);
+      setLoginError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during login. Please try again.'
+      );
+    }
+  };
+
+  const handleForgotPassword = async () => {
+    try {
+      await router.push('/forgot-password');
+    } catch (err) {
+      console.error('Navigation error:', err);
     }
   };
 
@@ -60,11 +81,20 @@ const LoginPage = () => {
             <h2 className="mt-6 text-3xl font-extrabold text-gray-900">Sign in to your account</h2>
             <p className="mt-2 text-sm text-gray-600">
               Or{' '}
-              <Link href="/register" className="font-medium text-primary-600 hover:text-primary-500">
+              <Link
+                href="/register"
+                className="font-medium text-primary-600 hover:text-primary-500"
+              >
                 create a new account
               </Link>
             </p>
           </div>
+
+          {loginError && (
+            <div className="rounded-md bg-red-50 p-4">
+              <div className="text-sm text-red-700">{loginError}</div>
+            </div>
+          )}
 
           <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
@@ -87,16 +117,15 @@ const LoginPage = () => {
               </div>
             </div>
 
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
-
             <div className="flex items-center justify-between">
               <div className="text-sm">
-                <Link
-                  href="/forgot-password"
+                <button
+                  type="button"
+                  onClick={() => void handleForgotPassword()}
                   className="font-medium text-primary-600 hover:text-primary-500"
                 >
                   Forgot your password?
-                </Link>
+                </button>
               </div>
             </div>
 

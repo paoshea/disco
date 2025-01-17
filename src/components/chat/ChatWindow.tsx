@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Message, TypingStatus } from '@/types/chat';
 import { useWebSocket } from '@/contexts/WebSocketContext';
 import { useAuth } from '@/hooks/useAuth';
-import type { User } from '@/types/user';
 
 interface ChatWindowProps {
   matchId: string;
@@ -10,16 +9,19 @@ interface ChatWindowProps {
   recipientName: string;
 }
 
-type ChatEvent = 
-  | 'chat:join'
-  | 'chat:leave'
-  | 'chat:message'
-  | 'chat:typing'
-  | `chat:${string}`
-  | `chat:${string}:typing`;
-
-interface ChatJoinPayload {
+interface MessagePayload {
+  id: string;
   matchId: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  timestamp: string;
+}
+
+interface TypingPayload {
+  userId: string;
+  matchId: string;
+  isTyping: boolean;
 }
 
 interface ChatMessagePayload extends Omit<Message, 'id' | 'timestamp'> {
@@ -44,16 +46,35 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
     send('chat:join', { matchId });
 
     // Listen for new messages
-    const unsubscribeMessage = subscribe(`chat:${matchId}`, (message: Message) => {
-      setMessages(prev => [...prev, message]);
-    });
+    const unsubscribeMessage = subscribe<'chat:message'>(
+      'chat:message',
+      (data: MessagePayload) => {
+        const message: Message = {
+          id: data.id,
+          matchId: data.matchId,
+          senderId: data.senderId,
+          recipientId: data.recipientId,
+          content: data.content,
+          timestamp: data.timestamp,
+        };
+        setMessages(prev => [...prev, message]);
+      }
+    );
 
     // Listen for typing status
-    const unsubscribeTyping = subscribe(`chat:${matchId}:typing`, (data: TypingStatus) => {
-      if (data.userId === recipientId) {
-        setIsTyping(data.isTyping);
+    const unsubscribeTyping = subscribe<'chat:typing'>(
+      'chat:typing',
+      (data: TypingPayload) => {
+        const typingStatus: TypingStatus = {
+          userId: data.userId,
+          matchId: data.matchId,
+          isTyping: data.isTyping,
+        };
+        if (typingStatus.userId === recipientId) {
+          setIsTyping(typingStatus.isTyping);
+        }
       }
-    });
+    );
 
     return () => {
       send('chat:leave', { matchId });
@@ -83,13 +104,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({ matchId, recipientId, re
 
   const handleTyping = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     if (!user?.id) return;
-    
+
     setNewMessage(e.target.value);
     send('chat:typing', {
       matchId,
       userId: user.id,
       isTyping: e.target.value.length > 0,
-    } as TypingStatus);
+    } as TypingPayload);
   };
 
   if (isLoading) {

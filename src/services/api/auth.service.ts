@@ -1,10 +1,19 @@
-import { api } from './api';
 import { User } from '@/types/user';
-import { RegisterData } from '@/contexts/AuthContext';
+import { api } from './api';
 
 interface LoginResponse {
-  token: string;
   user: User;
+  token: string;
+}
+
+interface RegisterData {
+  email: string;
+  password: string;
+  name: string;
+}
+
+interface TokenResponse {
+  token: string;
 }
 
 interface AuthError {
@@ -13,40 +22,34 @@ interface AuthError {
 }
 
 class AuthService {
-  private setAuthToken(token: string) {
+  private setAuthToken(token: string): void {
     localStorage.setItem('token', token);
-    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   }
 
-  private clearAuthToken() {
+  private clearAuthToken(): void {
     localStorage.removeItem('token');
-    delete api.defaults.headers.common['Authorization'];
   }
 
   async login(email: string, password: string): Promise<User> {
     try {
-      const { data } = await api.post<LoginResponse>('/auth/login', {
+      const response = await api.post<LoginResponse>('/auth/login', {
         email,
         password,
       });
-
-      this.setAuthToken(data.token);
-      return data.user;
-    } catch (error) {
-      const authError = error as AuthError;
-      throw new Error(authError.message || 'Failed to login');
+      this.setAuthToken(response.data.token);
+      return response.data.user;
+    } catch (err) {
+      throw this.handleError(err);
     }
   }
 
-  async register(userData: RegisterData): Promise<User> {
+  async register(data: RegisterData): Promise<User> {
     try {
-      const { data } = await api.post<LoginResponse>('/auth/register', userData);
-
-      this.setAuthToken(data.token);
-      return data.user;
-    } catch (error) {
-      const authError = error as AuthError;
-      throw new Error(authError.message || 'Failed to register');
+      const response = await api.post<LoginResponse>('/auth/register', data);
+      this.setAuthToken(response.data.token);
+      return response.data.user;
+    } catch (err) {
+      throw this.handleError(err);
     }
   }
 
@@ -54,38 +57,57 @@ class AuthService {
     try {
       await api.post('/auth/logout');
       this.clearAuthToken();
-    } catch (error) {
-      console.error('Logout error:', error);
-      // Still clear token on error
-      this.clearAuthToken();
+    } catch (err) {
+      throw this.handleError(err);
     }
   }
 
-  async refreshToken(): Promise<string> {
+  async getCurrentUser(): Promise<User> {
     try {
-      const { data } = await api.post<{ token: string }>('/auth/refresh');
-      this.setAuthToken(data.token);
-      return data.token;
-    } catch (error) {
-      this.clearAuthToken();
-      throw error;
+      const response = await api.get<{ user: User }>('/auth/me');
+      return response.data.user;
+    } catch (err) {
+      throw this.handleError(err);
     }
   }
 
-  async forgotPassword(email: string): Promise<void> {
-    await api.post('/auth/forgot-password', { email });
+  async requestPasswordReset(email: string): Promise<void> {
+    try {
+      await api.post('/auth/password-reset/request', { email });
+    } catch (err) {
+      throw this.handleError(err);
+    }
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    await api.post('/auth/reset-password', { token, password });
+    try {
+      await api.post('/auth/password-reset/confirm', { token, password });
+    } catch (err) {
+      throw this.handleError(err);
+    }
   }
 
   async verifyEmail(token: string): Promise<void> {
-    await api.post('/auth/verify-email', { token });
+    try {
+      await api.post('/auth/verify-email', { token });
+    } catch (err) {
+      throw this.handleError(err);
+    }
   }
 
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('token');
+  async sendVerificationEmail(): Promise<void> {
+    try {
+      await api.post('/auth/send-verification');
+    } catch (err) {
+      throw this.handleError(err);
+    }
+  }
+
+  private handleError(error: unknown): Error {
+    if (error instanceof Error) {
+      return error;
+    }
+    return new Error('An unexpected error occurred');
   }
 }
 

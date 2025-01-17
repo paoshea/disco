@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { Event, EventFilters } from '@/types/event';
 import { EventCard } from './EventCard';
 import { eventService } from '@/services/api/event.service';
@@ -12,41 +12,41 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchEvents = async () => {
-      try {
-        setIsLoading(true);
-        const data = await eventService.getEvents(filters);
-        setEvents(data);
-        setError(null);
-      } catch (err) {
-        setError('Failed to load events');
-        console.error('Error fetching events:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchEvents();
+  const fetchEvents = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      const data = await eventService.getEvents(filters);
+      setEvents(data);
+      setError(null);
+    } catch (err) {
+      setError('Failed to load events');
+      console.error('Error fetching events:', err);
+    } finally {
+      setIsLoading(false);
+    }
   }, [filters]);
 
-  const handleJoinEvent = async (eventId: string) => {
+  useEffect(() => {
+    void fetchEvents();
+  }, [fetchEvents]);
+
+  const handleJoinEvent = useCallback(async (eventId: string) => {
     try {
       const updatedEvent = await eventService.joinEvent(eventId);
-      setEvents(events.map(event => (event.id === eventId ? updatedEvent : event)));
+      setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to join event:', error);
     }
-  };
+  }, []);
 
-  const handleLeaveEvent = async (eventId: string) => {
+  const handleLeaveEvent = useCallback(async (eventId: string) => {
     try {
       const updatedEvent = await eventService.leaveEvent(eventId);
-      setEvents(events.map(event => (event.id === eventId ? updatedEvent : event)));
+      setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
     } catch (error) {
       console.error('Failed to leave event:', error);
     }
-  };
+  }, []);
 
   if (isLoading) {
     return (
@@ -87,8 +87,8 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
         <EventCard
           key={event.id}
           event={event}
-          onJoin={() => handleJoinEvent(event.id)}
-          onLeave={() => handleLeaveEvent(event.id)}
+          onJoin={handleJoinEvent}
+          onLeave={handleLeaveEvent}
         />
       ))}
     </div>

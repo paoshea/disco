@@ -42,6 +42,22 @@ export interface UserSettings {
   };
 }
 
+export type UserPreferences = {
+  ageRange: {
+    min: number;
+    max: number;
+  };
+  maxDistance: number;
+  interests: string[];
+  eventTypes: string[];
+  notifications: {
+    matches: boolean;
+    messages: boolean;
+    events: boolean;
+    safety: boolean;
+  };
+};
+
 export interface EmergencyContact {
   id: string;
   name: string;

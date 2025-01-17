@@ -1,18 +1,32 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { EmergencyContact } from '@/types/user';
+import { TextField } from '@/components/forms/TextField';
+import { emergencyService } from '@/services/api/emergency.service';
+
+interface EmergencyContact {
+  name: string;
+  relationship: string;
+  phoneNumber: string;
+  email: string;
+  notifyOn: {
+    sosAlert: boolean;
+    meetupStart: boolean;
+    meetupEnd: boolean;
+  };
+}
 
 interface EmergencyContactFormProps {
-  initialData?: Partial<EmergencyContact>;
   onSubmit: (data: Partial<EmergencyContact>) => void;
   onCancel: () => void;
+  initialData?: Partial<EmergencyContact>;
 }
 
 export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
-  initialData,
   onSubmit,
   onCancel,
+  initialData,
 }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
@@ -31,62 +45,70 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
     },
   });
 
+  const handleFormSubmit = async (data: EmergencyContact) => {
+    try {
+      setIsSubmitting(true);
+      await emergencyService.addContact(data);
+      onSubmit(data);
+    } catch (error) {
+      console.error('Error saving emergency contact:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFormSubmitWrapper = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleSubmit(handleFormSubmit)(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Name</label>
-        <input
-          type="text"
-          {...register('name', { required: 'Name is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-        {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name.message}</p>}
-      </div>
+    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
+      <TextField<EmergencyContact>
+        label="Name"
+        name="name"
+        register={register}
+        rules={{ required: 'Name is required' }}
+        error={errors.name?.message}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-        <input
-          type="tel"
-          {...register('phoneNumber', {
-            required: 'Phone number is required',
-            pattern: {
-              value: /^\+?[\d\s-]+$/,
-              message: 'Invalid phone number',
-            },
-          })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-        {errors.phoneNumber && (
-          <p className="mt-1 text-sm text-red-600">{errors.phoneNumber.message}</p>
-        )}
-      </div>
+      <TextField<EmergencyContact>
+        label="Phone Number"
+        name="phoneNumber"
+        type="tel"
+        register={register}
+        rules={{
+          required: 'Phone number is required',
+          pattern: {
+            value: /^\+?[\d\s-()]+$/,
+            message: 'Please enter a valid phone number',
+          },
+        }}
+        error={errors.phoneNumber?.message}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Relationship</label>
-        <input
-          type="text"
-          {...register('relationship', { required: 'Relationship is required' })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-        {errors.relationship && (
-          <p className="mt-1 text-sm text-red-600">{errors.relationship.message}</p>
-        )}
-      </div>
+      <TextField<EmergencyContact>
+        label="Relationship"
+        name="relationship"
+        register={register}
+        rules={{ required: 'Relationship is required' }}
+        error={errors.relationship?.message}
+      />
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Email</label>
-        <input
-          type="email"
-          {...register('email', {
-            pattern: {
-              value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-              message: 'Invalid email address',
-            },
-          })}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-        />
-        {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
-      </div>
+      <TextField<EmergencyContact>
+        label="Email"
+        name="email"
+        type="email"
+        register={register}
+        rules={{
+          required: 'Email is required',
+          pattern: {
+            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+            message: 'Please enter a valid email address',
+          },
+        }}
+        error={errors.email?.message}
+      />
 
       <div>
         <label className="block text-sm font-medium text-gray-700">Notify On</label>
@@ -127,19 +149,21 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
         </div>
       </div>
 
-      <div className="mt-6 flex justify-end space-x-3">
+      <div className="flex justify-end space-x-4">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+          disabled={isSubmitting}
+          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
         >
           Cancel
         </button>
         <button
           type="submit"
-          className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+          disabled={isSubmitting}
+          className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50"
         >
-          Save Contact
+          {isSubmitting ? 'Saving...' : 'Save Contact'}
         </button>
       </div>
     </form>

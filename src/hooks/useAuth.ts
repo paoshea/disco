@@ -2,7 +2,7 @@ import { useContext } from 'react';
 import { AuthContext, AuthContextType } from '@/contexts/AuthContext';
 import type { User } from '@/types/user';
 
-export interface UseAuthReturn extends AuthContextType {
+export interface UseAuthReturn extends Omit<AuthContextType, 'resetPassword'> {
   user: User | null;
   isLoading: boolean;
   error: string | null;
@@ -11,7 +11,8 @@ export interface UseAuthReturn extends AuthContextType {
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   updateProfile: (data: Partial<User>) => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  resetPassword: (token: string, password: string) => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
   sendVerificationEmail: () => Promise<void>;
 }

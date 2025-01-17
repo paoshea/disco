@@ -1,26 +1,22 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
+import { WebSocketMessage } from '@/types/websocket';
 
 interface WebSocketOptions {
   url: string;
   reconnectInterval?: number;
   maxReconnectAttempts?: number;
   protocols?: string | string[];
-  onMessage?: (data: WebSocketData) => void;
+  onMessage?: (message: WebSocketMessage) => void;
   onConnect?: () => void;
   onDisconnect?: () => void;
   onError?: (error: Event) => void;
 }
 
-interface WebSocketData {
-  type: string;
-  payload: unknown;
-}
-
 interface WebSocketState {
   isConnected: boolean;
-  error: Error | null;
-  lastMessage: WebSocketData | null;
+  error: string | null;
+  lastMessage: WebSocketMessage | null;
 }
 
 export const useWebSocket = ({
@@ -73,7 +69,7 @@ export const useWebSocket = ({
         } else {
           setState(prev => ({
             ...prev,
-            error: new Error('Max reconnection attempts reached'),
+            error: 'Maximum reconnection attempts reached',
           }));
         }
       };
@@ -81,27 +77,30 @@ export const useWebSocket = ({
       ws.current.onerror = (event: Event) => {
         setState(prev => ({
           ...prev,
-          error: new Error('WebSocket connection error'),
+          error: 'WebSocket error occurred',
         }));
         onError?.(event);
       };
 
       ws.current.onmessage = (event: MessageEvent) => {
         try {
-          const data: WebSocketData = JSON.parse(event.data);
-          setState(prev => ({ ...prev, lastMessage: data }));
-          onMessage?.(data);
+          const message: WebSocketMessage = JSON.parse(event.data);
+          setState(prev => ({ ...prev, lastMessage: message }));
+          onMessage?.(message);
         } catch (err) {
-          console.error('Failed to parse WebSocket message:', err);
+          console.error('Error parsing WebSocket message:', err);
           setState(prev => ({
             ...prev,
-            error: new Error('Failed to parse WebSocket message'),
+            error: err instanceof Error ? err.message : 'An error occurred while parsing message',
           }));
         }
       };
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to connect to WebSocket');
-      setState(prev => ({ ...prev, error }));
+      console.error('Error connecting to WebSocket:', err);
+      setState(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'An error occurred while connecting to WebSocket',
+      }));
     }
   }, [
     url,
@@ -128,17 +127,29 @@ export const useWebSocket = ({
     setState(prev => ({ ...prev, isConnected: false }));
   }, []);
 
-  const send = useCallback((type: string, payload: unknown) => {
+  const send = useCallback((message: WebSocketMessage) => {
     if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      throw new Error('WebSocket is not connected');
+      console.error('WebSocket is not connected');
+      return;
     }
 
-    ws.current.send(JSON.stringify({ type, payload }));
-  }, []);
+    try {
+      ws.current.send(JSON.stringify(message));
+    } catch (err) {
+      console.error('Error sending WebSocket message:', err);
+      setState(prev => ({
+        ...prev,
+        error: err instanceof Error ? err.message : 'An error occurred while sending message',
+      }));
+    }
+  }, [ws]);
 
   useEffect(() => {
     connect();
-    return () => disconnect();
+
+    return () => {
+      disconnect();
+    };
   }, [connect, disconnect]);
 
   return {

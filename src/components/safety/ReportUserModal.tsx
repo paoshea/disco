@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
 import { Dialog } from '@headlessui/react';
+import { TextArea } from '@/components/forms/TextArea';
 import { SafetyReport } from '@/types/safety';
 import { User } from '@/types/user';
 import { safetyService } from '@/services/api/safety.service';
@@ -12,6 +14,11 @@ interface ReportUserModalProps {
   meetingId?: string;
 }
 
+interface ReportFormData {
+  type: SafetyReport['type'];
+  description: string;
+}
+
 export const ReportUserModal: React.FC<ReportUserModalProps> = ({
   isOpen,
   onClose,
@@ -19,32 +26,48 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
   reportedUser,
   meetingId,
 }) => {
-  const [type, setType] = useState<SafetyReport['type']>('harassment');
-  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ReportFormData>();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleReport = async (data: ReportFormData) => {
     try {
       setIsSubmitting(true);
+      setError(null);
       const report = {
         reporterId: user.id,
         reportedUserId: reportedUser.id,
         meetingId,
-        type,
-        description: description.trim(),
+        type: data.type,
+        description: data.description.trim(),
         evidence: [],
         status: 'pending' as const,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       await safetyService.createSafetyReport(user.id, report);
+      reset();
       onClose();
-    } catch (error) {
-      console.error('Error submitting report:', error);
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while submitting your report. Please try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleFormSubmitWrapper = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleSubmit(handleReport)(e);
   };
 
   return (
@@ -61,14 +84,26 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
             Report User
           </Dialog.Title>
 
-          <form onSubmit={handleSubmit} className="mt-4">
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Type of Report</label>
-              <select
-                value={type}
-                onChange={e => setType(e.target.value as SafetyReport['type'])}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+          {error && (
+            <div className="rounded-md bg-red-50 p-4">
+              <p className="text-sm text-red-700">{error}</p>
+            </div>
+          )}
+
+          <form onSubmit={handleFormSubmitWrapper} className="mt-4 space-y-6">
+            <div>
+              <label
+                htmlFor="type"
+                className="block text-sm font-medium text-gray-700"
               >
+                Type of Report
+              </label>
+              <select
+                id="type"
+                {...register('type', { required: 'Please select a type' })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              >
+                <option value="">Select a type</option>
                 <option value="harassment">Harassment</option>
                 <option value="inappropriate">Inappropriate Behavior</option>
                 <option value="impersonation">Impersonation</option>
@@ -77,31 +112,39 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 <option value="safety_check">Safety Check</option>
                 <option value="other">Other</option>
               </select>
+              {errors.type && (
+                <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
+              )}
             </div>
 
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700">Description</label>
-              <textarea
-                value={description}
-                onChange={e => setDescription(e.target.value)}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                rows={4}
-                required
-              />
-            </div>
+            <TextArea<ReportFormData>
+              label="Description"
+              name="description"
+              register={register}
+              rules={{
+                required: 'Please provide a description',
+                minLength: {
+                  value: 20,
+                  message: 'Please provide more details (minimum 20 characters)',
+                },
+              }}
+              error={errors.description?.message}
+              placeholder="Please describe what happened..."
+            />
 
             <div className="mt-6 flex justify-end space-x-3">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+                disabled={isSubmitting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 border border-transparent rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
               >
                 {isSubmitting ? 'Submitting...' : 'Submit Report'}
               </button>

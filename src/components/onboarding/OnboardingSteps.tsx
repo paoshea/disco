@@ -42,7 +42,7 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({ onComplete }) 
       case 1:
         return (
           <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Welcome! Let's get started</h2>
+            <h2 className="text-xl font-semibold">Welcome! Let&apos;s get started</h2>
             <div>
               <label className="block text-sm font-medium text-gray-700">
                 What should we call you?

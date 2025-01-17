@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { safetyService } from '@/services/api/safety.service';
 import { EmergencyAlert, SafetyCheck } from '@/types/safety';
@@ -42,6 +42,8 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
     if (!user?.id) return;
 
     try {
+      setLoading(true);
+      setError(null);
       const [alertsData, checksData] = await Promise.all([
         safetyService.getEmergencyAlerts(user.id),
         safetyService.getSafetyChecks(user.id),
@@ -49,18 +51,25 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
       setAlerts(alertsData);
       setSafetyChecks(checksData);
-      setError(null);
     } catch (err) {
       console.error('Error fetching safety data:', err);
-      setError('Failed to fetch safety data');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while fetching safety data. Please try again.'
+      );
     } finally {
       setIsLoading(false);
     }
   }, [user?.id]);
 
   useEffect(() => {
-    fetchSafetyData();
-    const interval = setInterval(fetchSafetyData, pollingInterval);
+    void fetchSafetyData();
+
+    const interval = setInterval(() => {
+      void fetchSafetyData();
+    }, pollingInterval);
+
     return () => clearInterval(interval);
   }, [fetchSafetyData, pollingInterval]);
 
@@ -69,7 +78,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       if (!user?.id) return;
 
       try {
-        setIsLoading(true);
+        setError(null);
         const alert = await safetyService.triggerEmergencyAlert(user.id, {
           type: 'sos',
           location: location
@@ -84,14 +93,12 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
           notifiedContacts: [],
         });
 
-        setAlerts((prev) => [alert, ...prev]);
-        setError(null);
+        setAlerts(prev => [alert, ...prev]);
       } catch (err) {
         console.error('Error triggering emergency alert:', err);
-        setError('Failed to trigger emergency alert');
-        throw err;
-      } finally {
-        setIsLoading(false);
+        throw err instanceof Error
+          ? err
+          : new Error('An error occurred while triggering the emergency alert. Please try again.');
       }
     },
     [user?.id]
@@ -102,22 +109,18 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       if (!user?.id) return;
 
       try {
-        setIsLoading(true);
+        setError(null);
         const updatedCheck = await safetyService.resolveSafetyCheck(user.id, checkId, {
           status,
           notes,
         });
 
-        setSafetyChecks((prev) =>
-          prev.map((check) => (check.id === checkId ? updatedCheck : check))
-        );
-        setError(null);
+        setSafetyChecks(prev => prev.map(check => (check.id === checkId ? updatedCheck : check)));
       } catch (err) {
         console.error('Error resolving safety check:', err);
-        setError('Failed to resolve safety check');
-        throw err;
-      } finally {
-        setIsLoading(false);
+        throw err instanceof Error
+          ? err
+          : new Error('An error occurred while resolving the safety check. Please try again.');
       }
     },
     [user?.id]
@@ -128,29 +131,63 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       if (!user?.id) return;
 
       try {
-        setIsLoading(true);
-        await safetyService.dismissEmergencyAlert(user.id, alertId);
-        setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
         setError(null);
+        await safetyService.dismissEmergencyAlert(user.id, alertId);
+        setAlerts(prev => prev.filter(alert => alert.id !== alertId));
       } catch (err) {
         console.error('Error dismissing alert:', err);
-        setError('Failed to dismiss alert');
-        throw err;
-      } finally {
-        setIsLoading(false);
+        throw err instanceof Error
+          ? err
+          : new Error('An error occurred while dismissing the alert. Please try again.');
       }
     },
     [user?.id]
   );
+
+  const handleTriggerEmergencyAlert = async (location?: GeolocationCoordinates) => {
+    try {
+      await triggerEmergencyAlert(location);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while triggering the emergency alert. Please try again.'
+      );
+    }
+  };
+
+  const handleResolveSafetyCheck = async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
+    try {
+      await resolveSafetyCheck(checkId, status, notes);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while resolving the safety check. Please try again.'
+      );
+    }
+  };
+
+  const handleDismissAlert = async (alertId: string) => {
+    try {
+      await dismissAlert(alertId);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while dismissing the alert. Please try again.'
+      );
+    }
+  };
 
   const value = {
     alerts,
     safetyChecks,
     isLoading,
     error,
-    triggerEmergencyAlert,
-    resolveSafetyCheck,
-    dismissAlert,
+    triggerEmergencyAlert: handleTriggerEmergencyAlert,
+    resolveSafetyCheck: handleResolveSafetyCheck,
+    dismissAlert: handleDismissAlert,
   };
 
   return <SafetyAlertContext.Provider value={value}>{children}</SafetyAlertContext.Provider>;

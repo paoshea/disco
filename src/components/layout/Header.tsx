@@ -2,7 +2,6 @@ import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
-import type { AuthContextType } from '@/contexts/AuthContext';
 import { UserMenu } from '@/components/layout/UserMenu';
 
 export const Header: React.FC = () => {
@@ -14,6 +13,8 @@ export const Header: React.FC = () => {
       // Router will handle redirect after logout
     } catch (error) {
       console.error('Error logging out:', error);
+    } finally {
+      // Add a finally block to ensure any necessary cleanup is done
     }
   };
 

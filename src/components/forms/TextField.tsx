@@ -1,15 +1,23 @@
 import React from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormRegister, FieldValues } from 'react-hook-form';
 
-interface TextFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
+interface TextFieldProps<T extends FieldValues> extends React.InputHTMLAttributes<HTMLInputElement> {
   label: string;
   name: string;
   error?: string;
-  register?: UseFormRegister<any>;
-  rules?: Record<string, any>;
+  register?: UseFormRegister<T>;
+  rules?: Partial<{
+    required: boolean | string;
+    minLength: number;
+    maxLength: number;
+    min: number;
+    max: number;
+    pattern: RegExp;
+    validate: (value: string) => boolean | string;
+  }>;
 }
 
-export const TextField: React.FC<TextFieldProps> = ({
+export const TextField = <T extends FieldValues>({
   label,
   name,
   error,
@@ -17,7 +25,7 @@ export const TextField: React.FC<TextFieldProps> = ({
   rules,
   type = 'text',
   ...props
-}) => {
+}: TextFieldProps<T>): JSX.Element => {
   return (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-gray-700">
@@ -27,12 +35,14 @@ export const TextField: React.FC<TextFieldProps> = ({
         <input
           type={type}
           id={name}
+          className={`shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md ${
+            error ? 'border-red-300' : ''
+          }`}
           {...(register ? register(name, rules) : {})}
           {...props}
-          className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-primary-500 focus:border-primary-500"
         />
-        {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
       </div>
+      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
     </div>
   );
 };

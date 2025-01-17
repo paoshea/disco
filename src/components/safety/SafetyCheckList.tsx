@@ -1,86 +1,85 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SafetyCheck } from '@/types/safety';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Alert } from '@/components/ui/Alert';
 import { Button } from '@/components/ui/Button';
+import { SafetyCheckModal } from './SafetyCheckModal';
 import { formatDistanceToNow } from 'date-fns';
 
 interface SafetyCheckListProps {
   checks: SafetyCheck[];
-  onResolve: (checkId: string) => Promise<void>;
+  onComplete: (checkId: string) => Promise<void>;
 }
 
-export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onResolve }) => {
-  const [resolvingId, setResolvingId] = React.useState<string | null>(null);
-  const [error, setError] = React.useState<string | null>(null);
+export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({
+  checks,
+  onComplete,
+}) => {
+  const [selectedCheck, setSelectedCheck] = useState<SafetyCheck | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleResolve = async (checkId: string) => {
+  const handleComplete = async (checkId: string) => {
     try {
-      setResolvingId(checkId);
+      setIsLoading(true);
       setError(null);
-      await onResolve(checkId);
+      await onComplete(checkId);
+      setSelectedCheck(null);
     } catch (err) {
-      setError('Failed to resolve safety check. Please try again.');
-      console.error('Error resolving safety check:', err);
+      console.error('Error completing safety check:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while completing the safety check. Please try again.'
+      );
     } finally {
-      setResolvingId(null);
+      setIsLoading(false);
     }
   };
 
-  if (checks.length === 0) {
+  const handleCompleteWrapper = (checkId: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    void handleComplete(checkId);
+  };
+
+  if (!checks.length) {
     return (
-      <div className="text-center py-12">
-        <p className="text-gray-500">No safety checks at the moment.</p>
+      <div className="text-center py-4 text-gray-500">
+        No safety checks required at this time.
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {error && (
-        <Alert
-          type="error"
-          title="Error"
-          message={error}
-          onClose={() => setError(null)}
-        />
+        <div className="rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-700">{error}</p>
+        </div>
       )}
 
-      <ul className="divide-y divide-gray-200">
-        {checks.map((check) => (
-          <li key={check.id} className="py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900">
-                  {check.type === 'meetup' ? 'Meetup Safety Check' : 'Regular Safety Check'}
-                </p>
-                <p className="text-sm text-gray-500">
-                  {formatDistanceToNow(check.scheduledFor, { addSuffix: true })}
-                </p>
-                {check.notes && (
-                  <p className="mt-1 text-sm text-gray-600">{check.notes}</p>
-                )}
-              </div>
-              <div className="ml-4 flex-shrink-0">
-                {check.status === 'pending' ? (
-                  <Button
-                    onClick={() => handleResolve(check.id)}
-                    disabled={resolvingId === check.id}
-                    loading={resolvingId === check.id}
-                    size="sm"
-                  >
-                    I'm Safe
-                  </Button>
-                ) : (
-                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Resolved
-                  </span>
-                )}
-              </div>
-            </div>
-          </li>
-        ))}
-      </ul>
+      {checks.map((check) => (
+        <div
+          key={check.id}
+          className="bg-white shadow rounded-lg p-4 flex items-center justify-between"
+        >
+          <div>
+            <h3 className="text-sm font-medium text-gray-900">
+              {check.type === 'meetup' ? 'Meetup Safety Check' : 'Regular Safety Check'}
+            </h3>
+            <p className="text-sm text-gray-500">
+              {formatDistanceToNow(check.scheduledFor, { addSuffix: true })}
+            </p>
+            {check.notes && <p className="mt-1 text-sm text-gray-600">{check.notes}</p>}
+          </div>
+          <Button
+            onClick={handleCompleteWrapper(check.id)}
+            disabled={isLoading}
+            variant="primary"
+            size="sm"
+          >
+            {isLoading ? 'Completing...' : 'Complete'}
+          </Button>
+        </div>
+      ))}
     </div>
   );
 };

@@ -56,16 +56,14 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const toggleInterest = (interest: string) => {
     const current = selectedInterests || [];
     const updated = current.includes(interest)
-      ? current.filter((i) => i !== interest)
+      ? current.filter(i => i !== interest)
       : [...current, interest];
     setValue('interests', updated);
   };
 
-  const onSubmit = async (data: ProfileFormData) => {
-    setIsSubmitting(true);
-    setError(null);
-
+  const handleFormSubmit = async (data: ProfileFormData) => {
     try {
+      setIsSubmitting(true);
       await onUpdate(data);
     } catch (err) {
       console.error('Error updating profile:', err);
@@ -75,8 +73,13 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
     }
   };
 
+  const handleFormSubmitWrapper = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleSubmit(handleFormSubmit)(e);
+  };
+
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
       {error && (
         <div className="rounded-md bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>
@@ -123,7 +126,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       <div>
         <label className="block text-sm font-medium text-gray-700">Interests</label>
         <div className="mt-2 flex flex-wrap gap-2">
-          {AVAILABLE_INTERESTS.map((interest) => (
+          {AVAILABLE_INTERESTS.map(interest => (
             <button
               key={interest}
               type="button"

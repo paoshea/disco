@@ -1,18 +1,151 @@
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useCallback, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { socketService, WebSocketEvent, WebSocketMessage } from '@/services/socket.service';
+import { WebSocketMessage } from '@/types/websocket';
 
 interface WebSocketContextType {
-  isConnected: boolean;
+  connected: boolean;
   error: string | null;
-  send: <T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>) => void;
-  subscribe: <T extends WebSocketEvent>(
-    event: T,
-    callback: (data: WebSocketMessage<T>) => void
-  ) => () => void;
+  sendMessage: (message: WebSocketMessage) => void;
+  subscribe: (channel: string, callback: (message: WebSocketMessage) => void) => () => void;
 }
 
 const WebSocketContext = createContext<WebSocketContextType | null>(null);
+
+interface WebSocketProviderProps {
+  url: string;
+  children: React.ReactNode;
+}
+
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
+  url,
+  children,
+}) => {
+  const { user } = useAuth();
+  const [socket, setSocket] = useState<WebSocket | null>(null);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [subscribers, setSubscribers] = useState<Map<string, Set<(message: WebSocketMessage) => void>>>(
+    new Map()
+  );
+
+  const connect = useCallback(() => {
+    try {
+      if (!user?.id) return;
+
+      const ws = new WebSocket(`${url}?token=${user.id}`);
+
+      ws.onopen = () => {
+        setConnected(true);
+        setError(null);
+      };
+
+      ws.onclose = () => {
+        setConnected(false);
+        setError('WebSocket connection closed');
+        // Attempt to reconnect after 5 seconds
+        setTimeout(() => connect(), 5000);
+      };
+
+      ws.onerror = (event) => {
+        setError('WebSocket error occurred');
+        console.error('WebSocket error:', event);
+      };
+
+      ws.onmessage = (event) => {
+        try {
+          const message: WebSocketMessage = JSON.parse(event.data);
+          const { channel } = message;
+
+          if (channel && subscribers.has(channel)) {
+            const channelSubscribers = subscribers.get(channel);
+            channelSubscribers?.forEach((callback) => callback(message));
+          }
+        } catch (err) {
+          console.error('Error parsing WebSocket message:', err);
+        }
+      };
+
+      setSocket(ws);
+
+      return () => {
+        ws.close();
+      };
+    } catch (err) {
+      console.error('Error connecting to WebSocket:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while connecting to WebSocket'
+      );
+    }
+  }, [url, user?.id, subscribers]);
+
+  useEffect(() => {
+    const cleanup = connect();
+    return () => cleanup?.();
+  }, [connect]);
+
+  const sendMessage = useCallback(
+    (message: WebSocketMessage) => {
+      if (!socket || socket.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket is not connected');
+        return;
+      }
+
+      try {
+        socket.send(JSON.stringify(message));
+      } catch (err) {
+        console.error('Error sending WebSocket message:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while sending message'
+        );
+      }
+    },
+    [socket]
+  );
+
+  const subscribe = useCallback(
+    (channel: string, callback: (message: WebSocketMessage) => void) => {
+      setSubscribers((prev) => {
+        const channelSubscribers = prev.get(channel) || new Set();
+        channelSubscribers.add(callback);
+        return new Map(prev).set(channel, channelSubscribers);
+      });
+
+      return () => {
+        setSubscribers((prev) => {
+          const channelSubscribers = prev.get(channel);
+          if (channelSubscribers) {
+            channelSubscribers.delete(callback);
+            if (channelSubscribers.size === 0) {
+              const newMap = new Map(prev);
+              newMap.delete(channel);
+              return newMap;
+            }
+            return new Map(prev).set(channel, channelSubscribers);
+          }
+          return prev;
+        });
+      };
+    },
+    []
+  );
+
+  return (
+    <WebSocketContext.Provider
+      value={{
+        connected,
+        error,
+        sendMessage,
+        subscribe,
+      }}
+    >
+      {children}
+    </WebSocketContext.Provider>
+  );
+};
 
 export const useWebSocket = () => {
   const context = useContext(WebSocketContext);
@@ -20,114 +153,4 @@ export const useWebSocket = () => {
     throw new Error('useWebSocket must be used within a WebSocketProvider');
   }
   return context;
-};
-
-interface WebSocketProviderProps {
-  children: React.ReactNode;
-  url: string;
-  reconnectInterval?: number;
-  maxReconnectAttempts?: number;
-}
-
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
-  children,
-  url,
-  reconnectInterval = 5000,
-  maxReconnectAttempts = 5,
-}) => {
-  const { user } = useAuth();
-  const [isConnected, setIsConnected] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const reconnectAttempts = useRef(0);
-  const reconnectTimeoutId = useRef<NodeJS.Timeout>();
-
-  const connect = () => {
-    try {
-      socketService.connect(url, {
-        auth: {
-          token: localStorage.getItem('token'),
-          userId: user?.id,
-        },
-        reconnection: true,
-        reconnectionAttempts: maxReconnectAttempts,
-        reconnectionDelay: reconnectInterval,
-      });
-    } catch (err) {
-      console.error('WebSocket connection error:', err);
-      setError('Failed to connect to WebSocket server');
-    }
-  };
-
-  useEffect(() => {
-    const handleConnect = () => {
-      setIsConnected(true);
-      setError(null);
-      reconnectAttempts.current = 0;
-      if (reconnectTimeoutId.current) {
-        clearTimeout(reconnectTimeoutId.current);
-        reconnectTimeoutId.current = undefined;
-      }
-    };
-
-    const handleDisconnect = () => {
-      setIsConnected(false);
-      if (reconnectAttempts.current < maxReconnectAttempts) {
-        reconnectTimeoutId.current = setTimeout(() => {
-          reconnectAttempts.current += 1;
-          connect();
-        }, reconnectInterval);
-      } else {
-        setError('Maximum reconnection attempts reached');
-      }
-    };
-
-    const handleError = (data: Record<string, any>) => {
-      const error = data instanceof Error ? data : new Error(data.message || 'Unknown WebSocket error');
-      console.error('WebSocket error:', error);
-      setError(error.message);
-    };
-
-    // Subscribe to connection events
-    const unsubscribeConnect = socketService.subscribe('connect', handleConnect);
-    const unsubscribeDisconnect = socketService.subscribe('disconnect', handleDisconnect);
-    const unsubscribeError = socketService.subscribe('error', handleError);
-
-    // Initial connection
-    connect();
-
-    // Cleanup
-    return () => {
-      if (reconnectTimeoutId.current) {
-        clearTimeout(reconnectTimeoutId.current);
-      }
-      unsubscribeConnect();
-      unsubscribeDisconnect();
-      unsubscribeError();
-      socketService.disconnect();
-    };
-  }, [url, reconnectInterval, maxReconnectAttempts, user?.id]);
-
-  const send = <T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>) => {
-    if (!isConnected) {
-      console.warn('Cannot send message: WebSocket not connected');
-      return;
-    }
-    socketService.send(event, data);
-  };
-
-  const subscribe = <T extends WebSocketEvent>(
-    event: T,
-    callback: (data: WebSocketMessage<T>) => void
-  ) => {
-    return socketService.subscribe(event, callback);
-  };
-
-  const value = {
-    isConnected,
-    error,
-    send,
-    subscribe,
-  };
-
-  return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
 };

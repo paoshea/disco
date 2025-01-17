@@ -1,176 +1,209 @@
 import { io, Socket } from 'socket.io-client';
+import { EventEmitter } from 'events';
 
-export type WebSocketEvent = 
-  | 'connect'
-  | 'disconnect'
-  | 'error'
-  | 'message'
-  | 'notification'
-  | 'safety_alert'
-  | 'typing'
-  | 'presence'
-  | 'match'
-  | string;
-
-export type WebSocketMessage<T extends WebSocketEvent> = T extends 'message'
-  ? {
-      id: string;
-      senderId: string;
-      recipientId: string;
-      content: string;
-      timestamp: string;
-    }
-  : T extends 'notification'
-  ? {
-      id: string;
-      type: 'match' | 'message' | 'safety' | 'system';
-      title: string;
-      message: string;
-      timestamp: string;
-      data?: Record<string, any>;
-    }
-  : T extends 'safety_alert'
-  ? {
-      id: string;
-      type: 'sos' | 'check' | 'alert';
-      userId: string;
-      location?: {
-        latitude: number;
-        longitude: number;
-        accuracy: number;
-      };
-      timestamp: string;
-    }
-  : T extends 'typing'
-  ? {
-      userId: string;
-      conversationId: string;
-      isTyping: boolean;
-    }
-  : T extends 'presence'
-  ? {
-      userId: string;
-      status: 'online' | 'offline' | 'away';
-      lastSeen?: string;
-    }
-  : T extends 'match'
-  ? {
-      matchId: string;
-      userId: string;
-      matchedUserId: string;
-      timestamp: string;
-    }
-  : Record<string, any>;
-
-interface SocketOptions {
-  auth: {
-    token: string | null;
-    userId: string | undefined;
-  };
-  reconnection?: boolean;
-  reconnectionAttempts?: number;
-  reconnectionDelay?: number;
+interface SocketEvents {
+  connect: () => void;
+  disconnect: () => void;
+  error: (error: Error) => void;
+  message: (data: MessageData) => void;
+  notification: (data: NotificationData) => void;
+  status: (data: StatusData) => void;
+  safety_alert: (data: SafetyAlertData) => void;
+  typing: (data: TypingData) => void;
+  presence: (data: PresenceData) => void;
+  match: (data: MatchData) => void;
 }
 
-class SocketService {
+interface MessageData {
+  id: string;
+  senderId: string;
+  recipientId: string;
+  content: string;
+  timestamp: string;
+}
+
+interface NotificationData {
+  id: string;
+  type: 'match' | 'message' | 'safety' | 'system';
+  title: string;
+  message: string;
+  timestamp: string;
+  data?: Record<string, unknown>;
+}
+
+interface StatusData {
+  userId: string;
+  status: 'online' | 'offline' | 'away';
+  lastSeen?: number;
+}
+
+interface SafetyAlertData {
+  id: string;
+  type: 'sos' | 'check' | 'alert';
+  userId: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+  timestamp: string;
+}
+
+interface TypingData {
+  userId: string;
+  conversationId: string;
+  isTyping: boolean;
+}
+
+interface PresenceData {
+  userId: string;
+  status: 'online' | 'offline' | 'away';
+  lastSeen?: string;
+}
+
+interface MatchData {
+  matchId: string;
+  userId: string;
+  matchedUserId: string;
+  timestamp: string;
+}
+
+interface SocketConfig {
+  url: string;
+  options?: {
+    autoConnect?: boolean;
+    reconnection?: boolean;
+    reconnectionAttempts?: number;
+    reconnectionDelay?: number;
+    timeout?: number;
+  };
+}
+
+class SocketService extends EventEmitter {
   private socket: Socket | null = null;
-  private handlers: Map<WebSocketEvent, Set<(data: any) => void>> = new Map();
+  private config: SocketConfig;
   private reconnectAttempts = 0;
   private maxReconnectAttempts = 5;
   private reconnectDelay = 1000;
+  private connected = false;
 
-  connect(url: string, options: SocketOptions): void {
-    if (this.socket?.connected) return;
-
-    this.socket = io(url, {
-      auth: options.auth,
-      reconnection: options.reconnection ?? true,
-      reconnectionAttempts: options.reconnectionAttempts ?? this.maxReconnectAttempts,
-      reconnectionDelay: options.reconnectionDelay ?? this.reconnectDelay,
-    });
-
-    this.setupEventHandlers();
+  constructor(config: SocketConfig) {
+    super();
+    this.config = config;
   }
 
-  private setupEventHandlers(): void {
-    if (!this.socket) return;
+  connect(): void {
+    if (this.socket?.connected) {
+      return;
+    }
+
+    this.socket = io(this.config.url, {
+      autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: this.maxReconnectAttempts,
+      reconnectionDelay: this.reconnectDelay,
+      timeout: 10000,
+      ...this.config.options,
+    });
+
+    this.setupEventListeners();
+    this.socket.connect();
+  }
+
+  private setupEventListeners(): void {
+    if (!this.socket) {
+      return;
+    }
 
     this.socket.on('connect', () => {
-      console.log('WebSocket connected');
+      this.connected = true;
       this.reconnectAttempts = 0;
-      this.notifyHandlers('connect', undefined);
+      this.emit('connect');
     });
 
     this.socket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
-      this.notifyHandlers('disconnect', undefined);
+      this.connected = false;
+      this.emit('disconnect');
     });
 
     this.socket.on('error', (error: Error) => {
-      console.error('WebSocket error:', error);
-      this.notifyHandlers('error', error);
+      this.emit('error', error);
     });
 
-    // Handle custom events
-    ['message', 'notification', 'safety_alert', 'typing', 'presence', 'match'].forEach((event) => {
-      this.socket?.on(event, (data: any) => {
-        this.notifyHandlers(event as WebSocketEvent, data);
-      });
+    this.socket.on('message', (data: MessageData) => {
+      this.emit('message', data);
+    });
+
+    this.socket.on('notification', (data: NotificationData) => {
+      this.emit('notification', data);
+    });
+
+    this.socket.on('status', (data: StatusData) => {
+      this.emit('status', data);
+    });
+
+    this.socket.on('safety_alert', (data: SafetyAlertData) => {
+      this.emit('safety_alert', data);
+    });
+
+    this.socket.on('typing', (data: TypingData) => {
+      this.emit('typing', data);
+    });
+
+    this.socket.on('presence', (data: PresenceData) => {
+      this.emit('presence', data);
+    });
+
+    this.socket.on('match', (data: MatchData) => {
+      this.emit('match', data);
     });
   }
 
   disconnect(): void {
-    if (!this.socket) return;
-
-    this.socket.disconnect();
-    this.socket = null;
-    this.handlers.clear();
+    if (this.socket) {
+      this.socket.disconnect();
+      this.socket = null;
+      this.connected = false;
+    }
   }
 
-  send<T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>): void {
+  emit<K extends keyof SocketEvents>(event: K, ...args: Parameters<SocketEvents[K]>): boolean {
     if (!this.socket?.connected) {
-      console.error('Cannot send message: WebSocket not connected');
-      return;
+      console.warn(`Socket not connected. Unable to emit event: ${event}`);
+      return false;
     }
 
-    this.socket.emit(event, data);
-  }
-
-  subscribe<T extends WebSocketEvent>(
-    event: T,
-    callback: (data: WebSocketMessage<T>) => void
-  ): () => void {
-    if (!this.handlers.has(event)) {
-      this.handlers.set(event, new Set());
+    try {
+      this.socket.emit(event, ...args);
+      return true;
+    } catch (error) {
+      console.error(`Error emitting event ${event}:`, error);
+      return false;
     }
-
-    const handlers = this.handlers.get(event)!;
-    handlers.add(callback);
-
-    return () => {
-      handlers.delete(callback);
-      if (handlers.size === 0) {
-        this.handlers.delete(event);
-      }
-    };
   }
 
-  private notifyHandlers<T extends WebSocketEvent>(event: T, data: WebSocketMessage<T>): void {
-    const handlers = this.handlers.get(event);
-    if (!handlers) return;
+  on<K extends keyof SocketEvents>(event: K, listener: SocketEvents[K]): this {
+    super.on(event, listener);
+    return this;
+  }
 
-    handlers.forEach((handler) => {
-      try {
-        handler(data);
-      } catch (error) {
-        console.error(`Error in WebSocket handler for event ${event}:`, error);
-      }
-    });
+  off<K extends keyof SocketEvents>(event: K, listener: SocketEvents[K]): this {
+    super.off(event, listener);
+    return this;
   }
 
   isConnected(): boolean {
-    return this.socket?.connected ?? false;
+    return this.connected;
+  }
+
+  getSocket(): Socket {
+    if (!this.socket) {
+      throw new Error('Socket not initialized');
+    }
+    return this.socket;
   }
 }
 
-export const socketService = new SocketService();
+export const socketService = new SocketService({
+  url: process.env.NEXT_PUBLIC_SOCKET_URL || 'ws://localhost:3000',
+});

@@ -1,109 +1,151 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { SafetyReport, Evidence } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { TextArea } from '@/components/ui/TextArea';
-import { Select } from '@/components/ui/Select';
-import { FileUpload } from '@/components/ui/FileUpload';
+import { TextArea } from '@/components/forms/TextArea';
+import { Select } from '@/components/forms/Select';
+import { safetyService } from '@/services/api/safety.service';
 
 interface SafetyReportFormProps {
-  onSubmit: (data: Partial<SafetyReport>) => Promise<void>;
+  userId: string;
+  onSubmit: (report: any) => Promise<void>;
   onCancel: () => void;
-  initialData?: SafetyReport;
 }
 
-const reportTypes = [
-  { value: 'harassment', label: 'Harassment' },
-  { value: 'suspicious_activity', label: 'Suspicious Activity' },
-  { value: 'emergency', label: 'Emergency' },
-  { value: 'other', label: 'Other' },
-];
+interface FormData {
+  type: string;
+  description: string;
+  evidence: File[];
+}
 
 export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
+  userId,
   onSubmit,
   onCancel,
-  initialData,
 }) => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<SafetyReport>({
-    defaultValues: initialData,
-  });
+    setValue,
+  } = useForm<FormData>();
 
-  const [files, setFiles] = useState<Evidence[]>(initialData?.evidence || []);
-
-  const handleFileUpload = async (uploadedFiles: File[]) => {
-    // TODO: Implement file upload to storage service
-    const newEvidence: Evidence[] = uploadedFiles.map((file, index) => ({
-      id: `temp-${index}`,
-      reportId: initialData?.id || '',
-      type: file.type,
-      url: URL.createObjectURL(file),
-      createdAt: new Date().toISOString(),
-    }));
-    setFiles(prev => [...prev, ...newEvidence]);
+  const handleFileUpload = async (files: FileList | null) => {
+    if (!files?.length) return;
+    try {
+      setIsLoading(true);
+      setError(null);
+      const uploadedFiles = await Promise.all(
+        Array.from(files).map((file) =>
+          safetyService.uploadEvidence(userId, file)
+        )
+      );
+      setValue('evidence', uploadedFiles);
+    } catch (err) {
+      console.error('Error uploading files:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while uploading files. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleFormSubmit = async (data: SafetyReport) => {
-    await onSubmit({
-      ...data,
-      evidence: files,
-    });
+  const handleFormSubmit = async (data: FormData) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      await onSubmit({
+        ...data,
+        userId,
+        createdAt: new Date().toISOString(),
+      });
+    } catch (err) {
+      console.error('Error submitting report:', err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while submitting the report. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFormSubmitWrapper = (e: React.FormEvent) => {
+    e.preventDefault();
+    void handleSubmit(handleFormSubmit)(e);
   };
 
   return (
-    <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
-      <Select
-        label="Report Type"
-        options={reportTypes}
-        error={errors.type?.message}
-        {...register('type', { required: 'Report type is required' })}
-      />
-
-      <Input
-        label="Location"
-        error={errors.location?.message}
-        {...register('location', { required: 'Location is required' })}
-      />
-
-      <TextArea
-        label="Description"
-        error={errors.description?.message}
-        {...register('description', { required: 'Description is required' })}
-      />
-
-      <FileUpload
-        label="Evidence (Optional)"
-        accept={{
-          'image/*': ['.png', '.jpg', '.jpeg', '.gif'],
-          'video/*': ['.mp4', '.mov', '.avi'],
-          'audio/*': ['.mp3', '.wav'],
-        }}
-        multiple
-        onFilesSelected={handleFileUpload}
-      />
-
-      {files.length > 0 && (
-        <div className="space-y-2">
-          <label className="text-sm font-medium text-gray-700">Uploaded Files</label>
-          <ul className="space-y-1">
-            {files.map(file => (
-              <li key={file.id} className="text-sm text-gray-600">
-                {file.type} - {file.url}
-              </li>
-            ))}
-          </ul>
+    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
-      <div className="flex justify-end space-x-2">
-        <Button type="button" variant="secondary" onClick={onCancel}>
+      <Select<FormData>
+        label="Type of Report"
+        name="type"
+        register={register}
+        rules={{ required: 'Please select a report type' }}
+        error={errors.type?.message}
+        options={[
+          { value: 'harassment', label: 'Harassment' },
+          { value: 'inappropriate', label: 'Inappropriate Behavior' },
+          { value: 'spam', label: 'Spam' },
+          { value: 'other', label: 'Other' },
+        ]}
+      />
+
+      <TextArea<FormData>
+        label="Description"
+        name="description"
+        register={register}
+        rules={{
+          required: 'Please provide a description',
+          minLength: {
+            value: 20,
+            message: 'Please provide more details (minimum 20 characters)',
+          },
+        }}
+        error={errors.description?.message}
+        placeholder="Please describe what happened..."
+      />
+
+      <div>
+        <label className="block text-sm font-medium text-gray-700">
+          Evidence (Optional)
+        </label>
+        <input
+          type="file"
+          multiple
+          onChange={(e) => void handleFileUpload(e.target.files)}
+          disabled={isLoading}
+          className="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+        />
+      </div>
+
+      <div className="flex justify-end space-x-4">
+        <Button
+          type="button"
+          onClick={onCancel}
+          disabled={isLoading}
+          variant="secondary"
+        >
           Cancel
         </Button>
-        <Button type="submit">{initialData ? 'Update' : 'Submit'} Report</Button>
+        <Button
+          type="submit"
+          disabled={isLoading}
+          variant="primary"
+        >
+          {isLoading ? 'Submitting...' : 'Submit Report'}
+        </Button>
       </div>
     </form>
   );

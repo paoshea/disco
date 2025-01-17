@@ -3,6 +3,12 @@ import { EmergencyAlert, SafetyCheck } from '@/types/safety';
 import { Match } from '@/types/match';
 import { Message } from '@/types/chat';
 
+interface WebSocketMessage {
+  type: string;
+  data: unknown;
+  timestamp: number;
+}
+
 type WebSocketEvents = {
   emergency_alert: EmergencyAlert;
   safety_check: SafetyCheck;
@@ -85,6 +91,19 @@ class SocketService {
     this.socket.on('safety_check', (data: SafetyCheck) => {
       void this.notifyHandlers('safety_check', data);
     });
+
+    this.socket.on('message', (message: WebSocketMessage) => {
+      const handlers = this.handlers.get(message.type as keyof WebSocketEvents);
+      if (handlers) {
+        handlers.forEach(handler => {
+          try {
+            handler(message.data);
+          } catch (error) {
+            console.error('Error in message handler:', error);
+          }
+        });
+      }
+    });
   }
 
   subscribe<K extends keyof WebSocketEvents>(
@@ -143,7 +162,12 @@ class SocketService {
       console.error('Socket not connected');
       return;
     }
-    this.socket.emit(event, data);
+    const message: WebSocketMessage = {
+      type: event,
+      data,
+      timestamp: Date.now(),
+    };
+    this.socket.emit('message', message);
   }
 }
 

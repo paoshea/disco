@@ -1,21 +1,27 @@
 import React from 'react';
-import { UseFormRegister } from 'react-hook-form';
+import { UseFormRegister, FieldValues } from 'react-hook-form';
 
 interface Option {
-  value: string;
+  value: string | number;
   label: string;
 }
 
-interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+interface SelectProps<T extends FieldValues> extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label: string;
   name: string;
   options: Option[];
   error?: string;
-  register?: UseFormRegister<any>;
-  rules?: Record<string, any>;
+  register?: UseFormRegister<T>;
+  rules?: Partial<{
+    required: boolean | string;
+    min: number;
+    max: number;
+    pattern: RegExp;
+    validate: (value: string) => boolean | string;
+  }>;
 }
 
-export const Select: React.FC<SelectProps> = ({
+export const Select = <T extends FieldValues>({
   label,
   name,
   options,
@@ -23,7 +29,7 @@ export const Select: React.FC<SelectProps> = ({
   register,
   rules,
   ...props
-}) => {
+}: SelectProps<T>): JSX.Element => {
   return (
     <div>
       <label htmlFor={name} className="block text-sm font-medium text-gray-700">
@@ -32,9 +38,11 @@ export const Select: React.FC<SelectProps> = ({
       <div className="mt-1">
         <select
           id={name}
+          className={`block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md ${
+            error ? 'border-red-300' : ''
+          }`}
           {...(register ? register(name, rules) : {})}
           {...props}
-          className="block w-full pl-3 pr-10 py-2 text-base border border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 rounded-md"
         >
           {options.map(option => (
             <option key={option.value} value={option.value}>
