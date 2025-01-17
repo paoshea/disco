@@ -1,8 +1,12 @@
 import { io, Socket } from 'socket.io-client';
+import { EmergencyAlert, SafetyCheck } from '@/types/safety';
+
+type MessageHandler = (data: any) => void;
 
 class SocketService {
   private socket: Socket | null = null;
   private static instance: SocketService;
+  private handlers: Map<string, Set<MessageHandler>> = new Map();
 
   private constructor() {}
 
@@ -16,23 +20,50 @@ class SocketService {
   connect(token: string) {
     if (!this.socket) {
       this.socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:8081', {
-        auth: {
-          token,
-        },
+        auth: { token },
       });
 
-      this.socket.on('connect', () => {
-        console.log('Connected to WebSocket server');
-      });
-
-      this.socket.on('disconnect', () => {
-        console.log('Disconnected from WebSocket server');
-      });
-
-      this.socket.on('error', (error) => {
-        console.error('WebSocket error:', error);
-      });
+      this.setupEventHandlers();
     }
+    return this.socket;
+  }
+
+  private setupEventHandlers() {
+    if (!this.socket) return;
+
+    this.socket.on('connect', () => {
+      console.log('WebSocket connected');
+    });
+
+    this.socket.on('disconnect', () => {
+      console.log('WebSocket disconnected');
+    });
+
+    // Safety-related events
+    this.socket.on('emergency_alert', (data: EmergencyAlert) => {
+      this.notifyHandlers('emergency_alert', data);
+    });
+
+    this.socket.on('safety_check', (data: SafetyCheck) => {
+      this.notifyHandlers('safety_check', data);
+    });
+
+    // Add more event handlers as needed
+  }
+
+  subscribe(event: string, handler: MessageHandler) {
+    if (!this.handlers.has(event)) {
+      this.handlers.set(event, new Set());
+    }
+    this.handlers.get(event)?.add(handler);
+  }
+
+  unsubscribe(event: string, handler: MessageHandler) {
+    this.handlers.get(event)?.delete(handler);
+  }
+
+  private notifyHandlers(event: string, data: any) {
+    this.handlers.get(event)?.forEach(handler => handler(data));
   }
 
   disconnect() {
@@ -42,26 +73,16 @@ class SocketService {
     }
   }
 
+  isConnected(): boolean {
+    return this.socket?.connected || false;
+  }
+
   emit(event: string, data: any) {
-    if (this.socket) {
-      this.socket.emit(event, data);
-    } else {
+    if (!this.socket) {
       console.error('Socket not connected');
+      return;
     }
-  }
-
-  on(event: string, callback: (data: any) => void) {
-    if (this.socket) {
-      this.socket.on(event, callback);
-    } else {
-      console.error('Socket not connected');
-    }
-  }
-
-  off(event: string) {
-    if (this.socket) {
-      this.socket.off(event);
-    }
+    this.socket.emit(event, data);
   }
 }
 

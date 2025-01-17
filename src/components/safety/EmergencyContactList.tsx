@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { EmergencyContact } from '@/types/safety';
 import { toUserContact, toSafetyContact } from '@/utils/contactTypes';
 import { Button } from '@/components/ui/Button';
-import { safetyService } from '@/services/safety';
+import { safetyService } from '@/services/api/safety.service';
 
 interface EmergencyContactListProps {
   contacts: EmergencyContact[];

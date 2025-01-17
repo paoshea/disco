@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { EmergencyContact, SafetyReport } from '@/types/safety';
-import { safetyService } from '@/services/safety';
+import { safetyService } from '@/services/api/safety.service';
 import { EmergencyContactList } from './EmergencyContactList';
 import { EmergencyContactForm } from './EmergencyContactForm';
 import { SafetyReportForm } from './SafetyReportForm';

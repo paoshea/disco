@@ -50,32 +50,33 @@ class SafetyService {
     return response.data;
   }
 
-  async scheduleSafetyCheck(meetingId: string, scheduledTime: string): Promise<SafetyCheck> {
-    const response = await api.post('/safety/checks/schedule', { meetingId, scheduledTime });
-    return response.data;
+  async respondToSafetyCheck(id: string, response: 'safe' | 'unsafe', location?: { latitude: number; longitude: number; accuracy: number }): Promise<SafetyCheck> {
+    const payload = { response, location };
+    const res = await api.post(`/safety/checks/${id}/respond`, payload);
+    return res.data;
   }
 
   // Safety Reports
-  async submitReport(report: Omit<SafetyReport, 'id' | 'reporterId' | 'status' | 'resolution'>): Promise<SafetyReport> {
-    const response = await api.post('/safety/reports', report);
-    return response.data;
-  }
-
-  async getReports(userId: string): Promise<SafetyReport[]> {
+  async getSafetyReports(userId: string): Promise<SafetyReport[]> {
     const response = await api.get(`/safety/reports/${userId}`);
     return response.data;
   }
 
-  // Evidence Upload
+  async createSafetyReport(report: Omit<SafetyReport, 'id'>): Promise<SafetyReport> {
+    const response = await api.post('/safety/reports', report);
+    return response.data;
+  }
+
+  async updateSafetyReport(id: string, report: Partial<SafetyReport>): Promise<SafetyReport> {
+    const response = await api.put(`/safety/reports/${id}`, report);
+    return response.data;
+  }
+
   async uploadEvidence(reportId: string, file: File): Promise<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('reportId', reportId);
-
-    const response = await api.post('/safety/evidence', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+    const response = await api.post(`/safety/reports/${reportId}/evidence`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
     });
     return response.data;
   }

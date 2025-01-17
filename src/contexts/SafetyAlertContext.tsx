@@ -1,16 +1,18 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { EmergencyAlert, EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
 import { EmergencyContact as UserEmergencyContact } from '@/types/user';
 import { safetyService } from '@/services/api/safety.service';
 import { toSafetyContact } from '@/utils/contactTypes';
+import { socketService } from '@/services/websocket/socket.service';
 
 interface SafetyAlertContextType {
   activeAlerts: EmergencyAlert[];
   emergencyContacts: SafetyEmergencyContact[];
   triggerAlert: (alert: Omit<EmergencyAlert, 'id'>) => Promise<void>;
   resolveAlert: (alertId: string) => Promise<void>;
+  addAlert: (alert: EmergencyAlert) => void;
+  removeAlert: (alertId: string) => void;
 }
 
 const SafetyAlertContext = createContext<SafetyAlertContextType | undefined>(undefined);
@@ -20,7 +22,6 @@ interface SafetyAlertProviderProps {
 }
 
 export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ children }) => {
-  const ws = useWebSocket();
   const { user } = useAuth();
   const [activeAlerts, setActiveAlerts] = useState<EmergencyAlert[]>([]);
   const [emergencyContacts, setEmergencyContacts] = useState<SafetyEmergencyContact[]>([]);
@@ -28,11 +29,6 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
   useEffect(() => {
     if (!user?.id) return;
 
-    const socket = new WebSocket(
-      `${process.env.NEXT_PUBLIC_WS_URL}/safety/alerts?userId=${user.id}`
-    );
-
-    // Load initial data
     const loadData = async () => {
       try {
         if (!user?.id) return;
@@ -54,9 +50,8 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
   }, [user?.id]);
 
   useEffect(() => {
-    if (!ws || !user?.id) return;
+    if (!user?.id) return;
 
-    // Subscribe to safety-related events
     const handleEmergencyAlert = (alert: EmergencyAlert) => {
       setActiveAlerts(prev => [...prev, alert]);
       
@@ -85,16 +80,16 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
       );
     };
 
-    ws.on('emergency_alert', handleEmergencyAlert);
-    ws.on('alert_resolved', handleAlertResolution);
-    ws.on('contact_updated', handleContactUpdate);
+    socketService.subscribe('emergency_alert', handleEmergencyAlert);
+    socketService.subscribe('alert_resolved', handleAlertResolution);
+    socketService.subscribe('contact_updated', handleContactUpdate);
 
     return () => {
-      ws.off('emergency_alert', handleEmergencyAlert);
-      ws.off('alert_resolved', handleAlertResolution);
-      ws.off('contact_updated', handleContactUpdate);
+      socketService.unsubscribe('emergency_alert', handleEmergencyAlert);
+      socketService.unsubscribe('alert_resolved', handleAlertResolution);
+      socketService.unsubscribe('contact_updated', handleContactUpdate);
     };
-  }, [ws, user?.id]);
+  }, [user?.id]);
 
   const triggerAlert = async (alert: Omit<EmergencyAlert, 'id'>) => {
     try {
@@ -102,7 +97,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
       setActiveAlerts(prev => [...prev, newAlert]);
       
       // Broadcast via WebSocket
-      ws?.send('emergency_alert', newAlert);
+      socketService.emit('emergency_alert', newAlert);
     } catch (error) {
       console.error('Error triggering alert:', error);
       throw error;
@@ -115,11 +110,19 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
       setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
       
       // Broadcast via WebSocket
-      ws?.send('alert_resolved', alertId);
+      socketService.emit('alert_resolved', alertId);
     } catch (error) {
       console.error('Error resolving alert:', error);
       throw error;
     }
+  };
+
+  const addAlert = (alert: EmergencyAlert) => {
+    setActiveAlerts(prev => [...prev, alert]);
+  };
+
+  const removeAlert = (alertId: string) => {
+    setActiveAlerts(prev => prev.filter(alert => alert.id !== alertId));
   };
 
   return (
@@ -129,6 +132,8 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({ childr
         emergencyContacts,
         triggerAlert,
         resolveAlert,
+        addAlert,
+        removeAlert,
       }}
     >
       {children}
