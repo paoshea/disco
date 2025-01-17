@@ -1,7 +1,8 @@
 import React from 'react';
 import { UseFormRegister, FieldValues, Path } from 'react-hook-form';
 
-interface TextAreaProps<T extends FieldValues> extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'name'> {
+interface TextAreaProps<T extends FieldValues>
+  extends Omit<React.TextareaHTMLAttributes<HTMLTextAreaElement>, 'name'> {
   label: string;
   name: Path<T>;
   error?: string;

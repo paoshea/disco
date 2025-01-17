@@ -16,7 +16,14 @@ function classNames(...classes: string[]) {
 
 export default function Profile() {
   const router = useRouter();
-  const { user: authUser, isLoading: authLoading, error: authError, logout, updateProfile, sendVerificationEmail } = useAuth();
+  const {
+    user: authUser,
+    isLoading: authLoading,
+    error: authError,
+    logout,
+    updateProfile,
+    sendVerificationEmail,
+  } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState<User | null>(null);
@@ -45,9 +52,7 @@ export default function Profile() {
       setProfileData(data);
     } catch (err) {
       setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while loading profile data.'
+        err instanceof Error ? err.message : 'An error occurred while loading profile data.'
       );
     } finally {
       setIsLoading(false);
@@ -61,11 +66,7 @@ export default function Profile() {
       const updatedProfile = await userService.updateProfile(data);
       setProfileData(updatedProfile);
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while updating profile.'
-      );
+      setError(err instanceof Error ? err.message : 'An error occurred while updating profile.');
     } finally {
       setIsLoading(false);
     }
@@ -159,16 +160,9 @@ export default function Profile() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              {profileData && (
-                <ProfileEdit
-                  user={profileData}
-                  onUpdate={handleUpdateProfile}
-                />
-              )}
+              {profileData && <ProfileEdit user={profileData} onUpdate={handleUpdateProfile} />}
             </Tab.Panel>
-            <Tab.Panel>
-              {profileData && <ProfileSettings user={profileData} />}
-            </Tab.Panel>
+            <Tab.Panel>{profileData && <ProfileSettings user={profileData} />}</Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       </div>

@@ -33,7 +33,7 @@ export interface WebSocketProviderProps {
   onMessage?: (message: WebSocketMessage) => void;
 }
 
-export type WebSocketEventType = 
+export type WebSocketEventType =
   | 'connection'
   | 'message'
   | 'location_update'

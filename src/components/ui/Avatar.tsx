@@ -31,10 +31,7 @@ export const Avatar: React.FC<AvatarProps> = ({
           className
         )}
       >
-        <UserCircleIcon
-          className="text-gray-400"
-          aria-hidden="true"
-        />
+        <UserCircleIcon className="text-gray-400" aria-hidden="true" />
         <span className="sr-only">Avatar for user {userId}</span>
       </div>
     );
@@ -44,11 +41,7 @@ export const Avatar: React.FC<AvatarProps> = ({
     <img
       src={imageUrl}
       alt={`Avatar for user ${userId}`}
-      className={clsx(
-        'rounded-full object-cover',
-        sizeClasses[size],
-        className
-      )}
+      className={clsx('rounded-full object-cover', sizeClasses[size], className)}
     />
   );
 };

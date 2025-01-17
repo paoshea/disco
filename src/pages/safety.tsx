@@ -40,9 +40,7 @@ export default function Safety() {
       } catch (err) {
         console.error('Error initializing safety page:', err);
         setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while loading the safety page.'
+          err instanceof Error ? err.message : 'An error occurred while loading the safety page.'
         );
       } finally {
         setIsLoading(false);
@@ -131,10 +129,7 @@ export default function Safety() {
               <EmergencyContactList userId={user.id} />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyCheckList
-                checks={safetyChecks}
-                onResolveCheck={resolveSafetyCheck}
-              />
+              <SafetyCheckList checks={safetyChecks} onResolveCheck={resolveSafetyCheck} />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

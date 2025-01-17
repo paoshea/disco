@@ -87,7 +87,12 @@ export interface SafetyReport {
 
 export interface SafetyReportFormProps {
   reportedUserId: string;
-  onSubmit: (data: Omit<SafetyReport, 'id' | 'reporterId' | 'status' | 'adminNotes' | 'createdAt' | 'updatedAt' | 'resolvedAt'>) => Promise<void>;
+  onSubmit: (
+    data: Omit<
+      SafetyReport,
+      'id' | 'reporterId' | 'status' | 'adminNotes' | 'createdAt' | 'updatedAt' | 'resolvedAt'
+    >
+  ) => Promise<void>;
   onCancel: () => void;
 }
 

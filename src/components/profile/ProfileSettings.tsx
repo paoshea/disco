@@ -23,7 +23,7 @@ const defaultPreferences: UserPreferences = {
     messages: true,
     events: true,
     safety: true,
-  }
+  },
 };
 
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
@@ -38,7 +38,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       try {
         const userPreferences = await userService.getPreferences(user.id);
         setPreferences(userPreferences);
-        
+
         // Update form values
         Object.entries(userPreferences).forEach(([key, value]) => {
           setValue(key as keyof UserPreferences, value);
@@ -79,9 +79,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Age Range
-            </label>
+            <label className="block text-sm font-medium text-gray-700">Age Range</label>
             <div className="mt-1 grid grid-cols-2 gap-4">
               <input
                 type="number"
@@ -107,14 +105,14 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <Switch.Group key={key} as="div" className="flex items-center justify-between">
               <Switch.Label as="span" className="flex-grow">
                 <span className="text-sm font-medium text-gray-900">
-                  {key
-                    .replace(/([A-Z])/g, ' $1')
-                    .replace(/^./, str => str.toUpperCase())}
+                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
                 </span>
               </Switch.Label>
               <Switch
                 checked={watch(`notifications.${key as keyof typeof preferences.notifications}`)}
-                onChange={v => setValue(`notifications.${key as keyof typeof preferences.notifications}`, v)}
+                onChange={v =>
+                  setValue(`notifications.${key as keyof typeof preferences.notifications}`, v)
+                }
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
@@ -131,11 +129,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       </div>
 
       <div className="flex justify-end space-x-4">
-        <Button
-          type="submit"
-          disabled={isSubmitting}
-          className="inline-flex justify-center"
-        >
+        <Button type="submit" disabled={isSubmitting} className="inline-flex justify-center">
           {isSubmitting ? 'Saving...' : 'Save Preferences'}
         </Button>
       </div>

@@ -7,16 +7,19 @@ This document outlines the deployment process and configuration for the Disco ba
 ## Environments
 
 ### Development
+
 - **URL**: `http://localhost:8000`
 - **Purpose**: Local development
 - **Infrastructure**: Docker Compose
 
 ### Staging
+
 - **URL**: `https://api-staging.disco.com`
 - **Purpose**: Testing and QA
 - **Infrastructure**: AWS EKS
 
 ### Production
+
 - **URL**: `https://api.disco.com`
 - **Purpose**: Production environment
 - **Infrastructure**: AWS EKS
@@ -24,17 +27,20 @@ This document outlines the deployment process and configuration for the Disco ba
 ## Prerequisites
 
 1. **Tools**
+
    - Docker
    - kubectl
    - AWS CLI
    - Helm
 
 2. **Access**
+
    - AWS credentials
    - GitHub access
    - Docker registry access
 
 3. **Environment Variables**
+
    ```bash
    # AWS Configuration
    AWS_REGION=us-west-2
@@ -62,6 +68,7 @@ This document outlines the deployment process and configuration for the Disco ba
 ## Local Development
 
 1. **Start Development Environment**
+
    ```bash
    # Clone repository
    git clone https://github.com/disco/backend.git
@@ -75,6 +82,7 @@ This document outlines the deployment process and configuration for the Disco ba
    ```
 
 2. **Run Migrations**
+
    ```bash
    npm run migrate:up
    ```
@@ -89,6 +97,7 @@ This document outlines the deployment process and configuration for the Disco ba
 ### Cluster Setup
 
 1. **Create EKS Cluster**
+
    ```bash
    eksctl create cluster \
      --name disco-cluster \
@@ -102,6 +111,7 @@ This document outlines the deployment process and configuration for the Disco ba
    ```
 
 2. **Install Helm Charts**
+
    ```bash
    # Add Helm repositories
    helm repo add bitnami https://charts.bitnami.com/bitnami
@@ -119,18 +129,21 @@ This document outlines the deployment process and configuration for the Disco ba
 ### Service Deployment
 
 1. **Deploy Database**
+
    ```bash
    helm install postgresql bitnami/postgresql \
      --set auth.postgresPassword=$DB_PASSWORD
    ```
 
 2. **Deploy Redis**
+
    ```bash
    helm install redis bitnami/redis \
      --set auth.password=$REDIS_PASSWORD
    ```
 
 3. **Deploy Services**
+
    ```bash
    # Apply ConfigMaps and Secrets
    kubectl apply -f k8s/config/
@@ -184,11 +197,13 @@ jobs:
 ### Setup Monitoring Stack
 
 1. **Install Prometheus**
+
    ```bash
    helm install prometheus prometheus-community/prometheus
    ```
 
 2. **Install Grafana**
+
    ```bash
    helm install grafana grafana/grafana
    ```
@@ -203,12 +218,14 @@ jobs:
 ### Database Backups
 
 1. **Automated Backups**
+
    ```bash
    # Configure backup schedule
    kubectl apply -f k8s/backup/cronjob.yaml
    ```
 
 2. **Manual Backup**
+
    ```bash
    # Create backup
    kubectl exec -it postgresql-0 -- pg_dump -U postgres > backup.sql
@@ -225,6 +242,7 @@ jobs:
 ### Common Issues
 
 1. **Pod Crashes**
+
    ```bash
    # Check pod logs
    kubectl logs <pod-name>
@@ -234,6 +252,7 @@ jobs:
    ```
 
 2. **Database Connection Issues**
+
    ```bash
    # Check database status
    kubectl exec -it postgresql-0 -- pg_isready
@@ -253,6 +272,7 @@ jobs:
 ### SSL/TLS Configuration
 
 1. **Generate Certificates**
+
    ```bash
    # Install cert-manager
    kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.yaml
@@ -270,16 +290,19 @@ jobs:
 ## Best Practices
 
 1. **Deployment**
+
    - Use rolling updates
    - Implement health checks
    - Set resource limits
 
 2. **Security**
+
    - Regular security audits
    - Keep dependencies updated
    - Monitor security alerts
 
 3. **Monitoring**
+
    - Set up alerts
    - Monitor resource usage
    - Track error rates

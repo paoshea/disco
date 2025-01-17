@@ -23,11 +23,7 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
       await onDismiss();
     } catch (err) {
       console.error('Error dismissing alert:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while dismissing the alert'
-      );
+      setError(err instanceof Error ? err.message : 'An error occurred while dismissing the alert');
     } finally {
       setIsLoading(false);
     }
@@ -37,10 +33,7 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
     <div className="relative rounded-lg bg-white p-4 shadow-lg ring-1 ring-black ring-opacity-5">
       <div className="flex items-start">
         <div className="flex-shrink-0">
-          <ExclamationTriangleIcon
-            className="h-6 w-6 text-red-400"
-            aria-hidden="true"
-          />
+          <ExclamationTriangleIcon className="h-6 w-6 text-red-400" aria-hidden="true" />
         </div>
         <div className="ml-3 w-0 flex-1">
           <p className="text-sm font-medium text-gray-900">{alert.title}</p>

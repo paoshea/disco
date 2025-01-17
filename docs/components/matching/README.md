@@ -16,17 +16,17 @@ import { MatchMapView } from '@/components/matching/MatchMapView';
   onMarkerClick={handleMarkerClick}
   center={{ lat: 0, lng: 0 }}
   zoom={12}
-/>
+/>;
 ```
 
 #### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| matches | `Match[]` | Yes | Array of match objects to display |
-| onMarkerClick | `(matchId: string) => void` | Yes | Handler for match marker clicks |
-| center | `LatLng` | No | Center coordinates (default: `{ lat: 0, lng: 0 }`) |
-| zoom | `number` | No | Zoom level (default: 12) |
+| Prop          | Type                        | Required | Description                                        |
+| ------------- | --------------------------- | -------- | -------------------------------------------------- |
+| matches       | `Match[]`                   | Yes      | Array of match objects to display                  |
+| onMarkerClick | `(matchId: string) => void` | Yes      | Handler for match marker clicks                    |
+| center        | `LatLng`                    | No       | Center coordinates (default: `{ lat: 0, lng: 0 }`) |
+| zoom          | `number`                    | No       | Zoom level (default: 12)                           |
 
 #### Features
 

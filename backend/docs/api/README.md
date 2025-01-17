@@ -25,9 +25,11 @@ Authorization: Bearer <jwt_token>
 ### Authentication
 
 #### POST /auth/login
+
 Login with email and password.
 
 **Request:**
+
 ```json
 {
   "email": "string",
@@ -36,6 +38,7 @@ Login with email and password.
 ```
 
 **Response:**
+
 ```json
 {
   "token": "string",
@@ -50,9 +53,11 @@ Login with email and password.
 ### Safety
 
 #### POST /safety/alerts
+
 Create a new safety alert.
 
 **Request:**
+
 ```json
 {
   "type": "EMERGENCY",
@@ -65,6 +70,7 @@ Create a new safety alert.
 ```
 
 **Response:**
+
 ```json
 {
   "id": "string",
@@ -79,9 +85,11 @@ Create a new safety alert.
 ```
 
 #### GET /safety/alerts
+
 Get all active safety alerts for the authenticated user.
 
 **Response:**
+
 ```json
 {
   "alerts": [
@@ -102,14 +110,17 @@ Get all active safety alerts for the authenticated user.
 ### Matching
 
 #### GET /matches
+
 Get matches for the authenticated user.
 
 **Query Parameters:**
+
 - `limit`: number (default: 20)
 - `offset`: number (default: 0)
 - `radius`: number (km, default: 50)
 
 **Response:**
+
 ```json
 {
   "matches": [
@@ -145,6 +156,7 @@ All endpoints follow a consistent error response format:
 ```
 
 Common error codes:
+
 - `UNAUTHORIZED`: Invalid or missing authentication
 - `FORBIDDEN`: Insufficient permissions
 - `NOT_FOUND`: Resource not found
@@ -154,10 +166,12 @@ Common error codes:
 ## Rate Limiting
 
 API requests are rate limited by IP and user token:
+
 - Unauthenticated: 60 requests per minute
 - Authenticated: 1000 requests per minute
 
 Rate limit headers:
+
 ```
 X-RateLimit-Limit: <max requests>
 X-RateLimit-Remaining: <remaining requests>
@@ -171,14 +185,17 @@ The API uses URL versioning (v1, v2, etc.). Breaking changes will only be introd
 ## WebSocket API
 
 For real-time features, connect to:
+
 ```
 wss://api.disco.com/v1/ws
 ```
 
 Required query parameters:
+
 - `token`: JWT token
 
 Events:
+
 - `safety_alert`: New safety alert
 - `match_update`: Match status update
 - `location_update`: User location update

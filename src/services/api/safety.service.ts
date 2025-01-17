@@ -37,16 +37,11 @@ class SafetyService {
 
   // Safety Settings
   async getSettings(userId: string): Promise<SafetySettings> {
-    const response = await apiClient.get<SafetySettings>(
-      `${this.baseUrl}/settings/${userId}`
-    );
+    const response = await apiClient.get<SafetySettings>(`${this.baseUrl}/settings/${userId}`);
     return response.data;
   }
 
-  async updateSettings(
-    userId: string,
-    settings: Partial<SafetySettings>
-  ): Promise<SafetySettings> {
+  async updateSettings(userId: string, settings: Partial<SafetySettings>): Promise<SafetySettings> {
     const response = await apiClient.put<SafetySettings>(
       `${this.baseUrl}/settings/${userId}`,
       settings
@@ -90,14 +85,8 @@ class SafetyService {
     return response.data.alerts;
   }
 
-  async triggerEmergencyAlert(
-    userId: string,
-    alert: Partial<SafetyAlert>
-  ): Promise<SafetyAlert> {
-    const response = await apiClient.post<SafetyAlert>(
-      `${this.baseUrl}/alerts/${userId}`,
-      alert
-    );
+  async triggerEmergencyAlert(userId: string, alert: Partial<SafetyAlert>): Promise<SafetyAlert> {
+    const response = await apiClient.post<SafetyAlert>(`${this.baseUrl}/alerts/${userId}`, alert);
     return response.data;
   }
 
@@ -126,10 +115,7 @@ class SafetyService {
   }
 
   // Safety Reports
-  async createSafetyReport(
-    userId: string,
-    report: Partial<SafetyReport>
-  ): Promise<SafetyReport> {
+  async createSafetyReport(userId: string, report: Partial<SafetyReport>): Promise<SafetyReport> {
     const response = await apiClient.post<SafetyReport>(
       `${this.baseUrl}/reports/${userId}`,
       report
@@ -177,17 +163,12 @@ class SafetyService {
   }
 
   async getAlerts(): Promise<SafetyAlert[]> {
-    const response = await apiClient.get<{ alerts: SafetyAlert[] }>(
-      `${this.baseUrl}/alerts`
-    );
+    const response = await apiClient.get<{ alerts: SafetyAlert[] }>(`${this.baseUrl}/alerts`);
     return response.data.alerts;
   }
 
   async createAlert(data: SafetyAlertCreateData): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/alerts`,
-      data
-    );
+    const response = await apiClient.post<{ alert: SafetyAlert }>(`${this.baseUrl}/alerts`, data);
     return response.data.alert;
   }
 
@@ -199,17 +180,12 @@ class SafetyService {
   }
 
   async getChecks(): Promise<SafetyCheck[]> {
-    const response = await apiClient.get<{ checks: SafetyCheck[] }>(
-      `${this.baseUrl}/checks`
-    );
+    const response = await apiClient.get<{ checks: SafetyCheck[] }>(`${this.baseUrl}/checks`);
     return response.data.checks;
   }
 
   async createCheck(data: SafetyCheckCreateData): Promise<SafetyCheck> {
-    const response = await apiClient.post<{ check: SafetyCheck }>(
-      `${this.baseUrl}/checks`,
-      data
-    );
+    const response = await apiClient.post<{ check: SafetyCheck }>(`${this.baseUrl}/checks`, data);
     return response.data.check;
   }
 

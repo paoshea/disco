@@ -9,10 +9,7 @@ interface SafetyCheckListProps {
   onComplete: (checkId: string) => Promise<void>;
 }
 
-export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({
-  checks,
-  onComplete,
-}) => {
+export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComplete }) => {
   const [selectedCheck, setSelectedCheck] = useState<SafetyCheck | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,9 +39,7 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({
 
   if (!checks.length) {
     return (
-      <div className="text-center py-4 text-gray-500">
-        No safety checks required at this time.
-      </div>
+      <div className="text-center py-4 text-gray-500">No safety checks required at this time.</div>
     );
   }
 
@@ -56,7 +51,7 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({
         </div>
       )}
 
-      {checks.map((check) => (
+      {checks.map(check => (
         <div
           key={check.id}
           className="bg-white shadow rounded-lg p-4 flex items-center justify-between"

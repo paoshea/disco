@@ -14,7 +14,7 @@ import { EmergencyAlert } from '@/components/safety/EmergencyAlert';
 <EmergencyAlert
   onAlertSent={() => console.log('Alert sent')}
   onCancel={() => console.log('Cancelled')}
-/>
+/>;
 ```
 
 #### Features
@@ -32,7 +32,7 @@ A component for displaying active safety alerts with location information.
 ```tsx
 import { SafetyAlertNotification } from '@/components/safety/SafetyAlertNotification';
 
-<SafetyAlertNotification />
+<SafetyAlertNotification />;
 ```
 
 #### Features
@@ -61,21 +61,25 @@ const { activeAlerts, resolveAlert } = useSafetyAlerts();
 ## Best Practices
 
 1. **Location Services**
+
    - Always check for location permissions
    - Provide clear feedback when location is unavailable
    - Use high-accuracy mode for emergency features
 
 2. **Alert Handling**
+
    - Implement proper error handling
    - Show clear loading states
    - Provide feedback on alert status
 
 3. **Map Usage**
+
    - Use appropriate zoom levels for context
    - Ensure markers are clearly visible
    - Handle map interaction appropriately
 
 4. **Accessibility**
+
    - Maintain proper contrast ratios
    - Provide clear error messages
    - Ensure keyboard navigation

@@ -48,7 +48,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
 
       // Upload evidence files if any
       const evidenceUrls = await Promise.all(
-        files.map(async (file) => {
+        files.map(async file => {
           const response = await safetyService.uploadEvidence(file);
           return response.url;
         })
@@ -58,7 +58,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
         type: data.type,
         description: data.description,
         reportedUserId,
-        evidence: evidenceUrls.map((url) => ({
+        evidence: evidenceUrls.map(url => ({
           type: 'image',
           url,
         })),
@@ -66,9 +66,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     } catch (err) {
       console.error('Error submitting safety report:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while submitting the report'
+        err instanceof Error ? err.message : 'An error occurred while submitting the report'
       );
     } finally {
       setIsSubmitting(false);
@@ -79,11 +77,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
-      <Select
-        label="Report Type"
-        {...register('type')}
-        error={errors.type?.message}
-      >
+      <Select label="Report Type" {...register('type')} error={errors.type?.message}>
         <option value="">Select a reason for reporting</option>
         <option value="harassment">Harassment</option>
         <option value="inappropriate">Inappropriate Content</option>
@@ -101,9 +95,7 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">
-          Evidence (Optional)
-        </label>
+        <label className="block text-sm font-medium text-gray-700">Evidence (Optional)</label>
         <div className="mt-1">
           <input
             type="file"
@@ -113,18 +105,11 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
             className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
           />
         </div>
-        <p className="mt-2 text-sm text-gray-500">
-          Upload any relevant images or screenshots
-        </p>
+        <p className="mt-2 text-sm text-gray-500">Upload any relevant images or screenshots</p>
       </div>
 
       <div className="flex justify-end space-x-4">
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={onCancel}
-          disabled={isSubmitting}
-        >
+        <Button type="button" variant="secondary" onClick={onCancel} disabled={isSubmitting}>
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>

@@ -50,9 +50,7 @@ const LoginPage = () => {
       await router.push('/profile');
     } catch (err) {
       setLoginError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred during login. Please try again.'
+        err instanceof Error ? err.message : 'An error occurred during login. Please try again.'
       );
     }
   };

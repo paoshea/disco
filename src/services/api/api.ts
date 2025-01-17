@@ -29,21 +29,21 @@ class ApiService {
     this.instance = axios.create(config);
 
     this.instance.interceptors.request.use(
-      (config) => {
+      config => {
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => {
+      error => {
         return Promise.reject(this.handleError(error));
       }
     );
 
     this.instance.interceptors.response.use(
-      (response) => response,
-      (error) => {
+      response => response,
+      error => {
         return Promise.reject(this.handleError(error));
       }
     );
@@ -57,11 +57,7 @@ class ApiService {
     }
   }
 
-  async post<T>(
-    url: string,
-    data?: any,
-    config?: AxiosRequestConfig
-  ): Promise<AxiosResponse<T>> {
+  async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
       return await this.instance.post<T>(url, data, config);
     } catch (error) {
@@ -69,11 +65,7 @@ class ApiService {
     }
   }
 
-  async put<T>(
-    url: string,
-    data?: any,
-    config?: AxiosRequestConfig
-  ): Promise<AxiosResponse<T>> {
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<AxiosResponse<T>> {
     try {
       return await this.instance.put<T>(url, data, config);
     } catch (error) {

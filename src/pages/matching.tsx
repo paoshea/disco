@@ -66,9 +66,7 @@ export default function MatchingPage() {
           <button
             onClick={() => setViewMode('list')}
             className={`px-4 py-2 rounded-lg ${
-              viewMode === 'list'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+              viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'
             }`}
           >
             List View
@@ -76,9 +74,7 @@ export default function MatchingPage() {
           <button
             onClick={() => setViewMode('map')}
             className={`px-4 py-2 rounded-lg ${
-              viewMode === 'map'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+              viewMode === 'map' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'
             }`}
           >
             Map View

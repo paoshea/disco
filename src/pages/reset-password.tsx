@@ -44,11 +44,7 @@ export default function ResetPassword() {
         setSuccess('Password reset instructions have been sent to your email');
       }
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred. Please try again.'
-      );
+      setError(err instanceof Error ? err.message : 'An error occurred. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -77,7 +73,7 @@ export default function ResetPassword() {
 
         <form
           className="mt-8 space-y-6"
-          onSubmit={(e) => {
+          onSubmit={e => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
             void handleSubmit({
@@ -90,10 +86,7 @@ export default function ResetPassword() {
           <div className="space-y-4">
             {!token && (
               <div>
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-medium text-gray-700"
-                >
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
                   Email address
                 </label>
                 <input
@@ -109,10 +102,7 @@ export default function ResetPassword() {
             {token && (
               <>
                 <div>
-                  <label
-                    htmlFor="password"
-                    className="block text-sm font-medium text-gray-700"
-                  >
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                     New Password
                   </label>
                   <input

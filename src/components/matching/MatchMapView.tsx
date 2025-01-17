@@ -18,8 +18,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   const markers: MapMarker[] = useMemo(
     () =>
       matches
-        .filter((match) => match.location)
-        .map((match) => ({
+        .filter(match => match.location)
+        .map(match => ({
           id: match.id,
           position: {
             lat: match.location!.latitude,

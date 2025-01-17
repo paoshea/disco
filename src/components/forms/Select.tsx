@@ -6,7 +6,8 @@ interface Option {
   label: string;
 }
 
-interface SelectProps<T extends FieldValues> extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'name'> {
+interface SelectProps<T extends FieldValues>
+  extends Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'name'> {
   label: string;
   name: Path<T>;
   options: Option[];
@@ -38,7 +39,7 @@ export const Select = <T extends FieldValues>({
         {...(register ? register(name, rules) : {})}
         {...props}
       >
-        {options.map((option) => (
+        {options.map(option => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>

@@ -1,12 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
 import { apiClient } from './api.client';
-import { 
-  Event, 
+import {
+  Event,
   CreateEventInput,
   EventFilters,
   Location,
   EventStatus,
-  EventParticipant 
+  EventParticipant,
 } from '@/types/event';
 
 class EventService {
@@ -29,14 +29,8 @@ class EventService {
     return response.data;
   }
 
-  async updateEvent(
-    eventId: string,
-    data: Partial<CreateEventInput>
-  ): Promise<Event> {
-    const response = await apiClient.put<Event>(
-      `${this.baseUrl}/${eventId}`,
-      data
-    );
+  async updateEvent(eventId: string, data: Partial<CreateEventInput>): Promise<Event> {
+    const response = await apiClient.put<Event>(`${this.baseUrl}/${eventId}`, data);
     return response.data;
   }
 
@@ -45,18 +39,12 @@ class EventService {
   }
 
   async joinEvent(eventId: string, userId: string): Promise<Event> {
-    const response = await apiClient.post<Event>(
-      `${this.baseUrl}/${eventId}/join`,
-      { userId }
-    );
+    const response = await apiClient.post<Event>(`${this.baseUrl}/${eventId}/join`, { userId });
     return response.data;
   }
 
   async leaveEvent(eventId: string, userId: string): Promise<Event> {
-    const response = await apiClient.post<Event>(
-      `${this.baseUrl}/${eventId}/leave`,
-      { userId }
-    );
+    const response = await apiClient.post<Event>(`${this.baseUrl}/${eventId}/leave`, { userId });
     return response.data;
   }
 
@@ -68,9 +56,9 @@ class EventService {
     await apiClient.post(`${this.baseUrl}/${eventId}/report`, { reason });
   }
 
-  async getUpcomingEvents(params?: { 
-    page?: number; 
-    limit?: number; 
+  async getUpcomingEvents(params?: {
+    page?: number;
+    limit?: number;
     sortBy?: 'date' | 'popularity' | 'distance';
     filters?: EventFilters;
   }): Promise<Event[]> {
@@ -137,21 +125,14 @@ class EventService {
   }
 
   async cancelEvent(eventId: string, reason: string): Promise<Event> {
-    const response = await apiClient.post<Event>(
-      `${this.baseUrl}/${eventId}/cancel`,
-      { reason }
-    );
+    const response = await apiClient.post<Event>(`${this.baseUrl}/${eventId}/cancel`, { reason });
     return response.data;
   }
 
-  async updateSafetyGuidelines(
-    eventId: string,
-    guidelines: string[]
-  ): Promise<Event> {
-    const response = await apiClient.put<Event>(
-      `${this.baseUrl}/${eventId}/safety-guidelines`,
-      { guidelines }
-    );
+  async updateSafetyGuidelines(eventId: string, guidelines: string[]): Promise<Event> {
+    const response = await apiClient.put<Event>(`${this.baseUrl}/${eventId}/safety-guidelines`, {
+      guidelines,
+    });
     return response.data;
   }
 

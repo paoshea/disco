@@ -24,9 +24,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
     } catch (err) {
       console.error('Error resolving safety check:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while resolving the safety check'
+        err instanceof Error ? err.message : 'An error occurred while resolving the safety check'
       );
     } finally {
       setIsSubmitting(false);
@@ -34,11 +32,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onClose={onClose}
-      className="fixed inset-0 z-10 overflow-y-auto"
-    >
+    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-10 overflow-y-auto">
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <Dialog.Overlay className="fixed inset-0 bg-black opacity-30" />
 
@@ -55,7 +49,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
             <TextArea
               label="Additional Notes"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={e => setNotes(e.target.value)}
               placeholder="Add any relevant details about your safety status..."
               className="mt-4"
               rows={3}

@@ -51,9 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleAuthError = (err: unknown, operation: string) => {
     console.error(`${operation} error:`, err);
-    const errorMessage = err instanceof Error 
-      ? err.message 
-      : `An error occurred during ${operation.toLowerCase()}.`;
+    const errorMessage =
+      err instanceof Error ? err.message : `An error occurred during ${operation.toLowerCase()}.`;
     setError(errorMessage);
     throw err;
   };

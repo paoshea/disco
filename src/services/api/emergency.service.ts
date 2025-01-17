@@ -61,15 +61,11 @@ class EmergencyService {
       formData.append('description', description);
     }
 
-    const response = await apiClient.post(
-      `${this.baseUrl}/alerts/${alertId}/evidence`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
+    const response = await apiClient.post(`${this.baseUrl}/alerts/${alertId}/evidence`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
 
     return response.data;
   }

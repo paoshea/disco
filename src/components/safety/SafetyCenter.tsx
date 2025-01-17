@@ -31,19 +31,14 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
     <div className="space-y-8">
       <section>
         <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
-        <EmergencyAlert
-          user={user}
-          onTriggerAlert={onTriggerAlert}
-        />
+        <EmergencyAlert user={user} onTriggerAlert={onTriggerAlert} />
       </section>
 
       {alerts.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">
-            Active Alerts
-          </h2>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">Active Alerts</h2>
           <div className="space-y-4">
-            {alerts.map((alert) => (
+            {alerts.map(alert => (
               <SafetyAlertNotification
                 key={alert.id}
                 alert={alert}
@@ -55,9 +50,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
       )}
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-gray-900">
-          Safety Features
-        </h2>
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">Safety Features</h2>
         <SafetyFeatures user={user} />
       </section>
     </div>

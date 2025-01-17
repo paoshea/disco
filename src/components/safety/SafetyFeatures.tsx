@@ -17,9 +17,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user }) => {
     } catch (err) {
       console.error('Error updating safety feature:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while updating safety features'
+        err instanceof Error ? err.message : 'An error occurred while updating safety features'
       );
     } finally {
       setIsUpdating(false);
@@ -34,9 +32,7 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user }) => {
     } catch (err) {
       console.error('Error updating emergency contacts:', err);
       setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while updating emergency contacts'
+        err instanceof Error ? err.message : 'An error occurred while updating emergency contacts'
       );
     } finally {
       setIsUpdating(false);
@@ -50,50 +46,42 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({ user }) => {
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Location Sharing
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900">Location Sharing</h3>
             <p className="text-sm text-gray-500">
               Share your location with emergency contacts during alerts
             </p>
           </div>
           <Switch
             checked={user.safetySettings.locationSharing}
-            onChange={(enabled) => handleToggleFeature('locationSharing', enabled)}
+            onChange={enabled => handleToggleFeature('locationSharing', enabled)}
             disabled={isUpdating}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Automatic Check-ins
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900">Automatic Check-ins</h3>
             <p className="text-sm text-gray-500">
               Automatically request check-ins during high-risk activities
             </p>
           </div>
           <Switch
             checked={user.safetySettings.automaticCheckins}
-            onChange={(enabled) => handleToggleFeature('automaticCheckins', enabled)}
+            onChange={enabled => handleToggleFeature('automaticCheckins', enabled)}
             disabled={isUpdating}
           />
         </div>
 
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Emergency Notifications
-            </h3>
+            <h3 className="text-lg font-medium text-gray-900">Emergency Notifications</h3>
             <p className="text-sm text-gray-500">
               Send notifications to emergency contacts during alerts
             </p>
           </div>
           <Switch
             checked={user.safetySettings.emergencyNotifications}
-            onChange={(enabled) =>
-              handleToggleFeature('emergencyNotifications', enabled)
-            }
+            onChange={enabled => handleToggleFeature('emergencyNotifications', enabled)}
             disabled={isUpdating}
           />
         </div>

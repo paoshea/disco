@@ -17,10 +17,7 @@ interface WebSocketProviderProps {
   children: React.ReactNode;
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
-  url,
-  children,
-}) => {
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, children }) => {
   const { user } = useAuth();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -42,12 +39,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
         setTimeout(() => connect(), 5000);
       };
 
-      ws.onerror = (event) => {
+      ws.onerror = event => {
         setError('WebSocket error occurred');
         console.error('WebSocket error:', event);
       };
 
-      ws.onmessage = (event) => {
+      ws.onmessage = event => {
         try {
           const message: WebSocketMessage<any> = JSON.parse(event.data);
           console.log('WebSocket message received:', message);
@@ -108,11 +105,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     reconnect,
   };
 
-  return (
-    <WebSocketContext.Provider value={value}>
-      {children}
-    </WebSocketContext.Provider>
-  );
+  return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
 };
 
 export const useWebSocket = () => {

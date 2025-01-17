@@ -25,21 +25,21 @@ import { BaseMapView } from '@/components/map/BaseMapView';
       },
     },
   ]}
-  onClick={(e) => console.log('Map clicked:', e.latLng)}
-  onMarkerClick={(markerId) => console.log('Marker clicked:', markerId)}
-/>
+  onClick={e => console.log('Map clicked:', e.latLng)}
+  onMarkerClick={markerId => console.log('Marker clicked:', markerId)}
+/>;
 ```
 
 #### Props
 
-| Prop | Type | Required | Description |
-|------|------|----------|-------------|
-| center | `LatLng` | Yes | Center coordinates of the map |
-| zoom | `number` | No | Zoom level (default: 14) |
-| markers | `MapMarker[]` | No | Array of markers to display |
-| onClick | `(e: google.maps.MapMouseEvent) => void` | No | Handler for map click events |
-| onMarkerClick | `(markerId: string) => void` | No | Handler for marker click events |
-| mapOptions | `google.maps.MapOptions` | No | Additional Google Maps options |
+| Prop          | Type                                     | Required | Description                     |
+| ------------- | ---------------------------------------- | -------- | ------------------------------- |
+| center        | `LatLng`                                 | Yes      | Center coordinates of the map   |
+| zoom          | `number`                                 | No       | Zoom level (default: 14)        |
+| markers       | `MapMarker[]`                            | No       | Array of markers to display     |
+| onClick       | `(e: google.maps.MapMouseEvent) => void` | No       | Handler for map click events    |
+| onMarkerClick | `(markerId: string) => void`             | No       | Handler for marker click events |
+| mapOptions    | `google.maps.MapOptions`                 | No       | Additional Google Maps options  |
 
 #### Types
 

@@ -79,7 +79,7 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
       onClick={onClick}
       options={{ ...defaultMapOptions, ...mapOptions }}
     >
-      {markers.map((marker) => (
+      {markers.map(marker => (
         <Marker
           key={marker.id}
           position={marker.position}

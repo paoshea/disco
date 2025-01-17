@@ -99,7 +99,8 @@ export const useWebSocket = ({
       console.error('Error connecting to WebSocket:', err);
       setState(prev => ({
         ...prev,
-        error: err instanceof Error ? err.message : 'An error occurred while connecting to WebSocket',
+        error:
+          err instanceof Error ? err.message : 'An error occurred while connecting to WebSocket',
       }));
     }
   }, [
@@ -127,22 +128,25 @@ export const useWebSocket = ({
     setState(prev => ({ ...prev, isConnected: false }));
   }, []);
 
-  const send = useCallback((message: WebSocketMessage) => {
-    if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
-      console.error('WebSocket is not connected');
-      return;
-    }
+  const send = useCallback(
+    (message: WebSocketMessage) => {
+      if (!ws.current || ws.current.readyState !== WebSocket.OPEN) {
+        console.error('WebSocket is not connected');
+        return;
+      }
 
-    try {
-      ws.current.send(JSON.stringify(message));
-    } catch (err) {
-      console.error('Error sending WebSocket message:', err);
-      setState(prev => ({
-        ...prev,
-        error: err instanceof Error ? err.message : 'An error occurred while sending message',
-      }));
-    }
-  }, [ws]);
+      try {
+        ws.current.send(JSON.stringify(message));
+      } catch (err) {
+        console.error('Error sending WebSocket message:', err);
+        setState(prev => ({
+          ...prev,
+          error: err instanceof Error ? err.message : 'An error occurred while sending message',
+        }));
+      }
+    },
+    [ws]
+  );
 
   useEffect(() => {
     connect();

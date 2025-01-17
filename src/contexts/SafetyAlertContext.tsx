@@ -93,9 +93,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
         setAlerts(prev => [alert, ...prev]);
       } catch (err) {
         console.error('Error triggering emergency alert:', err);
-        throw err instanceof Error
-          ? err
-          : new Error('Failed to trigger emergency alert');
+        throw err instanceof Error ? err : new Error('Failed to trigger emergency alert');
       }
     },
     [user?.id]
@@ -113,14 +111,10 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
           completedAt: new Date().toISOString(),
         });
 
-        setSafetyChecks(prev =>
-          prev.map(check => (check.id === checkId ? updatedCheck : check))
-        );
+        setSafetyChecks(prev => prev.map(check => (check.id === checkId ? updatedCheck : check)));
       } catch (err) {
         console.error('Error resolving safety check:', err);
-        throw err instanceof Error
-          ? err
-          : new Error('Failed to resolve safety check');
+        throw err instanceof Error ? err : new Error('Failed to resolve safety check');
       }
     },
     [user?.id]
@@ -168,9 +162,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
       try {
         setError(null);
         const updatedAlert = await safetyService.resolveAlert(alertId);
-        setAlerts(prev =>
-          prev.map(alert => (alert.id === alertId ? updatedAlert : alert))
-        );
+        setAlerts(prev => prev.map(alert => (alert.id === alertId ? updatedAlert : alert)));
       } catch (err) {
         console.error('Error resolving alert:', err);
         throw err instanceof Error ? err : new Error('Failed to resolve alert');
@@ -191,9 +183,5 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
     resolveAlert,
   };
 
-  return (
-    <SafetyAlertContext.Provider value={value}>
-      {children}
-    </SafetyAlertContext.Provider>
-  );
+  return <SafetyAlertContext.Provider value={value}>{children}</SafetyAlertContext.Provider>;
 };

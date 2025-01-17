@@ -88,7 +88,10 @@ class UserService {
 
   async updateSettings(userId: string, settings: UserSettings): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await apiClient.put(`${this.baseUrl}/${userId}/settings`, settings);
+      const response: AxiosResponse<User> = await apiClient.put(
+        `${this.baseUrl}/${userId}/settings`,
+        settings
+      );
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -161,7 +164,9 @@ class UserService {
 
   async getPreferences(userId: string): Promise<UserPreferences> {
     try {
-      const response: AxiosResponse<UserPreferences> = await apiClient.get(`/users/${userId}/preferences`);
+      const response: AxiosResponse<UserPreferences> = await apiClient.get(
+        `/users/${userId}/preferences`
+      );
       return response.data;
     } catch (err) {
       throw this.handleError(err);

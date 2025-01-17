@@ -41,11 +41,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         setMessages(chatMessages);
       } catch (err) {
         console.error('Error fetching messages:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while fetching messages'
-        );
+        setError(err instanceof Error ? err.message : 'An error occurred while fetching messages');
       } finally {
         setLoading(false);
       }
@@ -67,11 +63,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       setNewMessage('');
     } catch (err) {
       console.error('Error sending message:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while sending the message'
-      );
+      setError(err instanceof Error ? err.message : 'An error occurred while sending the message');
     }
   };
 
@@ -107,7 +99,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.map((message) => (
+        {messages.map(message => (
           <div
             key={message.id}
             className={`mb-4 flex ${
@@ -136,7 +128,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <input
             type="text"
             value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
+            onChange={e => setNewMessage(e.target.value)}
             placeholder="Type a message..."
             className="flex-1 rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:outline-none"
           />

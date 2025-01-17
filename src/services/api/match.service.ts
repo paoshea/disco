@@ -29,7 +29,9 @@ class MatchService {
 
   async getMatch(matchId: string): Promise<MatchResponse> {
     try {
-      const response: AxiosResponse<{ match: MatchResponse }> = await api.get(`/matches/${matchId}`);
+      const response: AxiosResponse<{ match: MatchResponse }> = await api.get(
+        `/matches/${matchId}`
+      );
       return response.data.match;
     } catch (err) {
       throw this.handleError(err);

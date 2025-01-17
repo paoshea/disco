@@ -92,10 +92,7 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
 
           <form onSubmit={handleFormSubmitWrapper} className="mt-4 space-y-6">
             <div>
-              <label
-                htmlFor="type"
-                className="block text-sm font-medium text-gray-700"
-              >
+              <label htmlFor="type" className="block text-sm font-medium text-gray-700">
                 Type of Report
               </label>
               <select
@@ -112,9 +109,7 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 <option value="safety_check">Safety Check</option>
                 <option value="other">Other</option>
               </select>
-              {errors.type && (
-                <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>
-              )}
+              {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
             </div>
 
             <TextArea<ReportFormData>

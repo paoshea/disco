@@ -91,7 +91,7 @@ export class NotificationService {
         data: options.data,
       });
 
-      await new Promise<void>((resolve) => {
+      await new Promise<void>(resolve => {
         notification.onclick = async event => {
           event.preventDefault();
 
@@ -101,7 +101,10 @@ export class NotificationService {
               try {
                 await handler(notification);
               } catch (error) {
-                console.error(`Error in notification handler for type ${options.data.type}:`, error);
+                console.error(
+                  `Error in notification handler for type ${options.data.type}:`,
+                  error
+                );
               }
             }
           }
