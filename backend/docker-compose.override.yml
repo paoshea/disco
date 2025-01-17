@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  core-api:
+    volumes:
+      - ./services/core-api:/app
+    environment:
+      - DEBUG=true
+      - LOG_LEVEL=debug
+
+  location-service:
+    volumes:
+      - ./services/location-service:/app
+    environment:
+      - RUST_LOG=debug
+
+  user-service:
+    volumes:
+      - ./services/user-service:/app
+      - /app/node_modules
+    command: npm run start:dev
+    environment:
+      - NODE_ENV=development
+
+  matching-service:
+    volumes:
+      - ./services/matching-service:/app
+    environment:
+      - MIX_ENV=dev
+      - BEAM_DEBUG=1
+
+  postgres:
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init-scripts:/docker-entrypoint-initdb.d
