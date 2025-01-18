@@ -1,5 +1,23 @@
 import { create } from 'zustand';
 import type { LoginResult } from '@/lib/auth';
+import { z } from 'zod';
+
+const loginResponseSchema = z.object({
+  user: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      streakCount: z.number(),
+    })
+    .optional(),
+  error: z.string().optional(),
+  needsVerification: z.boolean().optional(),
+  token: z.string().optional(),
+});
+
+type LoginResponse = z.infer<typeof loginResponseSchema>;
 
 interface User {
   id: string;
@@ -28,22 +46,31 @@ async function loginImpl(
     body: JSON.stringify({ email, password }),
   });
 
-  const result = await response.json();
+  const data = await response.json();
+  const result = loginResponseSchema.safeParse(data);
 
-  if (!response.ok) {
+  if (!result.success) {
     return {
-      error: result.message || 'An error occurred during login',
+      error: 'Invalid response from server',
     };
   }
 
-  if (result.needsVerification) {
+  const parsedData = result.data;
+
+  if (!response.ok) {
+    return {
+      error: parsedData.error || 'An error occurred during login',
+    };
+  }
+
+  if (parsedData.needsVerification) {
     return { needsVerification: true };
   }
 
-  if (result.user && result.token) {
+  if (parsedData.user && parsedData.token) {
     return {
-      user: result.user,
-      token: result.token,
+      user: parsedData.user,
+      token: parsedData.token,
     };
   }
 

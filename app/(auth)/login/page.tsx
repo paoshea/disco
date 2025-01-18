@@ -126,7 +126,7 @@ export default function LoginPage() {
           </div>
 
           <form
-            onSubmit={e => void handleSubmit(onSubmit)(e)}
+            onSubmit={void handleSubmit(onSubmit)}
             className="mt-8 space-y-6"
           >
             <div className="space-y-4">

@@ -3,7 +3,6 @@ import { cookies } from 'next/headers';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
-import type { User } from '@prisma/client';
 import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
@@ -50,7 +49,7 @@ export async function verifyPassword(
 }
 
 // For JWT tokens (auth tokens)
-export async function generateToken(payload: JWTPayload): Promise<string> {
+export function generateToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
@@ -59,13 +58,11 @@ export function generateVerificationToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }
 
-export async function generateRefreshToken(
-  payload: JWTPayload
-): Promise<string> {
+export function generateRefreshToken(payload: JWTPayload): string {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
-export async function verifyToken(token: string): Promise<JWTPayload | null> {
+export function verifyToken(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as JWTPayload;
   } catch (error) {

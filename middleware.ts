@@ -3,7 +3,12 @@ import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
 // Add paths that require authentication
-const protectedPaths = ['/dashboard', '/api/dashboard', '/api/auth/refresh', '/api/safety-check'];
+const protectedPaths = [
+  '/dashboard',
+  '/api/dashboard',
+  '/api/auth/refresh',
+  '/api/safety-check',
+];
 
 // Add paths that should redirect authenticated users
 const authPaths = ['/login', '/signup'];
@@ -11,7 +16,9 @@ const authPaths = ['/login', '/signup'];
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const authToken = request.cookies.get('auth-token');
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  const isProtectedPath = protectedPaths.some(path =>
+    pathname.startsWith(path)
+  );
   const isAuthPath = authPaths.some(path => pathname === path);
 
   // Handle unauthenticated requests
@@ -52,14 +59,14 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   } catch (error) {
     console.error('Middleware error:', error);
-    
+
     // Handle errors on protected paths
     if (isProtectedPath) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('returnTo', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    
+
     // Allow request to proceed for non-protected paths
     return NextResponse.next();
   }

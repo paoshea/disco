@@ -2,20 +2,28 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
 import { generateToken, verifyToken } from '@/lib/auth';
+import { z } from 'zod';
+
+const refreshSchema = z.object({
+  refreshToken: z.string(),
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const { refreshToken } = await request.json();
+    const body = (await request.json()) as z.infer<typeof refreshSchema>;
+    const result = refreshSchema.safeParse(body);
 
-    if (!refreshToken) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Refresh token is required' },
+        { error: 'Invalid refresh token format' },
         { status: 400 }
       );
     }
 
+    const { refreshToken } = result.data;
+
     // Verify refresh token
-    const decoded = await verifyToken(refreshToken);
+    const decoded = verifyToken(refreshToken);
     if (!decoded) {
       return NextResponse.json(
         { error: 'Invalid refresh token' },
@@ -41,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate new access token
-    const token = await generateToken({
+    const token = generateToken({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,

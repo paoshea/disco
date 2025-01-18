@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
@@ -8,11 +7,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
-import type { RegisterData } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import Image from 'next/image';
+import { useState } from 'react';
 
 const signupSchema = z
   .object({
@@ -33,25 +33,27 @@ const signupSchema = z
     path: ['confirmPassword'],
   });
 
-type SignupFormData = z.infer<typeof signupSchema>;
-
 export default function SignupPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { register: signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const signupForm = useForm<SignupFormData>({
+  const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      confirmPassword: '',
+      firstName: '',
+      lastName: '',
+    },
   });
 
-  const handleSignup = async (data: SignupFormData) => {
+  const handleSignup = async (data: z.infer<typeof signupSchema>) => {
     setIsLoading(true);
-    setError(null);
 
     try {
-      const registerData: RegisterData = {
+      const registerData = {
         email: data.email,
         password: data.password,
         firstName: data.firstName,
@@ -69,7 +71,6 @@ export default function SignupPage() {
         err instanceof Error
           ? err.message
           : 'An error occurred during registration';
-      setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -82,9 +83,11 @@ export default function SignupPage() {
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 mb-4">
-              <img
+              <Image
                 src="/images/disco-logo.svg"
                 alt="Disco Logo"
+                width={96}
+                height={96}
                 className="w-full h-full"
               />
             </div>
@@ -105,7 +108,7 @@ export default function SignupPage() {
           <form
             onSubmit={e => {
               e.preventDefault();
-              void signupForm.handleSubmit(handleSignup)(e);
+              void form.handleSubmit(handleSignup)(e);
             }}
             className="mt-8 space-y-6"
           >
@@ -118,8 +121,8 @@ export default function SignupPage() {
                     required
                     placeholder="First name"
                     className="rounded-lg"
-                    error={signupForm.formState.errors.firstName?.message}
-                    {...signupForm.register('firstName')}
+                    error={form.formState.errors.firstName?.message}
+                    {...form.register('firstName')}
                   />
                 </div>
                 <div>
@@ -129,8 +132,8 @@ export default function SignupPage() {
                     required
                     placeholder="Last name"
                     className="rounded-lg"
-                    error={signupForm.formState.errors.lastName?.message}
-                    {...signupForm.register('lastName')}
+                    error={form.formState.errors.lastName?.message}
+                    {...form.register('lastName')}
                   />
                 </div>
               </div>
@@ -142,8 +145,8 @@ export default function SignupPage() {
                   required
                   placeholder="Email address"
                   className="rounded-lg"
-                  error={signupForm.formState.errors.email?.message}
-                  {...signupForm.register('email')}
+                  error={form.formState.errors.email?.message}
+                  {...form.register('email')}
                 />
               </div>
               <div>
@@ -154,8 +157,8 @@ export default function SignupPage() {
                   required
                   placeholder="Password"
                   className="rounded-lg"
-                  error={signupForm.formState.errors.password?.message}
-                  {...signupForm.register('password')}
+                  error={form.formState.errors.password?.message}
+                  {...form.register('password')}
                 />
               </div>
               <div>
@@ -166,23 +169,11 @@ export default function SignupPage() {
                   required
                   placeholder="Confirm password"
                   className="rounded-lg"
-                  error={signupForm.formState.errors.confirmPassword?.message}
-                  {...signupForm.register('confirmPassword')}
+                  error={form.formState.errors.confirmPassword?.message}
+                  {...form.register('confirmPassword')}
                 />
               </div>
             </div>
-
-            {error && (
-              <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {error}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            )}
 
             <div>
               <Button
