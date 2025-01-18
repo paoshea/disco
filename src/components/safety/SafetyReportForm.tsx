@@ -3,9 +3,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { SafetyReportFormProps, SafetyEvidence } from '@/types/safety';
-import { TextArea } from '@/components/forms/TextArea';
-import { Select } from '@/components/forms/Select';
 import { Button } from '@/components/ui/Button';
+import { Select } from '@/components/forms/Select';
+import { TextArea } from '@/components/forms/TextArea';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 interface UploadResponse {
@@ -29,7 +29,6 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
-  const [data, setData] = useState<ReportFormData>();
 
   const {
     register,
@@ -59,24 +58,26 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
 
     const data: unknown = await response.json();
 
-    if (
-      !data ||
-      typeof data !== 'object' ||
-      !('id' in data) ||
-      !('url' in data) ||
-      typeof (data as any).id !== 'string' ||
-      typeof (data as any).url !== 'string'
-    ) {
+    // Type guard for UploadResponse
+    const isUploadResponse = (value: unknown): value is UploadResponse => {
+      return (
+        typeof value === 'object' &&
+        value !== null &&
+        'id' in value &&
+        'url' in value &&
+        typeof value.id === 'string' &&
+        typeof value.url === 'string'
+      );
+    };
+
+    if (!isUploadResponse(data)) {
       throw new Error('Invalid upload response format');
     }
 
-    return {
-      id: (data as { id: string }).id,
-      url: (data as { url: string }).url,
-    };
+    return data;
   };
 
-  const handleFormSubmit = async (data: ReportFormData): Promise<void> => {
+  const handleFormSubmit = async (formData: z.infer<typeof reportSchema>): Promise<void> => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -94,8 +95,8 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
       }));
 
       await onSubmit({
-        type: data.type,
-        description: data.description,
+        type: formData.type,
+        description: formData.description,
         reportedUserId,
         evidence,
       });
@@ -109,16 +110,14 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    handleHookSubmit(data => {
-      setData(data);
-      void handleFormSubmit(data);
+  const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    void handleHookSubmit((formData: z.infer<typeof reportSchema>) => {
+      void handleFormSubmit(formData);
     })(e);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={submitHandler} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
       <Select

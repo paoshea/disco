@@ -14,24 +14,6 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleCompleteCheck = async (
-    checkId: string,
-    status: 'safe' | 'unsafe',
-    notes?: string
-  ) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await onComplete(checkId);
-      setSelectedCheck(null);
-    } catch (err) {
-      console.error('Error completing safety check:', err);
-      setError(err instanceof Error ? err.message : 'Failed to complete safety check');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (!checks.length) {
     return (
       <div className="text-center py-4 text-gray-500">No safety checks required at this time.</div>
@@ -64,9 +46,18 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
           check={selectedCheck}
           isOpen={true}
           onClose={() => setSelectedCheck(null)}
-          onResolve={async (checkId, status, notes) => {
-            await onComplete(checkId);
-            setSelectedCheck(null);
+          onResolve={async checkId => {
+            try {
+              setIsLoading(true);
+              setError(null);
+              await onComplete(checkId);
+              setSelectedCheck(null);
+            } catch (err) {
+              console.error('Error completing safety check:', err);
+              setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+            } finally {
+              setIsLoading(false);
+            }
           }}
         />
       )}

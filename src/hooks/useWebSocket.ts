@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
-import { WebSocketMessage, WebSocketEventType, WebSocketPayload } from '@/types/websocket';
+import { WebSocketMessage, WebSocketEventType } from '@/types/websocket';
 
 interface WebSocketOptions {
   url: string;
@@ -82,36 +82,35 @@ export function useWebSocket({
         onError?.(event);
       };
 
-      ws.current.onmessage = (event: MessageEvent) => {
+      ws.current.onmessage = (event: MessageEvent<string>) => {
         try {
           const rawData: unknown = JSON.parse(event.data);
 
           // Type guard function
           const isValidWebSocketMessage = (data: unknown): data is WebSocketMessage => {
-            return (
-              typeof data === 'object' &&
-              data !== null &&
-              'type' in data &&
-              'payload' in data &&
-              'timestamp' in data &&
-              typeof (data as any).type === 'string' &&
-              (data as any).type in WebSocketEventType &&
-              typeof (data as any).timestamp === 'string'
-            );
+            if (
+              typeof data !== 'object' ||
+              !data ||
+              !('type' in data) ||
+              !('payload' in data) ||
+              !('timestamp' in data)
+            ) {
+              return false;
+            }
+
+            const { type, timestamp } = data as { type: unknown; timestamp: unknown };
+            const validType = typeof type === 'string' && type in WebSocketEventType;
+            const validTimestamp = typeof timestamp === 'string';
+
+            return validType && validTimestamp;
           };
 
           if (!isValidWebSocketMessage(rawData)) {
             throw new Error('Invalid message format');
           }
 
-          const message: WebSocketMessage = {
-            type: rawData.type,
-            payload: rawData.payload,
-            timestamp: rawData.timestamp,
-          };
-
-          setState(prev => ({ ...prev, lastMessage: message }));
-          onMessage?.(message);
+          setState(prev => ({ ...prev, lastMessage: rawData }));
+          onMessage?.(rawData);
         } catch (err) {
           console.error('Error parsing WebSocket message:', err);
           setState(prev => ({

@@ -87,34 +87,34 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
           reject(new Error(errorMessage));
         };
 
-        ws.onmessage = (event: MessageEvent) => {
+        ws.onmessage = (event: MessageEvent<string>) => {
           try {
             const rawData: unknown = JSON.parse(event.data);
 
             // Type guard function
             const isValidWebSocketMessage = (data: unknown): data is WebSocketMessage => {
-              return (
-                typeof data === 'object' &&
-                data !== null &&
-                'type' in data &&
-                'payload' in data &&
-                'timestamp' in data &&
-                typeof (data as any).type === 'string' &&
-                (data as any).type in WebSocketEventType &&
-                typeof (data as any).timestamp === 'string'
-              );
+              if (
+                typeof data !== 'object' ||
+                !data ||
+                !('type' in data) ||
+                !('payload' in data) ||
+                !('timestamp' in data)
+              ) {
+                return false;
+              }
+
+              const { type, timestamp } = data as { type: unknown; timestamp: unknown };
+              const validType = typeof type === 'string' && type in WebSocketEventType;
+              const validTimestamp = typeof timestamp === 'string';
+
+              return validType && validTimestamp;
             };
 
             if (!isValidWebSocketMessage(rawData)) {
               throw new Error('Invalid message format');
             }
 
-            const message: WebSocketMessage = {
-              type: rawData.type,
-              payload: rawData.payload,
-              timestamp: rawData.timestamp,
-            };
-            handleWebSocketMessage(message);
+            handleWebSocketMessage(rawData);
           } catch (err) {
             console.error('Error parsing WebSocket message:', err);
           }
@@ -139,7 +139,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
         setIsConnected(false);
       }
     };
-  }, [user, url, isConnected, connectWebSocket]);
+  }, [user, url, isConnected, connectWebSocket, socket]);
 
   const disconnect = useCallback(() => {
     if (socket) {

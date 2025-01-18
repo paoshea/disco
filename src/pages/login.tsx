@@ -62,6 +62,23 @@ const LoginPage = () => {
     }
   };
 
+  const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    void handleFormSubmit((data: LoginFormData) => {
+      void (async () => {
+        try {
+          setIsSubmitting(true);
+          setLoginError(null);
+          await onSubmit(data);
+        } catch (err) {
+          console.error('Login error:', err);
+          setLoginError(err instanceof Error ? err.message : 'Failed to log in');
+        } finally {
+          setIsSubmitting(false);
+        }
+      })();
+    })(e);
+  };
+
   if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -93,23 +110,7 @@ const LoginPage = () => {
             </div>
           )}
 
-          <form
-            className="mt-8 space-y-6"
-            onSubmit={handleFormSubmit(data => {
-              void (async () => {
-                try {
-                  setIsSubmitting(true);
-                  setLoginError(null);
-                  await onSubmit(data);
-                } catch (err) {
-                  console.error('Login error:', err);
-                  setLoginError(err instanceof Error ? err.message : 'Failed to log in');
-                } finally {
-                  setIsSubmitting(false);
-                }
-              })();
-            })}
-          >
+          <form className="mt-8 space-y-6" onSubmit={submitHandler}>
             <div className="space-y-4">
               <div>
                 <Input

@@ -88,6 +88,23 @@ const SignupPage = () => {
     };
   };
 
+  const submitHandler = (e: React.FormEvent<HTMLFormElement>) => {
+    void handleFormSubmit((data: SignupFormData) => {
+      void (async () => {
+        try {
+          setIsSubmitting(true);
+          setError(null);
+          await onSubmit(data);
+        } catch (err) {
+          console.error('Signup error:', err);
+          setError(err instanceof Error ? err.message : 'Failed to create account');
+        } finally {
+          setIsSubmitting(false);
+        }
+      })();
+    })(e);
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -118,23 +135,7 @@ const SignupPage = () => {
             </div>
           )}
 
-          <form
-            className="mt-8 space-y-6"
-            onSubmit={handleFormSubmit(data => {
-              void (async () => {
-                try {
-                  setIsSubmitting(true);
-                  setError(null);
-                  await onSubmit(data);
-                } catch (err) {
-                  console.error('Signup error:', err);
-                  setError(err instanceof Error ? err.message : 'Failed to create account');
-                } finally {
-                  setIsSubmitting(false);
-                }
-              })();
-            })}
-          >
+          <form className="mt-8 space-y-6" onSubmit={submitHandler}>
             <div className="space-y-4 rounded-md shadow-sm">
               <Input
                 label="Email"
