@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
 import { useAuth } from '@/app/hooks/useAuth';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -52,17 +52,13 @@ export default function DashboardPage() {
   const [showSafetyModal, setSafetyModalOpen] = useState(false);
   const [isMatchesModalOpen, setMatchesModalOpen] = useState(false);
 
-  useEffect(() => {
-    void fetchStats();
-  }, [user]);
-
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     if (!user) return;
 
     try {
       const response = await fetch('/api/dashboard/stats');
       if (!response.ok) throw new Error('Failed to fetch dashboard stats');
-      const data = await response.json();
+      const data: unknown = await response.json();
 
       const result = dashboardStatsSchema.safeParse(data);
       if (result.success) {
@@ -75,7 +71,11 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
+
+  useEffect(() => {
+    void fetchStats();
+  }, [fetchStats]);
 
   return (
     <Layout>

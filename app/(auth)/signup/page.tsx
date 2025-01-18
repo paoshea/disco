@@ -1,6 +1,5 @@
 'use client';
 
-import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -34,8 +33,6 @@ const signupSchema = z
   });
 
 export default function SignupPage() {
-  const router = useRouter();
-  const searchParams = useSearchParams();
   const { register: signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const form = useForm<z.infer<typeof signupSchema>>({

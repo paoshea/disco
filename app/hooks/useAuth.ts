@@ -17,8 +17,6 @@ const loginResponseSchema = z.object({
   token: z.string().optional(),
 });
 
-type LoginResponse = z.infer<typeof loginResponseSchema>;
-
 interface User {
   id: string;
   email: string;

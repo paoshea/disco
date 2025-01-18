@@ -186,7 +186,7 @@ export default function LoginPage() {
                         <button
                           type="button"
                           className="font-medium text-yellow-800 underline"
-                          onClick={handleResendVerification}
+                          onClick={() => void handleResendVerification()}
                           disabled={isLoading}
                         >
                           Resend verification email
