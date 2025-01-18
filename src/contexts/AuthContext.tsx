@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
+import { LoginResult } from '@/hooks/useAuth';
 
 export interface RegisterData {
   email: string;
@@ -13,7 +14,7 @@ export interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   signup: (data: RegisterData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
@@ -66,15 +67,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     throw err;
   };
 
-  const login = async (email: string, password: string): Promise<void> => {
+  const login = async (email: string, password: string): Promise<LoginResult> => {
     try {
       setLoading(true);
       setError(null);
-      const { user, token } = await authService.login(email, password);
-      setUser(user);
-      localStorage.setItem('token', token);
+      const result = await authService.login(email, password);
+      // If we get here, login was successful
+      setUser(result.user);
+      localStorage.setItem('token', result.token);
+      return { success: true };
     } catch (err) {
-      handleAuthError(err, 'Login');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      // Check if the error indicates email verification is needed
+      if (err instanceof Error && err.message.toLowerCase().includes('email verification')) {
+        return { needsVerification: true };
+      }
+      return { error: errorMessage };
     } finally {
       setLoading(false);
     }

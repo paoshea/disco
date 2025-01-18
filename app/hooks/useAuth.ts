@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { LoginResult } from '@/lib/auth';
-import { api } from '@/lib/api';
+import type { LoginResult } from '@/hooks/useAuth';
+import { apiClient } from '@/services/api/api.client';
 import { z } from 'zod';
 
 interface User {
@@ -52,7 +52,7 @@ const useAuth = create<AuthState>()(
         set({ isLoading: true, error: null });
 
         try {
-          const data = await api.post('/api/auth/login', {
+          const data = await apiClient.post('/api/auth/login', {
             email,
             password,
           });
@@ -76,10 +76,13 @@ const useAuth = create<AuthState>()(
             set({ isLoading: false, error: result.data.error });
             return { error: result.data.error };
           }
-          
+
           throw new Error('Invalid response format');
         } catch (error) {
-          const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : 'An error occurred during login';
           set({
             error: errorMessage,
             isLoading: false,
@@ -90,7 +93,7 @@ const useAuth = create<AuthState>()(
 
       logout: async () => {
         try {
-          await api.post('/api/auth/logout');
+          await apiClient.post('/api/auth/logout');
           set({ user: null, token: null });
         } catch (error) {
           console.error('Logout error:', error);

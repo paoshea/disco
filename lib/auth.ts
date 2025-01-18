@@ -8,13 +8,15 @@ const JWT_SECRET = new TextEncoder().encode(
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
-export interface JWTPayload extends jose.JWTPayload {
+export type CustomJWTPayload = {
   userId: string;
   email: string;
   role: string;
   firstName: string;
   [key: string]: string | string[] | number | boolean | null | undefined;
-}
+};
+
+export type JWTPayload = CustomJWTPayload & jose.JWTPayload;
 
 export interface LoginResult {
   success?: boolean;

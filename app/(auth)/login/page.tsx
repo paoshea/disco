@@ -4,12 +4,12 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import useAuth from '@/app/hooks/useAuth';
-import { Button } from '@/src/components/ui/Button';
-import { Input } from '@/src/components/ui/Input';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { Logo } from '@/components/ui/Logo';
+import { Logo } from '../../../src/components/ui/Logo';
 import { useRouter } from 'next/navigation';
 
 const loginSchema = z.object({

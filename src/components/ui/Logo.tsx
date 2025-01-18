@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
+import { cn } from '@/utils/cn';
 
 interface LogoProps {
   className?: string;
@@ -8,7 +8,7 @@ interface LogoProps {
 
 export function Logo({ className }: LogoProps) {
   return (
-    <Link href="/" className={cn("flex items-center space-x-2", className)}>
+    <Link href="/" className={cn('flex items-center space-x-2', className)}>
       <Image
         src="/images/disco-logo.svg"
         alt="Disco Logo"

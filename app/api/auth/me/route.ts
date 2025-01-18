@@ -15,9 +15,10 @@ export async function GET() {
       );
     }
 
-    const decoded = await verifyToken(token);
+    const decodedToken = await verifyToken(token);
+    const decoded = decodedToken as { userId: string; role: string } | null;
 
-    if (!decoded || !('userId' in decoded)) {
+    if (!decoded || !decoded.userId || !decoded.role) {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
 
@@ -37,6 +38,7 @@ export async function GET() {
     }
 
     // Add role from token since it's not yet in the database
+    // We know decoded.role exists because we checked above
     return NextResponse.json({
       ...user,
       role: decoded.role,

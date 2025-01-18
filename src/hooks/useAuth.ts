@@ -2,13 +2,19 @@ import { useContext } from 'react';
 import { AuthContext, RegisterData } from '@/contexts/AuthContext';
 import type { User } from '@/types/user';
 
+export interface LoginResult {
+  success?: boolean;
+  error?: string;
+  needsVerification?: boolean;
+}
+
 export interface UseAuthReturn {
   user: User | null;
   loading: boolean;
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   signup: (data: RegisterData) => Promise<void>;
