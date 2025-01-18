@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { z } from 'zod';
-import { useAuth } from '@/app/hooks/useAuth';
+import useAuth from '@/app/hooks/useAuth';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DashboardStats } from '@/components/dashboard/DashboardStats';
 import { SafetyCheckList } from '@/components/dashboard/SafetyCheckList';

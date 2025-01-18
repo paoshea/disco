@@ -21,6 +21,7 @@ type UserWithStreak = {
   lastLogin: Date | null;
   streakCount: number;
   lastStreak: Date | null;
+  role: string;
   createdAt: Date;
   updatedAt: Date;
 };
@@ -115,20 +116,24 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
-      role: 'user',
+      role: user.role,
     };
 
-    const accessToken = generateToken(tokenPayload);
-    const refreshToken = generateRefreshToken(tokenPayload);
+    const [accessToken, refreshToken] = await Promise.all([
+      generateToken(tokenPayload),
+      generateRefreshToken(tokenPayload),
+    ]);
 
     const response = NextResponse.json({
       user: {
-        id: updatedUser.id,
-        email: updatedUser.email,
-        firstName: updatedUser.firstName,
-        lastName: updatedUser.lastName,
-        streakCount: updatedUser.streakCount ?? 0,
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        streakCount: updatedUser.streakCount,
       },
+      token: accessToken,
     });
 
     // Set cookies

@@ -1,4 +1,4 @@
-import { useAuth } from '@/app/hooks/useAuth';
+import useAuth from '@/app/hooks/useAuth';
 
 class ApiError extends Error {
   constructor(

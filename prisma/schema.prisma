@@ -19,6 +19,7 @@ model User {
   password             String
   firstName            String
   lastName             String
+  role                 String           @default("user")
   emailVerified        Boolean          @default(false)
   verificationToken    String?
   refreshToken         String?          @unique

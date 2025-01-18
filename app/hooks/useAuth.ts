@@ -1,8 +1,27 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
-import type { LoginResult } from '@/lib/auth';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { LoginResult } from '@/lib/auth';
 import { api } from '@/lib/api';
 import { z } from 'zod';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  streakCount: number;
+}
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  set: (state: Partial<AuthState>) => void;
+}
 
 const loginResponseSchema = z.object({
   user: z
@@ -11,6 +30,7 @@ const loginResponseSchema = z.object({
       email: z.string(),
       firstName: z.string(),
       lastName: z.string(),
+      role: z.string(),
       streakCount: z.number(),
     })
     .optional(),
@@ -19,82 +39,67 @@ const loginResponseSchema = z.object({
   token: z.string().optional(),
 });
 
-interface User {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  streakCount: number;
-}
-
-type AuthStore = {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  login: (email: string, password: string) => Promise<LoginResult>;
-  logout: () => void;
-};
-
-async function loginImpl(
-  email: string,
-  password: string
-): Promise<LoginResult> {
-  try {
-    const data = await api.post<LoginResult>('/api/auth/login', {
-      email,
-      password,
-    });
-    const result = loginResponseSchema.safeParse(data);
-
-    if (!result.success) {
-      return {
-        error: 'Invalid response from server',
-      };
-    }
-
-    return result.data;
-  } catch (error) {
-    if (error instanceof Error) {
-      return { error: error.message };
-    }
-    return { error: 'An error occurred during login' };
-  }
-}
-
-function logoutImpl(): void {
-  // Clear any stored tokens or user data
-  localStorage.removeItem('auth-storage');
-}
-
-export const useAuth = create<AuthStore>()(
+const useAuth = create<AuthState>()(
   persist(
     set => ({
       user: null,
       token: null,
       isLoading: false,
-      login: async (email, password) => {
-        set({ isLoading: true });
+      error: null,
+      set: state => set(state),
+
+      login: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+
         try {
-          const result = await loginImpl(email, password);
-          if (result.user && result.token) {
-            set({ user: result.user, token: result.token, isLoading: false });
+          const data = await api.post('/api/auth/login', {
+            email,
+            password,
+          });
+          const result = loginResponseSchema.safeParse(data);
+
+          if (!result.success) {
+            throw new Error('Invalid response from server');
+          }
+
+          if (result.data.user && result.data.token) {
+            set({
+              user: result.data.user,
+              token: result.data.token,
+              isLoading: false,
+            });
           } else {
             set({ isLoading: false });
           }
-          return result;
         } catch (error) {
-          set({ isLoading: false });
-          return { error: 'An error occurred during login' };
+          set({
+            error:
+              error instanceof Error
+                ? error.message
+                : 'An error occurred during login',
+            isLoading: false,
+          });
         }
       },
-      logout: () => {
-        logoutImpl();
-        set({ user: null, token: null });
+
+      logout: async () => {
+        try {
+          await api.post('/api/auth/logout');
+          set({ user: null, token: null });
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
       },
     }),
     {
       name: 'auth-storage',
-      partialize: state => ({ user: state.user, token: state.token }),
+      storage: createJSONStorage(() => localStorage),
+      partialize: state => ({
+        user: state.user,
+        token: state.token,
+      }),
     }
   )
 );
+
+export default useAuth;

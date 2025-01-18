@@ -1,4 +1,4 @@
-import { useAuth } from '@/app/hooks/useAuth';
+import useAuth from '@/app/hooks/useAuth';
 import { Logo } from '@/components/ui/Logo';
 
 export function DashboardHeader() {
