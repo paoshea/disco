@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
 import type { RegisterData } from '@/contexts/AuthContext';
 import { Layout } from '@/components/layout/Layout';
@@ -36,6 +37,7 @@ type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { register: signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -57,13 +59,15 @@ export default function SignupPage() {
       };
 
       await signUp(registerData);
-      router.push('/chat');
+      toast.success('Account created successfully! Please check your email for verification.');
+      // Force navigation to chat page
+      window.location.href = '/chat';
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred during registration'
-      );
+      const errorMessage = err instanceof Error
+        ? err.message
+        : 'An error occurred during registration';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
