@@ -29,10 +29,11 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [files, setFiles] = useState<File[]>([]);
+  const [data, setData] = useState<ReportFormData>();
 
   const {
     register,
-    handleSubmit,
+    handleSubmit: handleHookSubmit,
     formState: { errors },
   } = useForm<ReportFormData>({
     resolver: zodResolver(reportSchema),
@@ -51,13 +52,31 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
       method: 'POST',
       body: formData,
     });
+
     if (!response.ok) {
       throw new Error('Failed to upload file');
     }
-    return response.json();
+
+    const data: unknown = await response.json();
+
+    if (
+      !data ||
+      typeof data !== 'object' ||
+      !('id' in data) ||
+      !('url' in data) ||
+      typeof (data as any).id !== 'string' ||
+      typeof (data as any).url !== 'string'
+    ) {
+      throw new Error('Invalid upload response format');
+    }
+
+    return {
+      id: (data as { id: string }).id,
+      url: (data as { url: string }).url,
+    };
   };
 
-  const handleFormSubmit = async (data: ReportFormData) => {
+  const handleFormSubmit = async (data: ReportFormData): Promise<void> => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -90,12 +109,16 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     }
   };
 
-  const wrappedSubmit = (data: ReportFormData) => {
-    void handleFormSubmit(data);
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleHookSubmit(data => {
+      setData(data);
+      void handleFormSubmit(data);
+    })(e);
   };
 
   return (
-    <form onSubmit={handleSubmit(wrappedSubmit)} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {error && <ErrorMessage message={error} />}
 
       <Select

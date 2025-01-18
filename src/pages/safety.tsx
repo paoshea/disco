@@ -10,7 +10,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Alert } from '@/components/ui/Alert';
 import { Tab } from '@headlessui/react';
 import { safetyService } from '@/services/api/safety.service';
-import type { SafetyAlertNew as SafetyAlert, SafetyCheckNew as SafetyCheck } from '@/types/safety';
+import type { SafetyCheckNew as SafetyCheck } from '@/types/safety';
 import type { EmergencyContact } from '@/types/user';
 
 function classNames(...classes: string[]) {

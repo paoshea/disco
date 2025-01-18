@@ -66,7 +66,12 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={e => {
+        void handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-6"
+    >
       {error && (
         <div className="rounded-md bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>

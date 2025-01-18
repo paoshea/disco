@@ -99,8 +99,12 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
         <EventCard
           key={event.id}
           event={event}
-          onJoin={handleJoinEvent}
-          onLeave={handleLeaveEvent}
+          onJoin={eventId => {
+            void handleJoinEvent(eventId);
+          }}
+          onLeave={eventId => {
+            void handleLeaveEvent(eventId);
+          }}
         />
       ))}
     </div>

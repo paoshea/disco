@@ -1,5 +1,6 @@
 import React from 'react';
 import clsx from 'clsx';
+import Image from 'next/image';
 import { UserCircleIcon } from '@heroicons/react/24/solid';
 
 interface AvatarProps {
@@ -15,6 +16,13 @@ export const Avatar: React.FC<AvatarProps> = ({
   size = 'md',
   className = '',
 }) => {
+  const sizeMap = {
+    sm: 32,
+    md: 40,
+    lg: 48,
+    xl: 56,
+  };
+
   const sizeClasses = {
     sm: 'h-8 w-8',
     md: 'h-10 w-10',
@@ -38,10 +46,14 @@ export const Avatar: React.FC<AvatarProps> = ({
   }
 
   return (
-    <img
-      src={imageUrl}
-      alt={`Avatar for user ${userId}`}
-      className={clsx('rounded-full object-cover', sizeClasses[size], className)}
-    />
+    <div className={clsx('relative', sizeClasses[size], className)}>
+      <Image
+        src={imageUrl}
+        alt={`Avatar for user ${userId}`}
+        className="rounded-full object-cover"
+        fill
+        sizes={`${sizeMap[size]}px`}
+      />
+    </div>
   );
 };

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
-export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ userId, onAlertTriggered }) => {
+export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onAlertTriggered }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { position, error: locationError } = useGeolocation();
@@ -102,7 +102,9 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ userId, onAlertT
       {error && <ErrorMessage message={error} className="mb-4" />}
 
       <Button
-        onClick={handleTriggerAlert}
+        onClick={() => {
+          void handleTriggerAlert();
+        }}
         disabled={loading || !position?.coords}
         variant="danger"
         className="w-full py-3 text-lg font-semibold"

@@ -92,11 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      await authService.logout();
+      await Promise.resolve(authService.logout());
       setUser(null);
     } catch (err) {
       handleAuthError(err, 'Logout');

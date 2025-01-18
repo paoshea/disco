@@ -59,34 +59,23 @@ export default function Profile() {
     }
   };
 
-  const handleUpdateProfile = async (data: Partial<User>) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const updatedProfile = await userService.updateProfile(data);
-      setProfileData(updatedProfile);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred while updating profile.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleUpdateProfile = async (data: Partial<User>): Promise<void> => {
+    await updateProfile(data);
   };
 
-  const handleLogout = async () => {
-    try {
-      await logout();
-      await router.push('/login');
-    } catch (err) {
-      console.error('Logout error:', err);
-    }
+  const handleLogout = () => {
+    void (async () => {
+      try {
+        await logout();
+        await router.push('/login');
+      } catch (err) {
+        console.error('Logout error:', err);
+      }
+    })();
   };
 
-  const handleVerifyEmail = async () => {
-    try {
-      await sendVerificationEmail();
-    } catch (err) {
-      console.error('Failed to send verification email:', err);
-    }
+  const handleVerifyEmail = () => {
+    void sendVerificationEmail();
   };
 
   if (authLoading || isLoading) {
@@ -112,7 +101,8 @@ export default function Profile() {
                 <p className="text-sm text-yellow-600">
                   Your email is not verified.{' '}
                   <button
-                    onClick={handleVerifyEmail}
+                    type="button"
+                    onClick={() => void handleVerifyEmail()}
                     className="font-medium text-yellow-700 hover:text-yellow-600"
                   >
                     Resend verification email
@@ -121,7 +111,7 @@ export default function Profile() {
               </div>
             )}
           </div>
-          <Button variant="secondary" onClick={handleLogout}>
+          <Button type="button" variant="secondary" onClick={() => void handleLogout()}>
             Sign out
           </Button>
         </div>

@@ -2,23 +2,24 @@
 
 This document provides a comprehensive overview of the type system used in the Disco application, highlighting important relationships, versioning, and special features.
 To avoid potential gotchas, the type system is carefully designed to ensure consistency and maintainability. Below are some key points:
+
 - Version Management:
-Multiple types have "Old" and "New" versions (e.g., SafetySettingsOld → SafetySettingsNew)
-This indicates an ongoing migration that needs careful handling
+  Multiple types have "Old" and "New" versions (e.g., SafetySettingsOld → SafetySettingsNew)
+  This indicates an ongoing migration that needs careful handling
 - Response Wrapping:
-All API responses are wrapped in an ApiResponse<T> structure
-This requires careful type handling in services to access nested data
+  All API responses are wrapped in an ApiResponse<T> structure
+  This requires careful type handling in services to access nested data
 - Cross-Domain Types:
-Location type is used across multiple domains (safety, matches, events)
-User type is referenced by many features
-These shared types need careful coordination when making changes
+  Location type is used across multiple domains (safety, matches, events)
+  User type is referenced by many features
+  These shared types need careful coordination when making changes
 - Status Management:
-Multiple status enums exist for different features
-Some overlap in status names but with different meanings
-Need to be careful not to mix up similar-sounding statuses
+  Multiple status enums exist for different features
+  Some overlap in status names but with different meanings
+  Need to be careful not to mix up similar-sounding statuses
 - Optional Fields:
-Many types use optional fields extensively
-Requires careful null/undefined handling in the code
+  Many types use optional fields extensively
+  Requires careful null/undefined handling in the code
 
 ## API Response Structure
 
@@ -36,9 +37,7 @@ When making API calls, always wrap the expected response type in this structure:
 
 ```typescript
 // Example API call
-const response = await apiClient.get<{ data: { matches: Match[] } }>(
-  '/matches'
-);
+const response = await apiClient.get<{ data: { matches: Match[] } }>('/matches');
 return response.data.data.matches;
 ```
 
@@ -47,6 +46,7 @@ return response.data.data.matches;
 Several types have both "Old" and "New" versions to support backward compatibility during migration:
 
 ### Safety Types
+
 - `SafetySettingsOld` → `SafetySettingsNew`
 - `SafetyAlertOld` → `SafetyAlertNew`
 - `SafetyCheckOld` → `SafetyCheckNew`
@@ -57,14 +57,18 @@ Always use the "New" versions in new code. The "Old" versions are maintained for
 ## Key Type Relationships
 
 ### Location
+
 The `Location` type is used across multiple domains:
+
 - Safety alerts and checks
 - User profiles
 - Events
 - Matches
 
 ### User
+
 The `User` type is a core entity referenced by:
+
 - Safety alerts and reports
 - Matches
 - Chat rooms
@@ -75,6 +79,7 @@ The `User` type is a core entity referenced by:
 Several features use status enums to track their state:
 
 ### Safety
+
 ```typescript
 type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
 type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
@@ -82,6 +87,7 @@ type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
 ```
 
 ### Matching
+
 ```typescript
 type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 ```
@@ -89,6 +95,7 @@ type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 ## Props Interfaces
 
 Component prop interfaces follow a consistent naming pattern:
+
 ```typescript
 interface ComponentNameProps {
   // Props specific to the component
@@ -96,6 +103,7 @@ interface ComponentNameProps {
 ```
 
 Example:
+
 ```typescript
 interface SafetyFeaturesProps {
   user: User;
@@ -107,11 +115,13 @@ interface SafetyFeaturesProps {
 ## Important Notes
 
 1. **Partial Updates**: Many update operations use `Partial<T>` to allow updating only specific fields:
+
    ```typescript
    onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
    ```
 
 2. **Date Handling**: Dates are consistently stored as ISO strings:
+
    ```typescript
    createdAt: string;
    updatedAt: string;
@@ -119,6 +129,7 @@ interface SafetyFeaturesProps {
    ```
 
 3. **Optional Fields**: Fields that may not always be present are marked with `?`:
+
    ```typescript
    location?: Location;
    description?: string;
@@ -130,7 +141,7 @@ interface SafetyFeaturesProps {
      sosAlert: boolean;
      meetupStart: boolean;
      meetupEnd: boolean;
-   };
+   }
    ```
 
 ## Best Practices

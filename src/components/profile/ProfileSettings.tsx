@@ -4,7 +4,6 @@ import { Switch } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
 import type { User, UserSettings, UserPreferences } from '@/types/user';
 import { Button } from '@/components/ui/Button';
-import { Select } from '@/components/forms/Select';
 
 interface ProfileSettingsProps {
   user: User;
@@ -70,13 +69,29 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
         setSettings(settings);
 
         // Handle nested objects when setting form values
-        const setNestedValues = (obj: any, prefix = '') => {
+        type SettingsPath =
+          | keyof UserSettings
+          | 'ageRange.min'
+          | 'ageRange.max'
+          | 'privacy.showOnlineStatus'
+          | 'privacy.showLastSeen'
+          | 'privacy.showLocation'
+          | 'privacy.showAge'
+          | 'notifications.matches'
+          | 'notifications.messages'
+          | 'notifications.meetupReminders'
+          | 'notifications.safetyAlerts'
+          | 'safety.requireVerifiedMatch'
+          | 'safety.meetupCheckins'
+          | 'safety.emergencyContactAlerts';
+
+        const setNestedValues = (obj: Partial<UserSettings>, prefix = '') => {
           Object.entries(obj).forEach(([key, value]) => {
             const path = prefix ? `${prefix}.${key}` : key;
-            if (value && typeof value === 'object') {
-              setNestedValues(value, path);
+            if (value && typeof value === 'object' && !Array.isArray(value)) {
+              setNestedValues(value as Partial<UserSettings>, path);
             } else {
-              setValue(path as any, value);
+              setValue(path as SettingsPath, value);
             }
           });
         };
@@ -115,7 +130,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={e => {
+        void handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-6"
+    >
       <div className="space-y-4">
         <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

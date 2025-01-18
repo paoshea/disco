@@ -64,7 +64,11 @@ class SocketService {
 
         this.socket.once('connect', () => {
           this.setupEventHandlers();
-          resolve(this.socket!);
+          if (this.socket) {
+            resolve(this.socket);
+          } else {
+            reject(new Error('Socket connection failed: socket is null'));
+          }
         });
 
         this.socket.once('connect_error', (error: SocketError) => {

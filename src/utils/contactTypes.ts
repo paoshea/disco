@@ -2,9 +2,6 @@ import { EmergencyContact as UserEmergencyContact } from '@/types/user';
 import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
 import { EmergencyContactNew } from '@/types/safety';
 
-type NotificationEvent = 'sosAlert' | 'meetupStart' | 'meetupEnd';
-type SafetyNotificationEvent = 'sos' | 'meetup';
-
 interface NotificationPreferences {
   sosAlert: boolean;
   meetupStart: boolean;

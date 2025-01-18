@@ -125,9 +125,7 @@ class SafetyService {
   }
 
   async dismissEmergencyAlert(userId: string, alertId: string): Promise<void> {
-    await apiClient.post<void>(
-      `${this.baseUrl}/users/${userId}/alerts/${alertId}/dismiss`
-    );
+    await apiClient.post<void>(`${this.baseUrl}/users/${userId}/alerts/${alertId}/dismiss`);
   }
 
   async createAlert(data: {
@@ -135,10 +133,7 @@ class SafetyService {
     description?: string;
     location?: Location;
   }): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/alerts`,
-      data
-    );
+    const response = await apiClient.post<{ alert: SafetyAlert }>(`${this.baseUrl}/alerts`, data);
     return response.data.alert;
   }
 

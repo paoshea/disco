@@ -1,4 +1,10 @@
-import { Event, CreateEventInput, EventStatus, EventParticipant, EventFilters } from '@/types/event';
+import {
+  Event,
+  CreateEventInput,
+  EventStatus,
+  EventParticipant,
+  EventFilters,
+} from '@/types/event';
 import { Location } from '@/types/location';
 import { apiClient } from './api.client';
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from './useAuth';
-import { WebSocketMessage } from '@/types/websocket';
+import { WebSocketMessage, WebSocketEventType, WebSocketPayload } from '@/types/websocket';
 
 interface WebSocketOptions {
   url: string;
@@ -19,7 +19,7 @@ interface WebSocketState {
   lastMessage: WebSocketMessage | null;
 }
 
-export const useWebSocket = ({
+export function useWebSocket({
   url,
   reconnectInterval = 5000,
   maxReconnectAttempts = 5,
@@ -28,7 +28,7 @@ export const useWebSocket = ({
   onConnect,
   onDisconnect,
   onError,
-}: WebSocketOptions) => {
+}: WebSocketOptions) {
   const { user } = useAuth();
   const [state, setState] = useState<WebSocketState>({
     isConnected: false,
@@ -84,7 +84,32 @@ export const useWebSocket = ({
 
       ws.current.onmessage = (event: MessageEvent) => {
         try {
-          const message: WebSocketMessage = JSON.parse(event.data);
+          const rawData: unknown = JSON.parse(event.data);
+
+          // Type guard function
+          const isValidWebSocketMessage = (data: unknown): data is WebSocketMessage => {
+            return (
+              typeof data === 'object' &&
+              data !== null &&
+              'type' in data &&
+              'payload' in data &&
+              'timestamp' in data &&
+              typeof (data as any).type === 'string' &&
+              (data as any).type in WebSocketEventType &&
+              typeof (data as any).timestamp === 'string'
+            );
+          };
+
+          if (!isValidWebSocketMessage(rawData)) {
+            throw new Error('Invalid message format');
+          }
+
+          const message: WebSocketMessage = {
+            type: rawData.type,
+            payload: rawData.payload,
+            timestamp: rawData.timestamp,
+          };
+
           setState(prev => ({ ...prev, lastMessage: message }));
           onMessage?.(message);
         } catch (err) {
@@ -162,4 +187,4 @@ export const useWebSocket = ({
     disconnect,
     reconnect: connect,
   };
-};
+}

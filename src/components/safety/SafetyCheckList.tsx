@@ -14,7 +14,11 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const handleComplete = async (checkId: string) => {
+  const handleCompleteCheck = async (
+    checkId: string,
+    status: 'safe' | 'unsafe',
+    notes?: string
+  ) => {
     try {
       setIsLoading(true);
       setError(null);
@@ -22,39 +26,10 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
       setSelectedCheck(null);
     } catch (err) {
       console.error('Error completing safety check:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while completing the safety check. Please try again.'
-      );
+      setError(err instanceof Error ? err.message : 'Failed to complete safety check');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleResolve = async (checkId: string, status: 'safe' | 'unsafe', notes?: string) => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      if (status === 'safe') {
-        await onComplete(checkId);
-      }
-      setSelectedCheck(null);
-    } catch (err) {
-      console.error('Error resolving safety check:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while resolving the safety check. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleCompleteWrapper = (check: SafetyCheckNew) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    setSelectedCheck(check);
   };
 
   if (!checks.length) {
@@ -65,37 +40,21 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
 
   return (
     <div className="space-y-4">
-      {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
-        </div>
-      )}
+      {error && <div className="text-sm text-red-600">{error}</div>}
 
       {checks.map(check => (
         <div
           key={check.id}
-          className="bg-white shadow rounded-lg p-4 flex items-center justify-between"
+          className="flex items-center justify-between rounded-lg border border-gray-200 p-4"
         >
-          <div>
-            <h3 className="text-sm font-medium text-gray-900">
-              {check.type === 'meetup'
-                ? 'Meetup Safety Check'
-                : check.type === 'location'
-                  ? 'Location Safety Check'
-                  : 'Custom Safety Check'}
-            </h3>
+          <div className="flex-1">
+            <h3 className="font-medium text-gray-900">{check.type}</h3>
             <p className="text-sm text-gray-500">
-              {formatDistanceToNow(new Date(check.scheduledFor), { addSuffix: true })}
+              Created {formatDistanceToNow(new Date(check.createdAt))} ago
             </p>
-            {check.description && <p className="mt-1 text-sm text-gray-600">{check.description}</p>}
           </div>
-          <Button
-            onClick={handleCompleteWrapper(check)}
-            disabled={isLoading}
-            variant="primary"
-            size="sm"
-          >
-            Complete Check
+          <Button onClick={() => setSelectedCheck(check)} disabled={isLoading} variant="secondary">
+            View Details
           </Button>
         </div>
       ))}
@@ -105,7 +64,10 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
           check={selectedCheck}
           isOpen={true}
           onClose={() => setSelectedCheck(null)}
-          onResolve={handleResolve}
+          onResolve={async (checkId, status, notes) => {
+            await onComplete(checkId);
+            setSelectedCheck(null);
+          }}
         />
       )}
     </div>

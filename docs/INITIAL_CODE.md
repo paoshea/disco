@@ -1,6 +1,6 @@
 # Initial Code Structure
 
-This document represents the initial code structure for the DISCO! application, showcasing the core backend services written in Go and Rust, as well as the frontend React/Next.js implementation with TypeScript, as well as the API documentation. and implementation details for the DISCO! application. 
+This document represents the initial code structure for the DISCO! application, showcasing the core backend services written in Go and Rust, as well as the frontend React/Next.js implementation with TypeScript, as well as the API documentation. and implementation details for the DISCO! application.
 The code is organized into backend microservices and frontend components.
 
 ## Backend Services
@@ -8,6 +8,7 @@ The code is organized into backend microservices and frontend components.
 ### Core API Service (Go)
 
 #### Main Entry Point (`services/core-api/cmd/main.go`)
+
 ```go
 package main
 
@@ -28,7 +29,7 @@ func main() {
 
     // Initialize router
     router := gin.Default()
-    
+
     // Setup middleware
     router.Use(middleware.Cors())
     router.Use(middleware.Authentication())
@@ -36,7 +37,7 @@ func main() {
 
     // Initialize server
     srv := server.New(cfg, router)
-    
+
     // Start server
     if err := srv.Run(); err != nil {
         log.Fatalf("Failed to start server: %v", err)
@@ -45,6 +46,7 @@ func main() {
 ```
 
 #### User Model (`services/core-api/internal/models/user.go`)
+
 ```go
 package models
 
@@ -74,6 +76,7 @@ type UserSettings struct {
 ### Location Service (Rust)
 
 #### Main Entry Point (`services/location-service/src/main.rs`)
+
 ```rust
 use actix_web::{web, App, HttpServer};
 use tokio;
@@ -105,6 +108,7 @@ async fn main() -> std::io::Result<()> {
 ```
 
 #### Location Model (`services/location-service/src/models/location.rs`)
+
 ```rust
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -128,9 +132,11 @@ pub struct NearbyRequest {
     pub limit: Option<i32>,
 }
 ```
+
 # Core API Service (Go)
 
 # services/core-api/cmd/main.go
+
 ```go
 package main
 
@@ -151,7 +157,7 @@ func main() {
 
     // Initialize router
     router := gin.Default()
-    
+
     // Setup middleware
     router.Use(middleware.Cors())
     router.Use(middleware.Authentication())
@@ -159,7 +165,7 @@ func main() {
 
     // Initialize server
     srv := server.New(cfg, router)
-    
+
     // Start server
     if err := srv.Run(); err != nil {
         log.Fatalf("Failed to start server: %v", err)
@@ -168,6 +174,7 @@ func main() {
 ```
 
 # services/core-api/internal/models/user.go
+
 ```go
 package models
 
@@ -195,6 +202,7 @@ type UserSettings struct {
 ```
 
 # services/core-api/internal/handlers/user_handler.go
+
 ```go
 package handlers
 
@@ -233,6 +241,7 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 # Location Service (Rust)
 
 # services/location-service/src/main.rs
+
 ```rust
 use actix_web::{web, App, HttpServer};
 use tokio;
@@ -264,6 +273,7 @@ async fn main() -> std::io::Result<()> {
 ```
 
 # services/location-service/src/models/location.rs
+
 ```rust
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
@@ -289,6 +299,7 @@ pub struct NearbyRequest {
 ```
 
 # services/location-service/src/services/location_service.rs
+
 ```rust
 use crate::models::Location;
 use redis::{Client, Commands};
@@ -307,7 +318,7 @@ impl LocationService {
 
     pub async fn update_location(&self, location: Location) -> Result<(), Box<dyn std::error::Error>> {
         let conn = self.redis_client.get_connection()?;
-        
+
         // Generate geohash
         let geohash = encode(location.latitude, location.longitude, 8)
             .map_err(|e| format!("Failed to generate geohash: {}", e))?;
@@ -324,6 +335,7 @@ impl LocationService {
 # User Management Service (Node.js/NestJS)
 
 # services/user-service/src/main.ts
+
 ```typescript
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
@@ -351,8 +363,15 @@ bootstrap();
 ```
 
 # services/user-service/src/users/user.entity.ts
+
 ```typescript
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 @Entity()
 export class User {
@@ -387,6 +406,7 @@ export class User {
 ```
 
 # services/user-service/src/users/users.service.ts
+
 ```typescript
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
@@ -399,7 +419,7 @@ import { hash } from 'bcrypt';
 export class UsersService {
   constructor(
     @InjectRepository(User)
-    private usersRepository: Repository<User>,
+    private usersRepository: Repository<User>
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
@@ -421,6 +441,7 @@ export class UsersService {
 # Real-time Matching Service (Elixir/Phoenix)
 
 # services/matching-service/lib/disco/application.ex
+
 ```elixir
 defmodule Disco.Application do
   use Application
@@ -440,6 +461,7 @@ end
 ```
 
 # services/matching-service/lib/disco/matching/matcher.ex
+
 ```elixir
 defmodule Disco.Matching.Matcher do
   use GenServer
@@ -454,7 +476,7 @@ defmodule Disco.Matching.Matcher do
   end
 
   def handle_call({:find_matches, user_location}, _from, state) do
-    matches = 
+    matches =
       user_location
       |> find_nearby_users()
       |> calculate_scores()
@@ -483,6 +505,7 @@ end
 ```
 
 # services/matching-service/lib/disco_web/channels/user_socket.ex
+
 ```elixir
 defmodule DiscoWeb.UserSocket do
   use Phoenix.Socket
@@ -505,34 +528,36 @@ end
 # Configuration Files
 
 # services/core-api/config/config.yaml
+
 ```yaml
 server:
   port: 8080
-  host: "0.0.0.0"
+  host: '0.0.0.0'
 
 database:
-  host: "localhost"
+  host: 'localhost'
   port: 5432
-  name: "disco_core"
-  user: "disco_user"
+  name: 'disco_core'
+  user: 'disco_user'
 
 redis:
-  host: "localhost"
+  host: 'localhost'
   port: 6379
 
 security:
-  jwt_secret: "your-secret-key"
-  token_expiry: "24h"
+  jwt_secret: 'your-secret-key'
+  token_expiry: '24h'
 
 services:
-  location_service: "http://location-service:8081"
-  user_service: "http://user-service:3000"
-  matching_service: "http://matching-service:4000"
+  location_service: 'http://location-service:8081'
+  user_service: 'http://user-service:3000'
+  matching_service: 'http://matching-service:4000'
 ```
 
 # Docker Configurations
 
 # services/core-api/Dockerfile
+
 ```dockerfile
 FROM golang:1.21-alpine
 
@@ -551,6 +576,7 @@ CMD ["./main"]
 ```
 
 # services/location-service/Dockerfile
+
 ```dockerfile
 FROM rust:1.70 as builder
 
@@ -568,6 +594,7 @@ CMD ["location-service"]
 ```
 
 # services/user-service/Dockerfile
+
 ```dockerfile
 FROM node:18-alpine
 
@@ -585,6 +612,7 @@ CMD ["npm", "run", "start:prod"]
 ```
 
 # services/matching-service/Dockerfile
+
 ```dockerfile
 FROM elixir:1.14-alpine
 
@@ -601,12 +629,12 @@ EXPOSE 4000
 CMD ["mix", "phx.server"]
 ```
 
-
 ## Frontend Structure
 
 ### Configuration
 
 #### TypeScript Configuration (`tsconfig.json`)
+
 ```json
 {
   "compilerOptions": {
@@ -643,6 +671,7 @@ CMD ["mix", "phx.server"]
 ### Core Types
 
 #### User Types (`src/types/user.ts`)
+
 ```typescript
 export interface User {
   id: string;
@@ -677,6 +706,7 @@ export type UserStatus = 'online' | 'offline' | 'away' | 'busy';
 ### Components
 
 #### Match Card Component (`src/components/matching/MatchCard.tsx`)
+
 ```typescript
 import React from 'react';
 import Image from 'next/image';
@@ -751,6 +781,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 ### Services
 
 #### API Client (`src/services/api/client.ts`)
+
 ```typescript
 import axios from 'axios';
 
@@ -764,7 +795,7 @@ export const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -773,8 +804,8 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     if (error.response?.status === 401) {
       // Handle token refresh or logout
       window.location.href = '/auth/login';
@@ -787,6 +818,7 @@ apiClient.interceptors.response.use(
 # Configuration Files
 
 # tsconfig.json
+
 ```json
 {
   "compilerOptions": {
@@ -821,6 +853,7 @@ apiClient.interceptors.response.use(
 ```
 
 # tailwind.config.js
+
 ```javascript
 module.exports = {
   content: [
@@ -845,17 +878,18 @@ module.exports = {
         },
       },
       spacing: {
-        '128': '32rem',
+        128: '32rem',
       },
     },
   },
   plugins: [],
-}
+};
 ```
 
 # Types
 
 # src/types/user.ts
+
 ```typescript
 export interface User {
   id: string;
@@ -888,6 +922,7 @@ export type UserStatus = 'online' | 'offline' | 'away' | 'busy';
 ```
 
 # src/types/match.ts
+
 ```typescript
 export interface Match {
   id: string;
@@ -912,6 +947,7 @@ export interface MatchPreview {
 # Services
 
 # src/services/api/client.ts
+
 ```typescript
 import axios from 'axios';
 
@@ -925,7 +961,7 @@ export const apiClient = axios.create({
   },
 });
 
-apiClient.interceptors.request.use((config) => {
+apiClient.interceptors.request.use(config => {
   const token = localStorage.getItem('auth_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
@@ -934,8 +970,8 @@ apiClient.interceptors.request.use((config) => {
 });
 
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     if (error.response?.status === 401) {
       // Handle token refresh or logout
       window.location.href = '/auth/login';
@@ -946,6 +982,7 @@ apiClient.interceptors.response.use(
 ```
 
 # src/services/api/user.service.ts
+
 ```typescript
 import { apiClient } from './client';
 import { User, UserPreferences } from '@/types/user';
@@ -968,6 +1005,7 @@ export const userService = {
 ```
 
 # src/services/websocket/socket.service.ts
+
 ```typescript
 import { io, Socket } from 'socket.io-client';
 import { Match, MatchPreview } from '@/types/match';
@@ -1026,6 +1064,7 @@ export const socketService = new SocketService();
 # Store
 
 # src/store/store.ts
+
 ```typescript
 import { configureStore } from '@reduxjs/toolkit';
 import { userReducer } from './slices/userSlice';
@@ -1037,8 +1076,7 @@ export const store = configureStore({
     user: userReducer,
     matches: matchReducer,
   },
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware().concat(locationMiddleware),
+  middleware: getDefaultMiddleware => getDefaultMiddleware().concat(locationMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
@@ -1046,6 +1084,7 @@ export type AppDispatch = typeof store.dispatch;
 ```
 
 # src/store/slices/userSlice.ts
+
 ```typescript
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { User } from '@/types/user';
@@ -1063,12 +1102,9 @@ const initialState: UserState = {
   error: null,
 };
 
-export const fetchCurrentUser = createAsyncThunk(
-  'user/fetchCurrent',
-  async () => {
-    return await userService.getCurrentUser();
-  }
-);
+export const fetchCurrentUser = createAsyncThunk('user/fetchCurrent', async () => {
+  return await userService.getCurrentUser();
+});
 
 export const userSlice = createSlice({
   name: 'user',
@@ -1080,9 +1116,9 @@ export const userSlice = createSlice({
       }
     },
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
-      .addCase(fetchCurrentUser.pending, (state) => {
+      .addCase(fetchCurrentUser.pending, state => {
         state.loading = true;
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
@@ -1103,6 +1139,7 @@ export const userReducer = userSlice.reducer;
 # Hooks
 
 # src/hooks/useGeolocation.ts
+
 ```typescript
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
@@ -1133,7 +1170,7 @@ export const useGeolocation = () => {
     }
 
     const watchId = navigator.geolocation.watchPosition(
-      async (position) => {
+      async position => {
         const { latitude, longitude } = position.coords;
         setState({
           latitude,
@@ -1149,7 +1186,7 @@ export const useGeolocation = () => {
           console.error('Failed to update location:', error);
         }
       },
-      (error) => {
+      error => {
         setState(prev => ({
           ...prev,
           error: error.message,
@@ -1174,6 +1211,7 @@ export const useGeolocation = () => {
 # Components
 
 # src/components/map/MapView.tsx
+
 ```typescript
 import React, { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
@@ -1237,8 +1275,8 @@ export const MapView: React.FC<MapViewProps> = ({ matches, onMarkerClick }) => {
   }
 
   return (
-    <div 
-      ref={mapContainer} 
+    <div
+      ref={mapContainer}
       className="w-full h-128 rounded-lg shadow-lg"
     />
   );
@@ -1246,6 +1284,7 @@ export const MapView: React.FC<MapViewProps> = ({ matches, onMarkerClick }) => {
 ```
 
 # src/components/matching/MatchCard.tsx
+
 ```typescript
 import React from 'react';
 import Image from 'next/image';
@@ -1318,6 +1357,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 ```
 
 # src/components/layout/Layout.tsx
+
 ```typescript
 import React from 'react';
 import { Header } from './Header';
@@ -1346,6 +1386,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 ```
 
 # src/components/layout/Header.tsx
+
 ```typescript
 import React from 'react';
 import Link from 'next/link';
@@ -1406,6 +1447,7 @@ export const Header: React.FC = () => {
 # Pages
 
 # src/pages/index.tsx
+
 ```typescript
 import { NextPage } from 'next';
 import { useEffect } from 'react';
@@ -1474,6 +1516,7 @@ export default HomePage;
 ```
 
 # src/pages/auth/login.tsx
+
 ```typescript
 import { NextPage } from 'next';
 import { useForm } from 'react-hook-form';
@@ -1579,7 +1622,8 @@ const LoginPage: NextPage = () => {
 export default LoginPage;
 ```
 
-# src/pages/_app.tsx
+# src/pages/\_app.tsx
+
 ```typescript
 import { AppProps } from 'next/app';
 import { Provider } from 'react-redux';
@@ -1603,6 +1647,7 @@ export default MyApp;
 # Additional Files
 
 # src/hooks/useAuth.tsx
+
 ```typescript
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User } from '@/types/user';
@@ -1682,6 +1727,7 @@ export const useAuth = () => {
 ```
 
 # src/components/profile/ProfileEdit.tsx
+
 ```typescript
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -1840,6 +1886,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
 ```
 
 # src/components/chat/ChatWindow.tsx
+
 ```typescript
 import React, { useEffect, useRef, useState } from 'react';
 import { Message } from '@/types/chat';
@@ -1953,6 +2000,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 ```
 
 # src/services/notifications/notification.service.ts
+
 ```typescript
 import { Permission } from '@/types/notifications';
 
@@ -2030,6 +2078,7 @@ export const notificationService = NotificationService.getInstance();
 ```
 
 # src/utils/location.ts
+
 ```typescript
 export const calculateDistance = (
   lat1: number,
@@ -2042,10 +2091,7 @@ export const calculateDistance = (
   const dLon = toRad(lon2 - lon1);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) *
-      Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2);
+    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -2076,17 +2122,20 @@ export const isWithinRadius = (
 These additional components and utilities complete the frontend implementation with:
 
 1. Profile Management:
+
    - Comprehensive profile editing
    - Preference management
    - Privacy settings
 
 2. Real-time Chat:
+
    - WebSocket integration
    - Message history
    - Real-time updates
    - Typing indicators
 
 3. Notifications:
+
    - Push notification support
    - Custom notification types
    - Permission management
@@ -2097,6 +2146,7 @@ These additional components and utilities complete the frontend implementation w
    - Formatting helpers
 
 # src/components/safety/SafetyCenter.tsx
+
 ```typescript
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
@@ -2275,6 +2325,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
 ```
 
 # src/components/matching/MatchSettings.tsx
+
 ```typescript
 import React from 'react';
 import { useForm } from 'react-hook-form';
@@ -2452,6 +2503,7 @@ const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 ```
 
 # src/services/safety/safety.service.ts
+
 ```typescript
 import { apiClient } from '../api/client';
 import { EmergencyContact, EmergencyAlert } from '@/types/safety';
@@ -2488,6 +2540,7 @@ export const safetyService = new SafetyService();
 ```
 
 # src/types/safety.ts
+
 ```typescript
 export interface EmergencyContact {
   id: string;
@@ -2532,6 +2585,7 @@ export interface SafetyReport {
 ```
 
 # src/components/safety/SafetyCheckModal.tsx
+
 ```typescript
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
@@ -2675,6 +2729,7 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
 ```
 
 # src/components/safety/ReportUserModal.tsx
+
 ```typescript
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
@@ -2797,6 +2852,7 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
 ```
 
 # src/hooks/useSafetyChecks.ts
+
 ```typescript
 import { useState, useEffect } from 'react';
 import { SafetyCheck } from '@/types/safety';
@@ -2851,9 +2907,7 @@ export const useSafetyChecks = (meetingId: string) => {
         scheduledTime: new Date(),
       });
 
-      setChecks(checks.map(check => 
-        check.id === checkId ? updatedCheck : check
-      ));
+      setChecks(checks.map(check => (check.id === checkId ? updatedCheck : check)));
 
       return updatedCheck;
     } catch (error) {
@@ -2871,7 +2925,3 @@ export const useSafetyChecks = (meetingId: string) => {
   };
 };
 ```
-
-
-
-

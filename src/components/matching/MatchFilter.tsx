@@ -198,7 +198,9 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
                 Cancel
               </button>
               <button
-                onClick={handleSave}
+                onClick={() => {
+                  void handleSave();
+                }}
                 className="px-4 py-2 bg-primary-500 text-white text-sm font-medium rounded-md hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
               >
                 Apply Filters

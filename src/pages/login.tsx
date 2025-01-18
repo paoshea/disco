@@ -19,12 +19,13 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 const LoginPage = () => {
   const router = useRouter();
-  const { login, user, isLoading, error } = useAuth();
+  const { login, user, loading } = useAuth();
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
-    handleSubmit,
-    formState: { errors, isSubmitting },
+    handleSubmit: handleFormSubmit,
+    formState: { errors },
   } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
@@ -45,13 +46,11 @@ const LoginPage = () => {
 
   const onSubmit = async (data: LoginFormData) => {
     try {
-      setLoginError(null);
       await login(data.email, data.password);
       await router.push('/profile');
     } catch (err) {
-      setLoginError(
-        err instanceof Error ? err.message : 'An error occurred during login. Please try again.'
-      );
+      console.error('Login error:', err);
+      setLoginError(err instanceof Error ? err.message : 'Failed to log in');
     }
   };
 
@@ -63,7 +62,7 @@ const LoginPage = () => {
     }
   };
 
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -94,7 +93,23 @@ const LoginPage = () => {
             </div>
           )}
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="mt-8 space-y-6"
+            onSubmit={handleFormSubmit(data => {
+              void (async () => {
+                try {
+                  setIsSubmitting(true);
+                  setLoginError(null);
+                  await onSubmit(data);
+                } catch (err) {
+                  console.error('Login error:', err);
+                  setLoginError(err instanceof Error ? err.message : 'Failed to log in');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              })();
+            })}
+          >
             <div className="space-y-4">
               <div>
                 <Input

@@ -33,7 +33,12 @@ export const Header: React.FC = () => {
             {isLoading ? (
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
             ) : user ? (
-              <UserMenu user={user} onLogout={handleLogout} />
+              <UserMenu
+                user={user}
+                onLogout={() => {
+                  void handleLogout();
+                }}
+              />
             ) : (
               <div className="space-x-4">
                 <Link href="/auth/login" className="text-gray-600 hover:text-gray-900">

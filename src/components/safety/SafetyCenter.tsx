@@ -51,7 +51,12 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
     <div className="space-y-8">
       <section>
         <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
-        <EmergencyAlert userId={userId} onAlertTriggered={handleAlertTriggered} />
+        <EmergencyAlert
+          userId={userId}
+          onAlertTriggered={alert => {
+            void handleAlertTriggered(alert);
+          }}
+        />
       </section>
 
       {alerts.length > 0 && (

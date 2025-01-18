@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { ChatList } from '@/components/chat/ChatList';
-import type { ChatRoom, Message } from '@/types/chat';
+import type { ChatRoom } from '@/types/chat';
 import { chatService } from '@/services/api/chat.service';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -33,11 +33,14 @@ export default function ChatPage() {
     }
   }, [activeChat]);
 
-  const handleWebSocketMessage = useCallback((message: WebSocketMessage<WebSocketPayload>) => {
-    if (message.type === WebSocketEventType.CHAT_MESSAGE) {
-      void fetchChats();
-    }
-  }, [fetchChats]);
+  const handleWebSocketMessage = useCallback(
+    (message: WebSocketMessage<WebSocketPayload>) => {
+      if (message.type === WebSocketEventType.CHAT_MESSAGE) {
+        void fetchChats();
+      }
+    },
+    [fetchChats]
+  );
 
   const { isConnected, send } = useWebSocket({
     url: process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3000/ws',

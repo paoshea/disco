@@ -1,5 +1,5 @@
 import { useContext } from 'react';
-import { AuthContext, AuthContextType, RegisterData } from '@/contexts/AuthContext';
+import { AuthContext, RegisterData } from '@/contexts/AuthContext';
 import type { User } from '@/types/user';
 
 export interface UseAuthReturn {

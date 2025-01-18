@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { XMarkIcon, ExclamationTriangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
 import type { SafetyAlertNew } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 import { BaseMapView } from '@/components/map/BaseMapView';
-import type { LatLng } from '@/components/map/BaseMapView';
 
 interface SafetyAlertNotificationProps {
   alert: SafetyAlertNew;
@@ -106,7 +105,14 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
           )}
         </div>
         <div className="flex-shrink-0">
-          <Button variant="secondary" size="sm" onClick={handleDismiss} disabled={isLoading}>
+          <Button
+            variant="secondary"
+            size="sm"
+            onClick={() => {
+              void handleDismiss();
+            }}
+            disabled={isLoading}
+          >
             <XMarkIcon className="h-5 w-5" />
           </Button>
         </div>

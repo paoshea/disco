@@ -41,10 +41,11 @@ const SignupPage = () => {
   const { signup, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const {
     register,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { errors },
   } = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
@@ -79,6 +80,14 @@ const SignupPage = () => {
     }
   };
 
+  const handleFormSubmit = (callback: (data: SignupFormData) => void) => {
+    return (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      const data = handleSubmit(callback)(event);
+      return data;
+    };
+  };
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -109,7 +118,23 @@ const SignupPage = () => {
             </div>
           )}
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            className="mt-8 space-y-6"
+            onSubmit={handleFormSubmit(data => {
+              void (async () => {
+                try {
+                  setIsSubmitting(true);
+                  setError(null);
+                  await onSubmit(data);
+                } catch (err) {
+                  console.error('Signup error:', err);
+                  setError(err instanceof Error ? err.message : 'Failed to create account');
+                } finally {
+                  setIsSubmitting(false);
+                }
+              })();
+            })}
+          >
             <div className="space-y-4 rounded-md shadow-sm">
               <Input
                 label="Email"
@@ -137,29 +162,15 @@ const SignupPage = () => {
               <Input label="Last Name" {...register('lastName')} error={errors.lastName?.message} />
               <Input
                 label="Phone Number (optional)"
-                type="tel"
                 {...register('phoneNumber')}
                 error={errors.phoneNumber?.message}
               />
             </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting || isLoading}>
-              {isSubmitting || isLoading ? 'Creating Account...' : 'Sign Up'}
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating Account...' : 'Create Account'}
             </Button>
           </form>
-
-          <div className="mt-6">
-            <p className="text-center text-sm text-gray-600">
-              By signing up, you agree to our{' '}
-              <Link href="/terms" className="font-medium text-primary-600 hover:text-primary-500">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy" className="font-medium text-primary-600 hover:text-primary-500">
-                Privacy Policy
-              </Link>
-            </p>
-          </div>
         </div>
       </div>
     </Layout>

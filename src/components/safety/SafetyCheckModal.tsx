@@ -69,7 +69,9 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
               <Button
                 type="button"
                 variant="danger"
-                onClick={() => handleResolve('unsafe')}
+                onClick={() => {
+                  void handleResolve('unsafe');
+                }}
                 disabled={isSubmitting}
               >
                 Report Unsafe
@@ -77,7 +79,9 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
               <Button
                 type="button"
                 variant="primary"
-                onClick={() => handleResolve('safe')}
+                onClick={() => {
+                  void handleResolve('safe');
+                }}
                 disabled={isSubmitting}
               >
                 Confirm Safe
