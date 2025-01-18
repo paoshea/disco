@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { email, password } = result.data;
-    
+
     // Check rate limiting with validated email
     const limiter = await isRateLimited(email, 'login');
     if (limiter) {
@@ -37,16 +37,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const users = await db.$queryRaw<Array<{
-      id: string;
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-      emailVerified: boolean;
-      lastStreak: Date | null;
-      streakCount: number;
-    }>>`
+    const users = await db.$queryRaw<
+      Array<{
+        id: string;
+        email: string;
+        password: string;
+        firstName: string;
+        lastName: string;
+        emailVerified: boolean;
+        lastStreak: Date | null;
+        streakCount: number;
+      }>
+    >`
       SELECT 
         id, 
         email, 
@@ -71,7 +73,10 @@ export async function POST(request: NextRequest) {
 
     if (!user.emailVerified) {
       return NextResponse.json(
-        { error: 'Please verify your email before logging in', needsVerification: true },
+        {
+          error: 'Please verify your email before logging in',
+          needsVerification: true,
+        },
         { status: 403 }
       );
     }
@@ -81,11 +86,13 @@ export async function POST(request: NextRequest) {
       userId: user.id,
       email: user.email,
       role: 'user',
-      firstName: user.firstName
+      firstName: user.firstName,
     });
 
     const now = new Date();
-    const refreshTokenExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
+    const refreshTokenExpiresAt = new Date(
+      now.getTime() + 7 * 24 * 60 * 60 * 1000
+    ); // 7 days
 
     // Update user's refresh token and last login
     await db.$executeRaw`

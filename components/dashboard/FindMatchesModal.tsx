@@ -87,7 +87,7 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
                 </Dialog.Title>
               </div>
 
-              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+              <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
                 <div>
                   <label
                     htmlFor="interests"

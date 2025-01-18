@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { db } from '@/lib/prisma';
-import { generateToken } from '@/lib/auth';
+import { generateVerificationToken } from '@/lib/auth';
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     }
 
     // Generate reset token
-    const token = generateToken();
+    const token = generateVerificationToken();
 
     // Save reset token
     await db.passwordReset.create({

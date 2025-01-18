@@ -109,7 +109,7 @@ export function EmergencyContactsModal({
                 </Dialog.Title>
               </div>
 
-              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
+              <form onSubmit={e => void handleSubmit(e)} className="space-y-6">
                 {contacts.map((contact, index) => (
                   <div key={index} className="p-4 border rounded-lg space-y-4">
                     <div className="flex justify-between items-center">

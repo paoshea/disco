@@ -84,7 +84,7 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
                 Schedule Safety Check
               </Dialog.Title>
 
-              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
+              <form onSubmit={e => void handleSubmit(e)} className="space-y-4">
                 <div>
                   <label
                     htmlFor="date"

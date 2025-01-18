@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { prisma } from './prisma';
 import type { User } from '@prisma/client';
+import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 const ACCESS_TOKEN_EXPIRY = '15m';
@@ -21,8 +22,9 @@ export interface LoginResult {
   user?: {
     id: string;
     email: string;
-    name?: string;
-    role: string;
+    firstName: string;
+    lastName: string;
+    streakCount: number;
   };
   error?: string;
   needsVerification?: boolean;
@@ -47,11 +49,19 @@ export async function verifyPassword(
   return bcrypt.compare(password, hashedPassword);
 }
 
+// For JWT tokens (auth tokens)
 export async function generateToken(payload: JWTPayload): Promise<string> {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
 }
 
-export async function generateRefreshToken(payload: JWTPayload): Promise<string> {
+// For verification tokens (email verification, password reset)
+export function generateVerificationToken(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
+
+export async function generateRefreshToken(
+  payload: JWTPayload
+): Promise<string> {
   return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
 }
 
@@ -63,6 +73,9 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     return null;
   }
 }
+
+// Alias for verifyToken for backward compatibility
+export const verifyJWT = verifyToken;
 
 export function getTokenFromRequest(request: NextRequest): string | null {
   const authHeader = request.headers.get('Authorization');
@@ -82,7 +95,7 @@ export async function getServerSession(): Promise<Session | null> {
     }
 
     const decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
-    
+
     const user = await prisma.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -96,12 +109,11 @@ export async function getServerSession(): Promise<Session | null> {
       return null;
     }
 
-    // Since we don't have a role field in the schema, we'll use a default role
     return {
       user: {
         id: user.id,
         email: user.email,
-        role: 'user', // Default role since it's not in the schema
+        role: 'user', // Default role since we don't store it
       },
     };
   } catch (error) {

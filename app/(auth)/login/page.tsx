@@ -125,7 +125,10 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form onSubmit={(e) => void handleSubmit(onSubmit)(e)} className="mt-8 space-y-6">
+          <form
+            onSubmit={e => void handleSubmit(onSubmit)(e)}
+            className="mt-8 space-y-6"
+          >
             <div className="space-y-4">
               <div>
                 <Input
@@ -178,7 +181,8 @@ export default function LoginPage() {
                     </h3>
                     <div className="mt-2 text-sm text-yellow-700">
                       <p>
-                        Check your inbox for a verification link. Need a new link?{' '}
+                        Check your inbox for a verification link. Need a new
+                        link?{' '}
                         <button
                           type="button"
                           className="font-medium text-yellow-800 underline"

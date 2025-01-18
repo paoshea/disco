@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { hashPassword, generateVerificationToken } from '@/lib/auth';
 import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
@@ -34,16 +34,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate verification token
-    const verificationToken = generateToken();
-
     // Hash password
     const hashedPassword = await hashPassword(password);
+    const verificationToken = generateVerificationToken();
 
     // Create user with verification token
     await db.user.create({
       data: {
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         firstName,
         lastName,
