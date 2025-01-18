@@ -3,28 +3,27 @@ import { cookies } from 'next/headers';
 import { verifyToken, generateToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
-export async function POST(request: Request) {
+export async function POST(): Promise<Response> {
   try {
-    const cookieStore = await cookies();
+    const cookieStore = cookies();
     const refreshToken = cookieStore.get('refreshToken')?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
-        { message: 'Refresh token required' },
+        { message: 'Refresh token not found' },
         { status: 401 }
       );
     }
 
     const decoded = await verifyToken(refreshToken);
-
-    if (!decoded) {
+    if (!decoded || !decoded.userId) {
       return NextResponse.json(
         { message: 'Invalid refresh token' },
         { status: 401 }
       );
     }
 
-    // Verify user still exists
+    // Verify user still exists and get their data
     const user = await db.user.findUnique({
       where: { id: decoded.userId },
       select: {
@@ -36,29 +35,21 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+      return NextResponse.json(
+        { message: 'User not found' },
+        { status: 404 }
+      );
     }
 
-    // Generate new access token
-    const accessToken = await generateToken({
+    const newToken = await generateToken({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       role: user.role,
     });
 
-    const response = NextResponse.json({
-      token: accessToken,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        role: user.role,
-      },
-    });
-
-    // Set the new access token cookie
-    response.cookies.set('auth-token', accessToken, {
+    const response = NextResponse.json({ token: newToken });
+    response.cookies.set('auth-token', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -67,7 +58,7 @@ export async function POST(request: Request) {
 
     return response;
   } catch (error) {
-    console.error('Error in refresh token:', error);
+    console.error('Error refreshing token:', error);
     return NextResponse.json(
       { message: 'Failed to refresh token' },
       { status: 500 }

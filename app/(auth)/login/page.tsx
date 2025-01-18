@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -34,7 +34,7 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const onSubmit = useCallback(async (data: LoginFormData) => {
     setIsLoading(true);
     setNeedsVerification(false);
 
@@ -67,9 +67,9 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [login, router]);
 
-  const handleResendVerification = async () => {
+  const handleResendVerification = useCallback(async () => {
     if (!emailForVerification) return;
 
     try {
@@ -88,7 +88,7 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [emailForVerification]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -110,7 +110,10 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form className="mt-8 space-y-6" onSubmit={(e) => {
+            e.preventDefault();
+            void handleSubmit(onSubmit)(e);
+          }}>
             <div className="space-y-4">
               <div>
                 <Input

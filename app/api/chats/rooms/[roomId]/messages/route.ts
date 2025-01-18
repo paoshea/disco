@@ -12,7 +12,7 @@ export const runtime = 'nodejs';
 // Disable static optimization
 export const dynamic = 'force-dynamic';
 
-async function authenticateRequest(request: NextRequest) {
+async function authenticateRequest() {
   const headersList = await headers();
   const token = headersList.get('Authorization')?.replace('Bearer ', '');
 
@@ -33,10 +33,10 @@ async function authenticateRequest(request: NextRequest) {
 }
 
 export async function GET(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
 ): Promise<Response> {
-  const auth = await authenticateRequest(request);
+  const auth = await authenticateRequest();
   if ('error' in auth) {
     return NextResponse.json({ message: auth.error }, { status: auth.status });
   }
@@ -77,11 +77,15 @@ export async function GET(
   }
 }
 
+interface MessageContent {
+  content: string;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ roomId: string }> }
 ): Promise<Response> {
-  const auth = await authenticateRequest(request);
+  const auth = await authenticateRequest();
   if ('error' in auth) {
     return NextResponse.json({ message: auth.error }, { status: auth.status });
   }
@@ -97,7 +101,7 @@ export async function POST(
       );
     }
 
-    const body = await request.json();
+    const body = await request.json() as MessageContent;
     const { content } = body;
 
     if (!content) {
@@ -108,7 +112,6 @@ export async function POST(
     }
 
     const message = await createMessage(content, roomId, auth.userId);
-
     return NextResponse.json(message);
   } catch (error) {
     console.error('Error creating message:', error);

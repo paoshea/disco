@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Logo } from '@/components/ui/Logo';
 import { Button } from '@/components/ui/Button';
 

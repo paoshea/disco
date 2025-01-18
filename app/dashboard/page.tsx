@@ -103,18 +103,21 @@ export default function DashboardPage() {
     }
   }, [user]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+
     try {
       const response = await fetchApi('/api/dashboard/stats');
       const parsed = dashboardStatsSchema.parse(response);
       setStats(parsed.stats);
     } catch (err) {
-      setError('Failed to load dashboard stats');
+      setError(err instanceof Error ? err.message : 'Failed to load dashboard stats');
       console.error(err);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   const handleProfileClick = () => {
     // Navigate to profile
@@ -124,33 +127,43 @@ export default function DashboardPage() {
     // Navigate to settings
   };
 
-  const handleCheckComplete = async (checkId: string) => {
+  const handleCheckComplete = useCallback(async (checkId: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
       await fetchApi(`/api/safety/checks/${checkId}/complete`, {
         method: 'POST',
       });
       await fetchStats(); // Refresh stats after completing check
     } catch (err) {
-      setError('Failed to complete safety check');
+      setError(err instanceof Error ? err.message : 'Failed to complete safety check');
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [fetchStats]);
 
   const handleEditContact = (contact: EmergencyContact) => {
     // Handle editing contact
   };
 
-  const handleDeleteContact = async (contactId: string) => {
+  const handleDeleteContact = useCallback(async (contactId: string) => {
+    setIsLoading(true);
+    setError(null);
+
     try {
       await fetchApi(`/api/contacts/${contactId}`, {
         method: 'DELETE',
       });
       await fetchStats();
     } catch (err) {
-      setError('Failed to delete contact');
+      setError(err instanceof Error ? err.message : 'Failed to delete contact');
       console.error(err);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, [fetchStats]);
 
   if (isLoading) {
     return <LoadingSpinner />;

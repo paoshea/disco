@@ -1,46 +1,38 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
-import type { SignupInput } from '@/types/auth';
-import { z } from 'zod';
+import { hashPassword } from '@/lib/auth';
 import { randomUUID } from 'crypto';
+import { sendVerificationEmail } from '@/lib/email';
 
-const signupSchema = z.object({
-  email: z.string().email(),
-  password: z
-    .string()
-    .min(8)
-    .regex(
-      /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])/,
-      'Password must contain at least one number, one uppercase and one lowercase letter'
-    ),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-});
+interface SignupBody {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const body = await request.json();
-    const result = signupSchema.safeParse(body);
+    const body = await request.json() as SignupBody;
+    const { email, password, firstName, lastName } = body;
 
-    if (!result.success) {
+    if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { message: result.error.errors[0].message },
+        { message: 'All fields are required' },
         { status: 400 }
       );
     }
 
-    const { email, password, firstName, lastName } = result.data;
-
-    // Check if user exists
+    // Check if user already exists
     const existingUser = await db.user.findUnique({
-      where: { email: email.toLowerCase() },
+      where: { email },
+      select: { id: true },
     });
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Email already registered' },
+        { message: 'User already exists' },
         { status: 409 }
       );
     }
@@ -48,10 +40,9 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await hashPassword(password);
     const verificationToken = randomUUID();
 
-    // Create user
     const user = await db.user.create({
       data: {
-        email: email.toLowerCase(),
+        email,
         password: hashedPassword,
         firstName,
         lastName,
@@ -64,40 +55,20 @@ export async function POST(request: NextRequest) {
         email: true,
         firstName: true,
         lastName: true,
-        role: true,
       },
     });
 
-    // Generate token
-    const token = await generateToken({
-      userId: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      role: user.role,
-    });
+    await sendVerificationEmail(email, verificationToken);
 
-    const response = NextResponse.json(
-      {
-        message: 'User created successfully',
-        user: {
-          id: user.id,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-        },
+    return NextResponse.json({
+      message: 'User created successfully. Please check your email to verify your account.',
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
       },
-      { status: 201 }
-    );
-
-    // Set auth token cookie
-    response.cookies.set('auth-token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
     });
-
-    return response;
   } catch (error) {
     console.error('Signup error:', error);
     return NextResponse.json(

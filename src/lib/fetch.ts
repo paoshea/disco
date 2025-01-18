@@ -2,23 +2,36 @@ interface FetchOptions extends RequestInit {
   headers?: Record<string, string>;
 }
 
-export async function fetchApi(endpoint: string, options: FetchOptions = {}) {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+interface ApiError {
+  message: string;
+  status?: number;
+}
 
-  const response = await fetch(endpoint, {
-    ...options,
-    headers,
-  });
+export async function fetchApi<T>(
+  endpoint: string,
+  options: FetchOptions = {}
+): Promise<T> {
+  try {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    };
 
-  if (!response.ok) {
-    const error = await response
-      .json()
-      .catch(() => ({ message: 'An error occurred' }));
-    throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    const response = await fetch(endpoint, {
+      ...options,
+      headers,
+    });
+
+    if (!response.ok) {
+      const error = (await response.json()) as ApiError;
+      throw new Error(error.message || 'An error occurred');
+    }
+
+    return response.json() as Promise<T>;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('An unexpected error occurred');
   }
-
-  return response.json();
 }
