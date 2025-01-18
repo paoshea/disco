@@ -37,7 +37,10 @@ export async function POST(request: NextRequest) {
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
     if (!passwordRegex.test(password)) {
       return NextResponse.json(
-        { message: 'Password must be at least 8 characters and contain at least one number, one uppercase and one lowercase letter' },
+        {
+          message:
+            'Password must be at least 8 characters and contain at least one number, one uppercase and one lowercase letter',
+        },
         { status: 400 }
       );
     }
