@@ -44,7 +44,9 @@ export class NotificationService {
     }
 
     // Load saved permission from storage
-    const savedPermission = localStorage.getItem(this.storageKey) as NotificationPermission | null;
+    const savedPermission = localStorage.getItem(
+      this.storageKey
+    ) as NotificationPermission | null;
     if (savedPermission) {
       this.permission = savedPermission;
     } else {
@@ -83,7 +85,9 @@ export class NotificationService {
     }
   }
 
-  public async show<T extends NotificationData>(options: NotificationOptions<T>): Promise<void> {
+  public async show<T extends NotificationData>(
+    options: NotificationOptions<T>
+  ): Promise<void> {
     if (!this.isSupported()) {
       console.warn('This browser does not support notifications');
       return;
@@ -183,7 +187,11 @@ export class NotificationService {
     await this.show({
       title: `Message from ${message.senderName}`,
       body: message.content,
-      data: { type: 'message', messageId: message.id, senderId: message.senderId },
+      data: {
+        type: 'message',
+        messageId: message.id,
+        senderId: message.senderId,
+      },
       onClick: () => {
         window.focus();
         window.location.href = `/messages/${message.senderId}`;

@@ -124,7 +124,9 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Interests</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Interests
+        </label>
         <div className="mt-2 flex flex-wrap gap-2">
           {AVAILABLE_INTERESTS.map(interest => (
             <button

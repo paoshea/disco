@@ -6,7 +6,10 @@ interface ErrorMessageProps {
   className?: string;
 }
 
-export const ErrorMessage: React.FC<ErrorMessageProps> = ({ message, className = '' }) => {
+export const ErrorMessage: React.FC<ErrorMessageProps> = ({
+  message,
+  className = '',
+}) => {
   if (!message) return null;
 
   return (

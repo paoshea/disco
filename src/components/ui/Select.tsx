@@ -6,7 +6,8 @@ export interface SelectOption {
   label: string;
 }
 
-export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+export interface SelectProps
+  extends React.SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   error?: string;
   helperText?: string;
@@ -17,12 +18,23 @@ export interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElemen
 
 export const Select = forwardRef<HTMLSelectElement, SelectProps>(
   (
-    { className, label, error, helperText, fullWidth = false, options, placeholder, ...props },
+    {
+      className,
+      label,
+      error,
+      helperText,
+      fullWidth = false,
+      options,
+      placeholder,
+      ...props
+    },
     ref
   ) => {
     return (
       <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')}>
-        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+        {label && (
+          <label className="text-sm font-medium text-gray-700">{label}</label>
+        )}
         <select
           className={cn(
             'rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm',
@@ -46,7 +58,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ))}
         </select>
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {helperText && !error && <p className="text-sm text-gray-500">{helperText}</p>}
+        {helperText && !error && (
+          <p className="text-sm text-gray-500">{helperText}</p>
+        )}
       </div>
     );
   }

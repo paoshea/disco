@@ -38,7 +38,9 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
 
       try {
         const updatedEvent = await eventService.joinEvent(eventId, user.id);
-        setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
+        setEvents(events =>
+          events.map(event => (event.id === eventId ? updatedEvent : event))
+        );
       } catch (error) {
         console.error('Failed to join event:', error);
       }
@@ -52,7 +54,9 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
 
       try {
         const updatedEvent = await eventService.leaveEvent(eventId, user.id);
-        setEvents(events => events.map(event => (event.id === eventId ? updatedEvent : event)));
+        setEvents(events =>
+          events.map(event => (event.id === eventId ? updatedEvent : event))
+        );
       } catch (error) {
         console.error('Failed to leave event:', error);
       }
@@ -87,7 +91,9 @@ export const EventList: React.FC<EventListProps> = ({ filters }) => {
       <div className="text-center py-8">
         <h3 className="text-lg font-medium text-gray-900">No events found</h3>
         <p className="mt-2 text-sm text-gray-500">
-          {filters ? 'Try adjusting your filters' : 'Check back later for new events'}
+          {filters
+            ? 'Try adjusting your filters'
+            : 'Check back later for new events'}
         </p>
       </div>
     );

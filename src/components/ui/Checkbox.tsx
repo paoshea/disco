@@ -1,7 +1,8 @@
 import React, { forwardRef } from 'react';
 import { cn } from '@/utils/cn';
 
-export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CheckboxProps
+  extends React.InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   error?: string;
 }
@@ -25,13 +26,20 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         </div>
         {label && (
           <div className="ml-3 text-sm">
-            <label className={cn('font-medium', error ? 'text-red-700' : 'text-gray-700')}>
+            <label
+              className={cn(
+                'font-medium',
+                error ? 'text-red-700' : 'text-gray-700'
+              )}
+            >
               {label}
             </label>
             {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
           </div>
         )}
-        {error && !label && <p className="text-sm text-red-600 mt-1">{error}</p>}
+        {error && !label && (
+          <p className="text-sm text-red-600 mt-1">{error}</p>
+        )}
       </div>
     );
   }

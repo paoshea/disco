@@ -1,4 +1,10 @@
-export function getPasswordResetEmailTemplate(resetUrl: string) {
+export interface EmailTemplate {
+  subject: string;
+  text: string;
+  html: string;
+}
+
+export function getPasswordResetEmailTemplate(resetUrl: string): EmailTemplate {
   return {
     subject: 'Reset Your Password - Disco',
     text: `
@@ -34,7 +40,7 @@ export function getPasswordResetEmailTemplate(resetUrl: string) {
   };
 }
 
-export function getVerificationEmailTemplate(verifyUrl: string) {
+export function getVerificationEmailTemplate(verifyUrl: string): EmailTemplate {
   return {
     subject: 'Verify Your Email - Disco',
     text: `

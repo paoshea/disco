@@ -87,7 +87,9 @@ export function useWebSocket({
           const rawData: unknown = JSON.parse(event.data);
 
           // Type guard function
-          const isValidWebSocketMessage = (data: unknown): data is WebSocketMessage => {
+          const isValidWebSocketMessage = (
+            data: unknown
+          ): data is WebSocketMessage => {
             if (
               typeof data !== 'object' ||
               !data ||
@@ -98,8 +100,12 @@ export function useWebSocket({
               return false;
             }
 
-            const { type, timestamp } = data as { type: unknown; timestamp: unknown };
-            const validType = typeof type === 'string' && type in WebSocketEventType;
+            const { type, timestamp } = data as {
+              type: unknown;
+              timestamp: unknown;
+            };
+            const validType =
+              typeof type === 'string' && type in WebSocketEventType;
             const validTimestamp = typeof timestamp === 'string';
 
             return validType && validTimestamp;
@@ -115,7 +121,10 @@ export function useWebSocket({
           console.error('Error parsing WebSocket message:', err);
           setState(prev => ({
             ...prev,
-            error: err instanceof Error ? err.message : 'An error occurred while parsing message',
+            error:
+              err instanceof Error
+                ? err.message
+                : 'An error occurred while parsing message',
           }));
         }
       };
@@ -124,7 +133,9 @@ export function useWebSocket({
       setState(prev => ({
         ...prev,
         error:
-          err instanceof Error ? err.message : 'An error occurred while connecting to WebSocket',
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while connecting to WebSocket',
       }));
     }
   }, [
@@ -165,7 +176,10 @@ export function useWebSocket({
         console.error('Error sending WebSocket message:', err);
         setState(prev => ({
           ...prev,
-          error: err instanceof Error ? err.message : 'An error occurred while sending message',
+          error:
+            err instanceof Error
+              ? err.message
+              : 'An error occurred while sending message',
         }));
       }
     },

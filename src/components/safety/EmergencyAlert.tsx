@@ -7,7 +7,9 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
-export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onAlertTriggered }) => {
+export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
+  onAlertTriggered,
+}) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { position, error: locationError } = useGeolocation();
@@ -55,7 +57,9 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onAlertTriggered
     } catch (err) {
       console.error('Error triggering emergency alert:', err);
       setError(
-        err instanceof Error ? err.message : 'An error occurred while sending the emergency alert'
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while sending the emergency alert'
       );
     } finally {
       setLoading(false);
@@ -109,11 +113,16 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({ onAlertTriggered
         variant="danger"
         className="w-full py-3 text-lg font-semibold"
       >
-        {loading ? <LoadingSpinner className="w-6 h-6" /> : 'Send Emergency Alert'}
+        {loading ? (
+          <LoadingSpinner className="w-6 h-6" />
+        ) : (
+          'Send Emergency Alert'
+        )}
       </Button>
 
       <p className="text-sm text-gray-500 text-center">
-        This will alert your emergency contacts and share your current location with them.
+        This will alert your emergency contacts and share your current location
+        with them.
       </p>
     </div>
   );

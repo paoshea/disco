@@ -41,7 +41,9 @@ export const Sidebar: React.FC = () => {
                 >
                   <item.icon
                     className={`${
-                      isActive ? 'text-primary-500' : 'text-gray-400 group-hover:text-gray-500'
+                      isActive
+                        ? 'text-primary-500'
+                        : 'text-gray-400 group-hover:text-gray-500'
                     } mr-3 flex-shrink-0 h-6 w-6`}
                     aria-hidden="true"
                   />

@@ -15,7 +15,9 @@ interface UploadResponse {
 
 const reportSchema = z.object({
   type: z.enum(['harassment', 'inappropriate', 'spam', 'scam', 'other']),
-  description: z.string().min(10, 'Please provide more details about the incident'),
+  description: z
+    .string()
+    .min(10, 'Please provide more details about the incident'),
   evidence: z.array(z.string()).optional(),
 });
 
@@ -77,7 +79,9 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     return data;
   };
 
-  const handleFormSubmit = async (formData: z.infer<typeof reportSchema>): Promise<void> => {
+  const handleFormSubmit = async (
+    formData: z.infer<typeof reportSchema>
+  ): Promise<void> => {
     try {
       setIsSubmitting(true);
       setError(null);
@@ -103,7 +107,9 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
     } catch (err) {
       console.error('Error submitting safety report:', err);
       setError(
-        err instanceof Error ? err.message : 'An error occurred while submitting the report'
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while submitting the report'
       );
     } finally {
       setIsSubmitting(false);
@@ -142,7 +148,9 @@ export const SafetyReportForm: React.FC<SafetyReportFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Evidence (Optional)</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Evidence (Optional)
+        </label>
         <input
           type="file"
           onChange={handleFileChange}

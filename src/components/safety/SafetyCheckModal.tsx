@@ -9,7 +9,11 @@ interface SafetyCheckModalProps {
   check: SafetyCheckNew;
   isOpen: boolean;
   onClose: () => void;
-  onResolve: (checkId: string, status: 'safe' | 'unsafe', notes?: string) => Promise<void>;
+  onResolve: (
+    checkId: string,
+    status: 'safe' | 'unsafe',
+    notes?: string
+  ) => Promise<void>;
 }
 
 export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
@@ -31,7 +35,9 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
     } catch (err) {
       console.error('Error resolving safety check:', err);
       setError(
-        err instanceof Error ? err.message : 'An error occurred while resolving the safety check'
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while resolving the safety check'
       );
     } finally {
       setIsSubmitting(false);
@@ -39,7 +45,11 @@ export const SafetyCheckModal: React.FC<SafetyCheckModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-10 overflow-y-auto">
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      className="fixed inset-0 z-10 overflow-y-auto"
+    >
       <div className="flex min-h-screen items-center justify-center px-4 text-center">
         <div className="fixed inset-0 bg-black opacity-30" />
 

@@ -79,10 +79,15 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
       )}
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          Discovery Settings
+        </h3>
         <div className="mt-4 space-y-4">
           <div>
-            <label htmlFor="discoveryRadius" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="discoveryRadius"
+              className="block text-sm font-medium text-gray-700"
+            >
               Discovery Radius (km)
             </label>
             <input
@@ -97,12 +102,16 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               disabled={isSubmitting}
             />
             {errors.discoveryRadius && (
-              <p className="mt-1 text-sm text-red-600">{errors.discoveryRadius.message}</p>
+              <p className="mt-1 text-sm text-red-600">
+                {errors.discoveryRadius.message}
+              </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Age Range</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Age Range
+            </label>
             <div className="mt-2 grid grid-cols-2 gap-4">
               <div>
                 <label htmlFor="ageRangeMin" className="sr-only">
@@ -113,15 +122,23 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
                   id="ageRangeMin"
                   {...register('ageRange.min', {
                     valueAsNumber: true,
-                    min: { value: 18, message: 'Must be at least 18 years old' },
-                    max: { value: 100, message: 'Must be less than 100 years old' },
+                    min: {
+                      value: 18,
+                      message: 'Must be at least 18 years old',
+                    },
+                    max: {
+                      value: 100,
+                      message: 'Must be less than 100 years old',
+                    },
                   })}
                   placeholder="Min age"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                   disabled={isSubmitting}
                 />
                 {errors.ageRange?.min && (
-                  <p className="mt-1 text-sm text-red-600">{errors.ageRange.min.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.ageRange.min.message}
+                  </p>
                 )}
               </div>
               <div>
@@ -133,15 +150,23 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
                   id="ageRangeMax"
                   {...register('ageRange.max', {
                     valueAsNumber: true,
-                    min: { value: 18, message: 'Must be at least 18 years old' },
-                    max: { value: 100, message: 'Must be less than 100 years old' },
+                    min: {
+                      value: 18,
+                      message: 'Must be at least 18 years old',
+                    },
+                    max: {
+                      value: 100,
+                      message: 'Must be less than 100 years old',
+                    },
                   })}
                   placeholder="Max age"
                   className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
                   disabled={isSubmitting}
                 />
                 {errors.ageRange?.max && (
-                  <p className="mt-1 text-sm text-red-600">{errors.ageRange.max.message}</p>
+                  <p className="mt-1 text-sm text-red-600">
+                    {errors.ageRange.max.message}
+                  </p>
                 )}
               </div>
             </div>
@@ -160,7 +185,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="showOnlineStatus" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="showOnlineStatus"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Show my online status
             </label>
           </div>
@@ -172,7 +200,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="showLastSeen" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="showLastSeen"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Show when I was last seen
             </label>
           </div>
@@ -184,7 +215,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="showLocation" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="showLocation"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Show my location
             </label>
           </div>
@@ -196,7 +230,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="showAge" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="showAge"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Show my age
             </label>
           </div>
@@ -204,7 +241,9 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
       </div>
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900">Notification Settings</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          Notification Settings
+        </h3>
         <div className="mt-4 space-y-4">
           <div className="flex items-center">
             <input
@@ -214,7 +253,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="notifyMatches" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="notifyMatches"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Notify me about new matches
             </label>
           </div>
@@ -226,7 +268,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="notifyMessages" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="notifyMessages"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Notify me about new messages
             </label>
           </div>
@@ -238,7 +283,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="notifyMeetups" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="notifyMeetups"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Send me meetup reminders
             </label>
           </div>
@@ -250,7 +298,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="notifySafety" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="notifySafety"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Send me safety alerts
             </label>
           </div>
@@ -268,7 +319,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="requireVerified" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="requireVerified"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Only match with verified users
             </label>
           </div>
@@ -280,7 +334,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="enableCheckins" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="enableCheckins"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Enable meetup check-ins
             </label>
           </div>
@@ -292,7 +349,10 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
-            <label htmlFor="notifyEmergencyContacts" className="ml-2 block text-sm text-gray-700">
+            <label
+              htmlFor="notifyEmergencyContacts"
+              className="ml-2 block text-sm text-gray-700"
+            >
               Notify emergency contacts during alerts
             </label>
           </div>

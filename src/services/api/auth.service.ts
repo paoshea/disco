@@ -19,17 +19,22 @@ class AuthService {
 
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
-      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/login`, {
-        email,
-        password,
-      });
+      const response = await apiClient.post<LoginResponse>(
+        `${this.baseUrl}/login`,
+        {
+          email,
+          password,
+        }
+      );
 
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       return { token, user };
     } catch (error) {
       if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('Login service is not available. Please try again later.');
+        throw new Error(
+          'Login service is not available. Please try again later.'
+        );
       }
       throw error;
     }
@@ -37,14 +42,19 @@ class AuthService {
 
   async register(data: RegisterData): Promise<LoginResponse> {
     try {
-      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/signup`, data);
+      const response = await apiClient.post<LoginResponse>(
+        `${this.baseUrl}/signup`,
+        data
+      );
 
       const { token, user } = response.data;
       localStorage.setItem('token', token);
       return { token, user };
     } catch (error) {
       if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('Registration service is not available. Please try again later.');
+        throw new Error(
+          'Registration service is not available. Please try again later.'
+        );
       }
       throw error;
     }
@@ -52,11 +62,15 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiClient.get<{ user: User }>(`${this.baseUrl}/me`);
+      const response = await apiClient.get<{ user: User }>(
+        `${this.baseUrl}/me`
+      );
       return response.data.user;
     } catch (error) {
       if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('User service is not available. Please try again later.');
+        throw new Error(
+          'User service is not available. Please try again later.'
+        );
       }
       throw error;
     }
@@ -64,11 +78,16 @@ class AuthService {
 
   async updateUser(userId: string, data: Partial<User>): Promise<User> {
     try {
-      const response = await apiClient.put<{ user: User }>(`${this.baseUrl}/users/${userId}`, data);
+      const response = await apiClient.put<{ user: User }>(
+        `${this.baseUrl}/users/${userId}`,
+        data
+      );
       return response.data.user;
     } catch (error) {
       if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error('User update service is not available. Please try again later.');
+        throw new Error(
+          'User update service is not available. Please try again later.'
+        );
       }
       throw error;
     }
@@ -99,6 +118,8 @@ class AuthService {
 
   async logout(): Promise<void> {
     localStorage.removeItem('token');
+    await apiClient.post(`${this.baseUrl}/logout`, {});
+    window.location.href = '/login';
   }
 
   private isAxiosError(error: unknown): error is AxiosError {

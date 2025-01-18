@@ -60,7 +60,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         <p className="mt-1 text-sm text-gray-500">{match.distance}km away</p>
 
         <div className="mt-2">
-          <h4 className="text-sm font-medium text-gray-700">Common Interests</h4>
+          <h4 className="text-sm font-medium text-gray-700">
+            Common Interests
+          </h4>
           <div className="flex flex-wrap gap-2 mt-1">
             {match.commonInterests.map(interest => (
               <span

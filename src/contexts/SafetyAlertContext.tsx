@@ -1,7 +1,17 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+} from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { safetyService } from '@/services/api/safety.service';
-import type { SafetyAlertNew, SafetyCheckNew, SafetyAlert } from '@/types/safety';
+import type {
+  SafetyAlertNew,
+  SafetyCheckNew,
+  SafetyAlert,
+} from '@/types/safety';
 import { Location } from '@/types/location';
 
 interface SafetyContextType {
@@ -10,7 +20,11 @@ interface SafetyContextType {
   isLoading: boolean;
   error: string | null;
   triggerEmergencyAlert: (location?: Location) => Promise<void>;
-  resolveSafetyCheck: (checkId: string, status: 'safe' | 'unsafe', notes?: string) => Promise<void>;
+  resolveSafetyCheck: (
+    checkId: string,
+    status: 'safe' | 'unsafe',
+    notes?: string
+  ) => Promise<void>;
   dismissAlert: (alertId: string) => Promise<void>;
   addAlert: (alertData: Partial<SafetyAlertNew>) => Promise<void>;
   resolveAlert: (alertId: string) => Promise<void>;
@@ -127,7 +141,9 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
         setAlerts(prev => [convertToSafetyAlertNew(alert), ...prev]);
       } catch (err) {
         console.error('Error triggering emergency alert:', err);
-        throw err instanceof Error ? err : new Error('Failed to trigger emergency alert');
+        throw err instanceof Error
+          ? err
+          : new Error('Failed to trigger emergency alert');
       }
     },
     [user?.id]
@@ -139,10 +155,14 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
       try {
         setError(null);
-        const updatedCheck = await safetyService.resolveSafetyCheck(user.id, checkId, {
-          status,
-          notes,
-        });
+        const updatedCheck = await safetyService.resolveSafetyCheck(
+          user.id,
+          checkId,
+          {
+            status,
+            notes,
+          }
+        );
         setSafetyChecks(prev =>
           prev.map(check =>
             check.id === checkId
@@ -163,7 +183,9 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
         );
       } catch (err) {
         console.error('Error resolving safety check:', err);
-        throw err instanceof Error ? err : new Error('Failed to resolve safety check');
+        throw err instanceof Error
+          ? err
+          : new Error('Failed to resolve safety check');
       }
     },
     [user?.id]
@@ -214,7 +236,9 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
         setError(null);
         const updatedAlert = await safetyService.resolveAlert(alertId);
         setAlerts(prev =>
-          prev.map(alert => (alert.id === alertId ? convertToSafetyAlertNew(updatedAlert) : alert))
+          prev.map(alert =>
+            alert.id === alertId ? convertToSafetyAlertNew(updatedAlert) : alert
+          )
         );
       } catch (err) {
         console.error('Error resolving alert:', err);
@@ -236,5 +260,9 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
     resolveAlert,
   };
 
-  return <SafetyAlertContext.Provider value={value}>{children}</SafetyAlertContext.Provider>;
+  return (
+    <SafetyAlertContext.Provider value={value}>
+      {children}
+    </SafetyAlertContext.Provider>
+  );
 };

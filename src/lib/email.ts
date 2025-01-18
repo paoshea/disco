@@ -19,9 +19,12 @@ async function sendEmail(options: EmailOptions): Promise<void> {
 /**
  * Send password reset email
  */
-export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string
+): Promise<void> {
   const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
-  
+
   await sendEmail({
     to: email,
     subject: 'Reset Your Password',
@@ -39,9 +42,12 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
 /**
  * Send verification email
  */
-export async function sendVerificationEmail(email: string, token: string): Promise<void> {
+export async function sendVerificationEmail(
+  email: string,
+  token: string
+): Promise<void> {
   const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
-  
+
   await sendEmail({
     to: email,
     subject: 'Verify Your Email',

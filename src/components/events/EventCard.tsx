@@ -2,7 +2,11 @@ import React from 'react';
 import Image from 'next/image';
 import { format } from 'date-fns';
 import { Event } from '@/types/event';
-import { MapPinIcon, CalendarIcon, UserGroupIcon } from '@heroicons/react/24/outline';
+import {
+  MapPinIcon,
+  CalendarIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/Button';
 
@@ -12,7 +16,11 @@ interface EventCardProps {
   onLeave: (eventId: string) => void;
 }
 
-export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) => {
+export const EventCard: React.FC<EventCardProps> = ({
+  event,
+  onJoin,
+  onLeave,
+}) => {
   const { user } = useAuth();
   const isUpcoming = new Date(event.startTime) > new Date();
   const isJoined = event.participants.some(p => p.userId === user?.id);
@@ -45,7 +53,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
         <div className="mt-4 space-y-2">
           <div className="flex items-center text-sm text-gray-500">
             <CalendarIcon className="mr-2 h-5 w-5 text-gray-400" />
-            <span>{format(new Date(event.startTime), 'MMM d, yyyy h:mm a')}</span>
+            <span>
+              {format(new Date(event.startTime), 'MMM d, yyyy h:mm a')}
+            </span>
           </div>
 
           <div className="flex items-center text-sm text-gray-500">
@@ -57,7 +67,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
             <UserGroupIcon className="mr-2 h-5 w-5 text-gray-400" />
             <span>
               {event.currentParticipants}{' '}
-              {event.maxParticipants ? `of ${event.maxParticipants} attending` : 'attending'}
+              {event.maxParticipants
+                ? `of ${event.maxParticipants} attending`
+                : 'attending'}
             </span>
           </div>
         </div>
@@ -67,7 +79,9 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
             {event.isFree ? (
               <span className="font-medium text-green-600">Free</span>
             ) : (
-              <span className="font-medium text-gray-900">${event.price?.toFixed(2)}</span>
+              <span className="font-medium text-gray-900">
+                ${event.price?.toFixed(2)}
+              </span>
             )}
           </div>
           <Button
@@ -75,7 +89,10 @@ export const EventCard: React.FC<EventCardProps> = ({ event, onJoin, onLeave }) 
             variant={isJoined ? 'secondary' : 'primary'}
             disabled={
               !isUpcoming ||
-              Boolean(event.maxParticipants && event.currentParticipants >= event.maxParticipants)
+              Boolean(
+                event.maxParticipants &&
+                  event.currentParticipants >= event.maxParticipants
+              )
             }
           >
             {isJoined ? 'Leave Event' : 'Join Event'}

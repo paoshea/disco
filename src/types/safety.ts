@@ -12,7 +12,11 @@ export type IncidentType =
 
 export type IncidentStatus = 'pending' | 'resolved' | 'dismissed';
 
-export type VerificationStatus = 'unverified' | 'pending' | 'verified' | 'rejected';
+export type VerificationStatus =
+  | 'unverified'
+  | 'pending'
+  | 'verified'
+  | 'rejected';
 
 export type SafetyAlertType = 'sos' | 'check-in' | 'location-share' | 'custom';
 export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';

@@ -1,10 +1,16 @@
-const nodemailer = require('nodemailer');
+import nodemailer from 'nodemailer';
 
-let transporter;
+let transporter: nodemailer.Transporter;
 
 if (process.env.NODE_ENV === 'production') {
-  if (!process.env.SMTP_HOST || !process.env.SMTP_USER || !process.env.SMTP_PASSWORD) {
-    throw new Error('Email configuration is missing. Please set SMTP_* environment variables.');
+  if (
+    !process.env.SMTP_HOST ||
+    !process.env.SMTP_USER ||
+    !process.env.SMTP_PASSWORD
+  ) {
+    throw new Error(
+      'Email configuration is missing. Please set SMTP_* environment variables.'
+    );
   }
 
   transporter = nodemailer.createTransport({
@@ -29,4 +35,4 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-module.exports = { transporter };
+export { transporter };

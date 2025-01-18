@@ -8,7 +8,10 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 
-export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsChange }) => {
+export const SafetyCenter: React.FC<SafetyCenterProps> = ({
+  userId,
+  onSettingsChange,
+}) => {
   const { alerts, isLoading, error, dismissAlert, addAlert } = useSafetyAlert();
 
   const handleAlertTriggered = useCallback(
@@ -50,7 +53,9 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
   return (
     <div className="space-y-8">
       <section>
-        <h2 className="mb-4 text-2xl font-bold text-gray-900">Emergency Alert</h2>
+        <h2 className="mb-4 text-2xl font-bold text-gray-900">
+          Emergency Alert
+        </h2>
         <EmergencyAlert
           userId={userId}
           onAlertTriggered={alert => {
@@ -61,7 +66,9 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
 
       {alerts.length > 0 && (
         <section>
-          <h2 className="mb-4 text-xl font-semibold text-gray-900">Active Alerts</h2>
+          <h2 className="mb-4 text-xl font-semibold text-gray-900">
+            Active Alerts
+          </h2>
           <div className="space-y-4">
             {alerts.map(alert => (
               <SafetyAlertNotification
@@ -81,7 +88,9 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({ userId, onSettingsCh
       )}
 
       <section>
-        <h2 className="mb-4 text-xl font-semibold text-gray-900">Safety Features</h2>
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">
+          Safety Features
+        </h2>
         <SafetyFeatures
           user={{
             id: userId,

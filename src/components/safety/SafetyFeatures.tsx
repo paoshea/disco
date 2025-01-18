@@ -5,7 +5,9 @@ import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { safetyService } from '@/services/api/safety.service';
 
 type BooleanFeatureKey = {
-  [K in keyof SafetySettingsNew]: SafetySettingsNew[K] extends boolean ? K : never;
+  [K in keyof SafetySettingsNew]: SafetySettingsNew[K] extends boolean
+    ? K
+    : never;
 }[keyof SafetySettingsNew];
 
 interface FeatureConfig {
@@ -50,14 +52,19 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
       try {
         setIsUpdating(true);
         setError(null);
-        const updatedSettings = await safetyService.updateSafetySettings(user.id, {
-          [feature]: enabled,
-        });
+        const updatedSettings = await safetyService.updateSafetySettings(
+          user.id,
+          {
+            [feature]: enabled,
+          }
+        );
         onSettingsChange(updatedSettings);
       } catch (err) {
         console.error('Error updating safety feature:', err);
         setError(
-          err instanceof Error ? err.message : 'An error occurred while updating safety features'
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while updating safety features'
         );
       } finally {
         setIsUpdating(false);
@@ -74,12 +81,16 @@ export const SafetyFeatures: React.FC<SafetyFeaturesProps> = ({
         {SAFETY_FEATURES.map(feature => (
           <div key={feature.key} className="flex items-center justify-between">
             <div>
-              <h3 className="text-lg font-medium text-gray-900">{feature.title}</h3>
+              <h3 className="text-lg font-medium text-gray-900">
+                {feature.title}
+              </h3>
               <p className="text-sm text-gray-500">{feature.description}</p>
             </div>
             <Switch
               checked={settings[feature.key]}
-              onChange={enabled => void handleToggleFeature(feature.key, enabled)}
+              onChange={enabled =>
+                void handleToggleFeature(feature.key, enabled)
+              }
               disabled={isUpdating}
             />
           </div>

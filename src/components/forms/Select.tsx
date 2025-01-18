@@ -28,7 +28,10 @@ export const Select = <T extends FieldValues>({
 }: SelectProps<T>): JSX.Element => {
   return (
     <div>
-      <label htmlFor={name.toString()} className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor={name.toString()}
+        className="block text-sm font-medium text-gray-700"
+      >
         {label}
       </label>
       <select

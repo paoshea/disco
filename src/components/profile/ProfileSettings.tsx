@@ -137,7 +137,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       className="space-y-6"
     >
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Discovery Settings</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          Discovery Settings
+        </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -150,7 +152,9 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Age Range</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Age Range
+            </label>
             <div className="mt-1 grid grid-cols-2 gap-4">
               <input
                 type="number"
@@ -173,15 +177,25 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
         <h3 className="text-lg font-medium text-gray-900">Privacy Settings</h3>
         <div className="space-y-4">
           {Object.entries(settings.privacy).map(([key, value]) => (
-            <Switch.Group key={key} as="div" className="flex items-center justify-between">
+            <Switch.Group
+              key={key}
+              as="div"
+              className="flex items-center justify-between"
+            >
               <Switch.Label as="span" className="flex-grow">
                 <span className="text-sm font-medium text-gray-900">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  {key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, str => str.toUpperCase())}
                 </span>
               </Switch.Label>
               <Switch
-                checked={watch(`privacy.${key as keyof typeof settings.privacy}`)}
-                onChange={v => setValue(`privacy.${key as keyof typeof settings.privacy}`, v)}
+                checked={watch(
+                  `privacy.${key as keyof typeof settings.privacy}`
+                )}
+                onChange={v =>
+                  setValue(`privacy.${key as keyof typeof settings.privacy}`, v)
+                }
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
@@ -198,19 +212,32 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       </div>
 
       <div className="space-y-4">
-        <h3 className="text-lg font-medium text-gray-900">Notification Settings</h3>
+        <h3 className="text-lg font-medium text-gray-900">
+          Notification Settings
+        </h3>
         <div className="space-y-4">
           {Object.entries(settings.notifications).map(([key, value]) => (
-            <Switch.Group key={key} as="div" className="flex items-center justify-between">
+            <Switch.Group
+              key={key}
+              as="div"
+              className="flex items-center justify-between"
+            >
               <Switch.Label as="span" className="flex-grow">
                 <span className="text-sm font-medium text-gray-900">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  {key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, str => str.toUpperCase())}
                 </span>
               </Switch.Label>
               <Switch
-                checked={watch(`notifications.${key as keyof typeof settings.notifications}`)}
+                checked={watch(
+                  `notifications.${key as keyof typeof settings.notifications}`
+                )}
                 onChange={v =>
-                  setValue(`notifications.${key as keyof typeof settings.notifications}`, v)
+                  setValue(
+                    `notifications.${key as keyof typeof settings.notifications}`,
+                    v
+                  )
                 }
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
@@ -231,15 +258,23 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
         <h3 className="text-lg font-medium text-gray-900">Safety Settings</h3>
         <div className="space-y-4">
           {Object.entries(settings.safety).map(([key, value]) => (
-            <Switch.Group key={key} as="div" className="flex items-center justify-between">
+            <Switch.Group
+              key={key}
+              as="div"
+              className="flex items-center justify-between"
+            >
               <Switch.Label as="span" className="flex-grow">
                 <span className="text-sm font-medium text-gray-900">
-                  {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}
+                  {key
+                    .replace(/([A-Z])/g, ' $1')
+                    .replace(/^./, str => str.toUpperCase())}
                 </span>
               </Switch.Label>
               <Switch
                 checked={watch(`safety.${key as keyof typeof settings.safety}`)}
-                onChange={v => setValue(`safety.${key as keyof typeof settings.safety}`, v)}
+                onChange={v =>
+                  setValue(`safety.${key as keyof typeof settings.safety}`, v)
+                }
                 className={`${
                   value ? 'bg-primary-600' : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`}
@@ -256,7 +291,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       </div>
 
       <div className="flex justify-end space-x-4">
-        <Button type="submit" disabled={isSubmitting} className="inline-flex justify-center">
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="inline-flex justify-center"
+        >
           {isSubmitting ? 'Saving...' : 'Save Settings'}
         </Button>
       </div>

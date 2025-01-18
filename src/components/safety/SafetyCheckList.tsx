@@ -9,14 +9,21 @@ interface SafetyCheckListProps {
   onComplete: (checkId: string) => Promise<void>;
 }
 
-export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComplete }) => {
-  const [selectedCheck, setSelectedCheck] = useState<SafetyCheckNew | null>(null);
+export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({
+  checks,
+  onComplete,
+}) => {
+  const [selectedCheck, setSelectedCheck] = useState<SafetyCheckNew | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!checks.length) {
     return (
-      <div className="text-center py-4 text-gray-500">No safety checks required at this time.</div>
+      <div className="text-center py-4 text-gray-500">
+        No safety checks required at this time.
+      </div>
     );
   }
 
@@ -35,7 +42,11 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
               Created {formatDistanceToNow(new Date(check.createdAt))} ago
             </p>
           </div>
-          <Button onClick={() => setSelectedCheck(check)} disabled={isLoading} variant="secondary">
+          <Button
+            onClick={() => setSelectedCheck(check)}
+            disabled={isLoading}
+            variant="secondary"
+          >
             View Details
           </Button>
         </div>
@@ -54,7 +65,11 @@ export const SafetyCheckList: React.FC<SafetyCheckListProps> = ({ checks, onComp
               setSelectedCheck(null);
             } catch (err) {
               console.error('Error completing safety check:', err);
-              setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+              setError(
+                err instanceof Error
+                  ? err.message
+                  : 'Failed to complete safety check'
+              );
             } finally {
               setIsLoading(false);
             }

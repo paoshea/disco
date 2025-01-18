@@ -1,11 +1,23 @@
-import React, { createContext, useContext, useEffect, useCallback, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useCallback,
+  useState,
+} from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { WebSocketMessage, WebSocketPayload, WebSocketEventType } from '@/types/websocket';
+import {
+  WebSocketMessage,
+  WebSocketPayload,
+  WebSocketEventType,
+} from '@/types/websocket';
 
 interface WebSocketContextType {
   isConnected: boolean;
   error: string | null;
-  send: <T extends WebSocketPayload>(message: WebSocketMessage<T>) => Promise<void>;
+  send: <T extends WebSocketPayload>(
+    message: WebSocketMessage<T>
+  ) => Promise<void>;
   disconnect: () => void;
   reconnect: () => Promise<void>;
 }
@@ -17,7 +29,10 @@ interface WebSocketProviderProps {
   children: React.ReactNode;
 }
 
-export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, children }) => {
+export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
+  url,
+  children,
+}) => {
   const { user } = useAuth();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -25,22 +40,25 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
   const [reconnectAttempts, setReconnectAttempts] = useState(0);
   const maxReconnectAttempts = 5;
 
-  const handleWebSocketMessage = useCallback((message: WebSocketMessage<WebSocketPayload>) => {
-    switch (message.type) {
-      case WebSocketEventType.SAFETY_ALERT:
-      case WebSocketEventType.EMERGENCY_ALERT:
-        // Handle safety/emergency alerts
-        break;
-      case WebSocketEventType.LOCATION_UPDATE:
-        // Handle location update
-        break;
-      case WebSocketEventType.CONNECTION:
-        // Handle connection status
-        break;
-      default:
-        console.warn('Unhandled WebSocket message type:', message.type);
-    }
-  }, []);
+  const handleWebSocketMessage = useCallback(
+    (message: WebSocketMessage<WebSocketPayload>) => {
+      switch (message.type) {
+        case WebSocketEventType.SAFETY_ALERT:
+        case WebSocketEventType.EMERGENCY_ALERT:
+          // Handle safety/emergency alerts
+          break;
+        case WebSocketEventType.LOCATION_UPDATE:
+          // Handle location update
+          break;
+        case WebSocketEventType.CONNECTION:
+          // Handle connection status
+          break;
+        default:
+          console.warn('Unhandled WebSocket message type:', message.type);
+      }
+    },
+    []
+  );
 
   const connectWebSocket = useCallback(async () => {
     if (!user?.id || !url) {
@@ -72,7 +90,10 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
 
           // Attempt to reconnect if not manually disconnected
           if (reconnectAttempts < maxReconnectAttempts) {
-            const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
+            const delay = Math.min(
+              1000 * Math.pow(2, reconnectAttempts),
+              30000
+            );
             setReconnectAttempts(prev => prev + 1);
             setTimeout(() => {
               void connectWebSocket();
@@ -82,7 +103,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
 
         ws.onerror = (event: Event) => {
           clearTimeout(timeout);
-          const errorMessage = event instanceof ErrorEvent ? event.message : 'Unknown error';
+          const errorMessage =
+            event instanceof ErrorEvent ? event.message : 'Unknown error';
           setError(`WebSocket error: ${errorMessage}`);
           reject(new Error(errorMessage));
         };
@@ -92,7 +114,9 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
             const rawData: unknown = JSON.parse(event.data);
 
             // Type guard function
-            const isValidWebSocketMessage = (data: unknown): data is WebSocketMessage => {
+            const isValidWebSocketMessage = (
+              data: unknown
+            ): data is WebSocketMessage => {
               if (
                 typeof data !== 'object' ||
                 !data ||
@@ -103,8 +127,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
                 return false;
               }
 
-              const { type, timestamp } = data as { type: unknown; timestamp: unknown };
-              const validType = typeof type === 'string' && type in WebSocketEventType;
+              const { type, timestamp } = data as {
+                type: unknown;
+                timestamp: unknown;
+              };
+              const validType =
+                typeof type === 'string' && type in WebSocketEventType;
               const validTimestamp = typeof timestamp === 'string';
 
               return validType && validTimestamp;
@@ -121,12 +149,19 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
         };
       });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to connect';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to connect';
       setError(errorMessage);
       console.error('WebSocket connection error:', errorMessage);
       throw err;
     }
-  }, [url, user?.id, reconnectAttempts, handleWebSocketMessage, maxReconnectAttempts]);
+  }, [
+    url,
+    user?.id,
+    reconnectAttempts,
+    handleWebSocketMessage,
+    maxReconnectAttempts,
+  ]);
 
   useEffect(() => {
     if (user && url && !isConnected) {
@@ -158,7 +193,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
       setReconnectAttempts(0);
       await connectWebSocket();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to reconnect';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Failed to reconnect';
       setError(errorMessage);
       console.error('WebSocket reconnection error:', err);
       throw err;
@@ -190,7 +226,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({ url, child
     reconnect,
   };
 
-  return <WebSocketContext.Provider value={value}>{children}</WebSocketContext.Provider>;
+  return (
+    <WebSocketContext.Provider value={value}>
+      {children}
+    </WebSocketContext.Provider>
+  );
 };
 
 export const useWebSocket = () => {

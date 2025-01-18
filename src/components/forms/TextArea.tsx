@@ -22,7 +22,10 @@ export const TextArea = <T extends FieldValues>({
 }: TextAreaProps<T>): JSX.Element => {
   return (
     <div>
-      <label htmlFor={name.toString()} className="block text-sm font-medium text-gray-700">
+      <label
+        htmlFor={name.toString()}
+        className="block text-sm font-medium text-gray-700"
+      >
         {label}
       </label>
       <textarea

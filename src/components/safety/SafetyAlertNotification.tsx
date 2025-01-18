@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { XMarkIcon, ExclamationTriangleIcon, MapPinIcon } from '@heroicons/react/24/outline';
+import {
+  XMarkIcon,
+  ExclamationTriangleIcon,
+  MapPinIcon,
+} from '@heroicons/react/24/outline';
 import type { SafetyAlertNew } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 import { BaseMapView } from '@/components/map/BaseMapView';
@@ -9,10 +13,9 @@ interface SafetyAlertNotificationProps {
   onDismiss: () => Promise<void>;
 }
 
-export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = ({
-  alert,
-  onDismiss,
-}) => {
+export const SafetyAlertNotification: React.FC<
+  SafetyAlertNotificationProps
+> = ({ alert, onDismiss }) => {
   const [showMap, setShowMap] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +26,11 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
       await onDismiss();
     } catch (err) {
       console.error('Error dismissing alert:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while dismissing the alert');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while dismissing the alert'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -79,22 +86,34 @@ export const SafetyAlertNotification: React.FC<SafetyAlertNotificationProps> = (
       <div className="flex items-start space-x-4">
         <div className="flex-shrink-0">{getAlertIcon()}</div>
         <div className="min-w-0 flex-1">
-          <h3 className="text-sm font-medium text-gray-900">{getAlertTitle()}</h3>
+          <h3 className="text-sm font-medium text-gray-900">
+            {getAlertTitle()}
+          </h3>
           <p className="mt-1 text-sm text-gray-500">{getAlertDescription()}</p>
           {alert.location && (
             <div className="mt-2">
-              <Button variant="secondary" size="sm" onClick={() => setShowMap(!showMap)}>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowMap(!showMap)}
+              >
                 {showMap ? 'Hide Map' : 'View Location'}
               </Button>
               {showMap && (
                 <div className="mt-2 h-48 w-full rounded-md overflow-hidden">
                   <BaseMapView
-                    center={{ lat: alert.location.latitude, lng: alert.location.longitude }}
+                    center={{
+                      lat: alert.location.latitude,
+                      lng: alert.location.longitude,
+                    }}
                     zoom={15}
                     markers={[
                       {
                         id: alert.id,
-                        position: { lat: alert.location.latitude, lng: alert.location.longitude },
+                        position: {
+                          lat: alert.location.latitude,
+                          lng: alert.location.longitude,
+                        },
                         title: getAlertTitle(),
                       },
                     ]}

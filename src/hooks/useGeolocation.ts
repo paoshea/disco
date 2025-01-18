@@ -23,7 +23,11 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     isLoading: true,
   });
 
-  const { watchPosition = false, timeout = 10000, ...positionOptions } = options;
+  const {
+    watchPosition = false,
+    timeout = 10000,
+    ...positionOptions
+  } = options;
 
   const handleSuccess = useCallback((position: GeolocationPosition) => {
     setState({
@@ -65,9 +69,17 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     let watchId: number | undefined;
 
     if (watchPosition) {
-      watchId = navigator.geolocation.watchPosition(handleSuccess, handleError, geoOptions);
+      watchId = navigator.geolocation.watchPosition(
+        handleSuccess,
+        handleError,
+        geoOptions
+      );
     } else {
-      navigator.geolocation.getCurrentPosition(handleSuccess, handleError, geoOptions);
+      navigator.geolocation.getCurrentPosition(
+        handleSuccess,
+        handleError,
+        geoOptions
+      );
     }
 
     return () => {

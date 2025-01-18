@@ -40,13 +40,20 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
     });
 
     return (
-      <div className={cn('flex flex-col gap-1', fullWidth && 'w-full')} ref={ref}>
-        {label && <label className="text-sm font-medium text-gray-700">{label}</label>}
+      <div
+        className={cn('flex flex-col gap-1', fullWidth && 'w-full')}
+        ref={ref}
+      >
+        {label && (
+          <label className="text-sm font-medium text-gray-700">{label}</label>
+        )}
         <div
           {...getRootProps()}
           className={cn(
             'flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md',
-            isDragActive ? 'border-primary-500 bg-primary-50' : 'border-gray-300',
+            isDragActive
+              ? 'border-primary-500 bg-primary-50'
+              : 'border-gray-300',
             error && 'border-red-500',
             'cursor-pointer hover:border-primary-500 transition-colors'
           )}
@@ -57,7 +64,9 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(
               <p className="text-primary-600">Drop the files here...</p>
             ) : (
               <>
-                <p className="text-gray-600">Drag & drop files here, or click to select files</p>
+                <p className="text-gray-600">
+                  Drag & drop files here, or click to select files
+                </p>
                 <p className="text-sm text-gray-500 mt-1">
                   {multiple ? 'Files' : 'File'} should be less than{' '}
                   {Math.round(maxSize / 1024 / 1024)}MB

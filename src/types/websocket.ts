@@ -41,7 +41,9 @@ export interface WebSocketConfig {
   onOpen?: () => void;
   onClose?: () => void;
   onError?: (error: WebSocketError) => void;
-  onMessage?: <T extends WebSocketPayload>(message: WebSocketMessage<T>) => void;
+  onMessage?: <T extends WebSocketPayload>(
+    message: WebSocketMessage<T>
+  ) => void;
 }
 
 export interface WebSocketContextType {
@@ -55,5 +57,7 @@ export interface WebSocketContextType {
 export interface WebSocketProviderProps {
   children: React.ReactNode;
   url: string;
-  onMessage?: <T extends WebSocketPayload>(message: WebSocketMessage<T>) => void;
+  onMessage?: <T extends WebSocketPayload>(
+    message: WebSocketMessage<T>
+  ) => void;
 }

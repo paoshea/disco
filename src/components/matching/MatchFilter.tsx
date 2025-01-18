@@ -9,9 +9,13 @@ interface MatchFilterProps {
   onUpdate: (preferences: MatchPreferences) => void;
 }
 
-export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, onUpdate }) => {
+export const MatchFilter: React.FC<MatchFilterProps> = ({
+  initialPreferences,
+  onUpdate,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [preferences, setPreferences] = useState<MatchPreferences>(initialPreferences);
+  const [preferences, setPreferences] =
+    useState<MatchPreferences>(initialPreferences);
 
   const handleSave = async () => {
     try {
@@ -72,10 +76,14 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Age Range</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Age Range
+                </label>
                 <div className="mt-2 grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-500">Min Age</label>
+                    <label className="block text-sm text-gray-500">
+                      Min Age
+                    </label>
                     <input
                       type="number"
                       min="18"
@@ -91,7 +99,9 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-500">Max Age</label>
+                    <label className="block text-sm text-gray-500">
+                      Max Age
+                    </label>
                     <input
                       type="number"
                       min={preferences.minAge}
@@ -109,7 +119,9 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">Interests</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Interests
+                </label>
                 <div className="mt-2 space-y-2">
                   {[
                     'Music',
@@ -131,7 +143,9 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
                             ...preferences,
                             interests: e.target.checked
                               ? [...preferences.interests, interest]
-                              : preferences.interests.filter(item => item !== interest),
+                              : preferences.interests.filter(
+                                  item => item !== interest
+                                ),
                           })
                         }
                         className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
@@ -165,7 +179,10 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
                       }
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <label htmlFor="verifiedOnly" className="ml-2 block text-sm text-gray-700">
+                    <label
+                      htmlFor="verifiedOnly"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
                       Only show verified profiles
                     </label>
                   </div>
@@ -182,7 +199,10 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({ initialPreferences, on
                       }
                       className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
-                    <label htmlFor="withPhoto" className="ml-2 block text-sm text-gray-700">
+                    <label
+                      htmlFor="withPhoto"
+                      className="ml-2 block text-sm text-gray-700"
+                    >
                       Only show profiles with photos
                     </label>
                   </div>

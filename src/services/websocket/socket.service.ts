@@ -136,7 +136,10 @@ class SocketService {
               const result = handler(message.data);
               if (result instanceof Promise) {
                 void result.catch(error => {
-                  console.error(`Error in message handler for ${message.type}:`, error);
+                  console.error(
+                    `Error in message handler for ${message.type}:`,
+                    error
+                  );
                 });
               }
             } catch (error) {
@@ -166,7 +169,9 @@ class SocketService {
   ): void {
     this.handlers
       .get(event)
-      ?.delete(handler as MessageHandler<WebSocketEvents[keyof WebSocketEvents]>);
+      ?.delete(
+        handler as MessageHandler<WebSocketEvents[keyof WebSocketEvents]>
+      );
     if (this.handlers.get(event)?.size === 0) {
       this.handlers.delete(event);
     }
@@ -203,7 +208,10 @@ class SocketService {
     return this.socket?.connected ?? false;
   }
 
-  emit<K extends keyof WebSocketEvents>(event: K, data: WebSocketEvents[K]): void {
+  emit<K extends keyof WebSocketEvents>(
+    event: K,
+    data: WebSocketEvents[K]
+  ): void {
     if (!this.socket) {
       console.error('Socket not connected');
       return;

@@ -1,4 +1,9 @@
-import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import axios, {
+  AxiosInstance,
+  InternalAxiosRequestConfig,
+  AxiosResponse,
+  AxiosError,
+} from 'axios';
 
 // Get the base URL from environment variables or use relative path for Next.js API routes
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';

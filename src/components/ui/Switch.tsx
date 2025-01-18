@@ -20,7 +20,10 @@ export const Switch: React.FC<SwitchProps> = ({
   className = '',
 }) => {
   return (
-    <HeadlessSwitch.Group as="div" className={clsx('flex items-center', className)}>
+    <HeadlessSwitch.Group
+      as="div"
+      className={clsx('flex items-center', className)}
+    >
       <HeadlessSwitch
         checked={checked}
         onChange={onChange}
@@ -43,7 +46,9 @@ export const Switch: React.FC<SwitchProps> = ({
       {(label || description) && (
         <HeadlessSwitch.Label as="span" className="ml-3" passive>
           <span className="text-sm font-medium text-gray-900">{label}</span>
-          {description && <span className="text-sm text-gray-500">{description}</span>}
+          {description && (
+            <span className="text-sm text-gray-500">{description}</span>
+          )}
         </HeadlessSwitch.Label>
       )}
     </HeadlessSwitch.Group>

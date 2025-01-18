@@ -25,7 +25,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
           </div>
         ) : (
           <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-600">{user.name.charAt(0)}</span>
+            <span className="text-sm font-medium text-gray-600">
+              {user.name.charAt(0)}
+            </span>
           </div>
         )}
         <span className="text-sm font-medium text-gray-700">{user.name}</span>

@@ -28,7 +28,10 @@ class MatchService {
   private readonly baseUrl = '/matches';
 
   async getMatches(params?: GetMatchesParams): Promise<Match[]> {
-    const response = await apiClient.get<ApiResponse<MatchesResponse>>(this.baseUrl, { params });
+    const response = await apiClient.get<ApiResponse<MatchesResponse>>(
+      this.baseUrl,
+      { params }
+    );
     return response.data.data.matches;
   }
 
@@ -62,7 +65,9 @@ class MatchService {
 
   async dislikeProfile(userId: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/dislike/${userId}`);
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/dislike/${userId}`
+      );
     } catch (err) {
       throw this.handleError(err);
     }
@@ -70,7 +75,9 @@ class MatchService {
 
   async acceptMatch(matchId: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/accept`);
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/${matchId}/accept`
+      );
     } catch (err) {
       throw this.handleError(err);
     }
@@ -78,7 +85,9 @@ class MatchService {
 
   async rejectMatch(matchId: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/reject`);
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/${matchId}/reject`
+      );
     } catch (err) {
       throw this.handleError(err);
     }
@@ -92,7 +101,9 @@ class MatchService {
     }
   }
 
-  async updatePreferences(preferences: Partial<MatchPreferences>): Promise<void> {
+  async updatePreferences(
+    preferences: Partial<MatchPreferences>
+  ): Promise<void> {
     try {
       await apiClient.put<ApiResponse<void>, Partial<MatchPreferences>>(
         `${this.baseUrl}/preferences`,
@@ -103,7 +114,10 @@ class MatchService {
     }
   }
 
-  async updateMatchStatus(matchId: string, status: MatchStatus): Promise<Match> {
+  async updateMatchStatus(
+    matchId: string,
+    status: MatchStatus
+  ): Promise<Match> {
     try {
       const response = await apiClient.put<ApiResponse<MatchResponse>>(
         `${this.baseUrl}/${matchId}/status`,
@@ -140,7 +154,9 @@ class MatchService {
 
   async getPendingMatches(): Promise<Match[]> {
     try {
-      const response = await apiClient.get<ApiResponse<MatchesResponse>>(`${this.baseUrl}/pending`);
+      const response = await apiClient.get<ApiResponse<MatchesResponse>>(
+        `${this.baseUrl}/pending`
+      );
       return response.data.data.matches;
     } catch (err) {
       throw this.handleError(err);
@@ -160,7 +176,9 @@ class MatchService {
 
   async declineMatchRequest(matchId: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/decline`);
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/${matchId}/decline`
+      );
     } catch (err) {
       throw this.handleError(err);
     }
@@ -176,7 +194,9 @@ class MatchService {
 
   async pauseMatching(duration?: number): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/pause`, { duration });
+      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/pause`, {
+        duration,
+      });
     } catch (err) {
       throw this.handleError(err);
     }
@@ -192,7 +212,10 @@ class MatchService {
 
   async reportMatch(matchId: string, reason: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/report`, { reason });
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/${matchId}/report`,
+        { reason }
+      );
     } catch (err) {
       throw this.handleError(err);
     }
@@ -200,7 +223,9 @@ class MatchService {
 
   async blockMatch(matchId: string): Promise<void> {
     try {
-      await apiClient.post<ApiResponse<void>>(`${this.baseUrl}/${matchId}/block`);
+      await apiClient.post<ApiResponse<void>>(
+        `${this.baseUrl}/${matchId}/block`
+      );
     } catch (err) {
       throw this.handleError(err);
     }

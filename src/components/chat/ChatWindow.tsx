@@ -40,7 +40,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
         setMessages(chatMessages);
       } catch (err) {
         console.error('Error fetching messages:', err);
-        setError(err instanceof Error ? err.message : 'An error occurred while fetching messages');
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while fetching messages'
+        );
       } finally {
         setLoading(false);
       }
@@ -48,7 +52,11 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
 
     fetchMessages().catch(err => {
       console.error('Error in fetchMessages:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching messages');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while fetching messages'
+      );
     });
   }, [chatId]);
 
@@ -79,7 +87,9 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-gray-200 p-4">
-        <h2 className="text-lg font-semibold">Chat with {getOtherParticipant()}</h2>
+        <h2 className="text-lg font-semibold">
+          Chat with {getOtherParticipant()}
+        </h2>
         {!isConnected && (
           <p className="text-sm text-red-500">
             Disconnected - Messages will be sent when reconnected

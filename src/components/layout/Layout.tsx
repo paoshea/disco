@@ -6,12 +6,18 @@ interface LayoutProps {
   title?: string;
 }
 
-export const Layout: React.FC<LayoutProps> = ({ children, title = 'DISCO!' }) => {
+export const Layout: React.FC<LayoutProps> = ({
+  children,
+  title = 'DISCO!',
+}) => {
   return (
     <>
       <Head>
         <title>{title}</title>
-        <meta name="description" content="DISCO! - Spark Spontaneous Social Connections" />
+        <meta
+          name="description"
+          content="DISCO! - Spark Spontaneous Social Connections"
+        />
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
@@ -21,7 +27,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, title = 'DISCO!' }) =>
             <div className="flex justify-between h-16">
               <div className="flex">
                 <div className="flex-shrink-0 flex items-center">
-                  <span className="text-2xl font-bold text-primary-600">DISCO!</span>
+                  <span className="text-2xl font-bold text-primary-600">
+                    DISCO!
+                  </span>
                 </div>
               </div>
             </div>

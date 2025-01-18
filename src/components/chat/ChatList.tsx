@@ -62,7 +62,11 @@ export const ChatList: React.FC<ChatListProps> = ({
             }`}
           >
             <div className="relative flex-shrink-0">
-              <Avatar userId={otherParticipantId} size="md" className="h-12 w-12" />
+              <Avatar
+                userId={otherParticipantId}
+                size="md"
+                className="h-12 w-12"
+              />
               {chat.unreadCount > 0 && (
                 <Badge variant="primary" className="absolute -right-1 -top-1">
                   {chat.unreadCount}
@@ -71,7 +75,9 @@ export const ChatList: React.FC<ChatListProps> = ({
             </div>
             <div className="min-w-0 flex-1 px-4">
               <div className="flex items-center justify-between">
-                <p className="truncate text-sm font-medium text-gray-900">{otherParticipantId}</p>
+                <p className="truncate text-sm font-medium text-gray-900">
+                  {otherParticipantId}
+                </p>
                 {chat.lastMessage && (
                   <p className="text-xs text-gray-500">
                     {formatTimestamp(chat.lastMessage.timestamp)}
@@ -79,7 +85,9 @@ export const ChatList: React.FC<ChatListProps> = ({
                 )}
               </div>
               {chat.lastMessage && (
-                <p className="mt-1 truncate text-sm text-gray-500">{chat.lastMessage.content}</p>
+                <p className="mt-1 truncate text-sm text-gray-500">
+                  {chat.lastMessage.content}
+                </p>
               )}
             </div>
           </Link>

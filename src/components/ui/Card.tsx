@@ -11,7 +11,10 @@ export const Card = React.forwardRef<HTMLDivElement, CardProps>(
     return (
       <div
         ref={ref}
-        className={clsx('bg-white shadow rounded-lg overflow-hidden', className)}
+        className={clsx(
+          'bg-white shadow rounded-lg overflow-hidden',
+          className
+        )}
         {...props}
       >
         {children}

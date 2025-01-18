@@ -8,9 +8,14 @@ interface MatchListProps {
   onMatchClick: (matchId: string) => void;
 }
 
-export const MatchList: React.FC<MatchListProps> = ({ matches, onMatchClick }) => {
+export const MatchList: React.FC<MatchListProps> = ({
+  matches,
+  onMatchClick,
+}) => {
   const [error, setError] = useState<string | null>(null);
-  const [processingMatchIds, setProcessingMatchIds] = useState<Set<string>>(new Set());
+  const [processingMatchIds, setProcessingMatchIds] = useState<Set<string>>(
+    new Set()
+  );
 
   const handleAcceptMatch = async (matchId: string): Promise<void> => {
     if (processingMatchIds.has(matchId)) return;
@@ -61,7 +66,11 @@ export const MatchList: React.FC<MatchListProps> = ({ matches, onMatchClick }) =
   }
 
   if (matches.length === 0) {
-    return <div className="text-gray-500 text-center py-8">No matches found. Keep exploring!</div>;
+    return (
+      <div className="text-gray-500 text-center py-8">
+        No matches found. Keep exploring!
+      </div>
+    );
   }
 
   return (

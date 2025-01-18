@@ -89,10 +89,14 @@ export const Alert: React.FC<AlertProps> = ({
                   style.button,
                   'focus:outline-none focus:ring-2 focus:ring-offset-2',
                   {
-                    'focus:ring-green-600 focus:ring-offset-green-50': type === 'success',
-                    'focus:ring-red-600 focus:ring-offset-red-50': type === 'error',
-                    'focus:ring-yellow-600 focus:ring-offset-yellow-50': type === 'warning',
-                    'focus:ring-blue-600 focus:ring-offset-blue-50': type === 'info',
+                    'focus:ring-green-600 focus:ring-offset-green-50':
+                      type === 'success',
+                    'focus:ring-red-600 focus:ring-offset-red-50':
+                      type === 'error',
+                    'focus:ring-yellow-600 focus:ring-offset-yellow-50':
+                      type === 'warning',
+                    'focus:ring-blue-600 focus:ring-offset-blue-50':
+                      type === 'info',
                   }
                 )}
               >

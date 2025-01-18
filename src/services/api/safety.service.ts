@@ -42,8 +42,13 @@ class SafetyService {
     return response.data.contact;
   }
 
-  async deleteEmergencyContact(userId: string, contactId: string): Promise<void> {
-    await apiClient.delete<void>(`${this.baseUrl}/users/${userId}/contacts/${contactId}`);
+  async deleteEmergencyContact(
+    userId: string,
+    contactId: string
+  ): Promise<void> {
+    await apiClient.delete<void>(
+      `${this.baseUrl}/users/${userId}/contacts/${contactId}`
+    );
   }
 
   // Safety Checks
@@ -54,7 +59,10 @@ class SafetyService {
     return response.data.checks;
   }
 
-  async createSafetyCheck(userId: string, check: Omit<SafetyCheck, 'id'>): Promise<SafetyCheck> {
+  async createSafetyCheck(
+    userId: string,
+    check: Omit<SafetyCheck, 'id'>
+  ): Promise<SafetyCheck> {
     const response = await apiClient.post<{ check: SafetyCheck }>(
       `${this.baseUrl}/users/${userId}/checks`,
       check
@@ -75,10 +83,15 @@ class SafetyService {
   }
 
   async deleteSafetyCheck(userId: string, checkId: string): Promise<void> {
-    await apiClient.delete<void>(`${this.baseUrl}/users/${userId}/checks/${checkId}`);
+    await apiClient.delete<void>(
+      `${this.baseUrl}/users/${userId}/checks/${checkId}`
+    );
   }
 
-  async completeSafetyCheck(userId: string, checkId: string): Promise<SafetyCheck> {
+  async completeSafetyCheck(
+    userId: string,
+    checkId: string
+  ): Promise<SafetyCheck> {
     const response = await apiClient.post<{ check: SafetyCheck }>(
       `${this.baseUrl}/users/${userId}/checks/${checkId}/complete`
     );
@@ -105,7 +118,10 @@ class SafetyService {
     return response.data.alerts;
   }
 
-  async createSafetyAlert(userId: string, alert: Omit<SafetyAlert, 'id'>): Promise<SafetyAlert> {
+  async createSafetyAlert(
+    userId: string,
+    alert: Omit<SafetyAlert, 'id'>
+  ): Promise<SafetyAlert> {
     const response = await apiClient.post<{ alert: SafetyAlert }>(
       `${this.baseUrl}/users/${userId}/alerts`,
       alert
@@ -125,7 +141,9 @@ class SafetyService {
   }
 
   async dismissEmergencyAlert(userId: string, alertId: string): Promise<void> {
-    await apiClient.post<void>(`${this.baseUrl}/users/${userId}/alerts/${alertId}/dismiss`);
+    await apiClient.post<void>(
+      `${this.baseUrl}/users/${userId}/alerts/${alertId}/dismiss`
+    );
   }
 
   async createAlert(data: {
@@ -133,7 +151,10 @@ class SafetyService {
     description?: string;
     location?: Location;
   }): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(`${this.baseUrl}/alerts`, data);
+    const response = await apiClient.post<{ alert: SafetyAlert }>(
+      `${this.baseUrl}/alerts`,
+      data
+    );
     return response.data.alert;
   }
 
@@ -156,7 +177,10 @@ class SafetyService {
     return response.data.alert;
   }
 
-  async resolveSafetyAlert(userId: string, alertId: string): Promise<SafetyAlert> {
+  async resolveSafetyAlert(
+    userId: string,
+    alertId: string
+  ): Promise<SafetyAlert> {
     const response = await apiClient.post<{ alert: SafetyAlert }>(
       `${this.baseUrl}/users/${userId}/alerts/${alertId}/resolve`
     );
@@ -194,7 +218,11 @@ class SafetyService {
     return response.data.report;
   }
 
-  async uploadEvidence(userId: string, alertId: string, file: File): Promise<{ url: string }> {
+  async uploadEvidence(
+    userId: string,
+    alertId: string,
+    file: File
+  ): Promise<{ url: string }> {
     const formData = new FormData();
     formData.append('file', file);
 

@@ -80,7 +80,9 @@ export const toSafetyContact = (
  * @param contact - The safety emergency contact to convert
  * @returns A user emergency contact with the same information
  */
-export const toUserContact = (contact: SafetyEmergencyContact): UserEmergencyContact => {
+export const toUserContact = (
+  contact: SafetyEmergencyContact
+): UserEmergencyContact => {
   // Create notification preferences object
   const notifyPrefs: NotificationPreferences = {
     sosAlert: false,

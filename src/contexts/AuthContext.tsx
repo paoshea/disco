@@ -26,7 +26,9 @@ export interface AuthContextType {
 
 export const AuthContext = createContext<AuthContextType | null>(null);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const handleAuthError = (err: unknown, operation: string) => {
     console.error(`${operation} error:`, err);
     const errorMessage =
-      err instanceof Error ? err.message : `An error occurred during ${operation.toLowerCase()}.`;
+      err instanceof Error
+        ? err.message
+        : `An error occurred during ${operation.toLowerCase()}.`;
     setError(errorMessage);
     throw err;
   };
@@ -112,14 +116,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await authService.requestPasswordReset(email);
     } catch (err) {
       console.error('Password reset request error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to request password reset');
+      setError(
+        err instanceof Error ? err.message : 'Failed to request password reset'
+      );
       throw err;
     } finally {
       setLoading(false);
     }
   };
 
-  const resetPassword = async (token: string, password: string): Promise<void> => {
+  const resetPassword = async (
+    token: string,
+    password: string
+  ): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
@@ -156,7 +165,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await authService.sendVerificationEmail();
     } catch (err) {
       console.error('Send verification email error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to send verification email');
+      setError(
+        err instanceof Error ? err.message : 'Failed to send verification email'
+      );
       throw err;
     } finally {
       setLoading(false);

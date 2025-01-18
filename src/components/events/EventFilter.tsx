@@ -21,7 +21,10 @@ const categories: { value: EventCategory; label: string }[] = [
   { value: 'other', label: 'Other' },
 ];
 
-export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpdate }) => {
+export const EventFilter: React.FC<EventFilterProps> = ({
+  initialFilters,
+  onUpdate,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<EventFilters>({
     ...initialFilters,
@@ -65,7 +68,9 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
           </div>
 
           <div className="relative bg-white rounded-lg max-w-md w-full mx-4 p-6">
-            <Dialog.Title className="text-lg font-medium text-gray-900">Event Filters</Dialog.Title>
+            <Dialog.Title className="text-lg font-medium text-gray-900">
+              Event Filters
+            </Dialog.Title>
 
             <div className="mt-4 space-y-6">
               <Select
@@ -75,7 +80,9 @@ export const EventFilter: React.FC<EventFilterProps> = ({ initialFilters, onUpda
                 value={filters.filters?.categories?.[0] || ''}
                 onChange={e =>
                   updateFilters({
-                    categories: e.target.value ? [e.target.value as EventCategory] : undefined,
+                    categories: e.target.value
+                      ? [e.target.value as EventCategory]
+                      : undefined,
                   })
                 }
               />

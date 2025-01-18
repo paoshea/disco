@@ -5,8 +5,14 @@ import { apiClient } from './api.client';
 class EmergencyService {
   private readonly baseUrl = '/emergency';
 
-  async sendAlert(data: { location: Location; timestamp: string }): Promise<EmergencyAlert> {
-    const response = await apiClient.post<EmergencyAlert>(`${this.baseUrl}/alerts`, data);
+  async sendAlert(data: {
+    location: Location;
+    timestamp: string;
+  }): Promise<EmergencyAlert> {
+    const response = await apiClient.post<EmergencyAlert>(
+      `${this.baseUrl}/alerts`,
+      data
+    );
     return response.data;
   }
 
@@ -17,8 +23,13 @@ class EmergencyService {
     return response.data.contacts;
   }
 
-  async addEmergencyContact(contact: Partial<EmergencyContact>): Promise<EmergencyContact> {
-    const response = await apiClient.post<EmergencyContact>(`${this.baseUrl}/contacts`, contact);
+  async addEmergencyContact(
+    contact: Partial<EmergencyContact>
+  ): Promise<EmergencyContact> {
+    const response = await apiClient.post<EmergencyContact>(
+      `${this.baseUrl}/contacts`,
+      contact
+    );
     return response.data;
   }
 
@@ -37,7 +48,10 @@ class EmergencyService {
     await apiClient.delete<void>(`${this.baseUrl}/contacts/${contactId}`);
   }
 
-  async verifyEmergencyContact(contactId: string, code: string): Promise<EmergencyContact> {
+  async verifyEmergencyContact(
+    contactId: string,
+    code: string
+  ): Promise<EmergencyContact> {
     const response = await apiClient.post<EmergencyContact>(
       `${this.baseUrl}/contacts/${contactId}/verify`,
       { code }
@@ -46,7 +60,9 @@ class EmergencyService {
   }
 
   async resendVerificationCode(contactId: string): Promise<void> {
-    await apiClient.post<void>(`${this.baseUrl}/contacts/${contactId}/resend-code`);
+    await apiClient.post<void>(
+      `${this.baseUrl}/contacts/${contactId}/resend-code`
+    );
   }
 
   async getActiveAlerts(): Promise<EmergencyAlert[]> {

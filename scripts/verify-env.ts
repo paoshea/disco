@@ -1,8 +1,25 @@
-const emailTransporter = require('../src/lib/email/transporter').transporter;
-const { generateToken, verifyToken } = require('../src/lib/jwt');
-const WS = require('ws');
+import * as nodemailer from 'nodemailer';
+import { WebSocket } from 'ws';
 
-async function verifyEmailService() {
+// Import types
+interface JWTPayload {
+  userId: string;
+  email: string;
+}
+
+interface UserPayload {
+  id: string;
+  email: string;
+}
+
+// Import services
+const emailTransporter = require('../src/lib/email/transporter').transporter as nodemailer.Transporter;
+const jwtService = require('../src/lib/jwt') as {
+  generateToken: (user: UserPayload) => string;
+  verifyToken: (token: string) => JWTPayload;
+};
+
+async function verifyEmailService(): Promise<void> {
   console.log('\n🔍 Verifying Email Service...');
   try {
     await emailTransporter.verify();
@@ -12,12 +29,12 @@ async function verifyEmailService() {
   }
 }
 
-function verifyJWT() {
+function verifyJWT(): void {
   console.log('\n🔍 Verifying JWT Configuration...');
   try {
-    const testPayload = { userId: 'test-user', email: 'test@example.com' };
-    const token = generateToken({ id: 'test-user', email: 'test@example.com' } as any);
-    const decoded = verifyToken(token);
+    const testPayload: UserPayload = { id: 'test-user', email: 'test@example.com' };
+    const token = jwtService.generateToken(testPayload);
+    const decoded = jwtService.verifyToken(token);
     console.log('✅ JWT configuration is working');
     console.log('Generated token:', token.substring(0, 20) + '...');
     console.log('Decoded payload:', decoded);
@@ -26,7 +43,7 @@ function verifyJWT() {
   }
 }
 
-function verifyWebSocket() {
+function verifyWebSocket(): void {
   console.log('\n🔍 Verifying WebSocket URL...');
   const wsUrl = process.env.NEXT_PUBLIC_WEBSOCKET_URL;
   
@@ -36,7 +53,7 @@ function verifyWebSocket() {
   }
 
   try {
-    const ws = new WS(wsUrl);
+    const ws = new WebSocket(wsUrl);
     
     ws.on('open', () => {
       console.log('✅ WebSocket connection successful');
@@ -52,7 +69,7 @@ function verifyWebSocket() {
   }
 }
 
-async function main() {
+async function main(): Promise<void> {
   console.log('🚀 Starting environment verification...\n');
   
   // Verify Database URL

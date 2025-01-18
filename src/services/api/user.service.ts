@@ -23,7 +23,9 @@ class UserService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response: AxiosResponse<User> = await apiClient.get(`${this.baseUrl}/me`);
+      const response: AxiosResponse<User> = await apiClient.get(
+        `${this.baseUrl}/me`
+      );
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -32,7 +34,9 @@ class UserService {
 
   async getProfile(userId?: string): Promise<User> {
     try {
-      const endpoint = userId ? `${this.baseUrl}/${userId}` : `${this.baseUrl}/profile`;
+      const endpoint = userId
+        ? `${this.baseUrl}/${userId}`
+        : `${this.baseUrl}/profile`;
       const response: AxiosResponse<User> = await apiClient.get(endpoint);
       return response.data;
     } catch (err) {
@@ -145,16 +149,22 @@ class UserService {
 
   async searchUsers(query: string): Promise<User[]> {
     try {
-      const response: AxiosResponse<User[]> = await apiClient.get('/users/search', {
-        params: { q: query },
-      });
+      const response: AxiosResponse<User[]> = await apiClient.get(
+        '/users/search',
+        {
+          params: { q: query },
+        }
+      );
       return response.data;
     } catch (err) {
       throw this.handleError(err);
     }
   }
 
-  async updatePreferences(userId: string, preferences: UserPreferences): Promise<void> {
+  async updatePreferences(
+    userId: string,
+    preferences: UserPreferences
+  ): Promise<void> {
     try {
       await apiClient.put(`/users/${userId}/preferences`, preferences);
     } catch (err) {
@@ -175,7 +185,8 @@ class UserService {
 
   async getRecommendedUsers(): Promise<User[]> {
     try {
-      const response: AxiosResponse<User[]> = await apiClient.get('/users/recommended');
+      const response: AxiosResponse<User[]> =
+        await apiClient.get('/users/recommended');
       return response.data;
     } catch (err) {
       throw this.handleError(err);
@@ -214,7 +225,10 @@ class UserService {
     }
   }
 
-  async updatePassword(currentPassword: string, newPassword: string): Promise<void> {
+  async updatePassword(
+    currentPassword: string,
+    newPassword: string
+  ): Promise<void> {
     try {
       await apiClient.put('/users/password', {
         currentPassword,
@@ -242,7 +256,9 @@ class UserService {
     if (error instanceof Error) {
       return error;
     }
-    return new Error('An unexpected error occurred while processing your request');
+    return new Error(
+      'An unexpected error occurred while processing your request'
+    );
   }
 }
 

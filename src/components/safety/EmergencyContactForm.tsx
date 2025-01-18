@@ -100,7 +100,9 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
       />
 
       <div>
-        <label className="block text-sm font-medium text-gray-700">Notify On</label>
+        <label className="block text-sm font-medium text-gray-700">
+          Notify On
+        </label>
         <div className="mt-2 space-y-2">
           <div>
             <input

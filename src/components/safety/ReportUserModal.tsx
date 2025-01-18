@@ -71,7 +71,11 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onClose={onClose} className="fixed inset-0 z-10 overflow-y-auto">
+    <Dialog
+      open={isOpen}
+      onClose={onClose}
+      className="fixed inset-0 z-10 overflow-y-auto"
+    >
       <div className="min-h-screen px-4 text-center">
         <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
 
@@ -80,7 +84,10 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
         </span>
 
         <div className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-          <Dialog.Title as="h3" className="text-lg font-medium leading-6 text-gray-900">
+          <Dialog.Title
+            as="h3"
+            className="text-lg font-medium leading-6 text-gray-900"
+          >
             Report User
           </Dialog.Title>
 
@@ -92,7 +99,10 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
 
           <form onSubmit={handleFormSubmitWrapper} className="mt-4 space-y-6">
             <div>
-              <label htmlFor="type" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="type"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Type of Report
               </label>
               <select
@@ -109,7 +119,11 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 <option value="safety_check">Safety Check</option>
                 <option value="other">Other</option>
               </select>
-              {errors.type && <p className="mt-1 text-sm text-red-600">{errors.type.message}</p>}
+              {errors.type && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.type.message}
+                </p>
+              )}
             </div>
 
             <TextArea<ReportFormData>
@@ -120,7 +134,8 @@ export const ReportUserModal: React.FC<ReportUserModalProps> = ({
                 required: 'Please provide a description',
                 minLength: {
                   value: 20,
-                  message: 'Please provide more details (minimum 20 characters)',
+                  message:
+                    'Please provide more details (minimum 20 characters)',
                 },
               }}
               error={errors.description?.message}

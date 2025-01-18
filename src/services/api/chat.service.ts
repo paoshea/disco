@@ -40,9 +40,12 @@ class ChatService {
 
   async createChat(participantId: string): Promise<ChatRoom> {
     try {
-      const response = await apiClient.post<{ data: { chat: ChatRoom } }>(`${this.baseUrl}/rooms`, {
-        participantId,
-      });
+      const response = await apiClient.post<{ data: { chat: ChatRoom } }>(
+        `${this.baseUrl}/rooms`,
+        {
+          participantId,
+        }
+      );
       return response.data.data.chat;
     } catch (err) {
       throw this.handleError(err);

@@ -7,8 +7,13 @@ interface BadgeProps {
   className?: string;
 }
 
-export const Badge: React.FC<BadgeProps> = ({ children, variant = 'primary', className = '' }) => {
-  const baseClasses = 'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
+export const Badge: React.FC<BadgeProps> = ({
+  children,
+  variant = 'primary',
+  className = '',
+}) => {
+  const baseClasses =
+    'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium';
 
   const variantClasses = {
     primary: 'bg-primary-100 text-primary-800',
@@ -19,5 +24,9 @@ export const Badge: React.FC<BadgeProps> = ({ children, variant = 'primary', cla
     info: 'bg-blue-100 text-blue-800',
   };
 
-  return <span className={clsx(baseClasses, variantClasses[variant], className)}>{children}</span>;
+  return (
+    <span className={clsx(baseClasses, variantClasses[variant], className)}>
+      {children}
+    </span>
+  );
 };
