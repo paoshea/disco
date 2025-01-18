@@ -100,17 +100,20 @@ export default function LoginPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Sign in to your account
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 mb-4">
+              <img src="/images/disco-logo.svg" alt="Disco Logo" className="w-full h-full" />
+            </div>
+            <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
+              Welcome back!
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600">
               Or{' '}
               <Link
                 href="/signup"
-                className="font-medium text-indigo-600 hover:text-indigo-500"
+                className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
               >
                 create a new account
               </Link>
@@ -121,7 +124,7 @@ export default function LoginPage() {
             onSubmit={handleSubmit(onSubmit)}
             className="mt-8 space-y-6"
           >
-            <div className="rounded-md shadow-sm -space-y-px">
+            <div className="space-y-4">
               <div>
                 <Input
                   type="email"
@@ -129,6 +132,7 @@ export default function LoginPage() {
                   required
                   placeholder="Email address"
                   disabled={isLoading}
+                  className="rounded-lg"
                   {...register('email', {
                     required: 'Email is required',
                     pattern: {
@@ -145,6 +149,7 @@ export default function LoginPage() {
                   required
                   placeholder="Password"
                   disabled={isLoading}
+                  className="rounded-lg"
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -160,7 +165,7 @@ export default function LoginPage() {
               <div className="text-sm">
                 <Link
                   href="/forgot-password"
-                  className="font-medium text-indigo-600 hover:text-indigo-500"
+                  className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
                 >
                   Forgot your password?
                 </Link>
@@ -168,20 +173,20 @@ export default function LoginPage() {
             </div>
 
             {needsVerification && (
-              <div className="rounded-md bg-yellow-50 p-4">
+              <div className="rounded-lg bg-amber-50 p-4 border border-amber-200">
                 <div className="flex">
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">
+                    <h3 className="text-sm font-medium text-amber-800">
                       Email verification required
                     </h3>
-                    <div className="mt-2 text-sm text-yellow-700">
+                    <div className="mt-2 text-sm text-amber-700">
                       <p>
                         Please check your email for a verification link. If you
                         haven't received it,{' '}
                         <button
                           type="button"
                           onClick={handleResendVerification}
-                          className="font-medium text-yellow-800 underline hover:text-yellow-600"
+                          className="font-medium text-amber-800 underline hover:text-amber-600 transition-colors"
                           disabled={isLoading}
                         >
                           click here to resend
@@ -195,7 +200,7 @@ export default function LoginPage() {
             )}
 
             {error && (
-              <div className="rounded-md bg-red-50 p-4">
+              <div className="rounded-lg bg-red-50 p-4 border border-red-200">
                 <div className="flex">
                   <div className="ml-3">
                     <h3 className="text-sm font-medium text-red-800">{error}</h3>
@@ -207,10 +212,10 @@ export default function LoginPage() {
             <div>
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full bg-gradient-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
                 disabled={isLoading}
               >
-                {isLoading ? <LoadingSpinner /> : 'Sign in'}
+                {isLoading ? <LoadingSpinner className="w-5 h-5" /> : 'Sign in'}
               </Button>
             </div>
           </form>

@@ -4,6 +4,18 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Logo } from '@/components/ui/Logo';
+import { SafetyCheckModal } from '@/components/dashboard/SafetyCheckModal';
+import { EmergencyContactsModal } from '@/components/dashboard/EmergencyContactsModal';
+import { FindMatchesModal } from '@/components/dashboard/FindMatchesModal';
+import { 
+  SafetyIcon, 
+  ContactsIcon, 
+  MatchesIcon, 
+  StreakIcon, 
+  CalendarIcon, 
+  ClockIcon 
+} from '@/src/assets/icons';
 
 interface DashboardStats {
   streakCount: number;
@@ -16,6 +28,9 @@ export default function DashboardPage() {
   const { user } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isSafetyModalOpen, setSafetyModalOpen] = useState(false);
+  const [isContactsModalOpen, setContactsModalOpen] = useState(false);
+  const [isMatchesModalOpen, setMatchesModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchDashboardStats() {
@@ -48,10 +63,16 @@ export default function DashboardPage() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="md:flex md:items-center md:justify-between">
-          <div className="flex-1 min-w-0">
-            <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
-              Welcome back, {user?.firstName}!
-            </h2>
+          <div className="flex items-center space-x-4">
+            <Logo className="w-12 h-12" />
+            <div>
+              <h2 className="text-2xl font-bold leading-7 text-gray-900 sm:text-3xl sm:truncate">
+                Welcome back, {user?.firstName}!
+              </h2>
+              <p className="mt-1 text-sm text-gray-500">
+                Here's your safety and connection overview
+              </p>
+            </div>
           </div>
         </div>
 
@@ -62,10 +83,7 @@ export default function DashboardPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    {/* Add streak icon */}
-                    <svg className="h-6 w-6 text-yellow-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <StreakIcon className="h-6 w-6 text-yellow-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -82,10 +100,7 @@ export default function DashboardPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    {/* Add safety icon */}
-                    <svg className="h-6 w-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
+                    <SafetyIcon className="h-6 w-6 text-green-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -102,10 +117,7 @@ export default function DashboardPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    {/* Add calendar icon */}
-                    <svg className="h-6 w-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
+                    <CalendarIcon className="h-6 w-6 text-blue-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -122,10 +134,7 @@ export default function DashboardPage() {
               <div className="p-5">
                 <div className="flex items-center">
                   <div className="flex-shrink-0">
-                    {/* Add clock icon */}
-                    <svg className="h-6 w-6 text-purple-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <ClockIcon className="h-6 w-6 text-purple-400" />
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
@@ -147,24 +156,44 @@ export default function DashboardPage() {
           <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <button
               type="button"
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              onClick={() => setSafetyModalOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
             >
+              <CalendarIcon className="h-5 w-5 mr-2" />
               Schedule Safety Check
             </button>
             <button
               type="button"
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
+              onClick={() => setContactsModalOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-green-500 to-green-700 hover:from-green-600 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
             >
+              <ContactsIcon className="h-5 w-5 mr-2" />
               Update Emergency Contacts
             </button>
             <button
               type="button"
-              className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+              onClick={() => setMatchesModalOpen(true)}
+              className="inline-flex items-center justify-center px-4 py-3 border border-transparent shadow-sm text-sm font-medium rounded-lg text-white bg-gradient-to-r from-purple-500 to-purple-700 hover:from-purple-600 hover:to-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
             >
+              <MatchesIcon className="h-5 w-5 mr-2" />
               Find New Matches
             </button>
           </div>
         </div>
+
+        {/* Modals */}
+        <SafetyCheckModal
+          isOpen={isSafetyModalOpen}
+          onClose={() => setSafetyModalOpen(false)}
+        />
+        <EmergencyContactsModal
+          isOpen={isContactsModalOpen}
+          onClose={() => setContactsModalOpen(false)}
+        />
+        <FindMatchesModal
+          isOpen={isMatchesModalOpen}
+          onClose={() => setMatchesModalOpen(false)}
+        />
       </div>
     </Layout>
   );
