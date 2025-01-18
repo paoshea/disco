@@ -18,7 +18,7 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => Promise<void>;
   set: (state: Partial<AuthState>) => void;
 }
@@ -68,17 +68,23 @@ const useAuth = create<AuthState>()(
               token: result.data.token,
               isLoading: false,
             });
-          } else {
+            return { success: true };
+          } else if (result.data.needsVerification) {
             set({ isLoading: false });
+            return { needsVerification: true };
+          } else if (result.data.error) {
+            set({ isLoading: false, error: result.data.error });
+            return { error: result.data.error };
           }
+          
+          throw new Error('Invalid response format');
         } catch (error) {
+          const errorMessage = error instanceof Error ? error.message : 'An error occurred during login';
           set({
-            error:
-              error instanceof Error
-                ? error.message
-                : 'An error occurred during login',
+            error: errorMessage,
             isLoading: false,
           });
+          return { error: errorMessage };
         }
       },
 

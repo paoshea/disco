@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useAuth } from '@/hooks/useAuth';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
+import useAuth from '@/app/hooks/useAuth';
+import { Button } from '@/src/components/ui/Button';
+import { Input } from '@/src/components/ui/Input';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
+import { useRouter } from 'next/navigation';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -18,14 +19,9 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-interface LoginResult {
-  error?: string;
-  needsVerification?: boolean;
-}
-
 export default function LoginPage() {
   const { login } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [needsVerification, setNeedsVerification] = useState(false);
   const [emailForVerification, setEmailForVerification] = useState<string>('');
@@ -39,16 +35,13 @@ export default function LoginPage() {
   });
 
   const onSubmit = async (data: LoginFormData) => {
-    setError(null);
     setIsLoading(true);
     setNeedsVerification(false);
 
     try {
-      const loginResponse = await login(data.email, data.password);
-      const result = loginResponse as unknown as LoginResult;
+      const result = await login(data.email, data.password);
 
-      if ('error' in result && result.error) {
-        setError(result.error);
+      if (result.error) {
         toast.error(result.error);
         return;
       }
@@ -62,13 +55,14 @@ export default function LoginPage() {
         return;
       }
 
-      // Successful login will redirect automatically
-      toast.success('Login successful!');
+      if (result.success) {
+        toast.success('Login successful! Redirecting...');
+        router.push('/dashboard');
+      }
     } catch (err) {
       console.error('Login error:', err);
       const errorMessage =
         err instanceof Error ? err.message : 'An error occurred during login';
-      setError(errorMessage);
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
@@ -116,91 +110,56 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <form
-            onSubmit={void handleSubmit(onSubmit)}
-            className="mt-8 space-y-6"
-          >
+          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
             <div className="space-y-4">
               <div>
                 <Input
-                  {...register('email')}
+                  id="email"
                   type="email"
-                  autoComplete="email"
-                  placeholder="Email address"
+                  label="Email address"
                   error={errors.email?.message}
+                  {...register('email')}
                 />
               </div>
 
               <div>
                 <Input
-                  {...register('password')}
+                  id="password"
                   type="password"
-                  autoComplete="current-password"
-                  placeholder="Password"
+                  label="Password"
                   error={errors.password?.message}
+                  {...register('password')}
                 />
-              </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="text-sm">
-                <Link
-                  href="/forgot-password"
-                  className="font-medium text-sky-600 hover:text-sky-500"
-                >
-                  Forgot your password?
-                </Link>
               </div>
             </div>
 
             <div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
+                className="w-full"
                 disabled={isLoading}
+                loading={isLoading}
               >
                 {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
             </div>
-
-            {needsVerification && (
-              <div className="rounded-lg bg-yellow-50 p-4 border border-yellow-200">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-yellow-800">
-                      Please verify your email
-                    </h3>
-                    <div className="mt-2 text-sm text-yellow-700">
-                      <p>
-                        Check your inbox for a verification link. Need a new
-                        link?{' '}
-                        <button
-                          type="button"
-                          className="font-medium text-yellow-800 underline"
-                          onClick={() => void handleResendVerification()}
-                          disabled={isLoading}
-                        >
-                          Resend verification email
-                        </button>
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {error && (
-              <div className="rounded-lg bg-red-50 p-4 border border-red-200">
-                <div className="flex">
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {error}
-                    </h3>
-                  </div>
-                </div>
-              </div>
-            )}
           </form>
+
+          {needsVerification && (
+            <div className="mt-4">
+              <p className="text-sm text-gray-600 mb-2">
+                Need another verification email?
+              </p>
+              <Button
+                onClick={handleResendVerification}
+                variant="secondary"
+                className="w-full"
+                disabled={isLoading}
+              >
+                Resend Verification Email
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>

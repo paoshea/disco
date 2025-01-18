@@ -17,15 +17,18 @@ export interface JWTPayload extends jose.JWTPayload {
 }
 
 export interface LoginResult {
+  success?: boolean;
   token?: string;
+  error?: string;
+  needsVerification?: boolean;
   user?: {
     id: string;
     email: string;
     firstName: string;
     lastName: string;
     role: string;
+    streakCount: number;
   };
-  error?: string;
 }
 
 export interface Session {
