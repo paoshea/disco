@@ -15,7 +15,7 @@ interface RegisterData {
 }
 
 class AuthService {
-  private readonly baseUrl = '/api/auth';
+  private readonly baseUrl = '/auth';
 
   async login(email: string, password: string): Promise<LoginResponse> {
     try {
