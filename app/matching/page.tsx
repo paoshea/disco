@@ -1,4 +1,7 @@
+'use client';
+
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Match } from '@/types/match';
 import { matchService } from '@/services/api/match.service';
 import { MatchList } from '@/components/matching/MatchList';
@@ -8,6 +11,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 export default function MatchingPage() {
+  const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -45,40 +49,47 @@ export default function MatchingPage() {
   }, [position]);
 
   const handleMatchClick = (matchId: string) => {
-    // Handle match click - navigate to profile or open chat
-    console.log('Match clicked:', matchId);
+    router.push(`/profile/${matchId}`);
   };
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <LoadingSpinner />
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
 
   if (error) {
-    return <ErrorMessage message={error} />;
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <ErrorMessage message={error} />
+      </div>
+    );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Matches</h1>
+    <div className="container mx-auto p-4">
+      <div className="mb-4 flex items-center justify-between">
+        <h1 className="text-2xl font-bold">Find Matches</h1>
         <div className="flex space-x-2">
           <button
-            onClick={() => setViewMode('list')}
-            className={`px-4 py-2 rounded-lg ${
-              viewMode === 'list' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'
+            className={`rounded px-4 py-2 ${
+              viewMode === 'list'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 text-gray-700'
             }`}
+            onClick={() => setViewMode('list')}
           >
             List View
           </button>
           <button
-            onClick={() => setViewMode('map')}
-            className={`px-4 py-2 rounded-lg ${
-              viewMode === 'map' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-700'
+            className={`rounded px-4 py-2 ${
+              viewMode === 'map'
+                ? 'bg-primary text-white'
+                : 'bg-gray-200 text-gray-700'
             }`}
+            onClick={() => setViewMode('map')}
           >
             Map View
           </button>
@@ -88,20 +99,18 @@ export default function MatchingPage() {
       {viewMode === 'list' ? (
         <MatchList matches={matches} onMatchClick={handleMatchClick} />
       ) : (
-        <div className="h-[calc(100vh-200px)] rounded-lg overflow-hidden">
-          <MatchMapView
-            matches={matches}
-            onMarkerClick={handleMatchClick}
-            center={
-              position?.coords
-                ? {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                  }
-                : undefined
-            }
-          />
-        </div>
+        <MatchMapView
+          matches={matches}
+          onMarkerClick={handleMatchClick}
+          center={
+            position?.coords
+              ? {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                }
+              : undefined
+          }
+        />
       )}
     </div>
   );

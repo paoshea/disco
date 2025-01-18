@@ -37,7 +37,7 @@ class AuthService {
 
   async register(data: RegisterData): Promise<LoginResponse> {
     try {
-      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/register`, data);
+      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/signup`, data);
 
       const { token, user } = response.data;
       localStorage.setItem('token', token);

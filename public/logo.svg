@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Circle background -->
+  <circle cx="24" cy="24" r="24" fill="#2563EB"/>
+  
+  <!-- Stylized "D" -->
+  <path d="M16 12h10c6.627 0 12 5.373 12 12s-5.373 12-12 12H16V12zm10 4H20v16h6c4.418 0 8-3.582 8-8s-3.582-8-8-8z" fill="white"/>
+  
+  <!-- Music note accents -->
+  <circle cx="14" cy="20" r="2" fill="white"/>
+  <circle cx="14" cy="28" r="2" fill="white"/>
+</svg>

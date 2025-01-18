@@ -1,7 +1,10 @@
+'use client';
+
 import React, { useEffect, useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { ChatList } from '@/components/chat/ChatList';
-import type { ChatRoom } from '@/types/chat';
+import type { ChatRoom, Message } from '@/types/chat';
 import { chatService } from '@/services/api/chat.service';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAuth } from '@/hooks/useAuth';
@@ -14,7 +17,8 @@ export default function ChatPage() {
   const [activeChat, setActiveChat] = useState<ChatRoom | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+  const router = useRouter();
+  const { user, isLoading: authLoading } = useAuth();
 
   const fetchChats = useCallback(async () => {
     try {
@@ -48,14 +52,19 @@ export default function ChatPage() {
   });
 
   useEffect(() => {
+    if (!authLoading && !user) {
+      router.push('/login');
+      return;
+    }
     void fetchChats();
-  }, [fetchChats]);
+  }, [authLoading, user, router, fetchChats]);
 
   const handleChatSelect = (chatId: string) => {
     const selectedChat = chats.find(chat => chat.matchId === chatId);
     if (selectedChat) {
       setActiveChat(selectedChat);
-      void chatService.markAsRead(chatId);
+      // Note: markAsRead is not available in the chat service yet
+      // void chatService.markAsRead(chatId);
     }
   };
 
@@ -84,12 +93,16 @@ export default function ChatPage() {
     }
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  if (!user) {
+    return null;
   }
 
   if (error) {

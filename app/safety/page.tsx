@@ -1,5 +1,7 @@
+'use client';
+
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
 import { Layout } from '@/components/layout/Layout';
@@ -38,7 +40,7 @@ export default function Safety() {
     const init = async () => {
       try {
         if (!authLoading && !user) {
-          await router.push('/login');
+          router.push('/login');
           return;
         }
 
