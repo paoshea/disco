@@ -332,6 +332,7 @@
 ## Priority Features From README.md
 
 ### Priority 1: Core Privacy & Security Features
+
 - [ ] Zero personal data storage implementation
 - [ ] End-to-end encrypted communications
 - [ ] Approximate distance indicators
@@ -340,8 +341,10 @@
 - [ ] Custom privacy zones
 - [ ] AI-powered content screening
 - [ ] 24/7 human moderation system
+- [ ] Temporary Opt-Out by User, similar to focus mode, where User is not in the mood for a certain period of time
 
 ### Priority 2: Location & Discovery
+
 - [ ] Battery-optimized background location
 - [ ] Bluetooth proximity enhancement
 - [ ] Flexible radius settings (100ft to 1 mile)
@@ -351,6 +354,7 @@
 - [ ] Professional networking mode
 
 ### Priority 3: Safety Infrastructure
+
 - [ ] Real-time safety check-ins
 - [ ] Emergency contact system
 - [ ] Community rating implementation
@@ -360,6 +364,7 @@
 - [ ] Suspicious behavior detection
 
 ### Priority 4: User Experience
+
 - [ ] Battery optimization
 - [ ] Push notification system
 - [ ] Profile customization
@@ -369,6 +374,7 @@
 - [ ] City-based availability control
 
 ### Priority 5: Community Features
+
 - [ ] Public roadmap integration
 - [ ] City expansion voting system
 - [ ] Community blog integration
@@ -377,6 +383,7 @@
 - [ ] Community guidelines enforcement
 
 ### Priority 6: Support Infrastructure
+
 - [ ] 24/7 in-app support chat
 - [ ] Support ticket system
 - [ ] Email support integration
@@ -385,6 +392,7 @@
 - [ ] User feedback collection
 
 ### Priority 7: Analytics & Reporting
+
 - [ ] Safety rating analytics
 - [ ] Connection success metrics
 - [ ] User engagement tracking
@@ -401,7 +409,7 @@
 
 ## Priority Matrix
 
-### Immediate Priority 
+### Immediate Priority
 
 1. Authentication & Navigation
 
@@ -429,7 +437,7 @@
    - Error handling
    - Performance monitoring
 
-### Medium Priority 
+### Medium Priority
 
 1. Enhanced Gamification
 
@@ -448,7 +456,7 @@
    - Offline support
    - Push notifications
 
-### Long-term Goals 
+### Long-term Goals
 
 1. Advanced Features
 
@@ -469,17 +477,20 @@
 - Regular user feedback and iteration
 - Monitor engagement metrics and adjust features accordingly
 
-
 ## Empty Folders (Implementation Priority)
 
 ### Priority 1: Core Types and Shared Libraries
+
 These are foundational and should be implemented first as other components depend on them:
+
 - `/backend/libs/dto-types` - Data transfer object types
 - `/backend/libs/common-utils` - Common utility functions
 - `/backend/libs/security` - Security utilities
 
 ### Priority 2: Core Service Foundations
+
 Essential service components needed for basic functionality:
+
 - `/backend/services/core-api/internal/repository` - Data repositories
 - `/backend/services/core-api/internal/validators` - Input validators
 - `/backend/services/core-api/api/v1` - API v1 endpoints
@@ -489,7 +500,9 @@ Essential service components needed for basic functionality:
 - `/backend/services/user-service/src/services` - Service implementations
 
 ### Priority 3: Supporting Services
+
 Services that enhance core functionality:
+
 - `/backend/services/location-service/src/models` - Data models
 - `/backend/services/location-service/src/services` - Service implementations
 - `/backend/services/location-service/src/utils` - Utility functions
@@ -498,7 +511,9 @@ Services that enhance core functionality:
 - `/backend/services/matching-service/lib/channels` - Communication channels
 
 ### Priority 4: Service Configuration
+
 Configuration needed for service deployment:
+
 - `/backend/services/core-api/config` - Core API configuration
 - `/backend/services/user-service/config` - User service configuration
 - `/backend/services/location-service/config` - Location service configuration
@@ -507,14 +522,18 @@ Configuration needed for service deployment:
 - `/backend/services/user-service/src/middleware` - Service middleware
 
 ### Priority 5: Testing Infrastructure
+
 Test suites for ensuring service reliability:
+
 - `/backend/services/core-api/tests` - Core API test suite
 - `/backend/services/user-service/test` - User service test suite
 - `/backend/services/location-service/tests` - Location service test suite
 - `/backend/services/matching-service/test` - Matching service test suite
 
 ### Priority 6: Deployment Infrastructure
+
 Infrastructure as code and deployment configurations:
+
 - `/backend/deploy/terraform/modules` - Terraform modules
 - `/backend/deploy/terraform/environments` - Terraform environment configurations
 - `/backend/deploy/kubernetes/base/core-api` - Core API base configuration
@@ -523,7 +542,9 @@ Infrastructure as code and deployment configurations:
 - `/backend/deploy/kubernetes/base/matching-service` - Matching service base configuration
 
 ### Priority 7: Environment-Specific Configurations
+
 Environment overlays and initialization:
+
 - `/backend/deploy/kubernetes/overlays/dev` - Kubernetes development overlay
 - `/backend/deploy/kubernetes/overlays/staging` - Kubernetes staging overlay
 - `/backend/deploy/kubernetes/overlays/prod` - Kubernetes production overlay
@@ -540,7 +561,9 @@ Environment overlays and initialization:
 Using both `jsonwebtoken` and `jose` in the same project is technically possible, but it's generally not ideal due to potential redundancy, increased bundle size, and confusion about which library to use for specific tasks. Here's a detailed breakdown:
 
 ### **1. Compatibility and Use Case Differences**
+
 - **`jsonwebtoken`**:
+
   - A popular library for working with JWTs in Node.js environments.
   - Provides functions like `sign`, `verify`, and `decode`.
   - Heavily relies on Node.js-specific modules like `crypto` and is **not Edge-compatible** (e.g., for Next.js API routes running in the Edge Runtime).
@@ -551,17 +574,21 @@ Using both `jsonwebtoken` and `jose` in the same project is technically possible
   - Works seamlessly with modern web crypto APIs, making it ideal for Next.js applications with serverless or Edge runtime requirements.
 
 ### **2. Potential Issues**
-- **Redundancy**: 
+
+- **Redundancy**:
+
   - Both libraries offer overlapping functionality for handling JWTs, which can lead to confusion about which one to use in specific parts of your code.
   - This also increases your bundle size unnecessarily, especially if you're using both in client-side code.
 
 - **Inconsistent Behavior**:
+
   - If parts of your codebase rely on `jsonwebtoken` and others on `jose`, subtle differences in API behavior or token verification could lead to bugs or security risks.
 
 - **Edge Runtime Incompatibility**:
   - If you use `jsonwebtoken` in Edge-compatible routes or client-side code, you will encounter runtime errors because `jsonwebtoken` relies on Node.js-specific modules.
 
 ### **3. Recommendation**
+
 If you are starting fresh or aiming for compatibility with modern environments (like Edge), **migrate entirely to `jose`**. It is more future-proof and works in all the environments where `jsonwebtoken` might fail.
 
 ### **4. How to Replace `jsonwebtoken` with `jose`**
@@ -569,6 +596,7 @@ If you are starting fresh or aiming for compatibility with modern environments (
 Here’s how common tasks can be done using `jose`:
 
 #### Signing a JWT:
+
 ```typescript
 import { SignJWT } from 'jose';
 
@@ -586,6 +614,7 @@ async function createToken(payload: object, secretKey: string) {
 ```
 
 #### Verifying a JWT:
+
 ```typescript
 import { jwtVerify } from 'jose';
 
@@ -598,6 +627,7 @@ async function verifyToken(token: string, secretKey: string) {
 ```
 
 #### Decoding a JWT (without verification):
+
 ```typescript
 import { decodeJwt } from 'jose';
 
@@ -607,18 +637,24 @@ function decodeToken(token: string) {
 ```
 
 ### **5. Migrating Gradually**
+
 If migrating entirely to `jose` isn’t feasible immediately:
+
 - Use `jose` for new code, especially in Edge-compatible routes.
 - Plan to replace `jsonwebtoken` in older code incrementally.
 
 ### **6. Removing `jsonwebtoken`**
+
 Once the migration is complete, remove `jsonwebtoken` from your `package.json`:
+
 ```bash
 npm uninstall jsonwebtoken
 npm uninstall @types/jsonwebtoken
 ```
 
 ### **7. When to Keep Both**
+
 The only valid reason to use both libraries would be:
+
 - Legacy code relies on `jsonwebtoken`, and refactoring it is currently impractical.
 - New parts of the project require Edge compatibility, where `jose` is used.

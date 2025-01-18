@@ -23,14 +23,19 @@ export const Button: React.FC<ButtonProps> = ({
       'px-2.5 py-1.5 text-sm': size === 'sm',
       'px-4 py-2 text-base': size === 'md',
       'px-6 py-3 text-lg': size === 'lg',
-      
+
       // Variant variations
-      'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500': variant === 'primary',
-      'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500': variant === 'secondary',
-      'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500': variant === 'danger',
-      'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500': variant === 'ghost',
-      'border-2 border-sky-600 bg-transparent text-sky-600 hover:bg-sky-50 focus:ring-sky-500': variant === 'outline',
-      
+      'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500':
+        variant === 'primary',
+      'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500':
+        variant === 'secondary',
+      'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500':
+        variant === 'danger',
+      'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500':
+        variant === 'ghost',
+      'border-2 border-sky-600 bg-transparent text-sky-600 hover:bg-sky-50 focus:ring-sky-500':
+        variant === 'outline',
+
       // Disabled state
       'opacity-50 cursor-not-allowed': disabled || loading,
     },
@@ -38,11 +43,7 @@ export const Button: React.FC<ButtonProps> = ({
   );
 
   return (
-    <button
-      className={baseStyles}
-      disabled={disabled || loading}
-      {...props}
-    >
+    <button className={baseStyles} disabled={disabled || loading} {...props}>
       {loading ? (
         <>
           <svg

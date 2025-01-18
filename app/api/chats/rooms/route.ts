@@ -3,7 +3,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { withAuth, type AuthenticatedRequest } from '@/middleware/authMiddleware';
+import {
+  withAuth,
+  type AuthenticatedRequest,
+} from '@/middleware/authMiddleware';
 import type { ChatRoomWithRelations } from '@/types/chat';
 
 async function handleGet(request: AuthenticatedRequest) {
@@ -77,4 +80,6 @@ async function handleGet(request: AuthenticatedRequest) {
 }
 
 export const GET = (request: NextRequest) =>
-  withAuth(request, (req: NextRequest) => handleGet(req as AuthenticatedRequest));
+  withAuth(request, (req: NextRequest) =>
+    handleGet(req as AuthenticatedRequest)
+  );

@@ -5,7 +5,10 @@ interface ChatRoomAccess {
   id: string;
 }
 
-export async function verifyRoomAccess(roomId: string, userId: string): Promise<boolean> {
+export async function verifyRoomAccess(
+  roomId: string,
+  userId: string
+): Promise<boolean> {
   const chatRoom = await db.$queryRaw<ChatRoomAccess[]>`
     SELECT cr.id
     FROM "ChatRoom" cr
@@ -17,7 +20,11 @@ export async function verifyRoomAccess(roomId: string, userId: string): Promise<
   return chatRoom.length > 0;
 }
 
-export async function createMessage(content: string, roomId: string, userId: string): Promise<MessageWithSender> {
+export async function createMessage(
+  content: string,
+  roomId: string,
+  userId: string
+): Promise<MessageWithSender> {
   const [newMessage] = await db.$queryRaw<MessageWithSender[]>`
     WITH new_message AS (
       INSERT INTO "Message" (

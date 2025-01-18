@@ -34,8 +34,8 @@ export const ChatList: React.FC<ChatListProps> = ({
     return format(date, 'MM/dd/yy');
   };
 
-  const getOtherParticipant = (participants: string[]) => {
-    return participants.find(id => id !== user?.id) || '';
+  const getOtherParticipant = (participantIds: string[]): string => {
+    return participantIds.find(id => id !== user?.id) || '';
   };
 
   if (chats.length === 0) {
@@ -47,7 +47,7 @@ export const ChatList: React.FC<ChatListProps> = ({
   }
 
   return (
-    <div className={`divide-y divide-gray-200 ${className}`}>
+    <div className={`chat-list ${className}`}>
       {chats.map(chat => {
         const otherParticipantId = getOtherParticipant(chat.participants);
         const isSelected = chat.matchId === selectedChatId;

@@ -3,7 +3,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { withAuth, type AuthenticatedRequest } from '@/middleware/authMiddleware';
+import {
+  withAuth,
+  type AuthenticatedRequest,
+} from '@/middleware/authMiddleware';
 import { verifyRoomAccess, createMessage } from '@/lib/chatQueries';
 import type { MessageWithSender } from '@/types/chat';
 
@@ -14,14 +17,13 @@ export const dynamic = 'force-dynamic';
 
 async function handleGet(
   request: AuthenticatedRequest,
-  context: { params: Record<string, string> }
+  { params }: { params: { roomId: string } }
 ) {
-  const { params } = context;
   const { roomId } = params;
 
   try {
     const hasAccess = await verifyRoomAccess(roomId, request.user.userId);
-    
+
     if (!hasAccess) {
       return NextResponse.json(
         { message: 'Access denied to this chat room' },
@@ -46,9 +48,9 @@ async function handleGet(
 
     return NextResponse.json(messages);
   } catch (error) {
-    console.error('Error in GET /api/chats/rooms/[roomId]/messages:', error);
+    console.error('Error fetching messages:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Failed to fetch messages' },
       { status: 500 }
     );
   }
@@ -56,14 +58,13 @@ async function handleGet(
 
 async function handlePost(
   request: AuthenticatedRequest,
-  context: { params: Record<string, string> }
+  { params }: { params: { roomId: string } }
 ) {
-  const { params } = context;
   const { roomId } = params;
 
   try {
     const hasAccess = await verifyRoomAccess(roomId, request.user.userId);
-    
+
     if (!hasAccess) {
       return NextResponse.json(
         { message: 'Access denied to this chat room' },
@@ -72,28 +73,33 @@ async function handlePost(
     }
 
     const body = await request.json();
-    const content = body.content as string;
+    const { content } = body;
 
-    if (!content || typeof content !== 'string') {
+    if (!content) {
       return NextResponse.json(
         { message: 'Message content is required' },
         { status: 400 }
       );
     }
 
-    const newMessage = await createMessage(content, roomId, request.user.userId);
-    return NextResponse.json(newMessage);
+    const message = await createMessage(
+      content,
+      roomId,
+      request.user.userId
+    );
+
+    return NextResponse.json(message);
   } catch (error) {
-    console.error('Error in POST /api/chats/rooms/[roomId]/messages:', error);
+    console.error('Error creating message:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Failed to create message' },
       { status: 500 }
     );
   }
 }
 
-export const GET = (request: NextRequest, context: { params: Record<string, string> }) =>
-  withAuth(request, (req: NextRequest) => handleGet(req as AuthenticatedRequest, context));
+export const GET = (request: NextRequest, context: { params: { roomId: string } }) =>
+  withAuth(request, (req: AuthenticatedRequest) => handleGet(req, context));
 
-export const POST = (request: NextRequest, context: { params: Record<string, string> }) =>
-  withAuth(request, (req: NextRequest) => handlePost(req as AuthenticatedRequest, context));
+export const POST = (request: NextRequest, context: { params: { roomId: string } }) =>
+  withAuth(request, (req: AuthenticatedRequest) => handlePost(req, context));

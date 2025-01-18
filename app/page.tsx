@@ -29,14 +29,17 @@ export default function LandingPage() {
               Your Safety Companion in Every Journey
             </h1>
             <p className="text-xl text-gray-600 mb-8">
-              Disco helps you stay connected with loved ones and ensures your safety, no matter where life takes you.
+              Disco helps you stay connected with loved ones and ensures your
+              safety, no matter where life takes you.
             </p>
             <div className="flex gap-4 justify-center">
               <Link href="/signup">
                 <Button size="lg">Start Your Free Trial</Button>
               </Link>
               <Link href="#features">
-                <Button variant="outline" size="lg">Learn More</Button>
+                <Button variant="outline" size="lg">
+                  Learn More
+                </Button>
               </Link>
             </div>
           </div>
@@ -46,7 +49,9 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-20 bg-white">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose Disco?</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">
+            Why Choose Disco?
+          </h2>
           <div className="grid md:grid-cols-3 gap-8">
             <FeatureCard
               title="Real-time Location Sharing"
@@ -93,25 +98,43 @@ export default function LandingPage() {
             <div>
               <h3 className="font-bold mb-4">Product</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="#features">Features</Link></li>
-                <li><Link href="/pricing">Pricing</Link></li>
-                <li><Link href="/security">Security</Link></li>
+                <li>
+                  <Link href="#features">Features</Link>
+                </li>
+                <li>
+                  <Link href="/pricing">Pricing</Link>
+                </li>
+                <li>
+                  <Link href="/security">Security</Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-bold mb-4">Company</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/about">About Us</Link></li>
-                <li><Link href="/blog">Blog</Link></li>
-                <li><Link href="/careers">Careers</Link></li>
+                <li>
+                  <Link href="/about">About Us</Link>
+                </li>
+                <li>
+                  <Link href="/blog">Blog</Link>
+                </li>
+                <li>
+                  <Link href="/careers">Careers</Link>
+                </li>
               </ul>
             </div>
             <div>
               <h3 className="font-bold mb-4">Legal</h3>
               <ul className="space-y-2 text-gray-400">
-                <li><Link href="/privacy">Privacy Policy</Link></li>
-                <li><Link href="/terms">Terms of Service</Link></li>
-                <li><Link href="/contact">Contact Us</Link></li>
+                <li>
+                  <Link href="/privacy">Privacy Policy</Link>
+                </li>
+                <li>
+                  <Link href="/terms">Terms of Service</Link>
+                </li>
+                <li>
+                  <Link href="/contact">Contact Us</Link>
+                </li>
               </ul>
             </div>
           </div>
@@ -124,7 +147,15 @@ export default function LandingPage() {
   );
 }
 
-function FeatureCard({ title, description, icon }: { title: string; description: string; icon: string }) {
+function FeatureCard({
+  title,
+  description,
+  icon,
+}: {
+  title: string;
+  description: string;
+  icon: string;
+}) {
   return (
     <div className="p-6 rounded-lg bg-gray-50 hover:bg-sky-50 transition-colors">
       <div className="text-4xl mb-4">{icon}</div>
