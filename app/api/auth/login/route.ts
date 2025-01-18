@@ -46,10 +46,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const { password: _, ...userWithoutPassword } = user;
     const token = await generateToken({
-      userId: user.id,
+      id: user.id,
       email: user.email,
-      firstName: user.firstName,
-      role: user.role,
     });
 
     return NextResponse.json({
