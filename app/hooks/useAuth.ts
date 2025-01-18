@@ -16,7 +16,10 @@ type AuthStore = {
   logout: () => void;
 };
 
-async function loginImpl(email: string, password: string): Promise<LoginResult> {
+async function loginImpl(
+  email: string,
+  password: string
+): Promise<LoginResult> {
   const response = await fetch('/api/auth/login', {
     method: 'POST',
     headers: {
@@ -53,7 +56,7 @@ function logoutImpl(): void {
   localStorage.removeItem('token');
 }
 
-export const useAuth = create<AuthStore>((set) => ({
+export const useAuth = create<AuthStore>(set => ({
   user: null,
   isLoading: false,
   login: async (email: string, password: string) => {
@@ -66,7 +69,10 @@ export const useAuth = create<AuthStore>((set) => ({
       return result;
     } catch (error) {
       return {
-        error: error instanceof Error ? error.message : 'An error occurred during login',
+        error:
+          error instanceof Error
+            ? error.message
+            : 'An error occurred during login',
       };
     } finally {
       set({ isLoading: false });

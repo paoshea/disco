@@ -30,7 +30,7 @@ export async function isRateLimited(
   // Record this attempt
   const id = crypto.randomUUID();
   const now = new Date();
-  
+
   await db.$executeRaw`
     INSERT INTO "RateLimitAttempt" (id, identifier, action, user_id, created_at)
     VALUES (${id}, ${identifier}, ${action}, ${userId || null}, ${now})

@@ -1,42 +1,35 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { verifyPassword, generateJWT, generateToken } from '@/lib/auth';
+import { generateToken } from '@/lib/auth';
 import type { JWTPayload } from '@/lib/auth';
 import { isRateLimited } from '@/lib/rateLimit';
+import { z } from 'zod';
 
-interface LoginRequest {
-  email: string;
-  password: string;
-}
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
 
-interface UserData {
-  id: string;
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-  emailVerified: boolean;
-  lastStreak: Date | null;
-  streakCount: number;
-}
-
-const REFRESH_TOKEN_EXPIRY = 7 * 24 * 60 * 60 * 1000; // 7 days
+type LoginRequest = z.infer<typeof loginSchema>;
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = (await request.json()) as LoginRequest;
+    const body = await request.json();
+    const result = loginSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { error: 'Invalid email or password format' },
         { status: 400 }
       );
     }
 
-    // Check rate limiting
-    const rateLimited = await isRateLimited(email, 'login');
-    if (rateLimited) {
+    const { email, password } = result.data;
+    
+    // Check rate limiting with validated email
+    const limiter = await isRateLimited(email, 'login');
+    if (limiter) {
       return NextResponse.json(
         { error: 'Too many login attempts. Please try again later.' },
         { status: 429 }
@@ -44,7 +37,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Find user
-    const users = await db.$queryRaw<UserData[]>`
+    const users = await db.$queryRaw<Array<{
+      id: string;
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+      emailVerified: boolean;
+      lastStreak: Date | null;
+      streakCount: number;
+    }>>`
       SELECT 
         id, 
         email, 
@@ -55,7 +57,7 @@ export async function POST(request: NextRequest) {
         "lastStreak",
         "streakCount"
       FROM "User"
-      WHERE email = ${email}
+      WHERE email = ${email.toLowerCase()}
       LIMIT 1
     `;
 
@@ -67,81 +69,59 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check password
-    const validPassword = await verifyPassword(password, user.password);
-    if (!validPassword) {
-      return NextResponse.json(
-        { error: 'Invalid email or password' },
-        { status: 401 }
-      );
-    }
-
     if (!user.emailVerified) {
       return NextResponse.json(
-        { needsVerification: true },
-        { status: 401 }
+        { error: 'Please verify your email before logging in', needsVerification: true },
+        { status: 403 }
       );
     }
 
-    // Generate tokens
-    const jwtPayload: JWTPayload = {
+    // Generate JWT token with only the required fields
+    const token = await generateToken({
       userId: user.id,
       email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-    };
-    const token = generateJWT(jwtPayload);
+      role: 'user',
+      firstName: user.firstName
+    });
 
-    const refreshToken = generateToken();
-    const refreshTokenExpiresAt = new Date(Date.now() + REFRESH_TOKEN_EXPIRY);
-
-    // Calculate streak
     const now = new Date();
-    const lastStreak = user.lastStreak ? new Date(user.lastStreak) : null;
-    const streakCount = lastStreak && 
-      now.getTime() - lastStreak.getTime() < 48 * 60 * 60 * 1000 ? // Within 48 hours
-      user.streakCount + 1 : 1;
+    const refreshTokenExpiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days
 
     // Update user's refresh token and last login
     await db.$executeRaw`
       UPDATE "User"
       SET 
-        "refreshToken" = ${refreshToken},
-        "refreshTokenExpiresAt" = ${refreshTokenExpiresAt},
         "lastLogin" = ${now},
         "lastStreak" = ${now},
-        "streakCount" = ${streakCount}
+        "streakCount" = ${user.streakCount + 1}
       WHERE id = ${user.id}
     `;
 
     // Create response with cookie
     const response = NextResponse.json({
-      token,
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        streakCount,
+        streakCount: user.streakCount + 1,
       },
     });
 
-    // Set cookie on response
-    response.cookies.set({
-      name: 'refreshToken',
-      value: refreshToken,
+    // Set secure HTTP-only cookie
+    response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/',
-      expires: refreshTokenExpiresAt,
     });
 
     return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Error during login' },
+      { error: 'An error occurred during login' },
       { status: 500 }
     );
   }

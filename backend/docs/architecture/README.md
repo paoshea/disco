@@ -7,6 +7,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ## Technology Stack
 
 ### Frontend
+
 - **Framework**: Next.js 14 (React)
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS
@@ -15,6 +16,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 - **Notifications**: React Toastify
 
 ### Backend
+
 - **Runtime**: Node.js
 - **Framework**: Express
 - **Database**: PostgreSQL, MongoDB
@@ -48,12 +50,14 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ## Core Services
 
 ### API Gateway
+
 - Routes requests to appropriate services
 - Handles authentication and rate limiting
 - Manages WebSocket connections
 - Technologies: Node.js, Express, Redis
 
 ### Auth Service
+
 - User authentication and authorization
 - JWT token generation and verification
 - Password hashing using bcrypt
@@ -63,6 +67,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 - Technologies: Node.js, PostgreSQL, Redis
 
 ### Safety Service
+
 - Emergency alert management
 - Location tracking
 - Safety check-ins
@@ -71,6 +76,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 - Technologies: Node.js, MongoDB, Redis
 
 ### Match Service
+
 - User matching algorithm
 - Location-based search
 - Profile management
@@ -78,6 +84,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 - Technologies: Node.js, PostgreSQL, Elasticsearch
 
 ### User Service
+
 - User profile management
 - Settings and preferences
 - Account management
@@ -85,6 +92,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 - Technologies: Node.js, PostgreSQL
 
 ### Chat Service
+
 - Real-time messaging
 - Message history
 - Media handling
@@ -94,6 +102,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ## Frontend Architecture
 
 ### Component Structure
+
 ```
 /app
 ├── (auth)         # Authentication pages
@@ -104,6 +113,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ```
 
 ### State Management
+
 ```typescript
 // Context providers
 - AuthContext: User authentication state
@@ -112,6 +122,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ```
 
 ### Form Validation
+
 ```typescript
 // Zod schemas for form validation
 - Login/Signup validation
@@ -122,11 +133,13 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ## Data Storage
 
 ### Primary Databases
+
 - PostgreSQL: User data, matches, relationships
 - MongoDB: Messages, alerts, unstructured data
 - Elasticsearch: Location-based search, full-text search
 
 ### Database Schema
+
 ```prisma
 // Key models in prisma/schema.prisma
 - User
@@ -137,28 +150,33 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ```
 
 ### Caching Layer
+
 - Redis: Session data, real-time data, caching
 
 ## Message Queue
 
 ### Event Bus
+
 - RabbitMQ for service-to-service communication
 - Kafka for event streaming and analytics
 
 ## Infrastructure
 
 ### Deployment
+
 - Kubernetes for container orchestration
 - Docker for containerization
 - AWS for cloud infrastructure
 - Vercel for Next.js frontend
 
 ### CI/CD Pipeline
+
 - GitHub Actions for automated testing
 - Automated deployments on merge
 - Environment-based configuration
 
 ### Monitoring
+
 - Prometheus for metrics
 - Grafana for visualization
 - ELK stack for logging
@@ -168,12 +186,14 @@ Disco is built on a modern, scalable microservices architecture designed to hand
 ## Security
 
 ### Authentication
+
 - JWT for API authentication
 - OAuth2 for third-party integration
 - Rate limiting and DDoS protection
 - Two-factor authentication (planned)
 
 ### Data Protection
+
 - End-to-end encryption for messages
 - Data encryption at rest
 - SQL injection prevention via Prisma
@@ -228,6 +248,7 @@ Disco is built on a modern, scalable microservices architecture designed to hand
    - Better global coverage
 
 4. **Data Analytics**
+
    - Enhanced user behavior analysis
    - Improved recommendation system
 

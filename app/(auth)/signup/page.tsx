@@ -59,13 +59,16 @@ export default function SignupPage() {
       };
 
       await signUp(registerData);
-      toast.success('Account created successfully! Please check your email for verification.');
+      toast.success(
+        'Account created successfully! Please check your email for verification.'
+      );
       // Force navigation to chat page
       window.location.href = '/chat';
     } catch (err) {
-      const errorMessage = err instanceof Error
-        ? err.message
-        : 'An error occurred during registration';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'An error occurred during registration';
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -79,7 +82,11 @@ export default function SignupPage() {
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 mb-4">
-              <img src="/images/disco-logo.svg" alt="Disco Logo" className="w-full h-full" />
+              <img
+                src="/images/disco-logo.svg"
+                alt="Disco Logo"
+                className="w-full h-full"
+              />
             </div>
             <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
               Join Disco today
@@ -169,7 +176,9 @@ export default function SignupPage() {
               <div className="rounded-lg bg-red-50 p-4 border border-red-200">
                 <div className="flex">
                   <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">{error}</h3>
+                    <h3 className="text-sm font-medium text-red-800">
+                      {error}
+                    </h3>
                   </div>
                 </div>
               </div>
@@ -181,7 +190,11 @@ export default function SignupPage() {
                 className="w-full bg-gradient-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
                 disabled={isLoading}
               >
-                {isLoading ? <LoadingSpinner className="w-5 h-5" /> : 'Create account'}
+                {isLoading ? (
+                  <LoadingSpinner className="w-5 h-5" />
+                ) : (
+                  'Create account'
+                )}
               </Button>
             </div>
           </form>

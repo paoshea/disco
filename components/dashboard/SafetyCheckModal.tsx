@@ -45,7 +45,11 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="fixed inset-0 z-10 overflow-y-auto" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-10 overflow-y-auto"
+        onClose={onClose}
+      >
         <div className="min-h-screen px-4 text-center">
           <Transition.Child
             as={Fragment}
@@ -59,7 +63,6 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
           </Transition.Child>
 
-          {/* This element is to trick the browser into centering the modal contents. */}
           <span
             className="inline-block h-screen align-middle"
             aria-hidden="true"
@@ -81,9 +84,12 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
                 Schedule Safety Check
               </Dialog.Title>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                 <div>
-                  <label htmlFor="date" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="date"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     <div className="flex items-center space-x-2">
                       <CalendarIcon className="h-5 w-5 text-gray-400" />
                       <span>Date</span>
@@ -94,13 +100,18 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
                     type="date"
                     required
                     value={date}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setDate(e.target.value)
+                    }
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="time" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="time"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     <div className="flex items-center space-x-2">
                       <ClockIcon className="h-5 w-5 text-gray-400" />
                       <span>Time</span>
@@ -111,12 +122,17 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
                     type="time"
                     required
                     value={time}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTime(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setTime(e.target.value)
+                    }
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     <div className="flex items-center space-x-2">
                       <LocationIcon className="h-5 w-5 text-gray-400" />
                       <span>Location</span>
@@ -127,7 +143,9 @@ export function SafetyCheckModal({ isOpen, onClose }: SafetyCheckModalProps) {
                     type="text"
                     required
                     value={location}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setLocation(e.target.value)
+                    }
                     placeholder="Enter location"
                   />
                 </div>

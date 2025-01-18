@@ -3,6 +3,7 @@ import { Dialog, Transition } from '@headlessui/react';
 import { Fragment } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
+import { MatchesIcon } from '@/src/assets/icons';
 
 interface FindMatchesModalProps {
   isOpen: boolean;
@@ -18,7 +19,7 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const response = await fetch('/api/matches/find', {
         method: 'POST',
@@ -44,7 +45,11 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="fixed inset-0 z-10 overflow-y-auto" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-10 overflow-y-auto"
+        onClose={onClose}
+      >
         <div className="min-h-screen px-4 text-center">
           <Transition.Child
             as={Fragment}
@@ -58,7 +63,6 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
           </Transition.Child>
 
-          {/* This element is to trick the browser into centering the modal contents. */}
           <span
             className="inline-block h-screen align-middle"
             aria-hidden="true"
@@ -76,13 +80,19 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
             leaveTo="opacity-0 scale-95"
           >
             <Dialog.Panel className="inline-block w-full max-w-md p-6 my-8 overflow-hidden text-left align-middle transition-all transform bg-white shadow-xl rounded-2xl">
-              <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">
-                Find New Matches
-              </Dialog.Title>
+              <div className="flex items-center space-x-2 mb-4">
+                <MatchesIcon className="h-6 w-6 text-purple-500" />
+                <Dialog.Title className="text-lg font-medium text-gray-900">
+                  Find New Matches
+                </Dialog.Title>
+              </div>
 
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
                 <div>
-                  <label htmlFor="interests" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="interests"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Interests
                   </label>
                   <Input
@@ -90,13 +100,18 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
                     type="text"
                     required
                     value={interests}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInterests(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setInterests(e.target.value)
+                    }
                     placeholder="e.g. hiking, reading, music (comma-separated)"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="location"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Preferred Location
                   </label>
                   <Input
@@ -104,13 +119,18 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
                     type="text"
                     required
                     value={location}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLocation(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setLocation(e.target.value)
+                    }
                     placeholder="Enter city or area"
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="ageRange" className="block text-sm font-medium text-gray-700">
+                  <label
+                    htmlFor="ageRange"
+                    className="block text-sm font-medium text-gray-700"
+                  >
                     Age Range
                   </label>
                   <Input
@@ -118,7 +138,9 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
                     type="text"
                     required
                     value={ageRange}
-                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAgeRange(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                      setAgeRange(e.target.value)
+                    }
                     placeholder="e.g. 25-35"
                   />
                 </div>
@@ -131,8 +153,8 @@ export function FindMatchesModal({ isOpen, onClose }: FindMatchesModalProps) {
                   >
                     Cancel
                   </Button>
-                  <Button 
-                    type="submit" 
+                  <Button
+                    type="submit"
                     className="bg-sky-600 hover:bg-sky-700 text-white"
                     disabled={loading}
                   >

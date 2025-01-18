@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { db } from '@/lib/prisma';
-import { verify } from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+import { prisma } from '@/lib/prisma';
+import { getServerSession } from '@/lib/auth';
 
 interface JWTPayload {
   userId: string;
@@ -14,25 +12,25 @@ interface JWTPayload {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get token from Authorization header
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
+    const session = await getServerSession();
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { message: 'Unauthorized' },
+        { error: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    const token = authHeader.split(' ')[1];
-    const decoded = verify(token, JWT_SECRET) as JWTPayload;
+    const userId = session.user.id;
 
     // Fetch user data with pending safety checks count
-    const userData = await db.$queryRaw<Array<{
-      id: string;
-      streakCount: number;
-      lastLogin: Date | null;
-      pendingChecks: number;
-    }>>`
+    const userData = await prisma.$queryRaw<
+      Array<{
+        id: string;
+        streakCount: number;
+        lastLogin: Date | null;
+        pendingChecks: number;
+      }>
+    >`
       SELECT 
         u.id,
         u."streakCount",
@@ -40,15 +38,12 @@ export async function GET(request: NextRequest) {
         COUNT(sc.id) as "pendingChecks"
       FROM "User" u
       LEFT JOIN "SafetyCheck" sc ON sc."userId" = u.id AND sc.status = 'pending'
-      WHERE u.id = ${decoded.userId}
+      WHERE u.id = ${userId}
       GROUP BY u.id
     `;
 
     if (!userData || userData.length === 0) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const user = userData[0];
@@ -65,20 +60,22 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Dashboard stats error:', error);
     return NextResponse.json(
-      { message: 'Error fetching dashboard stats' },
+      { error: 'Error fetching dashboard stats' },
       { status: 500 }
     );
   }
 }
 
 async function calculateSafetyScore(userId: string): Promise<number> {
-  const data = await db.$queryRaw<Array<{
-    contactCount: number;
-    completedChecks: number;
-    totalChecks: number;
-    hasEmail: boolean;
-    hasName: boolean;
-  }>>`
+  const data = await prisma.$queryRaw<
+    Array<{
+      contactCount: number;
+      completedChecks: number;
+      totalChecks: number;
+      hasEmail: boolean;
+      hasName: boolean;
+    }>
+  >`
     SELECT 
       COUNT(DISTINCT ec.id) as "contactCount",
       COUNT(CASE WHEN sc.status = 'completed' THEN 1 END) as "completedChecks",
@@ -105,9 +102,8 @@ async function calculateSafetyScore(userId: string): Promise<number> {
   // Safety check completion rate (40 points max)
   const completedChecks = Number(stats.completedChecks);
   const totalChecks = Number(stats.totalChecks);
-  const checkScore = totalChecks > 0 
-    ? Math.round((completedChecks / totalChecks) * 40)
-    : 0;
+  const checkScore =
+    totalChecks > 0 ? Math.round((completedChecks / totalChecks) * 40) : 0;
   score += checkScore;
 
   // Profile completion (30 points max)

@@ -8,13 +8,13 @@ import { Logo } from '@/components/ui/Logo';
 import { SafetyCheckModal } from '@/components/dashboard/SafetyCheckModal';
 import { EmergencyContactsModal } from '@/components/dashboard/EmergencyContactsModal';
 import { FindMatchesModal } from '@/components/dashboard/FindMatchesModal';
-import { 
-  SafetyIcon, 
-  ContactsIcon, 
-  MatchesIcon, 
-  StreakIcon, 
-  CalendarIcon, 
-  ClockIcon 
+import {
+  SafetyIcon,
+  ContactsIcon,
+  MatchesIcon,
+  StreakIcon,
+  CalendarIcon,
+  ClockIcon,
 } from '@/src/assets/icons';
 
 interface DashboardStats {
@@ -87,8 +87,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Current Streak</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats?.streakCount || 0} days</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Current Streak
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats?.streakCount || 0} days
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -104,8 +108,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Safety Score</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats?.safetyScore || 0}%</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Safety Score
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats?.safetyScore || 0}%
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -121,8 +129,12 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Pending Check-ins</dt>
-                      <dd className="text-lg font-medium text-gray-900">{stats?.pendingChecks || 0}</dd>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Pending Check-ins
+                      </dt>
+                      <dd className="text-lg font-medium text-gray-900">
+                        {stats?.pendingChecks || 0}
+                      </dd>
                     </dl>
                   </div>
                 </div>
@@ -138,9 +150,13 @@ export default function DashboardPage() {
                   </div>
                   <div className="ml-5 w-0 flex-1">
                     <dl>
-                      <dt className="text-sm font-medium text-gray-500 truncate">Last Login</dt>
+                      <dt className="text-sm font-medium text-gray-500 truncate">
+                        Last Login
+                      </dt>
                       <dd className="text-lg font-medium text-gray-900">
-                        {stats?.lastLogin ? new Date(stats.lastLogin).toLocaleDateString() : 'First time!'}
+                        {stats?.lastLogin
+                          ? new Date(stats.lastLogin).toLocaleDateString()
+                          : 'First time!'}
                       </dd>
                     </dl>
                   </div>
@@ -152,7 +168,9 @@ export default function DashboardPage() {
 
         {/* Quick Actions */}
         <div className="mt-8">
-          <h3 className="text-lg leading-6 font-medium text-gray-900">Quick Actions</h3>
+          <h3 className="text-lg leading-6 font-medium text-gray-900">
+            Quick Actions
+          </h3>
           <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
             <button
               type="button"

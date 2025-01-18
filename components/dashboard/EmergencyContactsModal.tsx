@@ -17,20 +17,30 @@ interface EmergencyContactsModalProps {
   onClose: () => void;
 }
 
-export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsModalProps) {
+export function EmergencyContactsModal({
+  isOpen,
+  onClose,
+}: EmergencyContactsModalProps) {
   const [contacts, setContacts] = useState<Contact[]>([
     { name: '', relationship: '', phone: '', email: '' },
   ]);
 
   const handleAddContact = () => {
-    setContacts([...contacts, { name: '', relationship: '', phone: '', email: '' }]);
+    setContacts([
+      ...contacts,
+      { name: '', relationship: '', phone: '', email: '' },
+    ]);
   };
 
   const handleRemoveContact = (index: number) => {
     setContacts(contacts.filter((_, i) => i !== index));
   };
 
-  const handleContactChange = (index: number, field: keyof Contact, value: string) => {
+  const handleContactChange = (
+    index: number,
+    field: keyof Contact,
+    value: string
+  ) => {
     const newContacts = [...contacts];
     newContacts[index] = { ...newContacts[index], [field]: value };
     setContacts(newContacts);
@@ -57,7 +67,11 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
 
   return (
     <Transition appear show={isOpen} as={Fragment}>
-      <Dialog as="div" className="fixed inset-0 z-10 overflow-y-auto" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="fixed inset-0 z-10 overflow-y-auto"
+        onClose={onClose}
+      >
         <div className="min-h-screen px-4 text-center">
           <Transition.Child
             as={Fragment}
@@ -71,7 +85,6 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
             <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
           </Transition.Child>
 
-          {/* This element is to trick the browser into centering the modal contents. */}
           <span
             className="inline-block h-screen align-middle"
             aria-hidden="true"
@@ -96,16 +109,18 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
                 </Dialog.Title>
               </div>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
                 {contacts.map((contact, index) => (
                   <div key={index} className="p-4 border rounded-lg space-y-4">
                     <div className="flex justify-between items-center">
-                      <h4 className="text-sm font-medium text-gray-700">Contact {index + 1}</h4>
+                      <h4 className="text-sm font-medium text-gray-700">
+                        Contact {index + 1}
+                      </h4>
                       {contacts.length > 1 && (
                         <button
                           type="button"
                           onClick={() => handleRemoveContact(index)}
-                          className="text-red-600 hover:text-red-700 text-sm"
+                          className="text-red-600 hover:text-red-700"
                         >
                           Remove
                         </button>
@@ -114,48 +129,60 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
 
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Name</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Name
+                        </label>
                         <Input
                           type="text"
                           required
                           value={contact.name}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleContactChange(index, 'name', e.target.value)
                           }
                           placeholder="Full name"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Relationship</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Relationship
+                        </label>
                         <Input
                           type="text"
                           required
                           value={contact.relationship}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-                            handleContactChange(index, 'relationship', e.target.value)
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleContactChange(
+                              index,
+                              'relationship',
+                              e.target.value
+                            )
                           }
                           placeholder="e.g. Parent, Sibling, Friend"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Phone</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Phone
+                        </label>
                         <Input
                           type="tel"
                           required
                           value={contact.phone}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleContactChange(index, 'phone', e.target.value)
                           }
                           placeholder="Phone number"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Email
+                        </label>
                         <Input
                           type="email"
                           required
                           value={contact.email}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                             handleContactChange(index, 'email', e.target.value)
                           }
                           placeholder="Email address"
@@ -173,7 +200,7 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
                   Add Another Contact
                 </Button>
 
-                <div className="flex justify-end space-x-3">
+                <div className="mt-6 flex justify-end space-x-3">
                   <Button
                     type="button"
                     onClick={onClose}
@@ -181,7 +208,10 @@ export function EmergencyContactsModal({ isOpen, onClose }: EmergencyContactsMod
                   >
                     Cancel
                   </Button>
-                  <Button type="submit" className="bg-sky-600 hover:bg-sky-700 text-white">
+                  <Button
+                    type="submit"
+                    className="bg-sky-600 hover:bg-sky-700 text-white"
+                  >
                     Save Changes
                   </Button>
                 </div>

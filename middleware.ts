@@ -29,21 +29,19 @@ export async function middleware(request: NextRequest) {
   }
 
   // Apply rate limiting to all routes
-  const clientIp = request.headers.get('x-forwarded-for') || 
-                  request.headers.get('x-real-ip') || 
-                  'unknown';
-                  
+  const clientIp =
+    request.headers.get('x-forwarded-for') ||
+    request.headers.get('x-real-ip') ||
+    'unknown';
+
   const rateLimitKey = `ratelimit:${clientIp}:${pathname}`;
-  
+
   // Get rate limit data from KV store or similar
   // This is a placeholder - implement your preferred rate limiting solution
   const rateLimitData = request.headers.get(rateLimitKey);
   if (rateLimitData) {
     const { count, timestamp } = JSON.parse(rateLimitData);
-    if (
-      Date.now() - timestamp < RATE_LIMIT.window &&
-      count >= RATE_LIMIT.max
-    ) {
+    if (Date.now() - timestamp < RATE_LIMIT.window && count >= RATE_LIMIT.max) {
       return new NextResponse('Too Many Requests', { status: 429 });
     }
   }
@@ -69,13 +67,16 @@ export async function middleware(request: NextRequest) {
       if (refreshToken) {
         try {
           // Call refresh token endpoint
-          const response = await fetch(new URL('/api/auth/refresh', request.url), {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ refreshToken }),
-          });
+          const response = await fetch(
+            new URL('/api/auth/refresh', request.url),
+            {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ refreshToken }),
+            }
+          );
 
           if (!response.ok) {
             throw new Error('Failed to refresh token');
@@ -117,7 +118,7 @@ export async function middleware(request: NextRequest) {
     try {
       // Verify the token
       const decoded = verifyJWT(accessToken);
-      
+
       // Add user info to request headers
       const headers = new Headers(request.headers);
       headers.set('X-User-Id', decoded.userId);
