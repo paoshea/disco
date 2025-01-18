@@ -1,5 +1,8 @@
 import { transporter } from './transporter';
-import { getPasswordResetEmailTemplate, getVerificationEmailTemplate } from './templates';
+import {
+  getPasswordResetEmailTemplate,
+  getVerificationEmailTemplate,
+} from './templates';
 
 const FROM_EMAIL = process.env.EMAIL_FROM || 'noreply@disco.com';
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL;
@@ -15,7 +18,10 @@ const getBaseUrl = () => {
   return APP_URL;
 };
 
-export async function sendPasswordResetEmail(email: string, token: string): Promise<void> {
+export async function sendPasswordResetEmail(
+  email: string,
+  token: string
+): Promise<void> {
   const resetUrl = `${getBaseUrl()}/reset-password?token=${token}`;
   const template = getPasswordResetEmailTemplate(resetUrl);
 
@@ -28,7 +34,10 @@ export async function sendPasswordResetEmail(email: string, token: string): Prom
   });
 }
 
-export async function sendVerificationEmail(email: string, token: string): Promise<void> {
+export async function sendVerificationEmail(
+  email: string,
+  token: string
+): Promise<void> {
   const verifyUrl = `${getBaseUrl()}/verify-email?token=${token}`;
   const template = getVerificationEmailTemplate(verifyUrl);
 

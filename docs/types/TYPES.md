@@ -37,7 +37,9 @@ When making API calls, always wrap the expected response type in this structure:
 
 ```typescript
 // Example API call
-const response = await apiClient.get<{ data: { matches: Match[] } }>('/matches');
+const response = await apiClient.get<{ data: { matches: Match[] } }>(
+  '/matches'
+);
 return response.data.data.matches;
 ```
 

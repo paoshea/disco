@@ -14,18 +14,21 @@ const requestResetSchema = z.object({
   email: z.string().email('Invalid email address'),
 });
 
-const resetPasswordSchema = z.object({
-  password: z.string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
-  confirmPassword: z.string(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const resetPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      ),
+    confirmPassword: z.string(),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type RequestResetFormData = z.infer<typeof requestResetSchema>;
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
@@ -57,7 +60,9 @@ export default function ResetPasswordPage() {
       setSuccess('Password reset instructions have been sent to your email.');
       requestResetForm.reset();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to request password reset');
+      setError(
+        err instanceof Error ? err.message : 'Failed to request password reset'
+      );
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +101,10 @@ export default function ResetPasswordPage() {
           </div>
 
           {!token ? (
-            <form onSubmit={requestResetForm.handleSubmit(handleRequestReset)} className="mt-8 space-y-6">
+            <form
+              onSubmit={requestResetForm.handleSubmit(handleRequestReset)}
+              className="mt-8 space-y-6"
+            >
               <div>
                 <Input
                   id="email"
@@ -109,8 +117,14 @@ export default function ResetPasswordPage() {
                 />
               </div>
 
-              {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-              {success && <div className="text-green-500 text-sm text-center">{success}</div>}
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
+              {success && (
+                <div className="text-green-500 text-sm text-center">
+                  {success}
+                </div>
+              )}
 
               <div>
                 <Button
@@ -123,7 +137,10 @@ export default function ResetPasswordPage() {
               </div>
             </form>
           ) : (
-            <form onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)} className="mt-8 space-y-6">
+            <form
+              onSubmit={resetPasswordForm.handleSubmit(handleResetPassword)}
+              className="mt-8 space-y-6"
+            >
               <div className="space-y-4">
                 <Input
                   id="password"
@@ -138,13 +155,21 @@ export default function ResetPasswordPage() {
                   type="password"
                   required
                   placeholder="Confirm new password"
-                  error={resetPasswordForm.formState.errors.confirmPassword?.message}
+                  error={
+                    resetPasswordForm.formState.errors.confirmPassword?.message
+                  }
                   {...resetPasswordForm.register('confirmPassword')}
                 />
               </div>
 
-              {error && <div className="text-red-500 text-sm text-center">{error}</div>}
-              {success && <div className="text-green-500 text-sm text-center">{success}</div>}
+              {error && (
+                <div className="text-red-500 text-sm text-center">{error}</div>
+              )}
+              {success && (
+                <div className="text-green-500 text-sm text-center">
+                  {success}
+                </div>
+              )}
 
               <div>
                 <Button

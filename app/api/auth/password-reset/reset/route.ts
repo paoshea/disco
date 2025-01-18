@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/prisma';
 import { hashPassword } from '@/lib/auth';
 
 const resetSchema = z.object({
@@ -14,7 +14,7 @@ export async function POST(request: Request) {
     const { token, password } = resetSchema.parse(body);
 
     // Find valid reset token
-    const resetToken = await prisma.passwordReset.findFirst({
+    const resetToken = await db.passwordReset.findFirst({
       where: {
         token,
         used: false,
@@ -38,12 +38,12 @@ export async function POST(request: Request) {
     const hashedPassword = await hashPassword(password);
 
     // Update user password and mark token as used
-    await prisma.$transaction([
-      prisma.user.update({
+    await db.$transaction([
+      db.user.update({
         where: { id: resetToken.userId },
         data: { password: hashedPassword },
       }),
-      prisma.passwordReset.update({
+      db.passwordReset.update({
         where: { id: resetToken.id },
         data: { used: true },
       }),

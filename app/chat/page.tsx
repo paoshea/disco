@@ -8,7 +8,11 @@ import type { ChatRoom, Message } from '@/types/chat';
 import { chatService } from '@/services/api/chat.service';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAuth } from '@/hooks/useAuth';
-import { WebSocketEventType, WebSocketMessage, WebSocketPayload } from '@/types/websocket';
+import {
+  WebSocketEventType,
+  WebSocketMessage,
+  WebSocketPayload,
+} from '@/types/websocket';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
@@ -31,7 +35,11 @@ export default function ChatPage() {
       }
     } catch (err) {
       console.error('Error fetching chats:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while fetching chats');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while fetching chats'
+      );
     } finally {
       setLoading(false);
     }
@@ -72,12 +80,17 @@ export default function ChatPage() {
     if (!activeChat || !user?.id) return;
 
     try {
-      const message = await chatService.sendMessage(activeChat.matchId, content);
+      const message = await chatService.sendMessage(
+        activeChat.matchId,
+        content
+      );
 
       // Update the last message in the chat list
       setChats(prevChats =>
         prevChats.map(chat =>
-          chat.matchId === activeChat.matchId ? { ...chat, lastMessage: message } : chat
+          chat.matchId === activeChat.matchId
+            ? { ...chat, lastMessage: message }
+            : chat
         )
       );
 
@@ -89,7 +102,11 @@ export default function ChatPage() {
       });
     } catch (err) {
       console.error('Error sending message:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred while sending the message');
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'An error occurred while sending the message'
+      );
     }
   };
 

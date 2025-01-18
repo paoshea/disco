@@ -23,16 +23,13 @@ const MOCK_USERS: Record<string, User> = {
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization');
-    
+
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const token = authHeader.split(' ')[1];
-    
+
     // In production, you would:
     // 1. Verify the JWT token
     // 2. Get user data from database
@@ -40,10 +37,7 @@ export async function GET(request: NextRequest) {
     const user = MOCK_USERS[decoded.userId];
 
     if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({ user });

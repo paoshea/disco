@@ -41,7 +41,9 @@ export default function LoginPage() {
       await login(data.email, data.password);
       router.push('/chat');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred during login');
+      setError(
+        err instanceof Error ? err.message : 'An error occurred during login'
+      );
     } finally {
       setIsLoading(false);
     }

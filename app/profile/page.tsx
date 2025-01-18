@@ -54,7 +54,9 @@ export default function ProfilePage() {
       setProfileData(data);
     } catch (err) {
       console.error('Error loading profile:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load profile data');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load profile data'
+      );
     } finally {
       setIsLoading(false);
     }

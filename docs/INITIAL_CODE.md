@@ -993,8 +993,13 @@ export const userService = {
     return data;
   },
 
-  async updatePreferences(preferences: Partial<UserPreferences>): Promise<User> {
-    const { data } = await apiClient.patch<User>('/users/preferences', preferences);
+  async updatePreferences(
+    preferences: Partial<UserPreferences>
+  ): Promise<User> {
+    const { data } = await apiClient.patch<User>(
+      '/users/preferences',
+      preferences
+    );
     return data;
   },
 
@@ -1076,7 +1081,8 @@ export const store = configureStore({
     user: userReducer,
     matches: matchReducer,
   },
-  middleware: getDefaultMiddleware => getDefaultMiddleware().concat(locationMiddleware),
+  middleware: getDefaultMiddleware =>
+    getDefaultMiddleware().concat(locationMiddleware),
 });
 
 export type RootState = ReturnType<typeof store.getState>;
@@ -1102,9 +1108,12 @@ const initialState: UserState = {
   error: null,
 };
 
-export const fetchCurrentUser = createAsyncThunk('user/fetchCurrent', async () => {
-  return await userService.getCurrentUser();
-});
+export const fetchCurrentUser = createAsyncThunk(
+  'user/fetchCurrent',
+  async () => {
+    return await userService.getCurrentUser();
+  }
+);
 
 export const userSlice = createSlice({
   name: 'user',
@@ -2091,7 +2100,10 @@ export const calculateDistance = (
   const dLon = toRad(lon2 - lon1);
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
@@ -2509,8 +2521,13 @@ import { apiClient } from '../api/client';
 import { EmergencyContact, EmergencyAlert } from '@/types/safety';
 
 export class SafetyService {
-  async addEmergencyContact(contact: Omit<EmergencyContact, 'id'>): Promise<EmergencyContact> {
-    const { data } = await apiClient.post<EmergencyContact>('/safety/contacts', contact);
+  async addEmergencyContact(
+    contact: Omit<EmergencyContact, 'id'>
+  ): Promise<EmergencyContact> {
+    const { data } = await apiClient.post<EmergencyContact>(
+      '/safety/contacts',
+      contact
+    );
     return data;
   }
 
@@ -2518,16 +2535,22 @@ export class SafetyService {
     await apiClient.delete(`/safety/contacts/${contactId}`);
   }
 
-  async triggerEmergencyAlert(alert: Omit<EmergencyAlert, 'id'>): Promise<void> {
+  async triggerEmergencyAlert(
+    alert: Omit<EmergencyAlert, 'id'>
+  ): Promise<void> {
     await apiClient.post('/safety/emergency', alert);
   }
 
   async getEmergencyContacts(): Promise<EmergencyContact[]> {
-    const { data } = await apiClient.get<EmergencyContact[]>('/safety/contacts');
+    const { data } =
+      await apiClient.get<EmergencyContact[]>('/safety/contacts');
     return data;
   }
 
-  async updateMeetingSafety(meetingId: string, status: 'safe' | 'unsafe'): Promise<void> {
+  async updateMeetingSafety(
+    meetingId: string,
+    status: 'safe' | 'unsafe'
+  ): Promise<void> {
     await apiClient.post(`/safety/meetings/${meetingId}/status`, { status });
   }
 
@@ -2886,7 +2909,10 @@ export const useSafetyChecks = (meetingId: string) => {
 
   const scheduleCheck = async (checkTime: Date) => {
     try {
-      const newCheck = await safetyService.scheduleSafetyCheck(meetingId, checkTime);
+      const newCheck = await safetyService.scheduleSafetyCheck(
+        meetingId,
+        checkTime
+      );
       setChecks([...checks, newCheck]);
       return newCheck;
     } catch (error) {
@@ -2895,7 +2921,11 @@ export const useSafetyChecks = (meetingId: string) => {
     }
   };
 
-  const respondToCheck = async (checkId: string, response: 'safe' | 'unsafe', notes?: string) => {
+  const respondToCheck = async (
+    checkId: string,
+    response: 'safe' | 'unsafe',
+    notes?: string
+  ) => {
     try {
       const updatedCheck = await safetyService.submitSafetyCheck({
         id: checkId,
@@ -2907,7 +2937,9 @@ export const useSafetyChecks = (meetingId: string) => {
         scheduledTime: new Date(),
       });
 
-      setChecks(checks.map(check => (check.id === checkId ? updatedCheck : check)));
+      setChecks(
+        checks.map(check => (check.id === checkId ? updatedCheck : check))
+      );
 
       return updatedCheck;
     } catch (error) {

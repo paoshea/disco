@@ -46,14 +46,19 @@ export async function POST(request: NextRequest) {
     // 1. Hash the password before storing
     // 2. Use a proper JWT library
     // 3. Store user data in a database
-    const token = Buffer.from(JSON.stringify({ userId: newUser.id, email })).toString('base64');
+    const token = Buffer.from(
+      JSON.stringify({ userId: newUser.id, email })
+    ).toString('base64');
 
     const { password: _, ...userWithoutPassword } = newUser;
-    
-    return NextResponse.json({
-      user: userWithoutPassword,
-      token,
-    }, { status: 201 });
+
+    return NextResponse.json(
+      {
+        user: userWithoutPassword,
+        token,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error('Registration error:', error);
     return NextResponse.json(

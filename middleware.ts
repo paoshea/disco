@@ -14,7 +14,10 @@ export function middleware(request: NextRequest) {
   }
 
   // Check for API routes
-  if (pathname.startsWith('/api/auth') && !pathname.startsWith('/api/auth/me')) {
+  if (
+    pathname.startsWith('/api/auth') &&
+    !pathname.startsWith('/api/auth/me')
+  ) {
     return NextResponse.next();
   }
 

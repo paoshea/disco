@@ -51,7 +51,9 @@ export default function Safety() {
       } catch (err) {
         console.error('Error initializing safety page:', err);
         setError(
-          err instanceof Error ? err.message : 'An error occurred while loading the safety page.'
+          err instanceof Error
+            ? err.message
+            : 'An error occurred while loading the safety page.'
         );
       } finally {
         setIsLoading(false);
@@ -66,7 +68,9 @@ export default function Safety() {
     const dismissResolvedAlerts = async () => {
       try {
         // Since id is required in SafetyAlertNew interface, we can be sure it exists
-        const resolvedAlerts = alerts.filter(alert => alert.status === 'resolved');
+        const resolvedAlerts = alerts.filter(
+          alert => alert.status === 'resolved'
+        );
         await Promise.all(resolvedAlerts.map(alert => dismissAlert(alert.id)));
       } catch (err) {
         console.error('Error dismissing resolved alerts:', err);
@@ -109,7 +113,11 @@ export default function Safety() {
         });
       } catch (err) {
         console.error('Error updating safety settings:', err);
-        setError(err instanceof Error ? err.message : 'Failed to update safety settings');
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Failed to update safety settings'
+        );
       }
     })();
   };
@@ -127,10 +135,16 @@ export default function Safety() {
           createdAt: contact.createdAt || new Date().toISOString(),
           updatedAt: contact.updatedAt || new Date().toISOString(),
         };
-        await safetyService.updateEmergencyContact(user.id, contact.id, safetyContact);
+        await safetyService.updateEmergencyContact(
+          user.id,
+          contact.id,
+          safetyContact
+        );
       } catch (err) {
         console.error('Error updating contact:', err);
-        setError(err instanceof Error ? err.message : 'Failed to update contact');
+        setError(
+          err instanceof Error ? err.message : 'Failed to update contact'
+        );
       }
     })();
   };
@@ -141,7 +155,9 @@ export default function Safety() {
         await safetyService.deleteEmergencyContact(user.id, contactId);
       } catch (err) {
         console.error('Error deleting contact:', err);
-        setError(err instanceof Error ? err.message : 'Failed to delete contact');
+        setError(
+          err instanceof Error ? err.message : 'Failed to delete contact'
+        );
       }
     })();
   };
@@ -152,7 +168,9 @@ export default function Safety() {
         await resolveSafetyCheck(checkId, 'safe');
       } catch (err) {
         console.error('Error completing safety check:', err);
-        setError(err instanceof Error ? err.message : 'Failed to complete safety check');
+        setError(
+          err instanceof Error ? err.message : 'Failed to complete safety check'
+        );
       }
     })();
   };
@@ -163,7 +181,11 @@ export default function Safety() {
     userId: check.userId,
     type: check.type || 'custom',
     status:
-      check.status === 'completed' ? 'completed' : check.status === 'missed' ? 'missed' : 'pending',
+      check.status === 'completed'
+        ? 'completed'
+        : check.status === 'missed'
+          ? 'missed'
+          : 'pending',
     scheduledFor: check.scheduledFor,
     location: check.location,
     description: check.description,
@@ -190,7 +212,9 @@ export default function Safety() {
           )}
         </div>
 
-        {error && <Alert type="error" title="Error" message={error} className="mb-6" />}
+        {error && (
+          <Alert type="error" title="Error" message={error} className="mb-6" />
+        )}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
@@ -236,7 +260,10 @@ export default function Safety() {
           </Tab.List>
           <Tab.Panels className="mt-6">
             <Tab.Panel>
-              <SafetyCenter userId={user.id} onSettingsChange={wrappedSettingsChange} />
+              <SafetyCenter
+                userId={user.id}
+                onSettingsChange={wrappedSettingsChange}
+              />
             </Tab.Panel>
             <Tab.Panel>
               <EmergencyContactList
@@ -246,7 +273,10 @@ export default function Safety() {
               />
             </Tab.Panel>
             <Tab.Panel>
-              <SafetyCheckList checks={typedSafetyChecks} onComplete={wrappedCompleteCheck} />
+              <SafetyCheckList
+                checks={typedSafetyChecks}
+                onComplete={wrappedCompleteCheck}
+              />
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
