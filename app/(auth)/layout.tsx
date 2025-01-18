@@ -28,9 +28,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       {/* Right side - Image */}
       <div className="hidden lg:block lg:w-1/2">
         <div
-          className="h-full bg-cover bg-center"
+          className="flex flex-col justify-center min-h-screen bg-gray-100"
           style={{
+            backgroundColor: '#f3f4f6', // Fallback color
             backgroundImage: 'url("/auth-background.jpg")',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
           }}
         />
       </div>

@@ -10,7 +10,7 @@ import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import Image from 'next/image';
+import { Logo } from '@/components/ui/Logo';
 import { useState } from 'react';
 
 const signupSchema = z
@@ -78,29 +78,21 @@ export default function SignupPage() {
     <Layout>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 mb-4">
-              <Image
-                src="/images/disco-logo.svg"
-                alt="Disco Logo"
-                width={96}
-                height={96}
-                className="w-full h-full"
-              />
-            </div>
-            <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
-              Join Disco today
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Or{' '}
-              <Link
-                href="/login"
-                className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
-              >
-                sign in to your existing account
-              </Link>
-            </p>
+          <div className="flex flex-col items-center mb-8">
+            <Logo />
           </div>
+          <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
+            Join Disco today
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Or{' '}
+            <Link
+              href="/login"
+              className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
+            >
+              sign in to your existing account
+            </Link>
+          </p>
 
           <form
             onSubmit={e => {

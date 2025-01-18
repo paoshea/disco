@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import Image from 'next/image';
+import { Logo } from '@/components/ui/Logo';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -100,30 +100,21 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center">
-            <div className="w-24 h-24 mb-4">
-              <Image
-                src="/images/disco-logo.svg"
-                alt="Disco Logo"
-                width={96}
-                height={96}
-                priority
-                className="w-full h-full"
-              />
-            </div>
-            <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
-              Welcome back!
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Don&apos;t have an account?{' '}
-              <Link
-                href="/signup"
-                className="font-medium text-sky-600 hover:text-sky-500"
-              >
-                Sign up
-              </Link>
-            </p>
+          <div className="flex flex-col items-center mb-8">
+            <Logo />
           </div>
+          <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
+            Welcome back!
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Don&apos;t have an account?{' '}
+            <Link
+              href="/signup"
+              className="font-medium text-sky-600 hover:text-sky-500"
+            >
+              Sign up
+            </Link>
+          </p>
 
           <form
             onSubmit={void handleSubmit(onSubmit)}
