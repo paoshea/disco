@@ -40,15 +40,11 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<SignupFormData>({
+  const signupForm = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
   });
 
-  const onSubmit = async (data: SignupFormData) => {
+  const handleSignup = async (data: SignupFormData) => {
     setIsLoading(true);
     setError(null);
 
@@ -92,7 +88,12 @@ export default function SignupPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              void signupForm.handleSubmit(handleSignup)(e);
+            }}
+          >
             <div className="rounded-md shadow-sm -space-y-px">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -101,8 +102,8 @@ export default function SignupPage() {
                     type="text"
                     required
                     placeholder="First name"
-                    error={errors.firstName?.message}
-                    {...register('firstName')}
+                    error={signupForm.formState.errors.firstName?.message}
+                    {...signupForm.register('firstName')}
                   />
                 </div>
                 <div>
@@ -111,8 +112,8 @@ export default function SignupPage() {
                     type="text"
                     required
                     placeholder="Last name"
-                    error={errors.lastName?.message}
-                    {...register('lastName')}
+                    error={signupForm.formState.errors.lastName?.message}
+                    {...signupForm.register('lastName')}
                   />
                 </div>
               </div>
@@ -123,8 +124,8 @@ export default function SignupPage() {
                   autoComplete="email"
                   required
                   placeholder="Email address"
-                  error={errors.email?.message}
-                  {...register('email')}
+                  error={signupForm.formState.errors.email?.message}
+                  {...signupForm.register('email')}
                 />
               </div>
               <div>
@@ -134,8 +135,8 @@ export default function SignupPage() {
                   autoComplete="new-password"
                   required
                   placeholder="Password"
-                  error={errors.password?.message}
-                  {...register('password')}
+                  error={signupForm.formState.errors.password?.message}
+                  {...signupForm.register('password')}
                 />
               </div>
               <div>
@@ -145,8 +146,8 @@ export default function SignupPage() {
                   autoComplete="new-password"
                   required
                   placeholder="Confirm password"
-                  error={errors.confirmPassword?.message}
-                  {...register('confirmPassword')}
+                  error={signupForm.formState.errors.confirmPassword?.message}
+                  {...signupForm.register('confirmPassword')}
                 />
               </div>
             </div>

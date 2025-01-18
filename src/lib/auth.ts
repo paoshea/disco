@@ -6,7 +6,8 @@ const scryptAsync = promisify(scrypt);
 
 interface JWTPayload {
   userId: string;
-  [key: string]: any;
+  exp?: number;
+  iat?: number;
 }
 
 /**

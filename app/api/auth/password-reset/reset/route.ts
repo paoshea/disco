@@ -10,8 +10,17 @@ const resetSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { token, password } = resetSchema.parse(body);
+    const requestBody = (await request.json()) as {
+      token: string;
+      password: string;
+    };
+    if (!resetSchema.safeParse(requestBody).success) {
+      return NextResponse.json(
+        { message: 'Invalid request data' },
+        { status: 400 }
+      );
+    }
+    const { token, password } = resetSchema.parse(requestBody);
 
     // Find valid reset token
     const resetToken = await db.passwordReset.findFirst({

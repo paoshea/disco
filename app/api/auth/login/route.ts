@@ -1,65 +1,55 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { User } from '@/types/user';
-
-// TODO: Replace with actual database calls
-const MOCK_USERS: Record<string, User & { password: string }> = {
-  'test@example.com': {
-    id: '1',
-    email: 'test@example.com',
-    name: 'Test User',
-    firstName: 'Test',
-    lastName: 'User',
-    password: 'password123', // In production, this would be hashed
-    emailVerified: false,
-    interests: [],
-    status: 'offline',
-    emergencyContacts: [],
-    verificationStatus: 'unverified',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-};
+import { db } from '@/lib/prisma';
+import { verifyPassword, generateJWT } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password } = body;
+    const requestBody = (await request.json()) as {
+      email: string;
+      password: string;
+    };
+    const { email, password } = requestBody;
 
     if (!email || !password) {
       return NextResponse.json(
-        { error: 'Email and password are required' },
+        { message: 'Email and password are required' },
         { status: 400 }
       );
     }
 
-    const user = MOCK_USERS[email];
+    const user = await db.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+      },
+    });
 
-    if (!user || user.password !== password) {
+    if (!user) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { message: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
-    // In production, you would:
-    // 1. Hash the password before comparing
-    // 2. Use a proper JWT library
-    // 3. Store user data in a database
-    const token = Buffer.from(
-      JSON.stringify({ userId: user.id, email: user.email })
-    ).toString('base64');
+    const isValid = await verifyPassword(password, user.password);
 
-    const { password: _, ...userWithoutPassword } = user;
+    if (!isValid) {
+      return NextResponse.json(
+        { message: 'Invalid email or password' },
+        { status: 401 }
+      );
+    }
 
-    return NextResponse.json({
-      user: userWithoutPassword,
-      token,
-    });
+    const token = generateJWT({ userId: user.id });
+
+    return NextResponse.json({ token });
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: 'An error occurred during login' },
       { status: 500 }
     );
   }

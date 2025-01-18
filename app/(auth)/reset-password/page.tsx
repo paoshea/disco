@@ -102,7 +102,9 @@ export default function ResetPasswordPage() {
 
           {!token ? (
             <form
-              onSubmit={() => void requestResetForm.handleSubmit(handleRequestReset)()}
+              onSubmit={() =>
+                void requestResetForm.handleSubmit(handleRequestReset)()
+              }
               className="mt-8 space-y-6"
             >
               <div>
@@ -138,7 +140,9 @@ export default function ResetPasswordPage() {
             </form>
           ) : (
             <form
-              onSubmit={() => void resetPasswordForm.handleSubmit(handleResetPassword)()}
+              onSubmit={() =>
+                void resetPasswordForm.handleSubmit(handleResetPassword)()
+              }
               className="mt-8 space-y-6"
             >
               <div className="space-y-4">

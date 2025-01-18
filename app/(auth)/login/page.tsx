@@ -25,15 +25,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
+  const loginForm = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  const handleLogin = async (data: LoginFormData) => {
     setIsLoading(true);
     setError(null);
 
@@ -68,7 +64,13 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit(onSubmit)}>
+          <form
+            onSubmit={e => {
+              e.preventDefault();
+              void loginForm.handleSubmit(handleLogin)(e);
+            }}
+            className="mt-8 space-y-6"
+          >
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <Input
@@ -77,8 +79,8 @@ export default function LoginPage() {
                   autoComplete="email"
                   required
                   placeholder="Email address"
-                  error={errors.email?.message}
-                  {...register('email')}
+                  error={loginForm.formState.errors.email?.message}
+                  {...loginForm.register('email')}
                 />
               </div>
               <div>
@@ -88,8 +90,8 @@ export default function LoginPage() {
                   autoComplete="current-password"
                   required
                   placeholder="Password"
-                  error={errors.password?.message}
-                  {...register('password')}
+                  error={loginForm.formState.errors.password?.message}
+                  {...loginForm.register('password')}
                 />
               </div>
             </div>

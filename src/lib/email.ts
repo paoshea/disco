@@ -13,6 +13,7 @@ async function sendEmail(options: EmailOptions): Promise<void> {
   // For example, using nodemailer with SMTP:
   // const transporter = nodemailer.createTransport({...});
   await Promise.resolve(); // Placeholder await to satisfy TypeScript
+  console.log('Sending email:', options); // Log the options for debugging
   throw new Error('Email service implementation required');
 }
 

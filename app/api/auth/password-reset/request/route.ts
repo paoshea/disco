@@ -10,8 +10,14 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { email } = requestSchema.parse(body);
+    const requestBody = (await request.json()) as { email: string };
+    if (!requestSchema.safeParse(requestBody).success) {
+      return NextResponse.json(
+        { message: 'Invalid email address' },
+        { status: 400 }
+      );
+    }
+    const { email } = requestSchema.parse(requestBody);
 
     // Find user by email
     const user = await db.user.findUnique({
@@ -53,12 +59,6 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     console.error('Password reset request error:', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { message: 'Invalid email address' },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { message: 'An error occurred while processing your request' },
       { status: 500 }

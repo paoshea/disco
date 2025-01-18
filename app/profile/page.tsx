@@ -181,17 +181,14 @@ export default function ProfilePage() {
               {profileData && (
                 <ProfileEdit
                   user={profileData}
-                  onUpdate={(data) => void handleUpdateProfile(data)}
+                  onUpdate={async (data: Partial<User>) => {
+                    await handleUpdateProfile(data);
+                  }}
                 />
               )}
             </Tab.Panel>
             <Tab.Panel>
-              {authUser && (
-                <ProfileSettings 
-                  user={authUser} 
-                  onUpdate={(data) => void handleUpdateProfile(data)}
-                />
-              )}
+              {authUser && <ProfileSettings user={authUser} />}
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

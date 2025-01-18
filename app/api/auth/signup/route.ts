@@ -1,81 +1,67 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { User } from '@/types/user';
-
-// TODO: Replace with actual database calls
-const users: Record<string, User & { password: string }> = {};
-
-interface SignupRequestBody {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
+import { db } from '@/lib/prisma';
+import { hashPassword, generateToken } from '@/lib/auth';
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { email, password, firstName, lastName } = body as SignupRequestBody;
+    const requestBody = (await request.json()) as {
+      email: string;
+      password: string;
+      firstName: string;
+      lastName: string;
+    };
+    const { email, password, firstName, lastName } = requestBody;
 
-    // Validate email and password
+    // Validate required fields
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
-        { error: 'All fields are required' },
+        { message: 'All fields are required' },
         { status: 400 }
       );
     }
 
-    // Check if user already exists
-    if (users[email]) {
+    // Check if user exists
+    const existingUser = await db.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
       return NextResponse.json(
-        { error: 'User already exists' },
-        { status: 409 }
+        { message: 'User already exists' },
+        { status: 400 }
       );
     }
 
+    // Generate verification token
+    const verificationToken = generateToken();
+
     // Hash password
-    // In production, this would be hashed
-    const hashedPassword = password;
+    const hashedPassword = await hashPassword(password);
 
-    const newUser: User & { password: string } = {
-      id: Date.now().toString(),
-      email,
-      password: hashedPassword,
-      name: `${firstName} ${lastName}`,
-      firstName,
-      lastName,
-      emailVerified: false,
-      interests: [],
-      status: 'offline',
-      emergencyContacts: [],
-      verificationStatus: 'unverified',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
+    // Create user with verification token
+    await db.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        verificationToken,
+      },
+    });
 
-    users[email] = newUser;
-
-    // In production, you would:
-    // 1. Hash the password before storing
-    // 2. Use a proper JWT library
-    // 3. Store user data in a database
-    const token = Buffer.from(
-      JSON.stringify({ userId: newUser.id, email })
-    ).toString('base64');
-
-    const { password: _, ...userWithoutPassword } = newUser;
+    // Send verification email
+    await sendVerificationEmail(email, verificationToken);
 
     return NextResponse.json(
-      {
-        user: userWithoutPassword,
-        token,
-      },
+      { message: 'User created successfully' },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Signup error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: 'An error occurred during signup' },
       { status: 500 }
     );
   }
