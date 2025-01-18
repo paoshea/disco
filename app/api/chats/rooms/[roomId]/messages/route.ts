@@ -1,12 +1,9 @@
 // app/api/chats/rooms/[roomId]/messages/route.ts
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { headers } from 'next/headers';
+import { verifyToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
-import {
-  withAuth,
-  type AuthenticatedRequest,
-} from '@/middleware/authMiddleware';
 import { verifyRoomAccess, createMessage } from '@/lib/chatQueries';
 import type { MessageWithSender } from '@/types/chat';
 
@@ -15,14 +12,38 @@ export const runtime = 'nodejs';
 // Disable static optimization
 export const dynamic = 'force-dynamic';
 
-async function handleGet(
-  request: AuthenticatedRequest,
-  { params }: { params: { roomId: string } }
-) {
-  const { roomId } = params;
+async function authenticateRequest(request: NextRequest) {
+  const headersList = await headers();
+  const token = headersList.get('Authorization')?.replace('Bearer ', '');
+
+  if (!token) {
+    return { error: 'Authentication required', status: 401 };
+  }
 
   try {
-    const hasAccess = await verifyRoomAccess(roomId, request.user.userId);
+    const decoded = await verifyToken(token);
+    if (!decoded || !('userId' in decoded)) {
+      return { error: 'Invalid token', status: 401 };
+    }
+    return { userId: decoded.userId };
+  } catch (error) {
+    console.error('Authentication error:', error);
+    return { error: 'Invalid token', status: 401 };
+  }
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ roomId: string }> }
+): Promise<Response> {
+  const auth = await authenticateRequest(request);
+  if ('error' in auth) {
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
+  }
+
+  try {
+    const { roomId } = await params;
+    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -56,14 +77,18 @@ async function handleGet(
   }
 }
 
-async function handlePost(
-  request: AuthenticatedRequest,
-  { params }: { params: { roomId: string } }
-) {
-  const { roomId } = params;
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ roomId: string }> }
+): Promise<Response> {
+  const auth = await authenticateRequest(request);
+  if ('error' in auth) {
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
+  }
 
   try {
-    const hasAccess = await verifyRoomAccess(roomId, request.user.userId);
+    const { roomId } = await params;
+    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
 
     if (!hasAccess) {
       return NextResponse.json(
@@ -82,11 +107,7 @@ async function handlePost(
       );
     }
 
-    const message = await createMessage(
-      content,
-      roomId,
-      request.user.userId
-    );
+    const message = await createMessage(content, roomId, auth.userId);
 
     return NextResponse.json(message);
   } catch (error) {
@@ -97,9 +118,3 @@ async function handlePost(
     );
   }
 }
-
-export const GET = (request: NextRequest, context: { params: { roomId: string } }) =>
-  withAuth(request, (req: AuthenticatedRequest) => handleGet(req, context));
-
-export const POST = (request: NextRequest, context: { params: { roomId: string } }) =>
-  withAuth(request, (req: AuthenticatedRequest) => handlePost(req, context));
