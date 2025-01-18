@@ -40,14 +40,12 @@ export async function POST(request: Request) {
     }
 
     // Generate new access token
-    const tokenPayload = {
+    const accessToken = await generateToken({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       role: user.role,
-    };
-
-    const accessToken = await generateToken();
+    });
 
     const response = NextResponse.json({
       token: accessToken,

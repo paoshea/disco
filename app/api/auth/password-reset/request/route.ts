@@ -1,14 +1,16 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { db } from '@/lib/prisma';
-import { generateToken, type JWTPayload } from '@/lib/auth';
+import { generatePasswordResetToken } from '@/lib/auth';
+import type { ResetPasswordInput } from '@/types/auth';
 
 const requestSchema = z.object({
   email: z.string().email(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const requestBody = await request.json();
     if (!requestSchema.safeParse(requestBody).success) {
@@ -37,17 +39,12 @@ export async function POST(request: Request) {
     }
 
     // Generate a short-lived token for password reset
-    const tokenPayload: JWTPayload = {
+    const resetToken = await generatePasswordResetToken({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       role: user.role,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 minutes
-      type: 'password-reset',
-    };
-
-    const resetToken = await generateToken(tokenPayload);
+    });
 
     // Update user with reset token
     await db.user.update({

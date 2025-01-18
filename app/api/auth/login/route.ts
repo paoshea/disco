@@ -2,10 +2,12 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
 import {
-  generateToken,
+  hashPassword,
   verifyPassword,
+  generateToken,
   generateRefreshToken,
 } from '@/lib/auth';
+import type { LoginInput, LoginResult } from '@/types/auth';
 import { z } from 'zod';
 import { cookies } from 'next/headers';
 

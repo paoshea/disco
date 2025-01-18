@@ -1,87 +1,59 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken, type JWTPayload } from '@/lib/auth';
+import { verifyToken } from '@/lib/auth';
+import type { JWTPayload } from '@/types/auth';
 
-// Add paths that require authentication
-const protectedPaths = [
-  '/dashboard',
-  '/api/dashboard',
+const PUBLIC_PATHS = [
+  '/',
+  '/login',
+  '/signup',
+  '/api/auth/login',
+  '/api/auth/signup',
   '/api/auth/refresh',
-  '/api/safety-check',
+  '/api/auth/password-reset/request',
+  '/api/auth/password-reset/verify',
 ];
-
-// Add paths that should redirect authenticated users
-const authPaths = ['/login', '/signup'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const authToken = request.cookies.get('auth-token');
-  const isProtectedPath = protectedPaths.some(path =>
-    pathname.startsWith(path)
-  );
-  const isAuthPath = authPaths.some(path => pathname.startsWith(path));
 
-  try {
-    if (!authToken && isProtectedPath) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('returnTo', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    if (authToken) {
-      try {
-        const decoded = await verifyToken(authToken.value);
-
-        // Redirect authenticated users away from auth pages
-        if (isAuthPath) {
-          return NextResponse.redirect(new URL('/dashboard', request.url));
-        }
-
-        // Add user info to headers for protected paths
-        if (isProtectedPath) {
-          const response = NextResponse.next();
-          response.headers.set('X-User-Id', decoded.userId);
-          response.headers.set('X-User-Email', decoded.email);
-          response.headers.set('X-User-Role', decoded.role);
-          return response;
-        }
-      } catch (error) {
-        console.error('Token verification error:', error);
-
-        // Handle token verification errors on protected paths
-        if (isProtectedPath) {
-          const loginUrl = new URL('/login', request.url);
-          loginUrl.searchParams.set('returnTo', pathname);
-          return NextResponse.redirect(loginUrl);
-        }
-      }
-    }
-
-    // Default case: allow request to proceed
-    return NextResponse.next();
-  } catch (error) {
-    console.error('Middleware error:', error);
-
-    // Handle errors on protected paths
-    if (isProtectedPath) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('returnTo', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
+  // Allow public paths
+  if (PUBLIC_PATHS.includes(pathname)) {
     return NextResponse.next();
   }
+
+  // Get token from header
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const token = authHeader.substring(7);
+  const payload = await verifyToken(token);
+
+  if (!payload) {
+    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+  }
+
+  // Add user info to headers
+  const requestHeaders = new Headers(request.headers);
+  if (payload.userId) {
+    requestHeaders.set('x-user-id', payload.userId);
+  }
+  if (payload.email) {
+    requestHeaders.set('x-user-email', payload.email);
+  }
+  if (payload.role) {
+    requestHeaders.set('x-user-role', payload.role);
+  }
+
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 }
 
 export const config = {
-  matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!api|_next/static|_next/image|favicon.ico).*)',
-  ],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

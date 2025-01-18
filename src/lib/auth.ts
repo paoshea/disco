@@ -1,70 +1,124 @@
-import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
-import { promisify } from 'util';
-import jwt from 'jsonwebtoken';
+import { NextRequest } from 'next/server';
+import { cookies } from 'next/headers';
+import * as jose from 'jose';
+import type { JWTPayload, Session } from '../types/auth';
 
-const scryptAsync = promisify(scrypt);
+const JWT_SECRET = new TextEncoder().encode(
+  process.env.JWT_SECRET || 'your-secret-key'
+);
 
-interface JWTPayload {
-  userId: string;
-  exp?: number;
-  iat?: number;
-}
-
-/**
- * Generate a secure random token
- */
-export function generateToken(): string {
-  return randomBytes(32).toString('hex');
-}
-
-/**
- * Hash a password using scrypt
- */
 export async function hashPassword(password: string): Promise<string> {
-  const salt = randomBytes(16).toString('hex');
-  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${salt}:${derivedKey.toString('hex')}`;
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hash = await crypto.subtle.digest('SHA-256', data);
+  return Buffer.from(hash).toString('base64');
 }
 
-/**
- * Verify a password against its hash
- */
 export async function verifyPassword(
   password: string,
-  hash: string
+  hashedPassword: string
 ): Promise<boolean> {
-  const [salt, key] = hash.split(':');
-  const keyBuffer = Buffer.from(key, 'hex');
-  const derivedKey = (await scryptAsync(password, salt, 64)) as Buffer;
-  return timingSafeEqual(keyBuffer, derivedKey);
+  const hashedInput = await hashPassword(password);
+  return hashedInput === hashedPassword;
 }
 
-/**
- * Generate a JWT token
- */
-export function generateJWT(payload: JWTPayload): string {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
-  }
-  return jwt.sign(payload, secret, { expiresIn: '24h' });
+export async function generateToken(
+  payload: Omit<JWTPayload, 'iat' | 'exp'>
+): Promise<string> {
+  const jwt = await new jose.SignJWT({
+    ...payload,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(JWT_SECRET);
+  return jwt;
 }
 
-/**
- * Verify a JWT token
- */
-export async function verifyToken(token: string): Promise<JWTPayload> {
-  const secret = process.env.JWT_SECRET;
-  if (!secret) {
-    throw new Error('JWT_SECRET environment variable is not set');
+export async function generateRefreshToken(
+  payload: Omit<JWTPayload, 'iat' | 'exp'>
+): Promise<string> {
+  const jwt = await new jose.SignJWT({
+    ...payload,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d')
+    .sign(JWT_SECRET);
+  return jwt;
+}
+
+export async function generatePasswordResetToken(
+  payload: Omit<JWTPayload, 'iat' | 'exp'>
+): Promise<string> {
+  const jwt = await new jose.SignJWT({
+    ...payload,
+    type: 'password-reset',
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('15m')
+    .sign(JWT_SECRET);
+  return jwt;
+}
+
+export async function verifyToken(token: string): Promise<JWTPayload | null> {
+  try {
+    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+
+    // Type check and conversion
+    if (
+      typeof payload.userId !== 'string' ||
+      typeof payload.email !== 'string' ||
+      typeof payload.role !== 'string' ||
+      typeof payload.firstName !== 'string'
+    ) {
+      return null;
+    }
+
+    const customPayload: JWTPayload = {
+      userId: payload.userId,
+      email: payload.email,
+      role: payload.role,
+      firstName: payload.firstName,
+      type: payload.type as string | undefined,
+      iat: payload.iat,
+      exp: payload.exp,
+    };
+
+    return customPayload;
+  } catch (error) {
+    return null;
   }
-  return new Promise((resolve, reject) => {
-    jwt.verify(token, secret, (err, decoded) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(decoded as JWTPayload);
-      }
-    });
-  });
+}
+
+export function getTokenFromRequest(request: NextRequest): string | null {
+  const authHeader = request.headers.get('authorization');
+  if (!authHeader?.startsWith('Bearer ')) return null;
+  return authHeader.substring(7);
+}
+
+export async function getServerSession(): Promise<Session | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('auth-token')?.value;
+
+  if (!token) return null;
+
+  try {
+    const decoded = await verifyToken(token);
+    if (!decoded) return null;
+
+    return {
+      user: {
+        id: decoded.userId,
+        email: decoded.email,
+        role: decoded.role,
+      },
+      id: decoded.userId,
+      email: decoded.email,
+      role: decoded.role,
+    };
+  } catch (error) {
+    return null;
+  }
 }

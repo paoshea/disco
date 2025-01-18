@@ -28,3 +28,39 @@ export interface VerifyEmailInput {
   email: string;
   token: string;
 }
+
+export interface JWTPayload {
+  userId: string;
+  email: string;
+  role: string;
+  firstName: string;
+  type?: string;
+  iat?: number;
+  exp?: number;
+}
+
+export interface Session {
+  user?: {
+    id: string;
+    email: string;
+    role: string;
+  };
+  id: string;
+  email: string;
+  role: string;
+}
+
+export interface LoginResult {
+  success?: boolean;
+  token?: string;
+  error?: string;
+  needsVerification?: boolean;
+  user?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+    streakCount: number;
+  };
+}
