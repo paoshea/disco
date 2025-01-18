@@ -14,18 +14,25 @@ datasource db {
 }
 
 model User {
-  id                String           @id @default(uuid())
-  email             String           @unique
-  password          String
-  firstName         String
-  lastName          String
-  emailVerified     Boolean          @default(false)
-  verificationToken String?
-  createdAt         DateTime         @default(now())
-  updatedAt         DateTime         @updatedAt
-  passwordResets    PasswordReset[]
-  emergencyContacts EmergencyContact[]
-  safetyChecks      SafetyCheck[]
+  id                    String           @id @default(uuid())
+  email                 String           @unique
+  password             String
+  firstName            String
+  lastName             String
+  emailVerified        Boolean          @default(false)
+  verificationToken    String?
+  refreshToken         String?          @unique
+  refreshTokenExpiresAt DateTime?
+  lastLogin            DateTime?
+  streakCount          Int              @default(0)
+  lastStreak           DateTime?
+  createdAt            DateTime         @default(now())
+  updatedAt            DateTime         @updatedAt
+  passwordResets       PasswordReset[]
+  emergencyContacts    EmergencyContact[]
+  safetyChecks         SafetyCheck[]
+  achievements         Achievement[]
+  rateLimitAttempts    RateLimitAttempt[]
 }
 
 model PasswordReset {
@@ -62,4 +69,25 @@ model SafetyCheck {
   completedAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+}
+
+model Achievement {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  type        String   // e.g., 'streak', 'safety', 'community'
+  name        String
+  description String
+  earnedAt    DateTime @default(now())
+}
+
+model RateLimitAttempt {
+  id         String   @id @default(uuid())
+  identifier String   // IP address or user ID
+  action     String   // The action being rate limited (e.g., 'login', 'signup')
+  createdAt  DateTime @default(now())
+  user       User?    @relation(fields: [userId], references: [id])
+  userId     String?
+
+  @@index([identifier, action, createdAt])
 }
