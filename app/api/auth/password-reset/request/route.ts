@@ -1,68 +1,61 @@
 import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { z } from 'zod';
-import { sendPasswordResetEmail } from '@/lib/email';
 import { db } from '@/lib/prisma';
 import { generatePasswordResetToken } from '@/lib/auth';
-import type { ResetPasswordInput } from '@/types/auth';
+import { sendPasswordResetEmail } from '@/lib/email';
 
-const requestSchema = z.object({
-  email: z.string().email(),
-});
+interface PasswordResetRequest {
+  email: string;
+}
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request): Promise<Response> {
   try {
-    const requestBody = await request.json();
-    if (!requestSchema.safeParse(requestBody).success) {
+    const body = (await request.json()) as PasswordResetRequest;
+    const { email } = body;
+
+    if (!email) {
       return NextResponse.json(
-        { message: 'Invalid email address' },
+        { message: 'Email is required' },
         { status: 400 }
       );
     }
-    const { email } = requestSchema.parse(requestBody);
 
     const user = await db.user.findUnique({
       where: { email },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        role: true,
-      },
+      select: { id: true, email: true },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'If an account exists, a reset link has been sent.' },
-        { status: 200 }
-      );
+      // Return success even if user doesn't exist to prevent email enumeration
+      return NextResponse.json({
+        message:
+          'If an account exists with that email, a password reset link has been sent.',
+      });
     }
 
-    // Generate a short-lived token for password reset
     const resetToken = await generatePasswordResetToken({
       userId: user.id,
       email: user.email,
-      firstName: user.firstName,
-      role: user.role,
     });
 
-    // Update user with reset token
-    await db.user.update({
-      where: { id: user.id },
-      data: { verificationToken: resetToken },
+    // Create a new password reset record
+    await db.passwordReset.create({
+      data: {
+        token: resetToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+      },
     });
 
-    // Send reset email
-    await sendPasswordResetEmail(user.email, resetToken);
+    await sendPasswordResetEmail(email, resetToken);
 
-    return NextResponse.json(
-      { message: 'If an account exists, a reset link has been sent.' },
-      { status: 200 }
-    );
+    return NextResponse.json({
+      message:
+        'If an account exists with that email, a password reset link has been sent.',
+    });
   } catch (error) {
     console.error('Password reset request error:', error);
     return NextResponse.json(
-      { message: 'Failed to process password reset request' },
+      { message: 'An error occurred while processing your request' },
       { status: 500 }
     );
   }

@@ -7,6 +7,11 @@ const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key'
 );
 
+interface PasswordResetPayload {
+  userId: string;
+  email: string;
+}
+
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password);
@@ -49,7 +54,7 @@ export async function generateRefreshToken(
 }
 
 export async function generatePasswordResetToken(
-  payload: Omit<JWTPayload, 'iat' | 'exp'>
+  payload: PasswordResetPayload
 ): Promise<string> {
   const jwt = await new jose.SignJWT({
     ...payload,
@@ -57,7 +62,7 @@ export async function generatePasswordResetToken(
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('15m')
+    .setExpirationTime('1h')
     .sign(JWT_SECRET);
   return jwt;
 }

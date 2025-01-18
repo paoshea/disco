@@ -97,12 +97,6 @@ export default function DashboardPage() {
   const [showSafetyCheck, setShowSafetyCheck] = useState(false);
   const [currentCheck, setCurrentCheck] = useState<SafetyCheckNew | null>(null);
 
-  useEffect(() => {
-    if (user) {
-      fetchStats();
-    }
-  }, [user]);
-
   const fetchStats = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -112,12 +106,20 @@ export default function DashboardPage() {
       const parsed = dashboardStatsSchema.parse(response);
       setStats(parsed.stats);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load dashboard stats');
+      setError(
+        err instanceof Error ? err.message : 'Failed to load dashboard stats'
+      );
       console.error(err);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      void fetchStats();
+    }
+  }, [user, fetchStats]);
 
   const handleProfileClick = () => {
     // Navigate to profile
@@ -127,43 +129,54 @@ export default function DashboardPage() {
     // Navigate to settings
   };
 
-  const handleCheckComplete = useCallback(async (checkId: string) => {
-    setIsLoading(true);
-    setError(null);
+  const handleCheckComplete = useCallback(
+    async (checkId: string) => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      await fetchApi(`/api/safety/checks/${checkId}/complete`, {
-        method: 'POST',
-      });
-      await fetchStats(); // Refresh stats after completing check
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to complete safety check');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchStats]);
+      try {
+        await fetchApi(`/api/safety/checks/${checkId}/complete`, {
+          method: 'POST',
+        });
+        void fetchStats(); // Refresh stats after completing check
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to complete safety check'
+        );
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchStats]
+  );
 
   const handleEditContact = (contact: EmergencyContact) => {
-    // Handle editing contact
+    // TODO: Implement contact editing
+    console.log('Editing contact:', contact);
   };
 
-  const handleDeleteContact = useCallback(async (contactId: string) => {
-    setIsLoading(true);
-    setError(null);
+  const handleDeleteContact = useCallback(
+    async (contactId: string) => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      await fetchApi(`/api/contacts/${contactId}`, {
-        method: 'DELETE',
-      });
-      await fetchStats();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to delete contact');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchStats]);
+      try {
+        await fetchApi(`/api/contacts/${contactId}`, {
+          method: 'DELETE',
+        });
+        void fetchStats();
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : 'Failed to delete contact'
+        );
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [fetchStats]
+  );
 
   if (isLoading) {
     return <LoadingSpinner />;
@@ -209,7 +222,7 @@ export default function DashboardPage() {
             setShowSafetyCheck(false);
             setCurrentCheck(null);
           }}
-          onResolve={async (checkId, status, notes) => {
+          onResolve={async checkId => {
             await handleCheckComplete(checkId);
             setShowSafetyCheck(false);
             setCurrentCheck(null);

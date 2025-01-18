@@ -101,7 +101,7 @@ export async function POST(
       );
     }
 
-    const body = await request.json() as MessageContent;
+    const body = (await request.json()) as MessageContent;
     const { content } = body;
 
     if (!content) {

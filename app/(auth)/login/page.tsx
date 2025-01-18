@@ -34,40 +34,43 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = useCallback(async (data: LoginFormData) => {
-    setIsLoading(true);
-    setNeedsVerification(false);
+  const onSubmit = useCallback(
+    async (data: LoginFormData) => {
+      setIsLoading(true);
+      setNeedsVerification(false);
 
-    try {
-      const result = await login(data.email, data.password);
+      try {
+        const result = await login(data.email, data.password);
 
-      if (result.error) {
-        toast.error(result.error);
-        return;
+        if (result.error) {
+          toast.error(result.error);
+          return;
+        }
+
+        if (result.needsVerification) {
+          setNeedsVerification(true);
+          setEmailForVerification(data.email);
+          toast.error(
+            'Please verify your email address before logging in. Check your inbox for a verification link.'
+          );
+          return;
+        }
+
+        if (result.success) {
+          toast.success('Login successful! Redirecting...');
+          router.push('/dashboard');
+        }
+      } catch (err) {
+        console.error('Login error:', err);
+        const errorMessage =
+          err instanceof Error ? err.message : 'An error occurred during login';
+        toast.error(errorMessage);
+      } finally {
+        setIsLoading(false);
       }
-
-      if (result.needsVerification) {
-        setNeedsVerification(true);
-        setEmailForVerification(data.email);
-        toast.error(
-          'Please verify your email address before logging in. Check your inbox for a verification link.'
-        );
-        return;
-      }
-
-      if (result.success) {
-        toast.success('Login successful! Redirecting...');
-        router.push('/dashboard');
-      }
-    } catch (err) {
-      console.error('Login error:', err);
-      const errorMessage =
-        err instanceof Error ? err.message : 'An error occurred during login';
-      toast.error(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [login, router]);
+    },
+    [login, router]
+  );
 
   const handleResendVerification = useCallback(async () => {
     if (!emailForVerification) return;
@@ -110,10 +113,13 @@ export default function LoginPage() {
             </Link>
           </p>
 
-          <form className="mt-8 space-y-6" onSubmit={(e) => {
-            e.preventDefault();
-            void handleSubmit(onSubmit)(e);
-          }}>
+          <form
+            className="mt-8 space-y-6"
+            onSubmit={e => {
+              e.preventDefault();
+              void handleSubmit(onSubmit)(e);
+            }}
+          >
             <div className="space-y-4">
               <div>
                 <Input

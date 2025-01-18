@@ -14,7 +14,7 @@ interface SignupBody {
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const body = await request.json() as SignupBody;
+    const body = (await request.json()) as SignupBody;
     const { email, password, firstName, lastName } = body;
 
     if (!email || !password || !firstName || !lastName) {
@@ -61,7 +61,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     await sendVerificationEmail(email, verificationToken);
 
     return NextResponse.json({
-      message: 'User created successfully. Please check your email to verify your account.',
+      message:
+        'User created successfully. Please check your email to verify your account.',
       user: {
         id: user.id,
         email: user.email,

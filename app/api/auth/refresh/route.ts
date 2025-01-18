@@ -35,10 +35,7 @@ export async function POST(): Promise<Response> {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
     const newToken = await generateToken({

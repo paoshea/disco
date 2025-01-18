@@ -1,4 +1,5 @@
 import useAuth from '@/app/hooks/useAuth';
+import type { LoginResult } from '@/types/auth';
 
 class ApiError extends Error {
   constructor(
@@ -27,7 +28,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   if (!response.ok) {
     if (response.status === 401) {
       // Token might be expired, logout the user
-      authStore.logout();
+      void authStore.logout();
     }
     throw new ApiError(response.status, await response.text());
   }
@@ -70,3 +71,35 @@ export const api = {
     return response.json() as Promise<T>;
   },
 };
+
+export async function login(
+  email: string,
+  password: string
+): Promise<LoginResult> {
+  try {
+    const response = await api.post<LoginResult>('/api/auth/login', {
+      email,
+      password,
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function logout(): Promise<void> {
+  try {
+    await api.post<void>('/api/auth/logout');
+  } catch (error) {
+    throw error;
+  }
+}
+
+export async function refreshToken(): Promise<{ token: string }> {
+  try {
+    const response = await api.post<{ token: string }>('/api/auth/refresh');
+    return response;
+  } catch (error) {
+    throw error;
+  }
+}

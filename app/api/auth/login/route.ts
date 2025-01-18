@@ -4,9 +4,14 @@ import { verifyPassword } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import { generateToken } from '@/lib/jwt';
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as LoginRequest;
     const { email, password } = body;
 
     if (!email || !password) {
@@ -36,22 +41,29 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const isValid = await verifyPassword(password, user.password);
-    if (!isValid) {
+    // Verify password hash
+    const isPasswordValid = await verifyPassword(password, user.password);
+    if (!isPasswordValid) {
       return NextResponse.json(
         { message: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
-    const token = await generateToken({
+    const token = generateToken({
       id: user.id,
       email: user.email,
     });
 
     return NextResponse.json({
-      user: userWithoutPassword,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        streakCount: user.streakCount,
+      },
       token,
     });
   } catch (error) {
