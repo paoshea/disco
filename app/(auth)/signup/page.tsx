@@ -78,8 +78,8 @@ export default function SignupPage() {
     <Layout>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center mb-8">
-            <Logo />
+          <div className="flex flex-col items-center space-y-4">
+            <Logo priority />
           </div>
           <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Join Disco today

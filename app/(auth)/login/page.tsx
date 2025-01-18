@@ -94,8 +94,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center mb-8">
-            <Logo />
+          <div className="flex flex-col items-center space-y-4">
+            <Logo priority />
           </div>
           <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Welcome back!

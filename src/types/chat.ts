@@ -1,23 +1,34 @@
-export interface Message {
+export interface UserInfo {
   id: string;
-  matchId: string;
-  senderId: string;
-  recipientId: string;
+  firstName: string;
+  lastName: string;
+  avatar: string | null;
+}
+
+export interface MessageInfo {
+  id: string;
   content: string;
-  timestamp: string;
+  senderId: string;
+  chatRoomId: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
-export interface ChatRoom {
-  matchId: string;
-  participants: string[];
-  lastMessage?: Message;
-  unreadCount: number;
-  createdAt: string;
-  updatedAt: string;
+export interface MessageWithSender extends MessageInfo {
+  sender: UserInfo;
 }
 
-export interface TypingStatus {
-  userId: string;
-  matchId: string;
-  isTyping: boolean;
+export interface ChatRoomInfo {
+  id: string;
+  name: string | null;
+  creatorId: string;
+  participantId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ChatRoomWithRelations extends ChatRoomInfo {
+  creator: UserInfo;
+  participant: UserInfo;
+  messages: MessageWithSender[];
 }

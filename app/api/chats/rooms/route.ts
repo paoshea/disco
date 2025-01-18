@@ -1,56 +1,13 @@
+// app/api/chats/rooms/route.ts
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
+import { withAuth, type AuthenticatedRequest } from '@/middleware/authMiddleware';
+import type { ChatRoomWithRelations } from '@/types/chat';
 
-interface UserInfo {
-  id: string;
-  firstName: string;
-  lastName: string;
-  avatar: string | null;
-}
-
-interface MessageInfo {
-  id: string;
-  content: string;
-  senderId: string;
-  chatRoomId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ChatRoomInfo {
-  id: string;
-  name: string | null;
-  creatorId: string;
-  participantId: string;
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-interface ChatRoomWithRelations extends ChatRoomInfo {
-  creator: UserInfo;
-  participant: UserInfo;
-  messages: MessageInfo[];
-}
-
-export async function GET(request: NextRequest) {
+async function handleGet(request: AuthenticatedRequest) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
-
-    if (!token) {
-      return NextResponse.json(
-        { message: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const decoded = verifyToken(token);
-
-    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
-      return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
-    }
-
     const chatRooms = await db.$queryRaw<ChatRoomWithRelations[]>`
       SELECT 
         cr.id,
@@ -93,8 +50,8 @@ export async function GET(request: NextRequest) {
       FROM "ChatRoom" cr
       JOIN "User" creator ON cr."creatorId" = creator.id
       JOIN "User" participant ON cr."participantId" = participant.id
-      WHERE cr."creatorId" = ${decoded.userId}
-      OR cr."participantId" = ${decoded.userId}
+      WHERE cr."creatorId" = ${request.user.userId}
+      OR cr."participantId" = ${request.user.userId}
     `;
 
     return NextResponse.json({
@@ -118,3 +75,6 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export const GET = (request: NextRequest) =>
+  withAuth(request, (req: NextRequest) => handleGet(req as AuthenticatedRequest));

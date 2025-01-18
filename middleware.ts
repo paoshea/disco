@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/',
   '/login',
   '/signup',
+  '/chat',
   '/api/auth/login',
   '/api/auth/signup',
   '/api/auth/refresh',
@@ -22,36 +23,41 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from header
-  const authHeader = request.headers.get('authorization');
-  if (!authHeader?.startsWith('Bearer ')) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  // Only check auth header for API routes
+  if (pathname.startsWith('/api/')) {
+    // Get token from header
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const token = authHeader.substring(7);
+    try {
+      const payload = await verifyToken(token);
+      if (!payload) {
+        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+      }
+    } catch (error) {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
   }
 
-  const token = authHeader.substring(7);
-  const payload = await verifyToken(token);
-
-  if (!payload) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+  // For page loads, check cookies instead
+  const token = request.cookies.get('token')?.value;
+  if (!token) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Add user info to headers
-  const requestHeaders = new Headers(request.headers);
-  if (payload.userId) {
-    requestHeaders.set('x-user-id', payload.userId);
-  }
-  if (payload.email) {
-    requestHeaders.set('x-user-email', payload.email);
-  }
-  if (payload.role) {
-    requestHeaders.set('x-user-role', payload.role);
+  try {
+    const payload = await verifyToken(token);
+    if (!payload) {
+      return NextResponse.redirect(new URL('/login', request.url));
+    }
+  } catch (error) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return NextResponse.next();
 }
 
 export const config = {

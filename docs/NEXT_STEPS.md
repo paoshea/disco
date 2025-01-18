@@ -404,3 +404,93 @@
 - Ensure all features support safety and privacy
 - Regular user feedback and iteration
 - Monitor engagement metrics and adjust features accordingly
+
+### Aim to standardize on one library as soon as possible to avoid the issues mentioned below.
+
+# Replace jsonwebtoken with jose
+
+Using both `jsonwebtoken` and `jose` in the same project is technically possible, but it's generally not ideal due to potential redundancy, increased bundle size, and confusion about which library to use for specific tasks. Here's a detailed breakdown:
+
+### **1. Compatibility and Use Case Differences**
+- **`jsonwebtoken`**:
+  - A popular library for working with JWTs in Node.js environments.
+  - Provides functions like `sign`, `verify`, and `decode`.
+  - Heavily relies on Node.js-specific modules like `crypto` and is **not Edge-compatible** (e.g., for Next.js API routes running in the Edge Runtime).
+
+- **`jose`**:
+  - A modern library designed to work in both **Node.js and web environments** (e.g., Edge Runtime, browsers).
+  - Supports JWTs and other JOSE standards (JWS, JWE, JWK).
+  - Works seamlessly with modern web crypto APIs, making it ideal for Next.js applications with serverless or Edge runtime requirements.
+
+### **2. Potential Issues**
+- **Redundancy**: 
+  - Both libraries offer overlapping functionality for handling JWTs, which can lead to confusion about which one to use in specific parts of your code.
+  - This also increases your bundle size unnecessarily, especially if you're using both in client-side code.
+
+- **Inconsistent Behavior**:
+  - If parts of your codebase rely on `jsonwebtoken` and others on `jose`, subtle differences in API behavior or token verification could lead to bugs or security risks.
+
+- **Edge Runtime Incompatibility**:
+  - If you use `jsonwebtoken` in Edge-compatible routes or client-side code, you will encounter runtime errors because `jsonwebtoken` relies on Node.js-specific modules.
+
+### **3. Recommendation**
+If you are starting fresh or aiming for compatibility with modern environments (like Edge), **migrate entirely to `jose`**. It is more future-proof and works in all the environments where `jsonwebtoken` might fail.
+
+### **4. How to Replace `jsonwebtoken` with `jose`**
+
+Here’s how common tasks can be done using `jose`:
+
+#### Signing a JWT:
+```typescript
+import { SignJWT } from 'jose';
+
+async function createToken(payload: object, secretKey: string) {
+  const secret = new TextEncoder().encode(secretKey);
+
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('2h')
+    .sign(secret);
+
+  return token;
+}
+```
+
+#### Verifying a JWT:
+```typescript
+import { jwtVerify } from 'jose';
+
+async function verifyToken(token: string, secretKey: string) {
+  const secret = new TextEncoder().encode(secretKey);
+
+  const { payload } = await jwtVerify(token, secret);
+  return payload; // Decoded payload
+}
+```
+
+#### Decoding a JWT (without verification):
+```typescript
+import { decodeJwt } from 'jose';
+
+function decodeToken(token: string) {
+  return decodeJwt(token);
+}
+```
+
+### **5. Migrating Gradually**
+If migrating entirely to `jose` isn’t feasible immediately:
+- Use `jose` for new code, especially in Edge-compatible routes.
+- Plan to replace `jsonwebtoken` in older code incrementally.
+
+### **6. Removing `jsonwebtoken`**
+Once the migration is complete, remove `jsonwebtoken` from your `package.json`:
+```bash
+npm uninstall jsonwebtoken
+npm uninstall @types/jsonwebtoken
+```
+
+### **7. When to Keep Both**
+The only valid reason to use both libraries would be:
+- Legacy code relies on `jsonwebtoken`, and refactoring it is currently impractical.
+- New parts of the project require Edge compatibility, where `jose` is used.
