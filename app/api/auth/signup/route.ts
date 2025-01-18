@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword, generateVerificationToken } from '@/lib/auth';
-import { sendVerificationEmail } from '@/lib/email';
+import { hashPassword, generateToken } from '@/lib/auth';
+// Will be needed when we add email verification
+// import { generateVerificationToken } from '@/lib/auth';
+// import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -22,6 +24,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { message: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    // Basic password validation (at least 8 chars, 1 number, 1 uppercase, 1 lowercase)
+    const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return NextResponse.json(
+        { message: 'Password must be at least 8 characters and contain at least one number, one uppercase and one lowercase letter' },
+        { status: 400 }
+      );
+    }
+
     // Check if user exists
     const existingUser = await db.user.findUnique({
       where: { email },
@@ -36,24 +56,53 @@ export async function POST(request: NextRequest) {
 
     // Hash password
     const hashedPassword = await hashPassword(password);
-    const verificationToken = generateVerificationToken();
 
-    // Create user with verification token
-    await db.user.create({
+    // For email verification later:
+    // const verificationToken = generateVerificationToken();
+
+    // Create user
+    const user = await db.user.create({
       data: {
         email: email.toLowerCase(),
         password: hashedPassword,
         firstName,
         lastName,
-        verificationToken,
+        emailVerified: true, // Temporarily set to true since we're not doing email verification yet
+        // verificationToken, // Will be needed when we add email verification
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        emailVerified: true,
+        createdAt: true,
       },
     });
 
-    // Send verification email
-    await sendVerificationEmail(email, verificationToken);
+    // For email verification later:
+    // await sendVerificationEmail(email, verificationToken);
+
+    // Generate JWT token
+    const token = generateToken({
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      role: 'user',
+    });
 
     return NextResponse.json(
-      { message: 'User created successfully' },
+      {
+        message: 'User created successfully',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          emailVerified: user.emailVerified,
+        },
+      },
       { status: 201 }
     );
   } catch (error) {

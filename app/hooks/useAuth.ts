@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { LoginResult } from '@/lib/auth';
+import { api } from '@/lib/api';
 import { z } from 'zod';
 
 const loginResponseSchema = z.object({
@@ -27,6 +29,7 @@ interface User {
 
 type AuthStore = {
   user: User | null;
+  token: string | null;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<LoginResult>;
   logout: () => void;
@@ -36,75 +39,62 @@ async function loginImpl(
   email: string,
   password: string
 ): Promise<LoginResult> {
-  const response = await fetch('/api/auth/login', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ email, password }),
-  });
+  try {
+    const data = await api.post<LoginResult>('/api/auth/login', {
+      email,
+      password,
+    });
+    const result = loginResponseSchema.safeParse(data);
 
-  const data = await response.json();
-  const result = loginResponseSchema.safeParse(data);
+    if (!result.success) {
+      return {
+        error: 'Invalid response from server',
+      };
+    }
 
-  if (!result.success) {
-    return {
-      error: 'Invalid response from server',
-    };
+    return result.data;
+  } catch (error) {
+    if (error instanceof Error) {
+      return { error: error.message };
+    }
+    return { error: 'An error occurred during login' };
   }
-
-  const parsedData = result.data;
-
-  if (!response.ok) {
-    return {
-      error: parsedData.error || 'An error occurred during login',
-    };
-  }
-
-  if (parsedData.needsVerification) {
-    return { needsVerification: true };
-  }
-
-  if (parsedData.user && parsedData.token) {
-    return {
-      user: parsedData.user,
-      token: parsedData.token,
-    };
-  }
-
-  return {
-    error: 'Invalid response from server',
-  };
 }
 
 function logoutImpl(): void {
-  localStorage.removeItem('token');
+  // Clear any stored tokens or user data
+  localStorage.removeItem('auth-storage');
 }
 
-export const useAuth = create<AuthStore>(set => ({
-  user: null,
-  isLoading: false,
-  login: async (email: string, password: string) => {
-    set({ isLoading: true });
-    try {
-      const result = await loginImpl(email, password);
-      if (result.user) {
-        set({ user: result.user });
-      }
-      return result;
-    } catch (error) {
-      return {
-        error:
-          error instanceof Error
-            ? error.message
-            : 'An error occurred during login',
-      };
-    } finally {
-      set({ isLoading: false });
+export const useAuth = create<AuthStore>()(
+  persist(
+    set => ({
+      user: null,
+      token: null,
+      isLoading: false,
+      login: async (email, password) => {
+        set({ isLoading: true });
+        try {
+          const result = await loginImpl(email, password);
+          if (result.user && result.token) {
+            set({ user: result.user, token: result.token, isLoading: false });
+          } else {
+            set({ isLoading: false });
+          }
+          return result;
+        } catch (error) {
+          set({ isLoading: false });
+          return { error: 'An error occurred during login' };
+        }
+      },
+      logout: () => {
+        logoutImpl();
+        set({ user: null, token: null });
+      },
+    }),
+    {
+      name: 'auth-storage',
+      partialize: state => ({ user: state.user, token: state.token }),
     }
-  },
-  logout: () => {
-    logoutImpl();
-    set({ user: null });
-  },
-}));
+  )
+);

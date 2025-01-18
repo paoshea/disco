@@ -11,6 +11,7 @@ import { SafetyCheckModal } from '@/components/dashboard/SafetyCheckModal';
 import { FindMatchesModal } from '@/components/dashboard/FindMatchesModal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Layout } from '@/components/layout/Layout';
+import { api } from '@/lib/api';
 
 const dashboardStatsSchema = z.object({
   stats: z.object({
@@ -56,11 +57,9 @@ export default function DashboardPage() {
     if (!user) return;
 
     try {
-      const response = await fetch('/api/dashboard/stats');
-      if (!response.ok) throw new Error('Failed to fetch dashboard stats');
-      const data: unknown = await response.json();
-
+      const data = await api.get<unknown>('/api/dashboard/stats');
       const result = dashboardStatsSchema.safeParse(data);
+
       if (result.success) {
         setStats(result.data.stats);
       } else {
