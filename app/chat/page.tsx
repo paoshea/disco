@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { ChatWindow } from '@/components/chat/ChatWindow';
 import { ChatList } from '@/components/chat/ChatList';
-import type { ChatRoom, Message } from '@/types/chat';
+import type { ChatRoom } from '@/types/chat';
 import { chatService } from '@/services/api/chat.service';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAuth } from '@/hooks/useAuth';

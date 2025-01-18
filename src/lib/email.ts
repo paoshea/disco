@@ -12,7 +12,7 @@ async function sendEmail(options: EmailOptions): Promise<void> {
   // Implementation depends on your email service choice
   // For example, using nodemailer with SMTP:
   // const transporter = nodemailer.createTransport({...});
-  // await transporter.sendMail({...options});
+  await Promise.resolve(); // Placeholder await to satisfy TypeScript
   throw new Error('Email service implementation required');
 }
 
@@ -23,7 +23,7 @@ export async function sendPasswordResetEmail(
   email: string,
   token: string
 ): Promise<void> {
-  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${token}`;
+  const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/reset-password?token=${token}`;
 
   await sendEmail({
     to: email,
@@ -46,7 +46,7 @@ export async function sendVerificationEmail(
   email: string,
   token: string
 ): Promise<void> {
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${token}`;
+  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ''}/verify-email?token=${token}`;
 
   await sendEmail({
     to: email,

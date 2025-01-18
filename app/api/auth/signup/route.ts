@@ -5,11 +5,19 @@ import { User } from '@/types/user';
 // TODO: Replace with actual database calls
 const users: Record<string, User & { password: string }> = {};
 
+interface SignupRequestBody {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { email, password, firstName, lastName } = body;
+    const { email, password, firstName, lastName } = body as SignupRequestBody;
 
+    // Validate email and password
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json(
         { error: 'All fields are required' },
@@ -17,6 +25,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user already exists
     if (users[email]) {
       return NextResponse.json(
         { error: 'User already exists' },
@@ -24,10 +33,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Hash password
+    // In production, this would be hashed
+    const hashedPassword = password;
+
     const newUser: User & { password: string } = {
       id: Date.now().toString(),
       email,
-      password, // In production, this would be hashed
+      password: hashedPassword,
       name: `${firstName} ${lastName}`,
       firstName,
       lastName,

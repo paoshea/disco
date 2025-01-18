@@ -72,10 +72,13 @@ export default function ProfilePage() {
     }
   };
 
-  const handleUpdateProfile = async (data: Partial<User>) => {
+  const handleUpdateProfile = async (data: Partial<User>): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
+      if (!authUser) {
+        throw new Error('Not authenticated');
+      }
       await updateProfile(data);
       await loadProfileData();
     } catch (err) {
@@ -119,7 +122,7 @@ export default function ProfilePage() {
       <div className="container mx-auto max-w-4xl px-4 py-8">
         <div className="mb-8 flex items-center justify-between">
           <h1 className="text-3xl font-bold">Profile</h1>
-          <Button onClick={handleLogout} variant="secondary">
+          <Button onClick={() => void handleLogout()} variant="secondary">
             Logout
           </Button>
         </div>
@@ -135,7 +138,7 @@ export default function ProfilePage() {
             <p className="text-sm text-yellow-700">
               Your email is not verified.{' '}
               <button
-                onClick={handleSendVerificationEmail}
+                onClick={() => void handleSendVerificationEmail()}
                 className="font-medium text-yellow-800 hover:underline"
               >
                 Click here to resend verification email
@@ -178,12 +181,17 @@ export default function ProfilePage() {
               {profileData && (
                 <ProfileEdit
                   user={profileData}
-                  onUpdate={handleUpdateProfile}
+                  onUpdate={(data) => void handleUpdateProfile(data)}
                 />
               )}
             </Tab.Panel>
             <Tab.Panel>
-              <ProfileSettings user={authUser} />
+              {authUser && (
+                <ProfileSettings 
+                  user={authUser} 
+                  onUpdate={(data) => void handleUpdateProfile(data)}
+                />
+              )}
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

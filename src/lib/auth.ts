@@ -1,13 +1,19 @@
 import { randomBytes, scrypt, timingSafeEqual } from 'crypto';
 import { promisify } from 'util';
+import jwt from 'jsonwebtoken';
 
 const scryptAsync = promisify(scrypt);
+
+interface JWTPayload {
+  userId: string;
+  [key: string]: any;
+}
 
 /**
  * Generate a secure random token
  */
-export function generateToken(length = 32): string {
-  return randomBytes(length).toString('hex');
+export function generateToken(): string {
+  return randomBytes(32).toString('hex');
 }
 
 /**
@@ -35,9 +41,29 @@ export async function verifyPassword(
 /**
  * Generate a JWT token
  */
-export function generateJWT(payload: object): string {
-  // Implementation depends on your JWT library choice
-  // For example, using jsonwebtoken:
-  // return jwt.sign(payload, process.env.JWT_SECRET!, { expiresIn: '24h' });
-  throw new Error('JWT implementation required');
+export function generateJWT(payload: JWTPayload): string {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return jwt.sign(payload, secret, { expiresIn: '24h' });
+}
+
+/**
+ * Verify a JWT token
+ */
+export async function verifyToken(token: string): Promise<JWTPayload> {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('JWT_SECRET environment variable is not set');
+  }
+  return new Promise((resolve, reject) => {
+    jwt.verify(token, secret, (err, decoded) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(decoded as JWTPayload);
+      }
+    });
+  });
 }
