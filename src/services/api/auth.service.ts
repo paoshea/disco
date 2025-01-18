@@ -62,15 +62,20 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiClient.get<{ user: User }>(
-        `${this.baseUrl}/me`
-      );
-      return response.data.user;
+      const response = await apiClient.get<User>(`${this.baseUrl}/me`);
+      return response.data;
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'User service is not available. Please try again later.'
-        );
+      if (this.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          // Token expired or invalid, clear it
+          localStorage.removeItem('token');
+          throw new Error('Your session has expired. Please log in again.');
+        }
+        if (error.response?.status === 404) {
+          throw new Error(
+            'User service is not available. Please try again later.'
+          );
+        }
       }
       throw error;
     }

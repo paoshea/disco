@@ -13,6 +13,7 @@ interface ProfileEditProps {
 interface ProfileFormData {
   firstName: string;
   lastName: string;
+  email: string;
   bio: string;
   interests: string[];
   phoneNumber?: string;
@@ -35,6 +36,15 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [formData] = useState({
+    firstName: user.firstName || '',
+    lastName: user.lastName || '',
+    email: user.email || '',
+    bio: user.bio || '',
+    interests: user.interests || [],
+    phoneNumber: user.phoneNumber || '',
+  });
+
   const {
     register,
     handleSubmit,
@@ -42,13 +52,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
     setValue,
     watch,
   } = useForm<ProfileFormData>({
-    defaultValues: {
-      firstName: user.firstName,
-      lastName: user.lastName,
-      bio: user.bio || '',
-      interests: user.interests || [],
-      phoneNumber: user.phoneNumber || '',
-    },
+    defaultValues: formData,
   });
 
   const selectedInterests = watch('interests');
@@ -102,6 +106,15 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
             error={errors.lastName?.message}
           />
         </div>
+      </div>
+
+      <div>
+        <Input
+          label="Email"
+          type="email"
+          {...register('email', { required: 'Email is required' })}
+          error={errors.email?.message}
+        />
       </div>
 
       <div>

@@ -94,17 +94,13 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
         <SafetyFeatures
           user={{
             id: userId,
-            name: '',
             firstName: '',
             lastName: '',
             email: '',
             emailVerified: false,
-            interests: [],
-            status: 'online',
             emergencyContacts: [],
-            verificationStatus: 'unverified',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
+            createdAt: '',
+            updatedAt: '',
           }}
           settings={{
             autoShareLocation: false,

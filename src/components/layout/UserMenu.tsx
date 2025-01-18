@@ -12,25 +12,24 @@ interface UserMenuProps {
 export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
   return (
     <Menu as="div" className="relative inline-block text-left">
-      <Menu.Button className="flex items-center space-x-2">
+      <Menu.Button className="flex items-center gap-2">
         {user.avatar ? (
-          <div className="h-8 w-8 rounded-full overflow-hidden">
-            <Image
-              src={user.avatar}
-              alt={`${user.name}'s profile`}
-              width={32}
-              height={32}
-              className="h-full w-full object-cover"
-            />
-          </div>
+          <Image
+            className="h-8 w-8 rounded-full"
+            width={32}
+            height={32}
+            src={user.avatar}
+            alt={`${user.firstName} ${user.lastName}'s profile`}
+          />
         ) : (
-          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
-            <span className="text-sm font-medium text-gray-600">
-              {user.name.charAt(0)}
-            </span>
+          <div
+            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600"
+            aria-hidden="true"
+          >
+            {user.firstName?.charAt(0)}
           </div>
         )}
-        <span className="text-sm font-medium text-gray-700">{user.name}</span>
+        <span className="text-sm font-medium text-gray-700">{`${user.firstName || ''} ${user.lastName || ''}`}</span>
       </Menu.Button>
 
       <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">

@@ -26,8 +26,8 @@ export const OnboardingSteps: React.FC<OnboardingStepsProps> = ({
   const handleNext = () => {
     if (step === 4) {
       onComplete({
-        name: userData.displayName,
-        email: userData.email,
+        firstName: userData.displayName.split(' ')[0],
+        lastName: userData.displayName.split(' ').slice(1).join(' '),
         phoneNumber: userData.phoneNumber,
       });
     } else {

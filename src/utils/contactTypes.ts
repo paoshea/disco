@@ -97,6 +97,11 @@ export const toUserContact = (
     phoneNumber: contact.phoneNumber,
     email: contact.email || '',
     notifyOn: notifyPrefs,
+    sosAlert: notifyPrefs.sosAlert,
+    meetupStart: notifyPrefs.meetupStart,
+    meetupEnd: notifyPrefs.meetupEnd,
+    createdAt: contact.createdAt,
+    updatedAt: contact.updatedAt,
   };
 };
 
