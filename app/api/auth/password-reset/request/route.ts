@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { sendPasswordResetEmail } from '@/lib/email';
 import { db } from '@/lib/prisma';
-import { generateVerificationToken } from '@/lib/auth';
+import { generateToken, type JWTPayload } from '@/lib/auth';
 
 const requestSchema = z.object({
   email: z.string().email(),
@@ -10,7 +10,7 @@ const requestSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    const requestBody = (await request.json()) as { email: string };
+    const requestBody = await request.json();
     if (!requestSchema.safeParse(requestBody).success) {
       return NextResponse.json(
         { message: 'Invalid email address' },
@@ -19,48 +19,53 @@ export async function POST(request: Request) {
     }
     const { email } = requestSchema.parse(requestBody);
 
-    // Find user by email
     const user = await db.user.findUnique({
       where: { email },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        role: true,
+      },
     });
 
     if (!user) {
-      // Don't reveal whether a user exists
       return NextResponse.json(
-        {
-          message:
-            'If an account exists with this email, a password reset link will be sent.',
-        },
+        { message: 'If an account exists, a reset link has been sent.' },
         { status: 200 }
       );
     }
 
-    // Generate reset token
-    const token = generateVerificationToken();
+    // Generate a short-lived token for password reset
+    const tokenPayload: JWTPayload = {
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      role: user.role,
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 minutes
+      type: 'password-reset',
+    };
 
-    // Save reset token
-    await db.passwordReset.create({
-      data: {
-        token,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
-      },
+    const resetToken = await generateToken(tokenPayload);
+
+    // Update user with reset token
+    await db.user.update({
+      where: { id: user.id },
+      data: { verificationToken: resetToken },
     });
 
     // Send reset email
-    await sendPasswordResetEmail(email, token);
+    await sendPasswordResetEmail(user.email, resetToken);
 
     return NextResponse.json(
-      {
-        message:
-          'If an account exists with this email, a password reset link will be sent.',
-      },
+      { message: 'If an account exists, a reset link has been sent.' },
       { status: 200 }
     );
   } catch (error) {
     console.error('Password reset request error:', error);
     return NextResponse.json(
-      { message: 'An error occurred while processing your request' },
+      { message: 'Failed to process password reset request' },
       { status: 500 }
     );
   }

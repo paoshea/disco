@@ -8,15 +8,15 @@ const JWT_SECRET = new TextEncoder().encode(
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '7d';
 
-export type CustomJWTPayload = {
+export type JWTPayload = {
   userId: string;
   email: string;
   role: string;
   firstName: string;
+  iat?: number;
+  exp?: number;
   [key: string]: string | string[] | number | boolean | null | undefined;
-};
-
-export type JWTPayload = CustomJWTPayload & jose.JWTPayload;
+} & jose.JWTPayload;
 
 export interface LoginResult {
   success?: boolean;
@@ -59,15 +59,13 @@ export async function verifyPassword(
   return hashedInput === hashedPassword;
 }
 
-// For JWT tokens (auth tokens)
-export async function generateToken(payload: JWTPayload): Promise<string> {
+export async function generateToken(payload: Omit<JWTPayload, 'iat' | 'exp'>): Promise<string> {
   const alg = 'HS256';
-  const jwtPayload: jose.JWTPayload = {
+  const jwt = await new jose.SignJWT({
     ...payload,
     iat: Math.floor(Date.now() / 1000),
-  };
-
-  const jwt = await new jose.SignJWT(jwtPayload)
+    exp: Math.floor(Date.now() / 1000) + 60 * 15, // 15 minutes
+  })
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setExpirationTime(ACCESS_TOKEN_EXPIRY)
@@ -75,23 +73,15 @@ export async function generateToken(payload: JWTPayload): Promise<string> {
   return jwt;
 }
 
-// For verification tokens (email verification, password reset)
-export function generateVerificationToken(): string {
-  const buffer = new Uint8Array(32);
-  crypto.getRandomValues(buffer);
-  return Buffer.from(buffer).toString('base64url');
-}
-
 export async function generateRefreshToken(
-  payload: JWTPayload
+  payload: Omit<JWTPayload, 'iat' | 'exp'>
 ): Promise<string> {
   const alg = 'HS256';
-  const jwtPayload: jose.JWTPayload = {
+  const jwt = await new jose.SignJWT({
     ...payload,
     iat: Math.floor(Date.now() / 1000),
-  };
-
-  const jwt = await new jose.SignJWT(jwtPayload)
+    exp: Math.floor(Date.now() / 1000) + 60 * 60 * 24 * 7, // 7 days
+  })
     .setProtectedHeader({ alg })
     .setIssuedAt()
     .setExpirationTime(REFRESH_TOKEN_EXPIRY)
@@ -102,7 +92,7 @@ export async function generateRefreshToken(
 export async function verifyToken(token: string): Promise<JWTPayload | null> {
   try {
     const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    const customPayload = payload as unknown as JWTPayload;
+    const customPayload = payload as JWTPayload;
 
     // Verify that all required fields are present
     if (
@@ -119,9 +109,6 @@ export async function verifyToken(token: string): Promise<JWTPayload | null> {
     return null;
   }
 }
-
-// Alias for verifyToken for backward compatibility
-export const verifyJWT = verifyToken;
 
 export function getTokenFromRequest(request: NextRequest): string | null {
   const authHeader = request.headers.get('authorization');

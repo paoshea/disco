@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { hashPassword, generateToken, type JWTPayload } from '@/lib/auth';
 // Will be needed when we add email verification
-// import { generateVerificationToken } from '@/lib/auth';
 // import { sendVerificationEmail } from '@/lib/email';
+import { z } from 'zod';
 
 export async function POST(request: NextRequest) {
   try {
@@ -60,9 +60,6 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await hashPassword(password);
 
-    // For email verification later:
-    // const verificationToken = generateVerificationToken();
-
     // Create user
     const user = await db.user.create({
       data: {
@@ -71,7 +68,6 @@ export async function POST(request: NextRequest) {
         firstName,
         lastName,
         emailVerified: true, // Temporarily set to true since we're not doing email verification yet
-        // verificationToken, // Will be needed when we add email verification
       },
       select: {
         id: true,
@@ -83,16 +79,17 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // For email verification later:
-    // await sendVerificationEmail(email, verificationToken);
-
     // Generate JWT token
-    const token = generateToken({
+    const tokenPayload: JWTPayload = {
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       role: 'user',
-    });
+      iat: Math.floor(Date.now() / 1000),
+      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour
+    };
+
+    const token = await generateToken(tokenPayload);
 
     return NextResponse.json(
       {

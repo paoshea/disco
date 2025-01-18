@@ -6,8 +6,8 @@ import {
   verifyPassword,
   generateRefreshToken,
 } from '@/lib/auth';
-import type { JWTPayload } from '@/lib/auth';
 import { z } from 'zod';
+import { cookies } from 'next/headers';
 
 // Define a custom type that includes streak fields
 type UserWithStreak = {
@@ -33,28 +33,35 @@ const loginSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const body = (await request.json()) as unknown;
+    const body = await request.json();
     const result = loginSchema.safeParse(body);
 
     if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid request data' },
+        { message: 'Invalid request body' },
         { status: 400 }
       );
     }
 
     const { email, password } = result.data;
 
-    // Fetch user with raw SQL
-    const [user] = await db.$queryRaw<[UserWithStreak]>`
-      SELECT *
-      FROM "User"
-      WHERE email = ${email}
-    `;
+    const user = await db.user.findUnique({
+      where: { email },
+      select: {
+        id: true,
+        email: true,
+        password: true,
+        firstName: true,
+        lastName: true,
+        emailVerified: true,
+        streakCount: true,
+        role: true,
+      },
+    });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { message: 'Invalid email or password' },
         { status: 401 }
       );
     }
@@ -63,56 +70,34 @@ export async function POST(request: NextRequest) {
 
     if (!isValidPassword) {
       return NextResponse.json(
-        { error: 'Invalid credentials' },
+        { message: 'Invalid email or password' },
         { status: 401 }
       );
     }
 
     if (!user.emailVerified) {
       return NextResponse.json(
-        { error: 'Please verify your email before logging in' },
+        { message: 'Please verify your email before logging in' },
         { status: 403 }
       );
     }
 
-    // Calculate streak
-    const now = new Date();
-    const lastLoginDate = user.lastLogin ? new Date(user.lastLogin) : null;
-
-    let newStreakCount = user.streakCount ?? 0;
-
-    if (!lastLoginDate) {
-      // First login
-      newStreakCount = 1;
-    } else {
-      const daysSinceLastLogin = Math.floor(
-        (now.getTime() - lastLoginDate.getTime()) / (1000 * 60 * 60 * 24)
-      );
-
-      if (daysSinceLastLogin <= 1) {
-        // Login within 24 hours, increment streak if it's a new day
-        const isNewDay = lastLoginDate.getDate() !== now.getDate();
-        if (isNewDay) {
-          newStreakCount += 1;
-        }
-      } else if (daysSinceLastLogin > 2) {
-        // Missed a day, reset streak
-        newStreakCount = 1;
-      }
-    }
-
-    // Update user with new streak information using raw SQL
-    const [updatedUser] = await db.$queryRaw<[UserWithStreak]>`
+    // Update last login and streak
+    await db.$executeRaw`
       UPDATE "User"
-      SET "lastLogin" = ${now},
-          "streakCount" = ${newStreakCount},
-          "lastStreak" = ${now}
+      SET "lastLogin" = NOW(),
+          "streakCount" = CASE
+            WHEN "lastStreak" >= CURRENT_DATE - INTERVAL '1 day'
+            THEN "streakCount" + 1
+            ELSE 1
+          END,
+          "lastStreak" = CURRENT_DATE
       WHERE id = ${user.id}
       RETURNING *
     `;
 
     // Generate tokens
-    const tokenPayload: JWTPayload = {
+    const tokenPayload = {
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
@@ -131,31 +116,31 @@ export async function POST(request: NextRequest) {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
-        streakCount: updatedUser.streakCount,
+        streakCount: user.streakCount,
       },
       token: accessToken,
     });
 
-    // Set cookies
-    response.cookies.set('accessToken', accessToken, {
+    // Set cookies using the response object
+    response.cookies.set('auth-token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 60 * 15, // 15 minutes
     });
 
     response.cookies.set('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60, // 7 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
     });
 
     return response;
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Error in POST /api/auth/login:', error);
     return NextResponse.json(
-      { error: 'Something went wrong' },
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }

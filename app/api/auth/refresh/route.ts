@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { verifyToken, generateToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
-export async function POST() {
+export async function POST(request: Request) {
   try {
     const cookieStore = await cookies();
     const refreshToken = cookieStore.get('refreshToken')?.value;
@@ -17,21 +17,21 @@ export async function POST() {
 
     const decoded = await verifyToken(refreshToken);
 
-    if (!decoded || !('userId' in decoded)) {
+    if (!decoded) {
       return NextResponse.json(
         { message: 'Invalid refresh token' },
         { status: 401 }
       );
     }
 
+    // Verify user still exists
     const user = await db.user.findUnique({
       where: { id: decoded.userId },
       select: {
         id: true,
         email: true,
         firstName: true,
-        lastName: true,
-        streakCount: true,
+        role: true,
       },
     });
 
@@ -39,35 +39,39 @@ export async function POST() {
       return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
-    // Generate new access token using role from decoded token
-    const accessToken = await generateToken({
+    // Generate new access token
+    const tokenPayload = {
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
-      role: decoded.role,
-    });
+      role: user.role,
+    };
+
+    const accessToken = await generateToken();
 
     const response = NextResponse.json({
-      user: {
-        ...user,
-        role: decoded.role,
-      },
       token: accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        role: user.role,
+      },
     });
 
-    // Set new access token cookie
-    response.cookies.set('accessToken', accessToken, {
+    // Set the new access token cookie
+    response.cookies.set('auth-token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 15 * 60, // 15 minutes
+      maxAge: 60 * 15, // 15 minutes
     });
 
     return response;
   } catch (error) {
-    console.error('Error in POST /api/auth/refresh:', error);
+    console.error('Error in refresh token:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: 'Failed to refresh token' },
       { status: 500 }
     );
   }

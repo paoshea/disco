@@ -67,7 +67,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     throw err;
   };
 
-  const login = async (email: string, password: string): Promise<LoginResult> => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<LoginResult> => {
     try {
       setLoading(true);
       setError(null);
@@ -79,7 +82,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       // Check if the error indicates email verification is needed
-      if (err instanceof Error && err.message.toLowerCase().includes('email verification')) {
+      if (
+        err instanceof Error &&
+        err.message.toLowerCase().includes('email verification')
+      ) {
         return { needsVerification: true };
       }
       return { error: errorMessage };

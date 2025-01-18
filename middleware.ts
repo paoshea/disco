@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { verifyToken, type JWTPayload } from '@/lib/auth';
 
 // Add paths that require authentication
 const protectedPaths = [
@@ -19,40 +19,42 @@ export async function middleware(request: NextRequest) {
   const isProtectedPath = protectedPaths.some(path =>
     pathname.startsWith(path)
   );
-  const isAuthPath = authPaths.some(path => pathname === path);
-
-  // Handle unauthenticated requests
-  if (!authToken?.value) {
-    if (isProtectedPath) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('returnTo', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-    return NextResponse.next();
-  }
+  const isAuthPath = authPaths.some(path => pathname.startsWith(path));
 
   try {
-    // Verify token
-    const decoded = await verifyToken(authToken.value);
-
-    // Handle invalid token
-    if (!decoded && isProtectedPath) {
+    if (!authToken && isProtectedPath) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('returnTo', pathname);
       return NextResponse.redirect(loginUrl);
     }
 
-    // Redirect authenticated users away from auth pages
-    if (decoded && isAuthPath) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+    if (authToken) {
+      try {
+        const decoded = await verifyToken(authToken.value);
 
-    // Add user info to headers for protected paths
-    if (decoded && isProtectedPath) {
-      const response = NextResponse.next();
-      response.headers.set('X-User-Id', decoded.userId);
-      response.headers.set('X-User-Email', decoded.email);
-      return response;
+        // Redirect authenticated users away from auth pages
+        if (isAuthPath) {
+          return NextResponse.redirect(new URL('/dashboard', request.url));
+        }
+
+        // Add user info to headers for protected paths
+        if (isProtectedPath) {
+          const response = NextResponse.next();
+          response.headers.set('X-User-Id', decoded.userId);
+          response.headers.set('X-User-Email', decoded.email);
+          response.headers.set('X-User-Role', decoded.role);
+          return response;
+        }
+      } catch (error) {
+        console.error('Token verification error:', error);
+
+        // Handle token verification errors on protected paths
+        if (isProtectedPath) {
+          const loginUrl = new URL('/login', request.url);
+          loginUrl.searchParams.set('returnTo', pathname);
+          return NextResponse.redirect(loginUrl);
+        }
+      }
     }
 
     // Default case: allow request to proceed
@@ -67,7 +69,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
-    // Allow request to proceed for non-protected paths
     return NextResponse.next();
   }
 }
@@ -76,11 +77,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
-     * - api/auth (authentication routes that don't need token verification)
+     * - api (API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      */
-    '/((?!api/auth|_next/static|_next/image|favicon.ico).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
