@@ -65,7 +65,7 @@ export default function LoginPage() {
     setNeedsVerification(false);
 
     try {
-      const result = await Promise.resolve<LoginResult>(login(data.email, data.password));
+      const result = (await login(data.email, data.password) as unknown) as LoginResult;
 
       if ('error' in result && result.error) {
         setError(result.error);

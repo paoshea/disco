@@ -56,22 +56,21 @@ function logoutImpl(): void {
 export const useAuth = create<AuthStore>((set) => ({
   user: null,
   isLoading: false,
-  login: async (email: string, password: string): Promise<LoginResult> => {
+  login: async (email: string, password: string) => {
     set({ isLoading: true });
-    let result: LoginResult;
     try {
-      result = await loginImpl(email, password);
+      const result = await loginImpl(email, password);
       if (result.user) {
         set({ user: result.user });
       }
+      return result;
     } catch (error) {
-      result = {
+      return {
         error: error instanceof Error ? error.message : 'An error occurred during login',
       };
     } finally {
       set({ isLoading: false });
     }
-    return result;
   },
   logout: () => {
     logoutImpl();
