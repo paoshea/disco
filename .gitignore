@@ -10,6 +10,11 @@ node_modules/
 # Production
 /build/
 
+# Next.js
+/.next/
+/out/
+.next/
+
 # Environment files
 .env
 .env.local
@@ -88,6 +93,9 @@ __pycache__/
 .Python
 env/
 
-# Add to .gitignore
-.next/
-.next
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts

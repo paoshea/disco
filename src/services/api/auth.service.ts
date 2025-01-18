@@ -1,5 +1,6 @@
 import { User } from '@/types/user';
 import { apiClient } from './api.client';
+import type { AxiosError } from 'axios';
 
 interface LoginResponse {
   user: User;
@@ -14,68 +15,94 @@ interface RegisterData {
 }
 
 class AuthService {
-  private readonly baseUrl = '/auth';
+  private readonly baseUrl = '/api/auth';
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const response = await apiClient.post<{ data: LoginResponse }>(`${this.baseUrl}/login`, {
-      email,
-      password,
-    });
+    try {
+      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/login`, {
+        email,
+        password,
+      });
 
-    const { token, user } = response.data.data;
-    localStorage.setItem('token', token);
-    return { token, user };
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      return { token, user };
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error('Login service is not available. Please try again later.');
+      }
+      throw error;
+    }
   }
 
   async register(data: RegisterData): Promise<LoginResponse> {
-    const response = await apiClient.post<{ data: LoginResponse }>(
-      `${this.baseUrl}/register`,
-      data
-    );
+    try {
+      const response = await apiClient.post<LoginResponse>(`${this.baseUrl}/register`, data);
 
-    const { token, user } = response.data.data;
-    localStorage.setItem('token', token);
-    return { token, user };
+      const { token, user } = response.data;
+      localStorage.setItem('token', token);
+      return { token, user };
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error('Registration service is not available. Please try again later.');
+      }
+      throw error;
+    }
   }
 
   async getCurrentUser(): Promise<User> {
-    const response = await apiClient.get<{ data: { user: User } }>(`${this.baseUrl}/me`);
-    return response.data.data.user;
+    try {
+      const response = await apiClient.get<{ user: User }>(`${this.baseUrl}/me`);
+      return response.data.user;
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error('User service is not available. Please try again later.');
+      }
+      throw error;
+    }
   }
 
   async updateUser(userId: string, data: Partial<User>): Promise<User> {
-    const response = await apiClient.put<{ data: { user: User } }>(
-      `${this.baseUrl}/users/${userId}`,
-      data
-    );
-    return response.data.data.user;
+    try {
+      const response = await apiClient.put<{ user: User }>(`${this.baseUrl}/users/${userId}`, data);
+      return response.data.user;
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error('User update service is not available. Please try again later.');
+      }
+      throw error;
+    }
   }
 
   async requestPasswordReset(email: string): Promise<void> {
-    await apiClient.post<{ data: { message: string } }>(`${this.baseUrl}/password-reset/request`, {
+    await apiClient.post(`${this.baseUrl}/password-reset/request`, {
       email,
     });
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    await apiClient.post<{ data: { message: string } }>(`${this.baseUrl}/password-reset/reset`, {
+    await apiClient.post(`${this.baseUrl}/password-reset/reset`, {
       token,
       password,
     });
   }
 
   async verifyEmail(token: string): Promise<void> {
-    await apiClient.post<{ data: { message: string } }>(`${this.baseUrl}/verify-email`, {
+    await apiClient.post(`${this.baseUrl}/verify-email`, {
       token,
     });
   }
 
   async sendVerificationEmail(): Promise<void> {
-    await apiClient.post<{ data: { message: string } }>(`${this.baseUrl}/verify-email/resend`);
+    await apiClient.post(`${this.baseUrl}/verify-email/resend`);
   }
 
-  logout(): void {
+  async logout(): Promise<void> {
     localStorage.removeItem('token');
+  }
+
+  private isAxiosError(error: unknown): error is AxiosError {
+    return (error as AxiosError).isAxiosError === true;
   }
 }
 

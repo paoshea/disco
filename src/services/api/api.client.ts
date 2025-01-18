@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
 
-// Get the base URL from environment variables
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:3000/api';
+// Get the base URL from environment variables or use relative path for Next.js API routes
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '/api';
 
 // Create axios instance with default config
 export const apiClient: AxiosInstance = axios.create({
@@ -40,14 +40,20 @@ apiClient.interceptors.response.use(
           break;
         case 403:
           // Handle forbidden
+          console.error('Access forbidden:', error.response.data);
           break;
         case 404:
           // Handle not found
+          console.error('Resource not found:', error.response.data);
           break;
         case 500:
           // Handle server error
+          console.error('Server error:', error.response.data);
           break;
       }
+    } else if (error.request) {
+      // Handle network errors
+      console.error('Network error:', error.message);
     }
     return Promise.reject(error);
   }
