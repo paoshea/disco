@@ -1,3 +1,5 @@
+'use client';
+
 /* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
