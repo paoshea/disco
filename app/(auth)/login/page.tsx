@@ -72,7 +72,7 @@ export default function LoginPage() {
     [login, router]
   );
 
-  const handleResendVerification = useCallback(async () => {
+  const handleResendVerification = async () => {
     if (!emailForVerification) return;
 
     try {
@@ -91,7 +91,15 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [emailForVerification]);
+  };
+
+  const handleSubmitForm = useCallback(
+    (e: React.FormEvent<HTMLFormElement>): void => {
+      e.preventDefault();
+      void handleSubmit(onSubmit)(e);
+    },
+    [handleSubmit, onSubmit]
+  );
 
   return (
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
@@ -108,13 +116,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <form
-              className="mt-8 space-y-6"
-              onSubmit={e => {
-                e.preventDefault();
-                void handleSubmit(onSubmit)(e);
-              }}
-            >
+            <form className="mt-8 space-y-6" onSubmit={handleSubmitForm}>
               <div className="space-y-4">
                 <div>
                   <Input

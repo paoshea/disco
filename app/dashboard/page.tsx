@@ -151,8 +151,28 @@ export default function DashboardPage() {
     [fetchStats]
   );
 
+  const handleSafetyCheck = useCallback(
+    async (checkId: string): Promise<void> => {
+      await handleCheckComplete(checkId);
+      setShowSafetyCheck(false);
+      setCurrentCheck(null);
+    },
+    [handleCheckComplete]
+  );
+
+  const handleModalClose = useCallback((): void => {
+    setShowSafetyCheck(false);
+    setCurrentCheck(null);
+  }, []);
+
+  const handleResolve = useCallback(
+    (checkId: string): void => {
+      void handleSafetyCheck(checkId);
+    },
+    [handleSafetyCheck]
+  );
+
   const handleEditContact = (contact: EmergencyContact) => {
-    // TODO: Implement contact editing
     console.log('Editing contact:', contact);
   };
 
@@ -218,19 +238,14 @@ export default function DashboardPage() {
         <SafetyCheckModal
           check={currentCheck}
           isOpen={showSafetyCheck}
-          onClose={() => {
+          onClose={handleModalClose}
+          onResolve={async function (
+            checkId: string,
+            _status: 'safe' | 'unsafe'
+          ) {
+            await handleCheckComplete(checkId);
             setShowSafetyCheck(false);
             setCurrentCheck(null);
-          }}
-          onResolve={async (checkId: string, _status: 'safe' | 'unsafe', _notes?: string): Promise<void> => {
-            try {
-              await handleCheckComplete(checkId);
-              setShowSafetyCheck(false);
-              setCurrentCheck(null);
-            } catch (err) {
-              console.error('Error resolving safety check:', err);
-              throw err; // Re-throw to maintain Promise rejection
-            }
           }}
         />
       )}
