@@ -17,9 +17,13 @@ export default function MatchingPage() {
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const [radius, setRadius] = useState<number>(0.5); // Default 0.5 km (approx 500m)
-  const [timeWindow, setTimeWindow] = useState<'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'>('anytime');
+  const [timeWindow, setTimeWindow] = useState<
+    'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'
+  >('anytime');
   const [activityType, setActivityType] = useState<string>('any');
-  const [privacyMode, setPrivacyMode] = useState<'standard' | 'strict'>('standard');
+  const [privacyMode, setPrivacyMode] = useState<'standard' | 'strict'>(
+    'standard'
+  );
   const { position } = useGeolocation();
 
   useEffect(() => {
@@ -80,17 +84,16 @@ export default function MatchingPage() {
     <div className="container mx-auto p-4">
       <div className="mb-6">
         <h1 className="text-2xl font-bold mb-4">Find Matches</h1>
-        
         {/* Matching Controls */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
           {/* Radius Control */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
               Search Radius
             </label>
             <select
               value={radius}
-              onChange={(e) => setRadius(Number(e.target.value))}
+              onChange={e => setRadius(Number(e.target.value))}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             >
               <option value={0.1}>100m</option>
@@ -103,12 +106,22 @@ export default function MatchingPage() {
 
           {/* Time Window */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
               Time Window
             </label>
             <select
               value={timeWindow}
-              onChange={(e) => setTimeWindow(e.target.value as 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today')}
+              onChange={e =>
+                setTimeWindow(
+                  e.target.value as
+                    | 'anytime'
+                    | 'now'
+                    | '15min'
+                    | '30min'
+                    | '1hour'
+                    | 'today'
+                )
+              }
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             >
               <option value="anytime">Anytime</option>
@@ -122,12 +135,12 @@ export default function MatchingPage() {
 
           {/* Activity Type */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
               Activity
             </label>
             <select
               value={activityType}
-              onChange={(e) => setActivityType(e.target.value)}
+              onChange={e => setActivityType(e.target.value)}
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             >
               <option value="any">Any Activity</option>
@@ -141,12 +154,14 @@ export default function MatchingPage() {
 
           {/* Privacy Mode */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className="block text-sm font-medium text-gray-700">
               Privacy Mode
             </label>
             <select
               value={privacyMode}
-              onChange={(e) => setPrivacyMode(e.target.value as 'standard' | 'strict')}
+              onChange={e =>
+                setPrivacyMode(e.target.value as 'standard' | 'strict')
+              }
               className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
             >
               <option value="standard">Standard Privacy</option>

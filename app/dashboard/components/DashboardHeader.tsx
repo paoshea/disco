@@ -46,28 +46,46 @@ export function DashboardHeader({
               <div className="flex items-center space-x-4">
                 {/* Battery Status */}
                 <div className="flex items-center space-x-2">
-                  <div className="text-sm font-medium text-gray-600">Battery</div>
-                  <div className={`text-sm font-bold ${
-                    batteryStats.currentLevel > 20 ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                  <div className="text-sm font-medium text-gray-600">
+                    Battery
+                  </div>
+                  <div
+                    className={`text-sm font-bold ${
+                      batteryStats.currentLevel > 20
+                        ? 'text-green-600'
+                        : 'text-red-600'
+                    }`}
+                  >
                     {batteryStats.currentLevel}%
                   </div>
                 </div>
 
                 {/* Discovery Mode Status */}
                 <div className="flex items-center space-x-2">
-                  <div className="text-sm font-medium text-gray-600">Discovery</div>
-                  <div className={`h-2 w-2 rounded-full ${
-                    batteryStats.discoveryModeActive ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
+                  <div className="text-sm font-medium text-gray-600">
+                    Discovery
+                  </div>
+                  <div
+                    className={`h-2 w-2 rounded-full ${
+                      batteryStats.discoveryModeActive
+                        ? 'bg-green-500'
+                        : 'bg-gray-300'
+                    }`}
+                  />
                 </div>
 
                 {/* Bluetooth Status */}
                 <div className="flex items-center space-x-2">
-                  <div className="text-sm font-medium text-gray-600">Bluetooth</div>
-                  <div className={`h-2 w-2 rounded-full ${
-                    batteryStats.bluetoothActive ? 'bg-green-500' : 'bg-gray-300'
-                  }`} />
+                  <div className="text-sm font-medium text-gray-600">
+                    Bluetooth
+                  </div>
+                  <div
+                    className={`h-2 w-2 rounded-full ${
+                      batteryStats.bluetoothActive
+                        ? 'bg-green-500'
+                        : 'bg-gray-300'
+                    }`}
+                  />
                 </div>
               </div>
             )}
@@ -75,9 +93,13 @@ export function DashboardHeader({
             {privacyMode && (
               <div className="flex items-center space-x-2">
                 <div className="text-sm font-medium text-gray-600">Privacy</div>
-                <div className={`text-sm font-bold ${
-                  privacyMode === 'strict' ? 'text-purple-600' : 'text-blue-600'
-                }`}>
+                <div
+                  className={`text-sm font-bold ${
+                    privacyMode === 'strict'
+                      ? 'text-purple-600'
+                      : 'text-blue-600'
+                  }`}
+                >
                   {privacyMode === 'strict' ? 'Enhanced' : 'Standard'}
                 </div>
               </div>

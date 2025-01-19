@@ -195,17 +195,26 @@ export default function DashboardPage() {
     [fetchStats]
   );
 
-  const handlePrivacyModeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    console.log('Change privacy mode:', event.target.value);
-  }, []);
+  const handlePrivacyModeChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      console.log('Change privacy mode:', event.target.value);
+    },
+    []
+  );
 
-  const handleAutoDisableChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Change auto-disable discovery:', event.target.checked);
-  }, []);
+  const handleAutoDisableChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      console.log('Change auto-disable discovery:', event.target.checked);
+    },
+    []
+  );
 
-  const handleProgressiveDisclosureChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log('Change progressive disclosure:', event.target.checked);
-  }, []);
+  const handleProgressiveDisclosureChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      console.log('Change progressive disclosure:', event.target.checked);
+    },
+    []
+  );
 
   if (isLoading || !stats || !user) {
     return (
@@ -303,25 +312,45 @@ export default function DashboardPage() {
             </div>
 
             <div className="bg-white rounded-lg shadow-sm p-6">
-              <h3 className="text-lg font-semibold mb-4">Battery Optimization</h3>
+              <h3 className="text-lg font-semibold mb-4">
+                Battery Optimization
+              </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span>Current Battery Level</span>
-                  <span className="font-medium">{stats.batteryStats.currentLevel}%</span>
+                  <span className="font-medium">
+                    {stats.batteryStats.currentLevel}%
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Average Daily Usage</span>
-                  <span className="font-medium">{stats.batteryStats.averageDailyDrain}%</span>
+                  <span className="font-medium">
+                    {stats.batteryStats.averageDailyDrain}%
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Discovery Mode</span>
-                  <span className={`font-medium ${stats.batteryStats.discoveryModeActive ? 'text-green-600' : 'text-gray-500'}`}>
-                    {stats.batteryStats.discoveryModeActive ? 'Active' : 'Inactive'}
+                  <span
+                    className={`font-medium ${
+                      stats.batteryStats.discoveryModeActive
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
+                    {stats.batteryStats.discoveryModeActive
+                      ? 'Active'
+                      : 'Inactive'}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span>Bluetooth Status</span>
-                  <span className={`font-medium ${stats.batteryStats.bluetoothActive ? 'text-green-600' : 'text-gray-500'}`}>
+                  <span
+                    className={`font-medium ${
+                      stats.batteryStats.bluetoothActive
+                        ? 'text-green-600'
+                        : 'text-gray-500'
+                    }`}
+                  >
                     {stats.batteryStats.bluetoothActive ? 'Active' : 'Inactive'}
                   </span>
                 </div>
