@@ -37,6 +37,10 @@ model User {
   createdRooms         ChatRoom[]       @relation("CreatedRooms")
   participatingRooms   ChatRoom[]       @relation("ParticipatingRooms")
   messages             Message[]
+  locations            Location[]
+  privacyZones         PrivacyZone[]
+  events               Event[]
+  eventParticipants    EventParticipant[]
 }
 
 model PasswordReset {
@@ -117,4 +121,65 @@ model Message {
   sender     User      @relation(fields: [senderId], references: [id])
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+}
+
+model Location {
+  id             String   @id @default(uuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  latitude       Float
+  longitude      Float
+  accuracy       Float?
+  privacyMode    String   // 'precise', 'approximate', 'zone'
+  sharingEnabled Boolean  @default(false)
+  timestamp      DateTime @default(now())
+
+  @@index([userId, timestamp])
+}
+
+model PrivacyZone {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  name      String
+  latitude  Float
+  longitude Float
+  radius    Float    // in kilometers
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model Event {
+  id              String    @id @default(uuid())
+  title           String
+  description     String?
+  latitude        Float
+  longitude       Float
+  startTime       DateTime
+  endTime         DateTime?
+  type            String    // 'social', 'professional', 'activity'
+  maxParticipants Int?
+  creatorId       String
+  creator         User      @relation(fields: [creatorId], references: [id])
+  tags            String[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  participants    EventParticipant[]
+
+  @@index([latitude, longitude])
+  @@index([startTime])
+}
+
+model EventParticipant {
+  id        String   @id @default(uuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  joinedAt  DateTime @default(now())
+
+  @@unique([eventId, userId])
+  @@index([userId])
 }

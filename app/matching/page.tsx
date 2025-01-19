@@ -1,16 +1,24 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Match } from '@/types/match';
+import { useSession } from 'next-auth/react';
+import type { Match } from '@/types/match';
 import { matchService } from '@/services/api/match.service';
 import { MatchList } from '@/components/matching/MatchList';
 import { MatchMapView } from '@/components/matching/MatchMapView';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import LocationPrivacy from '@/components/location/LocationPrivacy';
+import { NearbyEvents } from '@/components/events/NearbyEvents';
+import { useToast } from '@/hooks/useToast';
+import type { Event } from '@/types/event';
+import type { LocationPrivacyMode } from '@/types/location';
 
 export default function MatchingPage() {
+  const { data: session } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
@@ -21,60 +29,86 @@ export default function MatchingPage() {
     'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'
   >('anytime');
   const [activityType, setActivityType] = useState<string>('any');
-  const [privacyMode, setPrivacyMode] = useState<'standard' | 'strict'>(
-    'standard'
-  );
+  const [privacyMode, setPrivacyMode] = useState<LocationPrivacyMode>('precise');
   const { position } = useGeolocation();
 
-  useEffect(() => {
-    const fetchMatches = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await matchService.getMatches(
-          position?.coords
-            ? {
-                latitude: position.coords.latitude,
-                longitude: position.coords.longitude,
-                radius: radius, // In kilometers
-                timeWindow,
-                activityType,
-                privacyMode,
-                useBluetoothProximity: true, // Enable enhanced indoor proximity
-              }
-            : undefined
-        );
-        setMatches(response);
-      } catch (err) {
-        console.error('Error fetching matches:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while fetching matches. Please try again.'
-        );
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchMatches();
+  const fetchMatches = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const matches = await matchService.getMatches(
+        position?.coords
+          ? {
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+              radius,
+              timeWindow,
+              activityType: activityType === 'any' ? undefined : activityType,
+              privacyMode: privacyMode === 'precise' ? 'standard' : 'strict',
+            }
+          : undefined
+      );
+      setMatches(matches);
+    } catch (error) {
+      console.error('Error fetching matches:', error);
+      setError('Failed to fetch matches');
+    } finally {
+      setLoading(false);
+    }
   }, [position, radius, timeWindow, activityType, privacyMode]);
 
-  const handleMatchClick = (matchId: string) => {
-    router.push(`/profile/${matchId}`);
-  };
+  useEffect(() => {
+    if (!session) {
+      router.push('/login');
+      return;
+    }
+    void fetchMatches();
+  }, [session, router, fetchMatches]);
+
+  const handleEventJoin = useCallback(
+    (event: Event) => {
+      toast.success(`Successfully joined ${event.title}`);
+      void fetchMatches();
+    },
+    [fetchMatches, toast]
+  );
+
+  const handleEventLeave = useCallback(
+    (event: Event) => {
+      toast.success(`Successfully left ${event.title}`);
+      void fetchMatches();
+    },
+    [fetchMatches, toast]
+  );
+
+  const handleRadiusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newRadius = parseFloat(event.target.value);
+    setRadius(newRadius);
+  }, []);
+
+  const handleTimeWindowChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setTimeWindow(event.target.value as typeof timeWindow);
+  }, []);
+
+  const handleActivityTypeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    setActivityType(event.target.value);
+  }, []);
+
+  if (!session) {
+    return null;
+  }
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="flex items-center justify-center h-screen">
+        <LoadingSpinner />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="p-4">
         <ErrorMessage message={error} />
       </div>
     );
@@ -82,132 +116,109 @@ export default function MatchingPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-4">Find Matches</h1>
-        {/* Matching Controls */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
-          {/* Radius Control */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Search Radius
-            </label>
+      <div className="mb-8">
+        <div className="flex flex-col space-y-4 p-4">
+          <div className="flex justify-between items-center">
+            <h1 className="text-2xl font-bold">Nearby Matches</h1>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 rounded ${
+                  viewMode === 'list'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                List
+              </button>
+              <button
+                onClick={() => setViewMode('map')}
+                className={`px-3 py-1 rounded ${
+                  viewMode === 'map'
+                    ? 'bg-blue-500 text-white'
+                    : 'bg-gray-200 text-gray-700'
+                }`}
+              >
+                Map
+              </button>
+            </div>
+          </div>
+
+          <LocationPrivacy
+            onPrivacyChange={(mode: LocationPrivacyMode) => {
+              setPrivacyMode(mode);
+            }}
+            onSharingChange={(enabled: boolean) => {
+              // Handle sharing change if needed
+            }}
+          />
+        </div>
+      </div>
+
+      <div className="mb-8">
+        <h2 className="mb-4 text-2xl font-bold">Nearby Events</h2>
+        <NearbyEvents
+          radius={radius}
+          onEventJoined={handleEventJoin}
+          onEventLeft={handleEventLeave}
+        />
+      </div>
+
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-2xl font-bold">Matches</h2>
+          <div className="flex space-x-4">
             <select
               value={radius}
-              onChange={e => setRadius(Number(e.target.value))}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              onChange={handleRadiusChange}
+              className="rounded-lg border-gray-300"
             >
-              <option value={0.1}>100m</option>
-              <option value={0.3}>300m</option>
-              <option value={0.5}>500m</option>
-              <option value={1}>1km</option>
-              <option value={1.6}>1 mile</option>
+              <option value={0.5}>Within 500m</option>
+              <option value={1}>Within 1km</option>
+              <option value={2}>Within 2km</option>
+              <option value={5}>Within 5km</option>
             </select>
-          </div>
 
-          {/* Time Window */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Time Window
-            </label>
             <select
               value={timeWindow}
-              onChange={e =>
-                setTimeWindow(
-                  e.target.value as
-                    | 'anytime'
-                    | 'now'
-                    | '15min'
-                    | '30min'
-                    | '1hour'
-                    | 'today'
-                )
-              }
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              onChange={handleTimeWindowChange}
+              className="rounded-lg border-gray-300"
             >
-              <option value="anytime">Anytime</option>
+              <option value="anytime">Any Time</option>
               <option value="now">Right Now</option>
-              <option value="15min">Next 15 minutes</option>
-              <option value="30min">Next 30 minutes</option>
-              <option value="1hour">Next hour</option>
+              <option value="15min">Next 15 Minutes</option>
+              <option value="30min">Next 30 Minutes</option>
+              <option value="1hour">Next Hour</option>
               <option value="today">Today</option>
             </select>
-          </div>
 
-          {/* Activity Type */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Activity
-            </label>
             <select
               value={activityType}
-              onChange={e => setActivityType(e.target.value)}
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+              onChange={handleActivityTypeChange}
+              className="rounded-lg border-gray-300"
             >
               <option value="any">Any Activity</option>
-              <option value="coffee">Coffee</option>
-              <option value="lunch">Lunch</option>
-              <option value="networking">Professional Networking</option>
-              <option value="workout">Workout</option>
-              <option value="study">Study Session</option>
+              <option value="social">Social</option>
+              <option value="exercise">Exercise</option>
+              <option value="study">Study</option>
+              <option value="hobby">Hobby</option>
             </select>
           </div>
-
-          {/* Privacy Mode */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Privacy Mode
-            </label>
-            <select
-              value={privacyMode}
-              onChange={e =>
-                setPrivacyMode(e.target.value as 'standard' | 'strict')
-              }
-              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
-            >
-              <option value="standard">Standard Privacy</option>
-              <option value="strict">Enhanced Privacy</option>
-            </select>
-          </div>
-        </div>
-
-        {/* View Mode Toggle */}
-        <div className="mt-4 flex justify-end space-x-2">
-          <button
-            className={`rounded px-4 py-2 ${
-              viewMode === 'list'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-            onClick={() => setViewMode('list')}
-          >
-            List View
-          </button>
-          <button
-            className={`rounded px-4 py-2 ${
-              viewMode === 'map'
-                ? 'bg-primary text-white'
-                : 'bg-gray-200 text-gray-700'
-            }`}
-            onClick={() => setViewMode('map')}
-          >
-            Map View
-          </button>
         </div>
 
         {viewMode === 'list' ? (
-          <MatchList matches={matches} onMatchClick={handleMatchClick} />
+          <MatchList
+            matches={matches}
+            onMatchClick={(matchId) => {
+              router.push(`/matches/${matchId}`);
+            }}
+          />
         ) : (
           <MatchMapView
             matches={matches}
-            onMarkerClick={handleMatchClick}
-            center={
-              position?.coords
-                ? {
-                    lat: position.coords.latitude,
-                    lng: position.coords.longitude,
-                  }
-                : undefined
-            }
+            onMarkerClick={(matchId) => {
+              router.push(`/matches/${matchId}`);
+            }}
           />
         )}
       </div>

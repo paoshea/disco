@@ -148,6 +148,337 @@ interface SafetyFeaturesProps {
 }
 ```
 
+## Prisma Types and Model Names
+
+### Model Names in Prisma Client
+
+Prisma models defined in `schema.prisma` are accessible through the Prisma client using lowercase model names:
+
+```typescript
+// In schema.prisma
+model Location {
+  id String @id
+  // ...
+}
+
+// In your code
+db.location.findFirst()  // Correct
+db.Location.findFirst() // Wrong
+```
+
+### Type Assertions with Application Types
+
+When using Prisma client results with application-specific types, use type assertions:
+
+```typescript
+// Application type
+interface Location {
+  id: string;
+  latitude: number;
+  longitude: number;
+  // ...
+}
+
+// Using with Prisma
+const location = await db.location.findFirst() as Location;
+```
+
+### Analyzing Prisma Client Types
+
+To debug Prisma client type issues, use these commands:
+
+```bash
+# Regenerate Prisma client
+npx prisma generate
+
+# View Prisma schema
+cat node_modules/.prisma/client/schema.prisma
+
+# Check Prisma client types
+ls node_modules/@prisma/client
+ls node_modules/.prisma/client
+
+# View type definitions
+cat node_modules/@prisma/client/index.d.ts
+```
+
+### Prisma Client Configuration
+
+Enable logging in development to help debug type issues:
+
+```typescript
+const prisma = new PrismaClient({
+  log: ['query', 'info', 'warn', 'error'],
+});
+```
+
+## Prisma Client Organization Patterns
+
+There are two recommended patterns for organizing Prisma client usage:
+
+1. **Service Class Pattern**
+   ```typescript
+   class LocationService {
+     private prisma: PrismaClient['location'];
+   
+     constructor() {
+       this.prisma = db.location;
+     }
+   
+     async findLocation() {
+       return await this.prisma.findFirst();
+     }
+   }
+   ```
+
+2. **Module-Level Client Pattern**
+   ```typescript
+   const locationDb = db.location;
+   const privacyZoneDb = db.privacyZone;
+   
+   export async function findLocation() {
+     return await locationDb.findFirst();
+   }
+   ```
+
+Benefits of these patterns:
+- Type-safe access to Prisma models
+- Better code organization and reusability
+- Reduced repetition of `db.modelName`
+- Easier to mock for testing
+
+### Type Inference vs Type Assertion
+
+When working with Prisma:
+
+1. **Type Inference (Preferred)**
+   ```typescript
+   // Prisma will infer the correct type
+   const location = await db.location.findFirst();
+   ```
+
+2. **Type Assertion (When needed)**
+   ```typescript
+   // Use when mixing with application types
+   const location = await db.location.findFirst() as Location;
+   ```
+
+Always prefer type inference unless you need to convert to application-specific types.
+
+## Prisma Client Type Access
+
+When working with Prisma models in TypeScript, there are several ways to type your database access:
+
+```typescript
+// Option 1: Direct access with PrismaClient type
+private prisma: PrismaClient['$extends']['extArgs']['model']['location'];
+
+// Option 2: Using NonNullable to ensure type exists
+private prisma: NonNullable<PrismaClient['$extends']>['location'];
+
+// Option 3: Type casting with 'any' (avoid if possible)
+this.prisma = (db as any).location;
+```
+
+Choose the approach that best fits your needs:
+- Option 1 is most type-safe but may need updates with Prisma version changes
+- Option 2 provides good type safety while being more flexible
+- Option 3 should be used only as a last resort
+
+## Prisma Client Type Casting Pattern
+
+When working with Prisma models in TypeScript, use the following type casting pattern:
+
+```typescript
+// INCORRECT: This can lead to type errors with Prisma's generated types
+private prisma: PrismaClient['$extends']['extArgs']['model']['location'];
+this.prisma = (db as PrismaClient).location;
+
+// INCORRECT: Direct access can fail type checking
+const locationDb = db.location;
+
+// CORRECT: Use NonNullable with a localized any cast
+const locationDb: NonNullable<PrismaClient['location']> = (db as any).location;
+```
+
+The correct pattern has these key elements:
+1. Type the variable using `NonNullable<PrismaClient['modelName']>`
+2. Use a localized `any` cast only during initialization: `(db as any).modelName`
+3. Keep the type assertion scoped only to the assignment
+
+This pattern works because:
+- `NonNullable` ensures type safety after initialization
+- The localized `any` cast handles Prisma's internal type complexity
+- The pattern is consistent with Prisma's runtime behavior
+
+## Troubleshooting Prisma Type Issues
+
+### Common Issue: Property Does Not Exist on PrismaClient
+
+When accessing Prisma models, you might encounter errors like:
+```typescript
+Property 'modelName' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'
+```
+
+Here are the attempted solutions and their outcomes:
+
+#### Attempt 1: Direct Type Assertion (Not Recommended)
+```typescript
+// ❌ Does not work - loses type safety
+const modelDb = (db as any).modelName;
+```
+
+#### Attempt 2: Using NonNullable with PrismaClient (Partial Solution)
+```typescript
+// ⚠️ Works but with type errors
+const modelDb: NonNullable<PrismaClient['modelName']> = (db as any).modelName;
+```
+
+#### Attempt 3: Using Prisma's Delegate Types (Not Working)
+```typescript
+// ❌ Type errors persist
+const modelDb: Prisma.ModelDelegate<Prisma.RejectOnNotFound | Prisma.RejectPerOperation> = db.modelName;
+```
+
+#### Solution: Custom Extended PrismaClient Type
+
+The working solution involves creating a custom type in your Prisma configuration file:
+
+1. First, verify your schema and regenerate the client:
+```bash
+npx prisma validate
+npx prisma generate
+```
+
+2. Create an extended PrismaClient type in `lib/prisma.ts`:
+```typescript
+export type ExtendedPrismaClient = PrismaClient & {
+  $extends: {
+    model: {
+      modelName: {
+        findFirst: (args: any) => Promise<any>;
+        findMany: (args: any) => Promise<any>;
+        create: (args: any) => Promise<any>;
+        deleteMany: (args: any) => Promise<any>;
+      };
+      // Add other models as needed
+    }
+  }
+};
+```
+
+3. Use the extended type in your services:
+```typescript
+import type { ExtendedPrismaClient } from '@/lib/prisma';
+
+class ModelService {
+  private prisma: ExtendedPrismaClient['$extends']['model']['modelName'];
+
+  constructor() {
+    this.prisma = (db as ExtendedPrismaClient).$extends.model.modelName;
+  }
+}
+```
+
+This solution works because:
+- It properly types the extended Prisma client
+- Maintains type safety for model operations
+- Allows TypeScript to understand the model structure
+- Works consistently across different parts of the application
+
+### Best Practices
+1. Always regenerate Prisma client after schema changes:
+```bash
+npx prisma generate
+```
+
+2. Verify schema validity:
+```bash
+npx prisma validate
+```
+
+3. Use the ExtendedPrismaClient type for all Prisma model access
+4. Keep model method signatures up to date in the extended type
+5. Consider adding specific argument and return types for better type safety
+
+### Common Gotchas
+- Make sure your schema.prisma file is properly defined
+- Ensure all models referenced in the ExtendedPrismaClient exist in your schema
+- The extended type needs to match your actual Prisma model methods
+- Remember to update the extended type when adding new model operations
+
+## Type Mapping Between Components
+
+When different parts of your application use different types for the same concept, create explicit mappings:
+
+```typescript
+// Example: Mapping between app and API privacy modes
+const privacyMode = userMode === 'precise' ? 'standard' : 'strict';
+
+// Better: Create a type-safe mapping function
+function mapPrivacyMode(mode: LocationPrivacyMode): ApiPrivacyMode {
+  const mapping: Record<LocationPrivacyMode, ApiPrivacyMode> = {
+    precise: 'standard',
+    approximate: 'strict',
+    zone: 'strict'
+  };
+  return mapping[mode];
+}
+```
+
+## Nested Object Type Access
+
+When working with complex types that have nested objects, use optional chaining and proper type narrowing:
+
+```typescript
+// Bad: Direct access to nested properties
+event.latitude.toFixed(6)
+
+// Good: Access through nested object with optional chaining
+event.location.latitude?.toFixed(6)
+
+// Better: Add type guard for complete type safety
+function hasCoordinates(location: Location): location is Location & { latitude: number; longitude: number } {
+  return typeof location.latitude === 'number' && typeof location.longitude === 'number';
+}
+
+if (hasCoordinates(event.location)) {
+  console.log(event.location.latitude.toFixed(6));
+}
+```
+
+## Component Props Type Safety
+
+When defining component props:
+
+1. Use explicit interfaces for prop types:
+```typescript
+interface LocationPrivacyProps {
+  onPrivacyChange: (mode: LocationPrivacyMode) => void;
+  onSharingChange: (enabled: boolean) => void;
+}
+```
+
+2. Ensure all required callbacks are properly typed:
+```typescript
+<MatchList 
+  matches={matches} 
+  onMatchClick={(matchId: string) => void}
+/>
+```
+
+3. Use discriminated unions for components with different modes:
+```typescript
+type ViewMode = 'list' | 'map';
+type ViewProps = {
+  mode: ViewMode;
+  data: Match[];
+} & (
+  | { mode: 'list'; onItemClick: (id: string) => void }
+  | { mode: 'map'; onMarkerClick: (id: string) => void }
+);
+```
+
 ## Type Safety Best Practices
 
 1. **Request Body Typing**: Always type your request bodies explicitly:

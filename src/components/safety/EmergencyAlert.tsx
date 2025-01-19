@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { emergencyService } from '@/services/api/emergency.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
+import type { Location } from '@/types/location';
 import { BaseMapView } from '@/components/map/BaseMapView';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 
 export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
+  userId,
   onAlertTriggered,
 }) => {
   const [loading, setLoading] = useState(false);
@@ -26,14 +28,14 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
 
       const alert = await emergencyService.sendAlert({
         location: {
+          id: crypto.randomUUID(),
+          userId,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          altitude: position.coords.altitude,
-          altitudeAccuracy: position.coords.altitudeAccuracy,
-          heading: position.coords.heading,
-          speed: position.coords.speed,
-          timestamp: position.timestamp,
+          timestamp: new Date(),
+          privacyMode: 'precise',
+          sharingEnabled: true,
         },
         timestamp: new Date().toISOString(),
       });
@@ -44,9 +46,14 @@ export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
         type: 'sos',
         status: 'active',
         location: {
+          id: crypto.randomUUID(),
+          userId,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
+          timestamp: new Date(),
+          privacyMode: 'precise',
+          sharingEnabled: true,
         },
         updatedAt: new Date().toISOString(),
       };

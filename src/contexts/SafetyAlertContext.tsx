@@ -58,9 +58,14 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
   const convertToSafetyAlertNew = (alert: SafetyAlert): SafetyAlertNew => {
     // Default location if not provided
     const defaultLocation: Location = {
+      id: crypto.randomUUID(),
+      userId: alert.userId,
       latitude: 0,
       longitude: 0,
       accuracy: 0,
+      timestamp: new Date(),
+      privacyMode: 'precise',
+      sharingEnabled: true,
     };
 
     return {

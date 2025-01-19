@@ -109,6 +109,14 @@ export default function Safety() {
             email: contact.email || '',
             createdAt: contact.createdAt || new Date().toISOString(),
             updatedAt: contact.updatedAt || new Date().toISOString(),
+            notifyOn: {
+              sosAlert: contact.notifyOn?.sosAlert ?? true,
+              meetupStart: contact.notifyOn?.meetupStart ?? true,
+              meetupEnd: contact.notifyOn?.meetupEnd ?? true,
+              lowBattery: contact.notifyOn?.lowBattery ?? true,
+              enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
+              exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true
+            }
           })),
         });
       } catch (err) {
@@ -134,6 +142,14 @@ export default function Safety() {
           userId: user.id,
           createdAt: contact.createdAt || new Date().toISOString(),
           updatedAt: contact.updatedAt || new Date().toISOString(),
+          notifyOn: {
+            sosAlert: contact.notifyOn?.sosAlert ?? true,
+            meetupStart: contact.notifyOn?.meetupStart ?? true,
+            meetupEnd: contact.notifyOn?.meetupEnd ?? true,
+            lowBattery: contact.notifyOn?.lowBattery ?? true,
+            enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
+            exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true
+          }
         };
         await safetyService.updateEmergencyContact(
           user.id,

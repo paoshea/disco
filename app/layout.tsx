@@ -1,7 +1,6 @@
 import { ReactNode } from 'react';
 import { Providers } from './providers';
-import { ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
+import { Toaster } from 'react-hot-toast';
 import '@/styles/globals.css';
 
 export const metadata = {
@@ -12,13 +11,17 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
     <html lang="en">
       <body>
         <Providers>
           {children}
-          <ToastContainer position="top-right" autoClose={3000} />
+          <Toaster position="top-right" />
         </Providers>
       </body>
     </html>

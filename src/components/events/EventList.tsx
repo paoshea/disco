@@ -1,118 +1,66 @@
-import React, { useEffect, useState, useCallback } from 'react';
-import { Event, EventFilters } from '@/types/event';
+import React, { useState } from 'react';
 import { EventCard } from './EventCard';
-import { eventService } from '@/services/api/event.service';
-import { useAuth } from '@/hooks/useAuth';
+import type { Event, EventType } from '@/types/event';
 
 interface EventListProps {
-  filters?: EventFilters;
+  events: Event[];
+  onEventJoined?: (event: Event) => void;
+  onEventLeft?: (event: Event) => void;
+  filterType?: EventType | 'all';
+  showActions?: boolean;
 }
 
-export const EventList: React.FC<EventListProps> = ({ filters }) => {
-  const { user } = useAuth();
-  const [events, setEvents] = useState<Event[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+export function EventList({
+  events,
+  onEventJoined,
+  onEventLeft,
+  filterType = 'all',
+  showActions = true,
+}: EventListProps) {
+  const [sortBy, setSortBy] = useState<'date' | 'participants'>('date');
 
-  const fetchEvents = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const data = await eventService.getEvents(filters);
-      setEvents(data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load events');
-      console.error('Error fetching events:', err);
-    } finally {
-      setIsLoading(false);
+  const filteredEvents = events.filter(event =>
+    filterType === 'all' ? true : event.eventType === filterType
+  );
+
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    if (sortBy === 'date') {
+      return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
     }
-  }, [filters]);
+    return b.currentParticipants - a.currentParticipants;
+  });
 
-  useEffect(() => {
-    void fetchEvents();
-  }, [fetchEvents]);
-
-  const handleJoinEvent = useCallback(
-    async (eventId: string) => {
-      if (!user?.id) return;
-
-      try {
-        const updatedEvent = await eventService.joinEvent(eventId, user.id);
-        setEvents(events =>
-          events.map(event => (event.id === eventId ? updatedEvent : event))
-        );
-      } catch (error) {
-        console.error('Failed to join event:', error);
-      }
-    },
-    [user?.id]
-  );
-
-  const handleLeaveEvent = useCallback(
-    async (eventId: string) => {
-      if (!user?.id) return;
-
-      try {
-        const updatedEvent = await eventService.leaveEvent(eventId, user.id);
-        setEvents(events =>
-          events.map(event => (event.id === eventId ? updatedEvent : event))
-        );
-      } catch (error) {
-        console.error('Failed to leave event:', error);
-      }
-    },
-    [user?.id]
-  );
-
-  if (isLoading) {
+  if (sortedEvents.length === 0) {
     return (
-      <div className="flex justify-center items-center min-h-[200px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-primary-500 border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-600">{error}</p>
-        <button
-          onClick={() => window.location.reload()}
-          className="mt-4 px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
-        >
-          Try Again
-        </button>
-      </div>
-    );
-  }
-
-  if (events.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <h3 className="text-lg font-medium text-gray-900">No events found</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          {filters
-            ? 'Try adjusting your filters'
-            : 'Check back later for new events'}
-        </p>
+      <div className="text-center text-gray-500 py-8">
+        No events found. Try adjusting your filters.
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {events.map(event => (
-        <EventCard
-          key={event.id}
-          event={event}
-          onJoin={eventId => {
-            void handleJoinEvent(eventId);
-          }}
-          onLeave={eventId => {
-            void handleLeaveEvent(eventId);
-          }}
-        />
-      ))}
+    <div className="space-y-4">
+      <div className="flex justify-end space-x-2">
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value as 'date' | 'participants')}
+          className="px-3 py-2 border rounded-md text-sm"
+        >
+          <option value="date">Sort by Date</option>
+          <option value="participants">Sort by Participants</option>
+        </select>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {sortedEvents.map(event => (
+          <EventCard
+            key={event.id}
+            event={event}
+            onEventJoined={onEventJoined}
+            onEventLeft={onEventLeft}
+            showActions={showActions}
+          />
+        ))}
+      </div>
     </div>
   );
-};
+}

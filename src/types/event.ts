@@ -49,12 +49,13 @@ export interface Event {
   participants: EventParticipant[];
   organizerId: string;
   organizer: User;
-  status: EventStatus;
   category: EventCategory;
+  eventType: EventType;
   tags: string[];
   safetyGuidelines: string[];
   meetupInstructions?: string;
   virtualMeetingLink?: string;
+  status: EventStatus;
   createdAt: string;
   updatedAt: string;
 }
@@ -64,7 +65,7 @@ export interface EventFilters {
   limit?: number;
   sortBy?: 'date' | 'popularity' | 'distance';
   filters?: {
-    type?: string;
+    eventType?: EventType;
     startDate?: string;
     endDate?: string;
     categories?: EventCategory[];
@@ -90,6 +91,7 @@ export interface CreateEventInput {
   price?: number;
   maxParticipants?: number;
   category: EventCategory;
+  eventType: EventType;
   tags: string[];
   safetyGuidelines: string[];
   meetupInstructions?: string;

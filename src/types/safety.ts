@@ -33,6 +33,9 @@ export interface EmergencyContact {
     sosAlert: boolean;
     meetupStart: boolean;
     meetupEnd: boolean;
+    lowBattery: boolean;
+    enterPrivacyZone: boolean;
+    exitPrivacyZone: boolean;
   };
   createdAt: string;
   updatedAt: string;
@@ -49,7 +52,6 @@ export interface SafetyAlert {
   notifiedContacts: string[];
   createdAt: string;
   updatedAt: string;
-  resolvedAt?: string;
 }
 
 export interface SafetyCheck {

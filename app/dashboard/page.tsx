@@ -1,10 +1,8 @@
-'use client';
-
 /* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
-import { DashboardHeader } from './components/DashboardHeader';
-import { DashboardStats } from './components/DashboardStats';
+import { DashboardHeader } from '../dashboard/components/DashboardHeader';
+import { DashboardStats } from '../dashboard/components/DashboardStats';
 import { SafetyCheckList } from '@/components/safety/SafetyCheckList';
 import { EmergencyContactList } from '@/components/safety/EmergencyContactList';
 import { SafetyCheckModalAsync } from '@/components/safety/SafetyCheckModalAsync';
@@ -13,6 +11,8 @@ import { Layout } from '@/components/layout/Layout';
 import { fetchApi } from '@/lib/fetch';
 import type { SafetyCheckNew } from '@/types/safety';
 import type { EmergencyContact } from '@/types/user';
+import type { LocationPrivacyMode } from '@/types/location';
+import type { PrivacySettings } from '@/types/privacy';
 
 // API response schemas
 const userSchema = z.object({
@@ -37,10 +37,23 @@ const userSchema = z.object({
   }),
   newAchievement: z
     .object({
+      id: z.string(),
       name: z.string(),
       description: z.string(),
+      earnedAt: z.string(),
     })
     .nullable(),
+});
+
+const locationSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  accuracy: z.number().optional(),
+  timestamp: z.date(),
+  privacyMode: z.enum(['precise', 'approximate', 'zone']),
+  sharingEnabled: z.boolean()
 });
 
 const dashboardStatsSchema = z.object({
@@ -50,69 +63,106 @@ const dashboardStatsSchema = z.object({
     pendingSafetyChecks: z.array(
       z.object({
         id: z.string(),
-        userId: z.string(),
-        type: z.enum(['meetup', 'location', 'custom']),
+        type: z.enum(['location', 'custom', 'meetup']),
         status: z.enum(['pending', 'completed', 'missed']),
+        userId: z.string(),
         scheduledFor: z.string(),
-        completedAt: z.string().optional(),
-        location: z
-          .object({
-            latitude: z.number(),
-            longitude: z.number(),
-            accuracy: z.number(),
-            privacyZone: z.boolean(),
-          })
-          .optional(),
-        description: z.string().optional(),
         createdAt: z.string(),
         updatedAt: z.string(),
+        location: locationSchema.optional(),
+        description: z.string().optional(),
+        completedAt: z.string().optional(),
         batteryLevel: z.number().optional(),
-        bluetoothEnabled: z.boolean().optional(),
+        bluetoothEnabled: z.boolean().optional()
       })
     ),
     emergencyContacts: z.array(
       z.object({
         id: z.string(),
+        userId: z.string(),
         name: z.string(),
         relationship: z.string(),
+        email: z.string().optional(),
         phoneNumber: z.string(),
-        email: z.string(),
         notifyOn: z.object({
           sosAlert: z.boolean(),
           meetupStart: z.boolean(),
           meetupEnd: z.boolean(),
           lowBattery: z.boolean(),
           enterPrivacyZone: z.boolean(),
-          exitPrivacyZone: z.boolean(),
+          exitPrivacyZone: z.boolean()
         }),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        createdAt: z.string(),
+        updatedAt: z.string()
       })
     ),
     privacySettings: z.object({
-      mode: z.enum(['standard', 'strict']),
+      mode: z.enum(['precise', 'approximate', 'zone']).default('precise'),
       autoDisableDiscovery: z.boolean(),
       progressiveDisclosure: z.boolean(),
       privacyZonesEnabled: z.boolean(),
-      batteryOptimization: z.boolean(),
+      batteryOptimization: z.boolean()
     }),
     batteryStats: z.object({
       currentLevel: z.number(),
       averageDailyDrain: z.number(),
       discoveryModeActive: z.boolean(),
-      bluetoothActive: z.boolean(),
-    }),
+      bluetoothActive: z.boolean()
+    })
   }),
+  user: userSchema
 });
 
 type DashboardStats = z.infer<typeof dashboardStatsSchema>['stats'];
 
+type Achievement = {
+  id: string;
+  name: string;
+  description: string;
+  earnedAt: string;
+};
+
+type DashboardUser = {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  lastActive: string;
+  memberSince: string;
+  streakStats: {
+    currentStreak: number;
+    lastStreakUpdate: string | null;
+    nextAchievementIn: number | null;
+    latestAchievement: Achievement | null;
+  };
+  newAchievement: Achievement | null;
+};
+
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<z.infer<typeof userSchema> | null>(null);
+  const [stats, setStats] = useState<DashboardStats>({
+    totalSafetyChecks: 0,
+    completedSafetyChecks: 0,
+    pendingSafetyChecks: [],
+    emergencyContacts: [],
+    privacySettings: {
+      mode: 'precise',
+      autoDisableDiscovery: false,
+      progressiveDisclosure: true,
+      privacyZonesEnabled: true,
+      batteryOptimization: true
+    },
+    batteryStats: {
+      currentLevel: 100,
+      averageDailyDrain: 0,
+      discoveryModeActive: false,
+      bluetoothActive: false
+    }
+  });
   const [currentCheck, setCurrentCheck] = useState<SafetyCheckNew | null>(null);
   const [showSafetyCheck, setShowSafetyCheck] = useState(false);
-  const [user, setUser] = useState<z.infer<typeof userSchema> | null>(null);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -196,8 +246,23 @@ export default function DashboardPage() {
   );
 
   const handlePrivacyModeChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      console.log('Change privacy mode:', event.target.value);
+    async (e: React.ChangeEvent<HTMLSelectElement>) => {
+      const newMode = e.target.value as LocationPrivacyMode;
+      try {
+        await fetchApi('/api/settings/privacy', {
+          method: 'PUT',
+          body: JSON.stringify({ mode: newMode }),
+        });
+        setStats(prev => ({
+          ...prev,
+          privacySettings: {
+            ...prev.privacySettings,
+            mode: newMode,
+          },
+        }));
+      } catch (error) {
+        console.error('Failed to update privacy mode:', error);
+      }
     },
     []
   );
@@ -216,6 +281,18 @@ export default function DashboardPage() {
     []
   );
 
+  const mapPrivacyMode = (mode: LocationPrivacyMode): 'standard' | 'strict' => {
+    switch (mode) {
+      case 'precise':
+        return 'standard';
+      case 'approximate':
+      case 'zone':
+        return 'strict';
+      default:
+        return 'standard';
+    }
+  };
+
   if (isLoading || !stats || !user) {
     return (
       <Layout>
@@ -226,16 +303,29 @@ export default function DashboardPage() {
     );
   }
 
-  // Create a user-like object from stats for DashboardStats
-  const dashboardUser = {
+  // Map user data to dashboard format
+  const dashboardUser: DashboardUser = {
     id: user.id,
     email: user.email,
     firstName: user.firstName,
     lastName: user.lastName,
     lastActive: user.lastActive,
     memberSince: user.memberSince,
-    streakStats: user.streakStats,
-    newAchievement: user.newAchievement,
+    streakStats: {
+      ...user.streakStats,
+      latestAchievement: user.streakStats.latestAchievement ? {
+        id: user.streakStats.latestAchievement.id,
+        name: user.streakStats.latestAchievement.name,
+        description: user.streakStats.latestAchievement.description,
+        earnedAt: user.streakStats.latestAchievement.earnedAt
+      } : null
+    },
+    newAchievement: user.newAchievement ? {
+      id: user.newAchievement.id,
+      name: user.newAchievement.name,
+      description: user.newAchievement.description,
+      earnedAt: user.newAchievement.earnedAt
+    } : null
   };
 
   return (
@@ -247,7 +337,7 @@ export default function DashboardPage() {
           onProfileClick={handleProfileClick}
           onSettingsClick={handleSettingsClick}
           batteryStats={stats.batteryStats}
-          privacyMode={stats.privacySettings.mode}
+          privacyMode={mapPrivacyMode(stats.privacySettings.mode)}
         />
 
         <DashboardStats stats={dashboardUser} />
@@ -256,12 +346,19 @@ export default function DashboardPage() {
           {/* Safety Features */}
           <div className="space-y-8">
             <SafetyCheckList
-              checks={stats.pendingSafetyChecks}
+              checks={stats.pendingSafetyChecks.map(check => ({
+                ...check,
+                location: check.location ? {
+                  ...check.location,
+                  privacyMode: check.location.privacyMode.toLowerCase() as LocationPrivacyMode
+                } : undefined
+              }))}
               onComplete={handleCheckComplete}
             />
             <EmergencyContactList
               contacts={stats.emergencyContacts.map(contact => ({
                 ...contact,
+                email: contact.email || '', // Ensure email is always a string
                 sosAlert: contact.notifyOn.sosAlert,
                 meetupStart: contact.notifyOn.meetupStart,
                 meetupEnd: contact.notifyOn.meetupEnd,
@@ -286,8 +383,9 @@ export default function DashboardPage() {
                     className="rounded-md border-gray-300"
                     onChange={handlePrivacyModeChange}
                   >
-                    <option value="standard">Standard</option>
-                    <option value="strict">Enhanced Privacy</option>
+                    <option value="precise">Precise Location</option>
+                    <option value="approximate">Approximate Location</option>
+                    <option value="zone">Privacy Zone Only</option>
                   </select>
                 </div>
                 <div className="flex justify-between items-center">
@@ -360,7 +458,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {currentCheck && (
+      {showSafetyCheck && currentCheck && (
         <SafetyCheckModalAsync
           check={currentCheck}
           isOpen={showSafetyCheck}
