@@ -11,11 +11,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto w-full max-w-sm">
           <div className="mb-8">
             <Image
-              src="/logo.svg"
+              src="/images/disco-logo.svg"
               alt="Disco"
               width={48}
               height={48}
               className="mx-auto h-12 w-auto"
+              priority
             />
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
               Welcome to Disco
@@ -26,15 +27,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Right side - Image */}
-      <div className="hidden lg:block lg:w-1/2">
-        <div
-          className="flex flex-col justify-center min-h-screen bg-gray-100"
-          style={{
-            backgroundColor: '#f3f4f6', // Fallback color
-            backgroundImage: 'url("/auth-background.jpg")',
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-          }}
+      <div className="hidden lg:block lg:w-1/2 relative">
+        <Image
+          src="/auth-background.svg"
+          alt="Authentication background"
+          fill
+          className="object-cover"
+          priority
+          sizes="50vw"
         />
       </div>
     </div>

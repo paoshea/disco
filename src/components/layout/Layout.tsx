@@ -1,45 +1,55 @@
+'use client';
+
 import React from 'react';
-import Head from 'next/head';
+import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 interface LayoutProps {
   children: React.ReactNode;
-  title?: string;
 }
 
-export const Layout: React.FC<LayoutProps> = ({
-  children,
-  title = 'DISCO!',
-}) => {
-  return (
-    <>
-      <Head>
-        <title>{title}</title>
-        <meta
-          name="description"
-          content="DISCO! - Spark Spontaneous Social Connections"
-        />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  const router = useRouter();
 
-      <div className="min-h-screen bg-gray-50">
-        <nav className="bg-white shadow-sm">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between h-16">
-              <div className="flex">
-                <div className="flex-shrink-0 flex items-center">
-                  <span className="text-2xl font-bold text-primary-600">
-                    DISCO!
-                  </span>
-                </div>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <nav className="bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex">
+              <div className="flex-shrink-0 flex items-center">
+                <Image
+                  src="/images/disco-logo.svg"
+                  alt="DISCO!"
+                  width={32}
+                  height={32}
+                  className="h-8 w-auto cursor-pointer"
+                  onClick={() => router.push('/dashboard')}
+                />
+                <span className="ml-2 text-2xl font-bold text-primary-600">
+                  DISCO!
+                </span>
               </div>
             </div>
+            <div className="flex items-center">
+              <button
+                onClick={() => router.push('/profile')}
+                className="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+              >
+                Profile
+              </button>
+              <button
+                onClick={() => router.push('/safety')}
+                className="ml-4 px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+              >
+                Safety
+              </button>
+            </div>
           </div>
-        </nav>
+        </div>
+      </nav>
 
-        <main className="py-10">
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">{children}</div>
-        </main>
-      </div>
-    </>
+      <main className="flex-1">{children}</main>
+    </div>
   );
 };
