@@ -1,6 +1,7 @@
 import { NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 import * as jose from 'jose';
+import * as bcrypt from 'bcryptjs';
 import type { JWTPayload, Session } from '../types/auth';
 
 const JWT_SECRET = new TextEncoder().encode(
@@ -13,18 +14,15 @@ interface PasswordResetPayload {
 }
 
 export async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password);
-  const hash = await crypto.subtle.digest('SHA-256', data);
-  return Buffer.from(hash).toString('base64');
+  const salt = await bcrypt.genSalt(12);
+  return bcrypt.hash(password, salt);
 }
 
 export async function verifyPassword(
   password: string,
   hashedPassword: string
 ): Promise<boolean> {
-  const hashedInput = await hashPassword(password);
-  return hashedInput === hashedPassword;
+  return bcrypt.compare(password, hashedPassword);
 }
 
 export async function generateToken(

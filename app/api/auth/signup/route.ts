@@ -12,6 +12,10 @@ interface SignupBody {
   lastName: string;
 }
 
+interface ErrorWithCode extends Error {
+  code?: string;
+}
+
 export async function POST(request: NextRequest): Promise<Response> {
   try {
     const body = (await request.json()) as SignupBody;
@@ -24,6 +28,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
+    console.log('Checking for existing user...');
     // Check if user already exists
     const existingUser = await db.user.findUnique({
       where: { email },
@@ -37,9 +42,11 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
+    console.log('Hashing password...');
     const hashedPassword = await hashPassword(password);
     const verificationToken = randomUUID();
 
+    console.log('Creating user...');
     const user = await db.user.create({
       data: {
         email,
@@ -58,7 +65,14 @@ export async function POST(request: NextRequest): Promise<Response> {
       },
     });
 
-    await sendVerificationEmail(email, verificationToken);
+    console.log('Sending verification email...');
+    try {
+      await sendVerificationEmail(email, verificationToken);
+    } catch (emailError) {
+      console.error('Email error:', emailError);
+      // Don't fail the signup if email fails, but log it
+      console.log('User created but verification email failed to send');
+    }
 
     return NextResponse.json({
       message:
@@ -71,7 +85,15 @@ export async function POST(request: NextRequest): Promise<Response> {
       },
     });
   } catch (error) {
-    console.error('Signup error:', error);
+    const err = error as ErrorWithCode;
+    console.error('Signup error details:', {
+      name: err.name,
+      message: err.message,
+      stack: err.stack,
+    });
+    if (err.code) {
+      console.error('Database error code:', err.code);
+    }
     return NextResponse.json(
       { message: 'An error occurred during signup' },
       { status: 500 }

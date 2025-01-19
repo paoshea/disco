@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Image from 'next/image';
+import { Logo } from '@/components/ui/Logo';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -18,17 +18,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="flex justify-between h-16">
             <div className="flex">
               <div className="flex-shrink-0 flex items-center">
-                <Image
-                  src="/images/disco-logo.svg"
-                  alt="DISCO!"
-                  width={32}
-                  height={32}
-                  className="h-8 w-auto cursor-pointer"
+                <button
                   onClick={() => router.push('/dashboard')}
-                />
-                <span className="ml-2 text-2xl font-bold text-primary-600">
-                  DISCO!
-                </span>
+                  className="flex items-center"
+                >
+                  <Logo />
+                </button>
               </div>
             </div>
             <div className="flex items-center">

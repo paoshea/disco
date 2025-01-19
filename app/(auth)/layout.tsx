@@ -33,7 +33,6 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
           alt="Authentication background"
           fill
           className="object-cover"
-          priority
           sizes="50vw"
         />
       </div>
