@@ -10,6 +10,10 @@ interface GetMatchesParams {
   latitude?: number;
   longitude?: number;
   radius?: number; // in kilometers
+  timeWindow?: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  activityType?: string;
+  privacyMode?: 'standard' | 'strict';
+  useBluetoothProximity?: boolean;
 }
 
 interface MatchResponse {

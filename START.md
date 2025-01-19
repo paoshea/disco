@@ -2,7 +2,8 @@
 
 ## Target Setup
 
-This guide will help you set up the Disco development environment. When properly configured, you'll have:
+This guide will help you set up the Disco development environment. 
+When properly configured, you'll have:
 
 1. **Infrastructure Services** (running in Docker):
 

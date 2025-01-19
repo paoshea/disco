@@ -60,11 +60,14 @@ const dashboardStatsSchema = z.object({
             latitude: z.number(),
             longitude: z.number(),
             accuracy: z.number(),
+            privacyZone: z.boolean(),
           })
           .optional(),
         description: z.string().optional(),
         createdAt: z.string(),
         updatedAt: z.string(),
+        batteryLevel: z.number().optional(),
+        bluetoothEnabled: z.boolean().optional(),
       })
     ),
     emergencyContacts: z.array(
@@ -78,11 +81,27 @@ const dashboardStatsSchema = z.object({
           sosAlert: z.boolean(),
           meetupStart: z.boolean(),
           meetupEnd: z.boolean(),
+          lowBattery: z.boolean(),
+          enterPrivacyZone: z.boolean(),
+          exitPrivacyZone: z.boolean(),
         }),
         createdAt: z.string().optional(),
         updatedAt: z.string().optional(),
       })
     ),
+    privacySettings: z.object({
+      mode: z.enum(['standard', 'strict']),
+      autoDisableDiscovery: z.boolean(),
+      progressiveDisclosure: z.boolean(),
+      privacyZonesEnabled: z.boolean(),
+      batteryOptimization: z.boolean(),
+    }),
+    batteryStats: z.object({
+      currentLevel: z.number(),
+      averageDailyDrain: z.number(),
+      discoveryModeActive: z.boolean(),
+      bluetoothActive: z.boolean(),
+    }),
   }),
 });
 
@@ -176,6 +195,18 @@ export default function DashboardPage() {
     [fetchStats]
   );
 
+  const handlePrivacyModeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
+    console.log('Change privacy mode:', event.target.value);
+  }, []);
+
+  const handleAutoDisableChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Change auto-disable discovery:', event.target.checked);
+  }, []);
+
+  const handleProgressiveDisclosureChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Change progressive disclosure:', event.target.checked);
+  }, []);
+
   if (isLoading || !stats || !user) {
     return (
       <Layout>
@@ -206,25 +237,97 @@ export default function DashboardPage() {
           userId={user.id}
           onProfileClick={handleProfileClick}
           onSettingsClick={handleSettingsClick}
+          batteryStats={stats.batteryStats}
+          privacyMode={stats.privacySettings.mode}
         />
 
         <DashboardStats stats={dashboardUser} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-          <SafetyCheckList
-            checks={stats.pendingSafetyChecks}
-            onComplete={handleCheckComplete}
-          />
-          <EmergencyContactList
-            contacts={stats.emergencyContacts.map(contact => ({
-              ...contact,
-              sosAlert: contact.notifyOn.sosAlert,
-              meetupStart: contact.notifyOn.meetupStart,
-              meetupEnd: contact.notifyOn.meetupEnd,
-            }))}
-            onEdit={handleEditContact}
-            onDelete={handleDeleteContact}
-          />
+          {/* Safety Features */}
+          <div className="space-y-8">
+            <SafetyCheckList
+              checks={stats.pendingSafetyChecks}
+              onComplete={handleCheckComplete}
+            />
+            <EmergencyContactList
+              contacts={stats.emergencyContacts.map(contact => ({
+                ...contact,
+                sosAlert: contact.notifyOn.sosAlert,
+                meetupStart: contact.notifyOn.meetupStart,
+                meetupEnd: contact.notifyOn.meetupEnd,
+                lowBattery: contact.notifyOn.lowBattery,
+                enterPrivacyZone: contact.notifyOn.enterPrivacyZone,
+                exitPrivacyZone: contact.notifyOn.exitPrivacyZone,
+              }))}
+              onEdit={handleEditContact}
+              onDelete={handleDeleteContact}
+            />
+          </div>
+
+          {/* Privacy and Battery Controls */}
+          <div className="space-y-8">
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-4">Privacy Controls</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Privacy Mode</span>
+                  <select
+                    value={stats.privacySettings.mode}
+                    className="rounded-md border-gray-300"
+                    onChange={handlePrivacyModeChange}
+                  >
+                    <option value="standard">Standard</option>
+                    <option value="strict">Enhanced Privacy</option>
+                  </select>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Auto-disable Discovery</span>
+                  <input
+                    type="checkbox"
+                    checked={stats.privacySettings.autoDisableDiscovery}
+                    onChange={handleAutoDisableChange}
+                    className="toggle"
+                  />
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Progressive Information Sharing</span>
+                  <input
+                    type="checkbox"
+                    checked={stats.privacySettings.progressiveDisclosure}
+                    onChange={handleProgressiveDisclosureChange}
+                    className="toggle"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold mb-4">Battery Optimization</h3>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <span>Current Battery Level</span>
+                  <span className="font-medium">{stats.batteryStats.currentLevel}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Average Daily Usage</span>
+                  <span className="font-medium">{stats.batteryStats.averageDailyDrain}%</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Discovery Mode</span>
+                  <span className={`font-medium ${stats.batteryStats.discoveryModeActive ? 'text-green-600' : 'text-gray-500'}`}>
+                    {stats.batteryStats.discoveryModeActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span>Bluetooth Status</span>
+                  <span className={`font-medium ${stats.batteryStats.bluetoothActive ? 'text-green-600' : 'text-gray-500'}`}>
+                    {stats.batteryStats.bluetoothActive ? 'Active' : 'Inactive'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

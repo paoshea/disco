@@ -16,6 +16,10 @@ export default function MatchingPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const [radius, setRadius] = useState<number>(0.5); // Default 0.5 km (approx 500m)
+  const [timeWindow, setTimeWindow] = useState<'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'>('anytime');
+  const [activityType, setActivityType] = useState<string>('any');
+  const [privacyMode, setPrivacyMode] = useState<'standard' | 'strict'>('standard');
   const { position } = useGeolocation();
 
   useEffect(() => {
@@ -28,7 +32,11 @@ export default function MatchingPage() {
             ? {
                 latitude: position.coords.latitude,
                 longitude: position.coords.longitude,
-                radius: 50, // Default radius in kilometers
+                radius: radius, // In kilometers
+                timeWindow,
+                activityType,
+                privacyMode,
+                useBluetoothProximity: true, // Enable enhanced indoor proximity
               }
             : undefined
         );
@@ -46,7 +54,7 @@ export default function MatchingPage() {
     };
 
     void fetchMatches();
-  }, [position]);
+  }, [position, radius, timeWindow, activityType, privacyMode]);
 
   const handleMatchClick = (matchId: string) => {
     router.push(`/profile/${matchId}`);
@@ -70,9 +78,85 @@ export default function MatchingPage() {
 
   return (
     <div className="container mx-auto p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Find Matches</h1>
-        <div className="flex space-x-2">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold mb-4">Find Matches</h1>
+        
+        {/* Matching Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 bg-white p-4 rounded-lg shadow-sm">
+          {/* Radius Control */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Search Radius
+            </label>
+            <select
+              value={radius}
+              onChange={(e) => setRadius(Number(e.target.value))}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+            >
+              <option value={0.1}>100m</option>
+              <option value={0.3}>300m</option>
+              <option value={0.5}>500m</option>
+              <option value={1}>1km</option>
+              <option value={1.6}>1 mile</option>
+            </select>
+          </div>
+
+          {/* Time Window */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Time Window
+            </label>
+            <select
+              value={timeWindow}
+              onChange={(e) => setTimeWindow(e.target.value as 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+            >
+              <option value="anytime">Anytime</option>
+              <option value="now">Right Now</option>
+              <option value="15min">Next 15 minutes</option>
+              <option value="30min">Next 30 minutes</option>
+              <option value="1hour">Next hour</option>
+              <option value="today">Today</option>
+            </select>
+          </div>
+
+          {/* Activity Type */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Activity
+            </label>
+            <select
+              value={activityType}
+              onChange={(e) => setActivityType(e.target.value)}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+            >
+              <option value="any">Any Activity</option>
+              <option value="coffee">Coffee</option>
+              <option value="lunch">Lunch</option>
+              <option value="networking">Professional Networking</option>
+              <option value="workout">Workout</option>
+              <option value="study">Study Session</option>
+            </select>
+          </div>
+
+          {/* Privacy Mode */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Privacy Mode
+            </label>
+            <select
+              value={privacyMode}
+              onChange={(e) => setPrivacyMode(e.target.value as 'standard' | 'strict')}
+              className="w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary"
+            >
+              <option value="standard">Standard Privacy</option>
+              <option value="strict">Enhanced Privacy</option>
+            </select>
+          </div>
+        </div>
+
+        {/* View Mode Toggle */}
+        <div className="mt-4 flex justify-end space-x-2">
           <button
             className={`rounded px-4 py-2 ${
               viewMode === 'list'
@@ -94,24 +178,24 @@ export default function MatchingPage() {
             Map View
           </button>
         </div>
-      </div>
 
-      {viewMode === 'list' ? (
-        <MatchList matches={matches} onMatchClick={handleMatchClick} />
-      ) : (
-        <MatchMapView
-          matches={matches}
-          onMarkerClick={handleMatchClick}
-          center={
-            position?.coords
-              ? {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                }
-              : undefined
-          }
-        />
-      )}
+        {viewMode === 'list' ? (
+          <MatchList matches={matches} onMatchClick={handleMatchClick} />
+        ) : (
+          <MatchMapView
+            matches={matches}
+            onMarkerClick={handleMatchClick}
+            center={
+              position?.coords
+                ? {
+                    lat: position.coords.latitude,
+                    lng: position.coords.longitude,
+                  }
+                : undefined
+            }
+          />
+        )}
+      </div>
     </div>
   );
 }

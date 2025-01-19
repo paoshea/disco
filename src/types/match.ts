@@ -17,6 +17,14 @@ export interface Match extends MatchPreview {
   interests: string[];
   connectionStatus: 'pending' | 'accepted' | 'declined';
   verificationStatus: 'verified' | 'unverified';
+  activityPreferences?: {
+    type: string;
+    timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  };
+  privacySettings?: {
+    mode: 'standard' | 'strict';
+    bluetoothEnabled: boolean;
+  };
 }
 
 export type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
@@ -28,4 +36,8 @@ export interface MatchPreferences {
   interests: string[];
   verifiedOnly: boolean;
   withPhoto: boolean;
+  activityType?: string;
+  timeWindow?: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  privacyMode?: 'standard' | 'strict';
+  useBluetoothProximity?: boolean;
 }

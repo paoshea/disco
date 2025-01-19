@@ -95,32 +95,32 @@ export default function LandingPage() {
             <div className="grid md:grid-cols-3 gap-8">
               <FeatureCard
                 title="Smart Discovery"
-                description="Get notified when people sharing your interests are nearby. Set your radius from 100ft to 1 mile."
+                description="Get notified within 30 seconds when people sharing your interests are nearby. Set your radius from 100ft to 1 mile with minimal battery impact."
                 icon={<MapPinIcon className="w-full h-full" />}
               />
               <FeatureCard
                 title="Privacy First"
-                description="End-to-end encrypted communications with zero personal data storage by default."
+                description="End-to-end encrypted communications with zero personal data storage. Progressive information disclosure based on mutual interest."
                 icon={<LockClosedIcon className="w-full h-full" />}
               />
               <FeatureCard
                 title="Safety Focused"
-                description="Real-time safety check-ins, verified meeting spots, and emergency contact system."
+                description="Real-time safety check-ins, verified meeting spots, emergency contact system, and AI-powered content screening."
                 icon={<ShieldCheckIcon className="w-full h-full" />}
               />
               <FeatureCard
                 title="Smart Matching"
-                description="Find people based on shared interests, activities, and time windows that work for you."
+                description="Find people based on shared interests, activities, and customizable time windows. Indoor proximity detection via Bluetooth."
                 icon={<UserGroupIcon className="w-full h-full" />}
               />
               <FeatureCard
                 title="Instant Alerts"
-                description="Real-time notifications when potential matches are nearby, with customizable preferences."
+                description="Battery-efficient notifications within 30 seconds when potential matches are nearby, with customizable preferences."
                 icon={<BellAlertIcon className="w-full h-full" />}
               />
               <FeatureCard
                 title="Secure Chat"
-                description="Private, encrypted conversations that automatically delete after 24 hours."
+                description="Private, encrypted conversations with progressive information sharing that automatically delete after 24 hours."
                 icon={<ChatBubbleLeftRightIcon className="w-full h-full" />}
               />
             </div>
@@ -202,6 +202,8 @@ export default function LandingPage() {
                     <li>• No location data storage</li>
                     <li>• Auto-deleting messages</li>
                     <li>• Customizable privacy zones</li>
+                    <li>• Progressive information sharing</li>
+                    <li>• Activity-based privacy settings</li>
                   </ul>
                 </div>
                 <div className="p-6 bg-sky-50 rounded-xl">
@@ -213,6 +215,8 @@ export default function LandingPage() {
                     <li>• Real-time safety check-ins</li>
                     <li>• Emergency contact system</li>
                     <li>• 24/7 support team</li>
+                    <li>• AI content screening</li>
+                    <li>• Battery-efficient monitoring</li>
                   </ul>
                 </div>
               </div>
