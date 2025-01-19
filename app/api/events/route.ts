@@ -70,10 +70,21 @@ export async function GET(request: NextRequest): Promise<Response> {
     const maxLon = userLocation.longitude + longitudeDelta;
 
     let events;
-    if (searchParams.get('latitude') && searchParams.get('longitude') && searchParams.get('radius')) {
-      const lat = parseFloat(searchParams.get('latitude'));
-      const lng = parseFloat(searchParams.get('longitude'));
-      const rad = parseFloat(searchParams.get('radius'));
+    const latitude = searchParams.get('latitude');
+    const longitude = searchParams.get('longitude');
+    const radius = searchParams.get('radius');
+
+    if (latitude && longitude && radius) {
+      const lat = parseFloat(latitude);
+      const lng = parseFloat(longitude);
+      const rad = parseFloat(radius);
+
+      if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
+        return NextResponse.json(
+          { error: 'Invalid latitude, longitude, or radius parameters' },
+          { status: 400 }
+        );
+      }
 
       events = await db.event.findMany({
         where: {

@@ -1,6 +1,7 @@
 import { db } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
-import type { EventWithParticipants } from '@/types/prisma';
+import type { Event, EventWithParticipants, EventParticipant } from '@/types/event';
+import type { ParticipantStatus } from '@/types/participant';
 import type { ServiceResponse } from '@/types/service';
 
 interface EventCreateInput {
@@ -8,9 +9,10 @@ interface EventCreateInput {
   description?: string;
   startTime: Date;
   endTime?: Date;
-  latitude: number;
-  longitude: number;
-  type: string;
+  latitude?: number;
+  longitude?: number;
+  address?: string;
+  type?: string;
   maxParticipants?: number;
   tags?: string[];
   creatorId: string;
@@ -23,6 +25,7 @@ interface EventUpdateInput {
   endTime?: Date;
   latitude?: number;
   longitude?: number;
+  address?: string;
   type?: string;
   maxParticipants?: number;
   tags?: string[];
@@ -42,6 +45,47 @@ export class EventService {
     return EventService.instance;
   }
 
+  private mapDbEventToEvent(dbEvent: any): EventWithParticipants {
+    const participants = (dbEvent.participants || []).map((p: any) => ({
+      id: p.id,
+      userId: p.userId,
+      eventId: p.eventId,
+      status: p.status || 'pending',
+      createdAt: new Date(p.createdAt),
+      updatedAt: new Date(p.updatedAt),
+      user: p.user ? {
+        id: p.user.id,
+        email: p.user.email,
+        name: p.user.name || `${p.user.firstName} ${p.user.lastName}`.trim() || null
+      } : undefined
+    } as EventParticipant));
+
+    return {
+      id: dbEvent.id,
+      title: dbEvent.title,
+      description: dbEvent.description || null,
+      type: dbEvent.type || 'social',
+      eventType: dbEvent.eventType || 'social',
+      creatorId: dbEvent.creatorId,
+      location: {
+        latitude: dbEvent.latitude,
+        longitude: dbEvent.longitude
+      },
+      startTime: new Date(dbEvent.startTime),
+      endTime: dbEvent.endTime ? new Date(dbEvent.endTime) : undefined,
+      maxParticipants: dbEvent.maxParticipants || null,
+      currentParticipants: participants.length,
+      participants,
+      tags: dbEvent.tags || [],
+      createdAt: new Date(dbEvent.createdAt),
+      updatedAt: new Date(dbEvent.updatedAt),
+      creator: {
+        id: dbEvent.creator.id,
+        name: dbEvent.creator.name || `${dbEvent.creator.firstName} ${dbEvent.creator.lastName}`.trim() || null
+      }
+    };
+  };
+
   async createEvent(data: EventCreateInput): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.create({
@@ -50,26 +94,26 @@ export class EventService {
           creator: true,
           participants: {
             include: {
-              user: true,
-            },
-          },
-        },
+              user: true
+            }
+          }
+        }
       });
 
       return {
         success: true,
-        data: event,
+        data: this.mapDbEventToEvent(event)
       };
     } catch (error) {
       console.error('Error creating event:', error);
       return {
         success: false,
-        error: 'Failed to create event',
+        error: 'Failed to create event'
       };
     }
   }
 
-  async getEvent(id: string): Promise<EventServiceResponse<EventWithParticipants>> {
+  async getEventById(id: string): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.findUnique({
         where: { id },
@@ -77,33 +121,36 @@ export class EventService {
           creator: true,
           participants: {
             include: {
-              user: true,
-            },
-          },
-        },
+              user: true
+            }
+          }
+        }
       });
 
       if (!event) {
         return {
           success: false,
-          error: 'Event not found',
+          error: 'Event not found'
         };
       }
 
       return {
         success: true,
-        data: event,
+        data: this.mapDbEventToEvent(event)
       };
     } catch (error) {
       console.error('Error getting event:', error);
       return {
         success: false,
-        error: 'Failed to get event',
+        error: 'Failed to get event'
       };
     }
   }
 
-  async updateEvent(id: string, data: EventUpdateInput): Promise<EventServiceResponse<EventWithParticipants>> {
+  async updateEvent(
+    id: string,
+    data: EventUpdateInput
+  ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.update({
         where: { id },
@@ -112,87 +159,21 @@ export class EventService {
           creator: true,
           participants: {
             include: {
-              user: true,
-            },
-          },
-        },
+              user: true
+            }
+          }
+        }
       });
 
       return {
         success: true,
-        data: event,
+        data: this.mapDbEventToEvent(event)
       };
     } catch (error) {
       console.error('Error updating event:', error);
       return {
         success: false,
-        error: 'Failed to update event',
-      };
-    }
-  }
-
-  async deleteEvent(id: string): Promise<EventServiceResponse<void>> {
-    try {
-      await db.event.delete({
-        where: { id },
-      });
-
-      return {
-        success: true,
-      };
-    } catch (error) {
-      console.error('Error deleting event:', error);
-      return {
-        success: false,
-        error: 'Failed to delete event',
-      };
-    }
-  }
-
-  async getNearbyEvents(
-    latitude: number,
-    longitude: number,
-    radiusInKm: number = 5
-  ): Promise<EventServiceResponse<EventWithParticipants[]>> {
-    try {
-      const radiusInDegrees = radiusInKm / 111.32; // rough approximation: 1 degree = 111.32 km
-
-      const events = await db.event.findMany({
-        where: {
-          AND: [
-            {
-              latitude: {
-                gte: latitude - radiusInDegrees,
-                lte: latitude + radiusInDegrees,
-              },
-            },
-            {
-              longitude: {
-                gte: longitude - radiusInDegrees,
-                lte: longitude + radiusInDegrees,
-              },
-            },
-          ],
-        },
-        include: {
-          creator: true,
-          participants: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      });
-
-      return {
-        success: true,
-        data: events,
-      };
-    } catch (error) {
-      console.error('Error getting nearby events:', error);
-      return {
-        success: false,
-        error: 'Failed to get nearby events',
+        error: 'Failed to update event'
       };
     }
   }
@@ -208,28 +189,29 @@ export class EventService {
           participants: {
             create: {
               userId,
-            },
-          },
+              joinedAt: new Date()
+            }
+          }
         },
         include: {
           creator: true,
           participants: {
             include: {
-              user: true,
-            },
-          },
-        },
+              user: true
+            }
+          }
+        }
       });
 
       return {
         success: true,
-        data: event,
+        data: this.mapDbEventToEvent(event)
       };
     } catch (error) {
       console.error('Error joining event:', error);
       return {
         success: false,
-        error: 'Failed to join event',
+        error: 'Failed to join event'
       };
     }
   }
@@ -246,30 +228,56 @@ export class EventService {
             delete: {
               eventId_userId: {
                 eventId,
-                userId,
-              },
-            },
-          },
+                userId
+              }
+            }
+          }
         },
         include: {
           creator: true,
           participants: {
             include: {
-              user: true,
-            },
-          },
-        },
+              user: true
+            }
+          }
+        }
       });
 
       return {
         success: true,
-        data: event,
+        data: this.mapDbEventToEvent(event)
       };
     } catch (error) {
       console.error('Error leaving event:', error);
       return {
         success: false,
-        error: 'Failed to leave event',
+        error: 'Failed to leave event'
+      };
+    }
+  }
+
+  async getEvents(): Promise<EventServiceResponse<EventWithParticipants[]>> {
+    try {
+      const events = await db.event.findMany({
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true
+            }
+          }
+        }
+      });
+
+      return {
+        success: true,
+        data: events.map(event => this.mapDbEventToEvent(event))
+      };
+    } catch (error) {
+      console.error('Error getting events:', error);
+      return {
+        success: false,
+        error: 'Failed to get events'
       };
     }
   }

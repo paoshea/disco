@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import type { Event, Location, PrivacyZone } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 
 // Add prisma to the global type
 declare global {
@@ -19,9 +19,9 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 type ModelReturnTypes = {
-  event: Event;
-  location: Location;
-  privacyZone: PrivacyZone;
+  event: Prisma.EventGetPayload<{}>;
+  location: Prisma.LocationGetPayload<{}>;
+  privacyZone: Prisma.PrivacyZoneGetPayload<{}>;
 };
 
 // Define base model operations

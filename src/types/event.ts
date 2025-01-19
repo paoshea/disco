@@ -1,6 +1,21 @@
 import type { Coordinates } from './location';
-import type { Participant } from './participant';
+import type { ParticipantStatus as ParticipantStatusType } from './participant';
 import { z } from 'zod';
+
+// Simplified participant type for events
+export interface EventParticipant {
+  id: string;
+  userId: string;
+  eventId: string;
+  status: ParticipantStatusType;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: {
+    id: string;
+    email: string;
+    name: string | null;
+  };
+}
 
 // Base event types
 export interface Event {
@@ -15,26 +30,15 @@ export interface Event {
   endTime?: Date;
   maxParticipants: number | null;
   currentParticipants: number;
-  participants?: Participant[];
+  participants?: EventParticipant[];
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface EventWithParticipants extends Event {
-  participants: Participant[];
+  participants: EventParticipant[];
   creator: {
-    id: string;
-    name: string | null;
-  };
-}
-
-export interface EventParticipant {
-  userId: string;
-  eventId: string;
-  joinedAt: Date;
-  status: string;
-  user: {
     id: string;
     name: string | null;
   };

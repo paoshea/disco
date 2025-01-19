@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { eventService } from '@/services/event/event.service';
-import type { Event } from '@/types/event';
+import type { Event, EventWithParticipants } from '@/types/event';
 import { useAuth } from '@/hooks/useAuth';
 import {
   MapPinIcon,
@@ -12,9 +12,9 @@ import {
 import { useCallback } from 'react';
 
 interface EventCardProps {
-  event: Event;
-  onEventJoined?: (event: Event) => void;
-  onEventLeft?: (event: Event) => void;
+  event: EventWithParticipants;
+  onEventJoined?: (event: EventWithParticipants) => void;
+  onEventLeft?: (event: EventWithParticipants) => void;
   showActions?: boolean;
 }
 

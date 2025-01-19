@@ -1,7 +1,13 @@
 import type { Event } from './event';
-import type { User } from './user';
 
 export type ParticipantStatus = 'pending' | 'accepted' | 'declined';
+
+// Simplified user type for participants to avoid circular dependencies
+export interface ParticipantUser {
+  id: string;
+  email: string;
+  name: string | null;
+}
 
 export interface Participant {
   id: string;
@@ -10,6 +16,6 @@ export interface Participant {
   status: ParticipantStatus;
   createdAt: Date;
   updatedAt: Date;
-  user?: User;
+  user?: ParticipantUser;
   event?: Event;
 }
