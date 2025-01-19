@@ -1,7 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import type { Event, Location } from '@/types/event';
+import { db } from '@/lib/prisma';
+import type { Event, EventWithParticipants } from '@/types/event';
+import type { User } from '@/types/user';
 
-const prisma = new PrismaClient();
+// Initialize Prisma client model
+const eventDb = db.$extends.model.event;
 
 interface EventServiceResponse<T> {
   success: boolean;
@@ -9,82 +11,78 @@ interface EventServiceResponse<T> {
   error?: string;
 }
 
-interface EventQueryParams {
-  radius: number;
-  types?: string[];
-  startTime?: string;
-  endTime?: string;
-}
-
-class EventService {
+export class EventService {
   private static instance: EventService;
+
   private constructor() {}
 
-  static getInstance(): EventService {
+  public static getInstance(): EventService {
     if (!EventService.instance) {
       EventService.instance = new EventService();
     }
     return EventService.instance;
   }
 
-  private mapPrismaEventToEvent(prismaEvent: any): Event {
-    return {
-      ...prismaEvent,
-      location: prismaEvent.location || {
-        address: '',
-        latitude: 0,
-        longitude: 0,
-      },
-      isFree: prismaEvent.price === 0 || prismaEvent.price === null,
-      currentParticipants: prismaEvent.participants?.length || 0,
-      organizerId: prismaEvent.creatorId,
-      organizer: prismaEvent.creator,
-      participants:
-        prismaEvent.participants?.map((p: any) => ({
-          userId: p.userId,
-          eventId: p.eventId,
-          joinedAt: p.joinedAt.toISOString(),
-          status: p.status || 'confirmed',
-          user: p.user,
-        })) || [],
-      category: prismaEvent.category || 'other',
-      eventType: prismaEvent.eventType || 'social',
-      tags: prismaEvent.tags || [],
-      safetyGuidelines: prismaEvent.safetyGuidelines || [],
-      status: prismaEvent.status || 'scheduled',
-      createdAt: prismaEvent.createdAt.toISOString(),
-      updatedAt: prismaEvent.updatedAt.toISOString(),
-    };
-  }
-
   async getNearbyEvents(
-    params: EventQueryParams
-  ): Promise<EventServiceResponse<Event[]>> {
+    latitude: number,
+    longitude: number,
+    radiusInMeters: number = 500
+  ): Promise<EventServiceResponse<EventWithParticipants[]>> {
     try {
-      const events = await prisma.event.findMany({
+      // Calculate bounding box for spatial query
+      const latitudeDelta = radiusInMeters / 111000; // 111km per degree
+      const minLat = latitude - latitudeDelta;
+      const maxLat = latitude + latitudeDelta;
+
+      const longitudeDelta =
+        radiusInMeters / (111000 * Math.cos((latitude * Math.PI) / 180));
+      const minLon = longitude - longitudeDelta;
+      const maxLon = longitude + longitudeDelta;
+
+      const events = await eventDb.findMany({
         where: {
-          startTime: {
-            gte: params.startTime ? new Date(params.startTime) : new Date(),
-            lte: params.endTime ? new Date(params.endTime) : undefined,
+          location: {
+            latitude: {
+              gte: minLat,
+              lte: maxLat,
+            },
+            longitude: {
+              gte: minLon,
+              lte: maxLon,
+            },
           },
-          type: params.types?.length ? { in: params.types } : undefined,
         },
         include: {
-          creator: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           participants: {
-            include: {
-              user: true,
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
       });
 
+      // Add currentParticipants count
       return {
         success: true,
-        data: events.map(event => this.mapPrismaEventToEvent(event)),
+        data: events.map((event: EventWithParticipants) => ({
+          ...event,
+          currentParticipants: event.participants.length,
+        })),
       };
     } catch (error) {
-      console.error('Error getting nearby events:', error);
+      console.error('Error fetching nearby events:', error);
       return {
         success: false,
         error: 'Failed to get nearby events',
@@ -92,26 +90,39 @@ class EventService {
     }
   }
 
-  async joinEvent(
-    eventId: string,
-    userId: string
-  ): Promise<EventServiceResponse<Event>> {
+  async createEvent(
+    eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>,
+    creator: User
+  ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
-      const event = await prisma.event.update({
-        where: { id: eventId },
+      const event = await eventDb.create({
         data: {
+          ...eventData,
+          creatorId: creator.id,
+          currentParticipants: 0,
           participants: {
             create: {
-              userId,
-              joinedAt: new Date(),
+              userId: creator.id,
+              status: 'confirmed',
             },
           },
         },
         include: {
-          creator: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           participants: {
-            include: {
-              user: true,
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -119,7 +130,62 @@ class EventService {
 
       return {
         success: true,
-        data: this.mapPrismaEventToEvent(event),
+        data: {
+          ...event,
+          currentParticipants: event.participants.length,
+        },
+      };
+    } catch (error) {
+      console.error('Error creating event:', error);
+      return {
+        success: false,
+        error: 'Failed to create event',
+      };
+    }
+  }
+
+  async joinEvent(
+    eventId: string,
+    userId: string
+  ): Promise<EventServiceResponse<EventWithParticipants>> {
+    try {
+      const event = await eventDb.update({
+        where: { id: eventId },
+        data: {
+          participants: {
+            create: {
+              userId,
+              status: 'confirmed',
+            },
+          },
+        },
+        include: {
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          participants: {
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        data: {
+          ...event,
+          currentParticipants: event.participants.length,
+        },
       };
     } catch (error) {
       console.error('Error joining event:', error);
@@ -133,9 +199,9 @@ class EventService {
   async leaveEvent(
     eventId: string,
     userId: string
-  ): Promise<EventServiceResponse<Event>> {
+  ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
-      const event = await prisma.event.update({
+      const event = await eventDb.update({
         where: { id: eventId },
         data: {
           participants: {
@@ -148,10 +214,21 @@ class EventService {
           },
         },
         include: {
-          creator: true,
+          creator: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
           participants: {
-            include: {
-              user: true,
+            select: {
+              userId: true,
+              user: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
@@ -159,7 +236,10 @@ class EventService {
 
       return {
         success: true,
-        data: this.mapPrismaEventToEvent(event),
+        data: {
+          ...event,
+          currentParticipants: event.participants.length,
+        },
       };
     } catch (error) {
       console.error('Error leaving event:', error);
@@ -171,4 +251,5 @@ class EventService {
   }
 }
 
+// Export singleton instance
 export const eventService = EventService.getInstance();

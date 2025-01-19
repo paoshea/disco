@@ -9,10 +9,12 @@ The Chat Archive and Block feature provides users with enhanced privacy controls
 This feature will be accessible through multiple entry points:
 
 1. **Chat Interface**
+
    - Three-dot menu in chat header
    - Option: "Archive and Block"
 
 2. **Profile View**
+
    - Under Privacy Controls section
    - Option: "Archive Conversation & Block"
 
@@ -23,6 +25,7 @@ This feature will be accessible through multiple entry points:
 ## User Flow
 
 ### 1. Initiating Archive & Block
+
 ```typescript
 interface ArchiveBlockAction {
   userId: string;
@@ -42,6 +45,7 @@ interface ArchiveBlockAction {
    - Optional: Provide reason (for personal reference)
 
 ### 2. Archive Process
+
 ```typescript
 interface ChatArchive {
   archiveId: string;
@@ -70,6 +74,7 @@ interface ChatArchive {
 4. Archive is accessible only to the user who created it
 
 ### 3. Block Implementation
+
 ```typescript
 interface BlockSettings {
   blockedUserId: string;
@@ -88,12 +93,14 @@ interface BlockSettings {
 ## Privacy Controls
 
 ### Archive Security
+
 - End-to-end encryption of archived chats
 - Secure, time-limited storage of media files
 - Access restricted to archive creator
 - Optional auto-deletion after specified period
 
 ### Block Protection
+
 - Prevents profile visibility
 - Disables matching algorithm
 - Blocks all communication channels
@@ -102,22 +109,27 @@ interface BlockSettings {
 ## User Interface
 
 ### Archive Management
+
 ```typescript
 interface ArchiveManager {
   // Viewing archives
   getArchivedChats(): Promise<ChatArchive[]>;
   viewArchive(archiveId: string): Promise<ChatArchive>;
-  
+
   // Archive actions
   deleteArchive(archiveId: string): Promise<void>;
-  updateArchiveMetadata(archiveId: string, metadata: Partial<ArchiveMetadata>): Promise<void>;
-  
+  updateArchiveMetadata(
+    archiveId: string,
+    metadata: Partial<ArchiveMetadata>
+  ): Promise<void>;
+
   // Export functionality
   exportArchive(archiveId: string, format: 'pdf' | 'json'): Promise<Blob>;
 }
 ```
 
 1. **Archived Chats View**
+
    - List of archived conversations
    - Search and filter capabilities
    - Sort by date, reason, or block status
@@ -131,18 +143,21 @@ interface ArchiveManager {
 ## Implementation Details
 
 ### Storage
+
 - Encrypted archive storage
 - Separate from active chat database
 - Efficient compression for media
 - Regular cleanup of expired archives
 
 ### Performance
+
 - Lazy loading of archived content
 - Compressed media previews
 - Background archiving process
 - Minimal impact on app performance
 
 ### Data Retention
+
 - Configurable retention periods
 - Automatic cleanup of expired archives
 - Media file expiration
@@ -151,18 +166,21 @@ interface ArchiveManager {
 ## Integration Points
 
 ### 1. Chat Service
+
 - Seamless archiving process
 - Real-time blocking
 - Message history encryption
 - Media file handling
 
 ### 2. Match Service
+
 - Block list integration
 - Future match prevention
 - Match history preservation
 - Profile visibility control
 
 ### 3. Privacy Service
+
 - Archive encryption
 - Access control
 - Data retention
@@ -171,17 +189,19 @@ interface ArchiveManager {
 ## Usage Examples
 
 ### Scenario 1: Immediate Block
+
 ```typescript
 // User wants to immediately block and archive
 await archiveManager.archiveAndBlock({
   userId: currentUserId,
   blockDuration: 'permanent',
   preventFutureMatches: true,
-  deleteMatchHistory: false
+  deleteMatchHistory: false,
 });
 ```
 
 ### Scenario 2: Temporary Block
+
 ```typescript
 // User wants to temporarily block for 30 days
 await archiveManager.archiveAndBlock({
@@ -189,18 +209,20 @@ await archiveManager.archiveAndBlock({
   blockDuration: 'temporary',
   blockPeriod: 30, // days
   preventFutureMatches: false,
-  archiveReason: 'Taking a break'
+  archiveReason: 'Taking a break',
 });
 ```
 
 ## Future Enhancements
 
 1. **Smart Archiving**
+
    - AI-powered categorization
    - Content summarization
    - Pattern recognition for block recommendations
 
 2. **Enhanced Privacy**
+
    - Multi-factor archive access
    - Improved encryption
    - Granular privacy controls

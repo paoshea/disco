@@ -27,10 +27,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
@@ -64,10 +61,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
@@ -82,7 +76,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { latitude, longitude, accuracy, timestamp, privacyMode, sharingEnabled } = result.data;
+    const {
+      latitude,
+      longitude,
+      accuracy,
+      timestamp,
+      privacyMode,
+      sharingEnabled,
+    } = result.data;
 
     // Create location
     const location = await (db as any).location.create({
@@ -111,10 +112,7 @@ export async function PUT(request: NextRequest) {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const user = session.user as SessionUser;
@@ -129,7 +127,14 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { latitude, longitude, accuracy, timestamp, privacyMode, sharingEnabled } = result.data;
+    const {
+      latitude,
+      longitude,
+      accuracy,
+      timestamp,
+      privacyMode,
+      sharingEnabled,
+    } = result.data;
 
     // Update latest location
     const location = await (db as any).location.update({

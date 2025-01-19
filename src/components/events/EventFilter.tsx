@@ -28,7 +28,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<EventFilters>({
     ...initialFilters,
-    filters: initialFilters.filters || {},
+    filter: initialFilters.filter || {},
   });
 
   const handleSave = () => {
@@ -36,11 +36,11 @@ export const EventFilter: React.FC<EventFilterProps> = ({
     setIsOpen(false);
   };
 
-  const updateFilters = (updates: Partial<typeof filters.filters>) => {
+  const updateFilters = (updates: Partial<typeof filters.filter>) => {
     setFilters(prev => ({
       ...prev,
-      filters: {
-        ...prev.filters,
+      filter: {
+        ...prev.filter,
         ...updates,
       },
     }));
@@ -77,10 +77,10 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 label="Category"
                 name="category"
                 options={categories}
-                value={filters.filters?.categories?.[0] || ''}
+                value={filters.filter?.category?.[0] || ''}
                 onChange={e =>
                   updateFilters({
-                    categories: e.target.value
+                    category: e.target.value
                       ? [e.target.value as EventCategory]
                       : undefined,
                   })
@@ -92,7 +92,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   label="Start Date"
                   name="startDate"
                   type="date"
-                  value={filters.filters?.startDate}
+                  value={filters.filter?.startDate}
                   onChange={e =>
                     updateFilters({
                       startDate: e.target.value,
@@ -103,8 +103,8 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                   label="End Date"
                   name="endDate"
                   type="date"
-                  value={filters.filters?.endDate}
-                  min={filters.filters?.startDate}
+                  value={filters.filter?.endDate}
+                  min={filters.filter?.startDate}
                   onChange={e =>
                     updateFilters({
                       endDate: e.target.value,
@@ -116,7 +116,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
               <Checkbox
                 label="Show only free events"
                 name="isFree"
-                checked={filters.filters?.isFree}
+                checked={filters.filter?.isFree}
                 onChange={e =>
                   updateFilters({
                     isFree: e.target.checked,
@@ -124,13 +124,13 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 }
               />
 
-              {!filters.filters?.isFree && (
+              {!filters.filter?.isFree && (
                 <TextField
                   label="Maximum Price ($)"
                   name="maxPrice"
                   type="number"
                   min="0"
-                  value={filters.filters?.maxPrice?.toString()}
+                  value={filters.filter?.maxPrice?.toString()}
                   onChange={e =>
                     updateFilters({
                       maxPrice: parseInt(e.target.value),
@@ -143,7 +143,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 label="Location"
                 name="location"
                 placeholder="Enter city or address"
-                value={filters.filters?.location}
+                value={filters.filter?.location}
                 onChange={e =>
                   updateFilters({
                     location: e.target.value,
@@ -151,13 +151,13 @@ export const EventFilter: React.FC<EventFilterProps> = ({
                 }
               />
 
-              {filters.filters?.location && (
+              {filters.filter?.location && (
                 <TextField
                   label="Search Radius (km)"
                   name="radius"
                   type="number"
                   min="1"
-                  value={filters.filters?.radius?.toString()}
+                  value={filters.filter?.radius?.toString()}
                   onChange={e =>
                     updateFilters({
                       radius: parseInt(e.target.value),
@@ -169,7 +169,7 @@ export const EventFilter: React.FC<EventFilterProps> = ({
               <Checkbox
                 label="Show events with available spots only"
                 name="hasAvailableSpots"
-                checked={filters.filters?.hasAvailableSpots}
+                checked={filters.filter?.hasAvailableSpots}
                 onChange={e =>
                   updateFilters({
                     hasAvailableSpots: e.target.checked,

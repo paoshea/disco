@@ -1,45 +1,51 @@
 import { useEffect, useState } from 'react';
-import { toast } from 'react-hot-toast';
+import { useGeolocation } from '@/hooks/useGeolocation';
 import { eventService } from '@/services/event/event.service';
 import type { Event } from '@/types/event';
 import { EventList } from './EventList';
+import { toast } from 'react-hot-toast';
 
 interface NearbyEventsProps {
-  radius: number;
+  radius?: number; // in meters
   onEventJoined?: (event: Event) => void;
   onEventLeft?: (event: Event) => void;
 }
 
 export function NearbyEvents({
-  radius,
+  radius = 500,
   onEventJoined,
   onEventLeft,
 }: NearbyEventsProps) {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
+  const { position } = useGeolocation();
 
   useEffect(() => {
-    void fetchNearbyEvents();
-  }, [radius]);
+    async function fetchNearbyEvents() {
+      if (!position) return;
 
-  const fetchNearbyEvents = async () => {
-    try {
-      const { data, success, error } = await eventService.getNearbyEvents({
-        radius,
-      });
-      if (success && data) {
-        setEvents(data);
-      } else {
-        throw new Error(error || 'Failed to fetch nearby events');
+      try {
+        const { data, success, error } = await eventService.getNearbyEvents(
+          position.coords.latitude,
+          position.coords.longitude,
+          radius
+        );
+
+        if (success && data) {
+          setEvents(data);
+        } else if (error) {
+          toast.error(error);
+        }
+      } catch (err) {
+        console.error('Error fetching nearby events:', err);
+        toast.error('Failed to fetch nearby events');
+      } finally {
+        setLoading(false);
       }
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : 'Failed to fetch nearby events'
-      );
-    } finally {
-      setLoading(false);
     }
-  };
+
+    fetchNearbyEvents();
+  }, [position, radius]);
 
   const handleEventJoined = async (updatedEvent: Event) => {
     setEvents(prevEvents =>
@@ -63,12 +69,12 @@ export function NearbyEvents({
     );
   }
 
+  if (!position) {
+    return <div>Please enable location services to see nearby events.</div>;
+  }
+
   if (events.length === 0) {
-    return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">No nearby events found</p>
-      </div>
-    );
+    return <div>No events found nearby.</div>;
   }
 
   return (

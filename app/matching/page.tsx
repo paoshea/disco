@@ -29,7 +29,8 @@ export default function MatchingPage() {
     'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'
   >('anytime');
   const [activityType, setActivityType] = useState<string>('any');
-  const [privacyMode, setPrivacyMode] = useState<LocationPrivacyMode>('precise');
+  const [privacyMode, setPrivacyMode] =
+    useState<LocationPrivacyMode>('precise');
   const { position } = useGeolocation();
 
   const fetchMatches = useCallback(async () => {
@@ -81,18 +82,27 @@ export default function MatchingPage() {
     [fetchMatches, toast]
   );
 
-  const handleRadiusChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newRadius = parseFloat(event.target.value);
-    setRadius(newRadius);
-  }, []);
+  const handleRadiusChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const newRadius = parseFloat(event.target.value);
+      setRadius(newRadius);
+    },
+    []
+  );
 
-  const handleTimeWindowChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    setTimeWindow(event.target.value as typeof timeWindow);
-  }, []);
+  const handleTimeWindowChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setTimeWindow(event.target.value as typeof timeWindow);
+    },
+    []
+  );
 
-  const handleActivityTypeChange = useCallback((event: React.ChangeEvent<HTMLSelectElement>) => {
-    setActivityType(event.target.value);
-  }, []);
+  const handleActivityTypeChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      setActivityType(event.target.value);
+    },
+    []
+  );
 
   if (!session) {
     return null;
@@ -209,14 +219,14 @@ export default function MatchingPage() {
         {viewMode === 'list' ? (
           <MatchList
             matches={matches}
-            onMatchClick={(matchId) => {
+            onMatchClick={matchId => {
               router.push(`/matches/${matchId}`);
             }}
           />
         ) : (
           <MatchMapView
             matches={matches}
-            onMarkerClick={(matchId) => {
+            onMarkerClick={matchId => {
               router.push(`/matches/${matchId}`);
             }}
           />

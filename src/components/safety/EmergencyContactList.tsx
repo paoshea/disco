@@ -1,5 +1,5 @@
 import React from 'react';
-import { EmergencyContact } from '@/types/user';
+import type { EmergencyContact } from '@/types/safety';
 import { Button } from '@/components/ui/Button';
 
 interface EmergencyContactListProps {
@@ -20,6 +20,9 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
     if (notifyOn.sosAlert) notifications.push('SOS Alerts');
     if (notifyOn.meetupStart) notifications.push('Meetup Start');
     if (notifyOn.meetupEnd) notifications.push('Meetup End');
+    if (notifyOn.lowBattery) notifications.push('Low Battery');
+    if (notifyOn.enterPrivacyZone) notifications.push('Enter Privacy Zone');
+    if (notifyOn.exitPrivacyZone) notifications.push('Exit Privacy Zone');
     return notifications.join(', ');
   };
 

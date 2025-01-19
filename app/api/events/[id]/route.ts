@@ -1,96 +1,46 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { db } from '@/lib/prisma';
-import { z } from 'zod';
-import type { Event, EventParticipant } from '@/types/event';
-import type { ExtendedPrismaClient } from '@/lib/prisma';
+import type { EventWithParticipants } from '@/types/event';
+import { actionSchema } from '@/types/event';
+import type { User } from '@/types/user';
 
-// Define session user type
-interface SessionUser {
-  id: string;
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-}
-
-// Input validation schema
-const actionSchema = z.object({
-  action: z.enum(['join', 'leave']),
-});
-
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-// Initialize typed Prisma client
-const eventDb = (db as ExtendedPrismaClient).$extends.model.event;
-
-type PrismaEvent = {
-  id: string;
-  creatorId: string;
-  type: string;
-  maxParticipants: number | null;
-  participants: Array<{
-    userId: string;
-    user: {
-      id: string;
-      name: string | null;
-    };
-  }>;
-  creator: {
-    id: string;
-    name: string | null;
-  };
-};
+// Initialize Prisma client
+const eventDb = db.$extends.model.event;
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } },
-) {
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      );
-    }
+    const { id } = await params;
 
-    const user = session.user as SessionUser;
-    const eventId = params.id;
-
-    const event = await eventDb.findUnique({
-      where: { id: eventId },
+    const event = (await eventDb.findUnique({
+      where: { id },
       include: {
-        creator: true,
+        creator: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         participants: {
-          include: {
-            user: true,
+          select: {
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
           },
         },
       },
-    }) as PrismaEvent | null;
+    })) as EventWithParticipants | null;
 
     if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 },
-      );
-    }
-
-    // Check if user has permission to view the event
-    const isCreator = event.creatorId === user.id;
-    const isParticipant = event.participants.some(
-      (participant) => participant.userId === user.id,
-    );
-
-    if (!isCreator && !isParticipant && event.type === 'private') {
-      return NextResponse.json(
-        { error: 'Not authorized to view this event' },
-        { status: 403 },
-      );
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     return NextResponse.json(event);
@@ -98,134 +48,110 @@ export async function GET(
     console.error('Error fetching event:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
 
 export async function POST(
   request: NextRequest,
-  { params }: RouteParams,
-) {
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response> {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 },
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = session.user as SessionUser;
-    const eventId = params.id;
+    const { id } = await params;
     const body = await request.json();
-    const result = actionSchema.safeParse(body);
+    const validatedBody = actionSchema.safeParse(body);
 
-    if (!result.success) {
+    if (!validatedBody.success) {
       return NextResponse.json(
         { error: 'Invalid request body' },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
-    const { action } = result.data;
+    const { action } = validatedBody.data;
+    const userId = (session.user as User).id;
 
-    const event = await eventDb.findUnique({
-      where: { id: eventId },
+    const event = (await eventDb.findUnique({
+      where: { id },
       include: {
-        participants: true,
+        participants: {
+          select: {
+            userId: true,
+          },
+        },
       },
-    }) as PrismaEvent | null;
+    })) as EventWithParticipants | null;
 
     if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 },
-      );
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    const isParticipant = event.participants.some(
-      (participant) => participant.userId === user.id,
-    );
-
     if (action === 'join') {
+      // Check if user is already a participant
+      const isParticipant = event.participants.some(p => p.userId === userId);
       if (isParticipant) {
         return NextResponse.json(
-          { error: 'Already joined this event' },
-          { status: 400 },
+          { error: 'Already joined event' },
+          { status: 400 }
         );
       }
 
       // Check if event is full
-      if (event.maxParticipants && event.participants.length >= event.maxParticipants) {
-        return NextResponse.json(
-          { error: 'Event is full' },
-          { status: 400 },
-        );
+      if (
+        event.maxParticipants &&
+        event.participants.length >= event.maxParticipants
+      ) {
+        return NextResponse.json({ error: 'Event is full' }, { status: 400 });
       }
 
-      const updatedEvent = await eventDb.update({
-        where: { id: eventId },
+      // Join event
+      await eventDb.update({
+        where: { id },
         data: {
           participants: {
             create: {
-              userId: user.id,
+              userId,
             },
           },
         },
-        include: {
-          creator: true,
-          participants: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      }) as PrismaEvent;
-
-      return NextResponse.json(updatedEvent);
-    } else if (action === 'leave') {
+      });
+    } else {
+      // Leave event
+      const isParticipant = event.participants.some(p => p.userId === userId);
       if (!isParticipant) {
         return NextResponse.json(
-          { error: 'Not a participant of this event' },
-          { status: 400 },
+          { error: 'Not a participant' },
+          { status: 400 }
         );
       }
 
-      const updatedEvent = await eventDb.update({
-        where: { id: eventId },
+      await eventDb.update({
+        where: { id },
         data: {
           participants: {
             delete: {
               eventId_userId: {
-                eventId,
-                userId: user.id,
+                eventId: id,
+                userId,
               },
             },
           },
         },
-        include: {
-          creator: true,
-          participants: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      }) as PrismaEvent;
-
-      return NextResponse.json(updatedEvent);
+      });
     }
 
-    return NextResponse.json(
-      { error: 'Invalid action' },
-      { status: 400 },
-    );
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error updating event:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }

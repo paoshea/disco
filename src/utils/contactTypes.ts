@@ -1,34 +1,13 @@
-import { EmergencyContact as UserEmergencyContact } from '@/types/user';
-import { EmergencyContact as SafetyEmergencyContact } from '@/types/safety';
-import { EmergencyContactNew } from '@/types/safety';
+import type { EmergencyContact, EmergencyContactNew } from '@/types/safety';
 
 interface NotificationPreferences {
   sosAlert: boolean;
   meetupStart: boolean;
   meetupEnd: boolean;
+  lowBattery: boolean;
+  enterPrivacyZone: boolean;
+  exitPrivacyZone: boolean;
 }
-
-/**
- * User Emergency Contact (from user profile)
- * - Used in user profiles and general contact management
- * - Contains relationship information
- * - Has structured notification preferences
- * - Does not track creation/update timestamps
- *
- * @example
- * {
- *   id: "123",
- *   name: "John Doe",
- *   relationship: "Father",
- *   phoneNumber: "+1234567890",
- *   email: "john@example.com",
- *   notifyOn: {
- *     sosAlert: true,
- *     meetupStart: true,
- *     meetupEnd: false
- *   }
- * }
- */
 
 /**
  * Safety Emergency Contact (from safety system)
@@ -59,19 +38,19 @@ interface NotificationPreferences {
  * @returns A safety emergency contact with the same information
  */
 export const toSafetyContact = (
-  contact: UserEmergencyContact,
+  contact: Omit<EmergencyContact, 'userId'>,
   userId: string
 ): EmergencyContactNew => {
   return {
     id: contact.id,
-    userId,
     name: contact.name,
     phone: contact.phoneNumber,
     email: contact.email,
     relationship: contact.relationship,
-    isVerified: false,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    isVerified: true,
+    userId,
+    createdAt: contact.createdAt || new Date().toISOString(),
+    updatedAt: contact.updatedAt || new Date().toISOString(),
   };
 };
 
@@ -80,26 +59,22 @@ export const toSafetyContact = (
  * @param contact - The safety emergency contact to convert
  * @returns A user emergency contact with the same information
  */
-export const toUserContact = (
-  contact: SafetyEmergencyContact
-): UserEmergencyContact => {
-  // Create notification preferences object
-  const notifyPrefs: NotificationPreferences = {
-    sosAlert: false,
-    meetupStart: false,
-    meetupEnd: false,
-  };
-
+export const toUserContact = (contact: EmergencyContact): EmergencyContact => {
   return {
     id: contact.id,
+    userId: contact.userId,
     name: contact.name,
     relationship: contact.relationship,
     phoneNumber: contact.phoneNumber,
-    email: contact.email || '',
-    notifyOn: notifyPrefs,
-    sosAlert: notifyPrefs.sosAlert,
-    meetupStart: notifyPrefs.meetupStart,
-    meetupEnd: notifyPrefs.meetupEnd,
+    email: contact.email,
+    notifyOn: {
+      sosAlert: contact.notifyOn.sosAlert,
+      meetupStart: contact.notifyOn.meetupStart,
+      meetupEnd: contact.notifyOn.meetupEnd,
+      lowBattery: contact.notifyOn.lowBattery,
+      enterPrivacyZone: contact.notifyOn.enterPrivacyZone,
+      exitPrivacyZone: contact.notifyOn.exitPrivacyZone,
+    },
     createdAt: contact.createdAt,
     updatedAt: contact.updatedAt,
   };
@@ -109,7 +84,7 @@ export type ContactStatus = 'pending' | 'verified' | 'rejected';
 
 export interface ContactEvent {
   type: string;
-  contact: SafetyEmergencyContact;
+  contact: EmergencyContact;
   timestamp: string;
 }
 

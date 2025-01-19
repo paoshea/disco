@@ -31,16 +31,12 @@ export function EventCard({
   const handleJoinEvent = async () => {
     if (!user) return;
     try {
-      const {
-        data: updatedEvent,
-        success,
-        error,
-      } = await eventService.joinEvent(event.id, user.id);
-      if (success && updatedEvent) {
+      const response = await eventService.joinEvent(event.id, user.id);
+      if (response.success && response.data) {
         toast.success('Successfully joined event!');
-        onEventJoined?.(updatedEvent);
+        onEventJoined?.(response.data);
       } else {
-        throw new Error(error || 'Failed to join event');
+        throw new Error(response.error || 'Failed to join event');
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to join event');
@@ -50,16 +46,12 @@ export function EventCard({
   const handleLeaveEvent = async () => {
     if (!user) return;
     try {
-      const {
-        data: updatedEvent,
-        success,
-        error,
-      } = await eventService.leaveEvent(event.id, user.id);
-      if (success && updatedEvent) {
+      const response = await eventService.leaveEvent(event.id, user.id);
+      if (response.success && response.data) {
         toast.success('Successfully left event!');
-        onEventLeft?.(updatedEvent);
+        onEventLeft?.(response.data);
       } else {
-        throw new Error(error || 'Failed to leave event');
+        throw new Error(response.error || 'Failed to leave event');
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to leave event');

@@ -1,106 +1,99 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { db } from '@/lib/prisma';
-import type { CreateEventInput, Event, EventType } from '@/types/event';
-import { z } from 'zod';
+import type { Event, EventSearchParams, CreateEventInput } from '@/types/event';
+import { createEventSchema } from '@/types/event';
+import type { User } from '@/types/user';
 
-// Define session user type
-interface SessionUser {
-  id: string;
-  name?: string | null;
-  email?: string | null;
-  image?: string | null;
-}
+// Initialize Prisma client models
+const eventDb = db.$extends.model.event;
+const locationDb = db.$extends.model.location;
 
-// Input validation schema for query parameters
-const querySchema = z.object({
-  radius: z.string().optional(),
-  types: z.string().optional(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
-});
-
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = session.user as SessionUser;
-    const { searchParams } = new URL(request.url);
-    
-    // Validate and parse query parameters
-    const result = querySchema.safeParse(Object.fromEntries(searchParams));
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid query parameters' },
-        { status: 400 }
-      );
-    }
-
-    const { radius, types, startTime, endTime } = result.data;
-
-    // Get user's location
-    const userLocation = await (db as any).location.findFirst({
+    const searchParams = new URL(request.url).searchParams;
+    const location = await locationDb.findFirst({
       where: {
-        userId: user.id,
+        userId: (session.user as User).id,
       },
       orderBy: {
         timestamp: 'desc',
       },
     });
 
-    if (!userLocation) {
+    if (!location) {
       return NextResponse.json(
-        { error: 'User location not found' },
+        { error: 'Location not found' },
         { status: 404 }
       );
     }
 
-    // Parse event types
-    const eventTypes = types ? (types.split(',') as EventType[]) : undefined;
-
-    // Build where clause
-    const where: any = {
-      startTime: startTime ? { gte: new Date(startTime) } : undefined,
-      endTime: endTime ? { lte: new Date(endTime) } : undefined,
-      type: eventTypes?.length ? { in: eventTypes } : undefined,
+    const radiusInMeters = parseFloat(searchParams.get('radius') ?? '500');
+    const userLocation = {
+      latitude: location.latitude,
+      longitude: location.longitude,
     };
 
-    // If radius is provided, add location filter
-    if (radius && userLocation) {
-      const radiusInMeters = parseInt(radius, 10) * 1000; // Convert km to meters
-      where.latitude = {
-        gte: userLocation.latitude - radiusInMeters / 111000, // Rough conversion
-        lte: userLocation.latitude + radiusInMeters / 111000,
-      };
-      where.longitude = {
-        gte: userLocation.longitude - radiusInMeters / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
-        lte: userLocation.longitude + radiusInMeters / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
-      };
-    }
+    // Calculate bounding box for spatial query
+    const latitudeDelta = radiusInMeters / 111000; // 111km per degree
+    const minLat = userLocation.latitude - latitudeDelta;
+    const maxLat = userLocation.latitude + latitudeDelta;
 
-    // Get events
-    const events = await (db as any).event.findMany({
-      where,
-      include: {
-        creator: true,
-        participants: {
-          include: {
-            user: true
-          }
-        }
+    const longitudeDelta =
+      radiusInMeters /
+      (111000 * Math.cos((userLocation.latitude * Math.PI) / 180));
+    const minLon = userLocation.longitude - longitudeDelta;
+    const maxLon = userLocation.longitude + longitudeDelta;
+
+    const events = await eventDb.findMany({
+      where: {
+        location: {
+          latitude: {
+            gte: minLat,
+            lte: maxLat,
+          },
+          longitude: {
+            gte: minLon,
+            lte: maxLon,
+          },
+        },
       },
-      orderBy: {
-        startTime: 'asc',
+      include: {
+        creator: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        participants: {
+          select: {
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 
-    return NextResponse.json(events);
+    // Add currentParticipants count
+    const eventsWithCount = events.map(
+      (event: Event & { participants: Array<{ userId: string }> }) => ({
+        ...event,
+        currentParticipants: event.participants.length,
+      })
+    );
+
+    return NextResponse.json(eventsWithCount);
   } catch (error) {
     console.error('Error fetching events:', error);
     return NextResponse.json(
@@ -110,47 +103,56 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const user = session.user as SessionUser;
     const body = await request.json();
+    const validatedBody = createEventSchema.safeParse(body);
 
-    // Validate input
-    if (!body.title || !body.latitude || !body.longitude || !body.startTime || !body.type) {
+    if (!validatedBody.success) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Invalid request body' },
         { status: 400 }
       );
     }
 
-    // Create event
-    const event = await (db as any).event.create({
-      data: {
-        ...body,
+    const userId = (session.user as User).id;
+    const eventData = {
+      ...validatedBody.data,
+      creatorId: userId,
+      currentParticipants: 0,
+      participants: {
+        create: {
+          userId,
+          status: 'confirmed',
+        },
+      },
+    };
+
+    const event = await eventDb.create({
+      data: eventData,
+      include: {
         creator: {
-          connect: { id: user.id }
+          select: {
+            id: true,
+            name: true,
+          },
         },
         participants: {
-          create: {
-            userId: user.id
-          }
-        }
-      },
-      include: {
-        creator: true,
-        participants: {
-          include: {
-            user: true
-          }
-        }
+          select: {
+            userId: true,
+            user: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
     });
 

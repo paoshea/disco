@@ -2,7 +2,7 @@
 
 ## Target Setup
 
-This guide will help you set up the Disco development environment. 
+This guide will help you set up the Disco development environment.
 When properly configured, you'll have:
 
 1. **Infrastructure Services** (running in Docker):
@@ -171,6 +171,7 @@ When you're done working or need to shut down for the night, follow these steps 
 ### 2. Stop Backend Services
 
 1. Stop all Go services in any order:
+
    - Press `Ctrl+C` in each terminal running a Go service:
      - Core API Service
      - Location Service
@@ -190,11 +191,14 @@ When you're done working or need to shut down for the night, follow these steps 
 ### 3. Stop Infrastructure Services
 
 1. Stop Docker containers:
+
    ```bash
    cd backend
    docker compose down
    ```
+
    This will:
+
    - Stop and remove all containers (PostgreSQL, Redis)
    - Remove the Docker network
    - Preserve your data volumes
@@ -208,16 +212,20 @@ When you're done working or need to shut down for the night, follow these steps 
 ### 4. Optional: Clean Up (if needed)
 
 1. Remove unused Docker resources:
+
    ```bash
    docker system prune
    ```
+
    This removes:
+
    - Stopped containers
    - Unused networks
    - Dangling images
    - Build cache
 
 2. Clear Node.js cache (if experiencing issues):
+
    ```bash
    npm cache clean --force
    ```
@@ -234,6 +242,7 @@ When you're done working or need to shut down for the night, follow these steps 
 ### 5. Verify Clean Shutdown
 
 1. Check for any remaining processes:
+
    ```bash
    # Check for Node processes
    ps aux | grep node
@@ -291,6 +300,7 @@ This approach of running only essential services in Docker and other services lo
 ### Docker Issues
 
 - If containers fail to start, try:
+
   ```bash
   docker compose down
   docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
@@ -307,6 +317,7 @@ This approach of running only essential services in Docker and other services lo
 ### Process Issues
 
 - If a service won't stop with Ctrl+C:
+
   ```bash
   # For Node.js
   pkill -f "node"

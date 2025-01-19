@@ -180,7 +180,7 @@ interface Location {
 }
 
 // Using with Prisma
-const location = await db.location.findFirst() as Location;
+const location = (await db.location.findFirst()) as Location;
 ```
 
 ### Analyzing Prisma Client Types
@@ -217,14 +217,15 @@ const prisma = new PrismaClient({
 There are two recommended patterns for organizing Prisma client usage:
 
 1. **Service Class Pattern**
+
    ```typescript
    class LocationService {
      private prisma: PrismaClient['location'];
-   
+
      constructor() {
        this.prisma = db.location;
      }
-   
+
      async findLocation() {
        return await this.prisma.findFirst();
      }
@@ -232,16 +233,18 @@ There are two recommended patterns for organizing Prisma client usage:
    ```
 
 2. **Module-Level Client Pattern**
+
    ```typescript
    const locationDb = db.location;
    const privacyZoneDb = db.privacyZone;
-   
+
    export async function findLocation() {
      return await locationDb.findFirst();
    }
    ```
 
 Benefits of these patterns:
+
 - Type-safe access to Prisma models
 - Better code organization and reusability
 - Reduced repetition of `db.modelName`
@@ -252,6 +255,7 @@ Benefits of these patterns:
 When working with Prisma:
 
 1. **Type Inference (Preferred)**
+
    ```typescript
    // Prisma will infer the correct type
    const location = await db.location.findFirst();
@@ -260,7 +264,7 @@ When working with Prisma:
 2. **Type Assertion (When needed)**
    ```typescript
    // Use when mixing with application types
-   const location = await db.location.findFirst() as Location;
+   const location = (await db.location.findFirst()) as Location;
    ```
 
 Always prefer type inference unless you need to convert to application-specific types.
@@ -281,6 +285,7 @@ this.prisma = (db as any).location;
 ```
 
 Choose the approach that best fits your needs:
+
 - Option 1 is most type-safe but may need updates with Prisma version changes
 - Option 2 provides good type safety while being more flexible
 - Option 3 should be used only as a last resort
@@ -302,11 +307,13 @@ const locationDb: NonNullable<PrismaClient['location']> = (db as any).location;
 ```
 
 The correct pattern has these key elements:
+
 1. Type the variable using `NonNullable<PrismaClient['modelName']>`
 2. Use a localized `any` cast only during initialization: `(db as any).modelName`
 3. Keep the type assertion scoped only to the assignment
 
 This pattern works because:
+
 - `NonNullable` ensures type safety after initialization
 - The localized `any` cast handles Prisma's internal type complexity
 - The pattern is consistent with Prisma's runtime behavior
@@ -316,6 +323,7 @@ This pattern works because:
 ### Common Issue: Property Does Not Exist on PrismaClient
 
 When accessing Prisma models, you might encounter errors like:
+
 ```typescript
 Property 'modelName' does not exist on type 'PrismaClient<PrismaClientOptions, never, DefaultArgs>'
 ```
@@ -323,21 +331,26 @@ Property 'modelName' does not exist on type 'PrismaClient<PrismaClientOptions, n
 Here are the attempted solutions and their outcomes:
 
 #### Attempt 1: Direct Type Assertion (Not Recommended)
+
 ```typescript
 // ❌ Does not work - loses type safety
 const modelDb = (db as any).modelName;
 ```
 
 #### Attempt 2: Using NonNullable with PrismaClient (Partial Solution)
+
 ```typescript
 // ⚠️ Works but with type errors
 const modelDb: NonNullable<PrismaClient['modelName']> = (db as any).modelName;
 ```
 
 #### Attempt 3: Using Prisma's Delegate Types (Not Working)
+
 ```typescript
 // ❌ Type errors persist
-const modelDb: Prisma.ModelDelegate<Prisma.RejectOnNotFound | Prisma.RejectPerOperation> = db.modelName;
+const modelDb: Prisma.ModelDelegate<
+  Prisma.RejectOnNotFound | Prisma.RejectPerOperation
+> = db.modelName;
 ```
 
 #### Solution: Custom Extended PrismaClient Type
@@ -345,12 +358,14 @@ const modelDb: Prisma.ModelDelegate<Prisma.RejectOnNotFound | Prisma.RejectPerOp
 The working solution involves creating a custom type in your Prisma configuration file:
 
 1. First, verify your schema and regenerate the client:
+
 ```bash
 npx prisma validate
 npx prisma generate
 ```
 
 2. Create an extended PrismaClient type in `lib/prisma.ts`:
+
 ```typescript
 export type ExtendedPrismaClient = PrismaClient & {
   $extends: {
@@ -362,12 +377,13 @@ export type ExtendedPrismaClient = PrismaClient & {
         deleteMany: (args: any) => Promise<any>;
       };
       // Add other models as needed
-    }
-  }
+    };
+  };
 };
 ```
 
 3. Use the extended type in your services:
+
 ```typescript
 import type { ExtendedPrismaClient } from '@/lib/prisma';
 
@@ -381,18 +397,22 @@ class ModelService {
 ```
 
 This solution works because:
+
 - It properly types the extended Prisma client
 - Maintains type safety for model operations
 - Allows TypeScript to understand the model structure
 - Works consistently across different parts of the application
 
 ### Best Practices
+
 1. Always regenerate Prisma client after schema changes:
+
 ```bash
 npx prisma generate
 ```
 
 2. Verify schema validity:
+
 ```bash
 npx prisma validate
 ```
@@ -402,10 +422,60 @@ npx prisma validate
 5. Consider adding specific argument and return types for better type safety
 
 ### Common Gotchas
+
 - Make sure your schema.prisma file is properly defined
 - Ensure all models referenced in the ExtendedPrismaClient exist in your schema
 - The extended type needs to match your actual Prisma model methods
 - Remember to update the extended type when adding new model operations
+
+## Next.js Route Handler Types
+
+### Dynamic Route Parameters
+
+When working with Next.js dynamic route handlers (e.g., `app/api/[id]/route.ts`), the correct type for the params argument is:
+
+```typescript
+{
+  params: Promise<{ [key: string]: string }>;
+}
+```
+
+Example usage:
+
+```typescript
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+): Promise<Response>;
+```
+
+This is because:
+
+1. Next.js 15 expects route parameters to be wrapped in a Promise
+2. The params object contains key-value pairs where both key and value are strings
+3. Custom interfaces like `RouteHandlerContext` are not compatible with Next.js's internal types
+
+❌ Incorrect:
+
+```typescript
+interface RouteHandlerContext {
+  params: { id: string };
+}
+
+export async function GET(request: NextRequest, context: RouteHandlerContext);
+```
+
+✅ Correct:
+
+```typescript
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+);
+
+// Usage
+const { id } = await params;
+```
 
 ## Type Mapping Between Components
 
@@ -420,7 +490,7 @@ function mapPrivacyMode(mode: LocationPrivacyMode): ApiPrivacyMode {
   const mapping: Record<LocationPrivacyMode, ApiPrivacyMode> = {
     precise: 'standard',
     approximate: 'strict',
-    zone: 'strict'
+    zone: 'strict',
   };
   return mapping[mode];
 }
@@ -432,14 +502,19 @@ When working with complex types that have nested objects, use optional chaining 
 
 ```typescript
 // Bad: Direct access to nested properties
-event.latitude.toFixed(6)
+event.latitude.toFixed(6);
 
 // Good: Access through nested object with optional chaining
-event.location.latitude?.toFixed(6)
+event.location.latitude?.toFixed(6);
 
 // Better: Add type guard for complete type safety
-function hasCoordinates(location: Location): location is Location & { latitude: number; longitude: number } {
-  return typeof location.latitude === 'number' && typeof location.longitude === 'number';
+function hasCoordinates(
+  location: Location
+): location is Location & { latitude: number; longitude: number } {
+  return (
+    typeof location.latitude === 'number' &&
+    typeof location.longitude === 'number'
+  );
 }
 
 if (hasCoordinates(event.location)) {
@@ -452,6 +527,7 @@ if (hasCoordinates(event.location)) {
 When defining component props:
 
 1. Use explicit interfaces for prop types:
+
 ```typescript
 interface LocationPrivacyProps {
   onPrivacyChange: (mode: LocationPrivacyMode) => void;
@@ -460,14 +536,16 @@ interface LocationPrivacyProps {
 ```
 
 2. Ensure all required callbacks are properly typed:
+
 ```typescript
-<MatchList 
-  matches={matches} 
+<MatchList
+  matches={matches}
   onMatchClick={(matchId: string) => void}
 />
 ```
 
 3. Use discriminated unions for components with different modes:
+
 ```typescript
 type ViewMode = 'list' | 'map';
 type ViewProps = {
@@ -482,6 +560,7 @@ type ViewProps = {
 ## Type Safety Best Practices
 
 1. **Request Body Typing**: Always type your request bodies explicitly:
+
    ```typescript
    interface MessageContent {
      content: string;
@@ -490,6 +569,7 @@ type ViewProps = {
    ```
 
 2. **Error Handling**: Use discriminated unions for error handling:
+
    ```typescript
    if ('error' in result) {
      // Handle error case
@@ -499,6 +579,7 @@ type ViewProps = {
    ```
 
 3. **Authentication**: Always properly type authentication results:
+
    ```typescript
    const session = await verifyToken(token);
    if (!session) {
@@ -515,11 +596,13 @@ type ViewProps = {
 ## Important Notes
 
 1. **Partial Updates**: Many update operations use `Partial<T>` to allow updating only specific fields:
+
    ```typescript
    onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
    ```
 
 2. **Date Handling**: Dates are consistently stored as ISO strings:
+
    ```typescript
    createdAt: string;
    updatedAt: string;
@@ -527,6 +610,7 @@ type ViewProps = {
    ```
 
 3. **Optional Fields**: Fields that may not always be present are marked with `?`:
+
    ```typescript
    location?: Location;
    description?: string;

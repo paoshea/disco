@@ -1,3 +1,5 @@
+import type { EmergencyContact } from './safety';
+
 export interface User {
   id: string;
   email: string;
@@ -75,21 +77,3 @@ export type UserPreferences = {
     emergencyContactAlerts: boolean;
   };
 };
-
-export interface EmergencyContact {
-  id: string;
-  name: string;
-  relationship: string;
-  phoneNumber: string;
-  email: string;
-  notifyOn: {
-    sosAlert: boolean;
-    meetupStart: boolean;
-    meetupEnd: boolean;
-  };
-  sosAlert: boolean;
-  meetupStart: boolean;
-  meetupEnd: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}

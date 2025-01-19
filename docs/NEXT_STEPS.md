@@ -468,12 +468,15 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
 ## Spontaneous Social Engagement Implementation Order
 
 ### Phase 1: Core Location & Privacy Foundation
+
 1. Privacy-focused location processing
+
    - Essential for user trust and data protection
    - Foundation for all location-based features
    - Must be implemented before any location features go live
 
 2. Profile visibility controls
+
    - Allow users to control what potential matches can see
    - Set up granular privacy settings
    - Enable temporary profile visibility options
@@ -484,7 +487,9 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
    - Integration with existing geohashing system
 
 ### Phase 2: Matching & Filtering
+
 4. Interest-based matching
+
    - Define interest categories and tags
    - Implement matching algorithm weights
    - Create interest-based filtering UI
@@ -495,7 +500,9 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
    - Availability status system
 
 ### Phase 3: Real-time Notifications
+
 6. Push notification system
+
    - Near-match notifications
    - Chat request alerts
    - Safety check notifications
@@ -508,7 +515,9 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
    - Background task management
 
 ### Phase 4: Enhanced Proximity Features
+
 8. Bluetooth proximity enhancement
+
    - Short-range precise matching
    - Battery-efficient proximity detection
    - Indoor location enhancement
@@ -519,18 +528,21 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
    - Temporary contact sharing options
 
 ### Success Criteria for Each Phase
+
 - Phase 1: Users can safely share location and control visibility
 - Phase 2: Users are matched based on compatible interests and activities
 - Phase 3: Users receive timely notifications about potential matches
 - Phase 4: Enhanced proximity detection and secure information sharing
 
 ### Dependencies
+
 - Phase 1 must be completed before any other phases
 - Phase 2 can begin once basic privacy controls are in place
 - Phase 3 requires completion of Phase 1
 - Phase 4 can run in parallel with Phase 3
 
 ### Metrics for Success
+
 - Battery impact < 5% per day
 - Match notification latency < 30 seconds
 - False positive matches < 10%

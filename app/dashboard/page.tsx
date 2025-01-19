@@ -1,3 +1,5 @@
+'use client';
+
 /* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars */
 import { useCallback, useEffect, useState } from 'react';
 import { z } from 'zod';
@@ -9,8 +11,7 @@ import { SafetyCheckModalAsync } from '@/components/safety/SafetyCheckModalAsync
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Layout } from '@/components/layout/Layout';
 import { fetchApi } from '@/lib/fetch';
-import type { SafetyCheckNew } from '@/types/safety';
-import type { EmergencyContact } from '@/types/user';
+import type { SafetyCheckNew, EmergencyContact } from '@/types/safety';
 import type { LocationPrivacyMode } from '@/types/location';
 import type { PrivacySettings } from '@/types/privacy';
 
@@ -53,7 +54,7 @@ const locationSchema = z.object({
   accuracy: z.number().optional(),
   timestamp: z.date(),
   privacyMode: z.enum(['precise', 'approximate', 'zone']),
-  sharingEnabled: z.boolean()
+  sharingEnabled: z.boolean(),
 });
 
 const dashboardStatsSchema = z.object({
@@ -73,7 +74,7 @@ const dashboardStatsSchema = z.object({
         description: z.string().optional(),
         completedAt: z.string().optional(),
         batteryLevel: z.number().optional(),
-        bluetoothEnabled: z.boolean().optional()
+        bluetoothEnabled: z.boolean().optional(),
       })
     ),
     emergencyContacts: z.array(
@@ -90,10 +91,10 @@ const dashboardStatsSchema = z.object({
           meetupEnd: z.boolean(),
           lowBattery: z.boolean(),
           enterPrivacyZone: z.boolean(),
-          exitPrivacyZone: z.boolean()
+          exitPrivacyZone: z.boolean(),
         }),
         createdAt: z.string(),
-        updatedAt: z.string()
+        updatedAt: z.string(),
       })
     ),
     privacySettings: z.object({
@@ -101,16 +102,16 @@ const dashboardStatsSchema = z.object({
       autoDisableDiscovery: z.boolean(),
       progressiveDisclosure: z.boolean(),
       privacyZonesEnabled: z.boolean(),
-      batteryOptimization: z.boolean()
+      batteryOptimization: z.boolean(),
     }),
     batteryStats: z.object({
       currentLevel: z.number(),
       averageDailyDrain: z.number(),
       discoveryModeActive: z.boolean(),
-      bluetoothActive: z.boolean()
-    })
+      bluetoothActive: z.boolean(),
+    }),
   }),
-  user: userSchema
+  user: userSchema,
 });
 
 type DashboardStats = z.infer<typeof dashboardStatsSchema>['stats'];
@@ -152,14 +153,14 @@ export default function DashboardPage() {
       autoDisableDiscovery: false,
       progressiveDisclosure: true,
       privacyZonesEnabled: true,
-      batteryOptimization: true
+      batteryOptimization: true,
     },
     batteryStats: {
       currentLevel: 100,
       averageDailyDrain: 0,
       discoveryModeActive: false,
-      bluetoothActive: false
-    }
+      bluetoothActive: false,
+    },
   });
   const [currentCheck, setCurrentCheck] = useState<SafetyCheckNew | null>(null);
   const [showSafetyCheck, setShowSafetyCheck] = useState(false);
@@ -313,19 +314,23 @@ export default function DashboardPage() {
     memberSince: user.memberSince,
     streakStats: {
       ...user.streakStats,
-      latestAchievement: user.streakStats.latestAchievement ? {
-        id: user.streakStats.latestAchievement.id,
-        name: user.streakStats.latestAchievement.name,
-        description: user.streakStats.latestAchievement.description,
-        earnedAt: user.streakStats.latestAchievement.earnedAt
-      } : null
+      latestAchievement: user.streakStats.latestAchievement
+        ? {
+            id: user.streakStats.latestAchievement.id,
+            name: user.streakStats.latestAchievement.name,
+            description: user.streakStats.latestAchievement.description,
+            earnedAt: user.streakStats.latestAchievement.earnedAt,
+          }
+        : null,
     },
-    newAchievement: user.newAchievement ? {
-      id: user.newAchievement.id,
-      name: user.newAchievement.name,
-      description: user.newAchievement.description,
-      earnedAt: user.newAchievement.earnedAt
-    } : null
+    newAchievement: user.newAchievement
+      ? {
+          id: user.newAchievement.id,
+          name: user.newAchievement.name,
+          description: user.newAchievement.description,
+          earnedAt: user.newAchievement.earnedAt,
+        }
+      : null,
   };
 
   return (
@@ -348,10 +353,13 @@ export default function DashboardPage() {
             <SafetyCheckList
               checks={stats.pendingSafetyChecks.map(check => ({
                 ...check,
-                location: check.location ? {
-                  ...check.location,
-                  privacyMode: check.location.privacyMode.toLowerCase() as LocationPrivacyMode
-                } : undefined
+                location: check.location
+                  ? {
+                      ...check.location,
+                      privacyMode:
+                        check.location.privacyMode.toLowerCase() as LocationPrivacyMode,
+                    }
+                  : undefined,
               }))}
               onComplete={handleCheckComplete}
             />

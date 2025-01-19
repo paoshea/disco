@@ -9,11 +9,12 @@ import { SafetyCenter } from '@/components/safety/SafetyCenter';
 import { EmergencyContactList } from '@/components/safety/EmergencyContactList';
 import { SafetyCheckList } from '@/components/safety/SafetyCheckList';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Alert } from '@/components/ui/Alert';
+import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { useSafetyService } from '@/hooks/useSafetyService';
+import type { EmergencyContact } from '@/types/safety';
 import { Tab } from '@headlessui/react';
 import { safetyService } from '@/services/api/safety.service';
 import type { SafetyCheckNew as SafetyCheck } from '@/types/safety';
-import type { EmergencyContact } from '@/types/user';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -115,8 +116,8 @@ export default function Safety() {
               meetupEnd: contact.notifyOn?.meetupEnd ?? true,
               lowBattery: contact.notifyOn?.lowBattery ?? true,
               enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
-              exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true
-            }
+              exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true,
+            },
           })),
         });
       } catch (err) {
@@ -148,8 +149,8 @@ export default function Safety() {
             meetupEnd: contact.notifyOn?.meetupEnd ?? true,
             lowBattery: contact.notifyOn?.lowBattery ?? true,
             enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
-            exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true
-          }
+            exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true,
+          },
         };
         await safetyService.updateEmergencyContact(
           user.id,
@@ -219,18 +220,14 @@ export default function Safety() {
             Manage your safety settings and emergency contacts
           </p>
           {activeAlerts.length > 0 && (
-            <Alert
-              type="warning"
-              title="Active Safety Alerts"
+            <ErrorMessage
               message={`You have ${activeAlerts.length} active safety alert(s)`}
               className="mt-4"
             />
           )}
         </div>
 
-        {error && (
-          <Alert type="error" title="Error" message={error} className="mb-6" />
-        )}
+        {error && <ErrorMessage message={error} className="mb-6" />}
 
         <Tab.Group>
           <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
