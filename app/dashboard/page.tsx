@@ -222,10 +222,15 @@ export default function DashboardPage() {
             setShowSafetyCheck(false);
             setCurrentCheck(null);
           }}
-          onResolve={async checkId => {
-            await handleCheckComplete(checkId);
-            setShowSafetyCheck(false);
-            setCurrentCheck(null);
+          onResolve={async (checkId: string, _status: 'safe' | 'unsafe', _notes?: string): Promise<void> => {
+            try {
+              await handleCheckComplete(checkId);
+              setShowSafetyCheck(false);
+              setCurrentCheck(null);
+            } catch (err) {
+              console.error('Error resolving safety check:', err);
+              throw err; // Re-throw to maintain Promise rejection
+            }
           }}
         />
       )}

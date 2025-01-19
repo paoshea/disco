@@ -94,81 +94,86 @@ export default function LoginPage() {
   }, [emailForVerification]);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
-      <div className="sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center space-y-4">
-            <Logo priority />
-          </div>
-          <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
-            Welcome back!
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link
-              href="/signup"
-              className="font-medium text-sky-600 hover:text-sky-500"
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
+        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
+          <div className="max-w-md mx-auto">
+            <div className="divide-y divide-gray-200">
+              <Logo className="h-12 mx-auto" />
+              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+                <h1 className="text-2xl font-bold text-center mb-8">
+                  Welcome Back
+                </h1>
+              </div>
+            </div>
+
+            <form
+              className="mt-8 space-y-6"
+              onSubmit={e => {
+                e.preventDefault();
+                void handleSubmit(onSubmit)(e);
+              }}
             >
-              Sign up
-            </Link>
-          </p>
+              <div className="space-y-4">
+                <div>
+                  <Input
+                    id="email"
+                    type="email"
+                    label="Email address"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
+                </div>
 
-          <form
-            className="mt-8 space-y-6"
-            onSubmit={e => {
-              e.preventDefault();
-              void handleSubmit(onSubmit)(e);
-            }}
-          >
-            <div className="space-y-4">
-              <div>
-                <Input
-                  id="email"
-                  type="email"
-                  label="Email address"
-                  error={errors.email?.message}
-                  {...register('email')}
-                />
+                <div>
+                  <Input
+                    id="password"
+                    type="password"
+                    label="Password"
+                    error={errors.password?.message}
+                    {...register('password')}
+                  />
+                </div>
               </div>
 
               <div>
-                <Input
-                  id="password"
-                  type="password"
-                  label="Password"
-                  error={errors.password?.message}
-                  {...register('password')}
-                />
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                  loading={isLoading}
+                >
+                  {isLoading ? 'Signing in...' : 'Sign in'}
+                </Button>
               </div>
-            </div>
+            </form>
 
-            <div>
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-                loading={isLoading}
-              >
-                {isLoading ? 'Signing in...' : 'Sign in'}
-              </Button>
-            </div>
-          </form>
+            {needsVerification && (
+              <div className="mt-4">
+                <p className="text-sm text-gray-600 mb-2">
+                  Need another verification email?
+                </p>
+                <Button
+                  onClick={handleResendVerification}
+                  variant="secondary"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  Resend Verification Email
+                </Button>
+              </div>
+            )}
 
-          {needsVerification && (
-            <div className="mt-4">
-              <p className="text-sm text-gray-600 mb-2">
-                Need another verification email?
-              </p>
-              <Button
-                onClick={handleResendVerification}
-                variant="secondary"
-                className="w-full"
-                disabled={isLoading}
+            <div className="mt-4 text-center">
+              <Link
+                href="/signup"
+                className="text-sm text-blue-600 hover:text-blue-500"
               >
-                Resend Verification Email
-              </Button>
+                Don&apos;t have an account? Sign up
+              </Link>
             </div>
-          )}
+          </div>
         </div>
       </div>
     </div>
