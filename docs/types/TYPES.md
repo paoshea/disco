@@ -43,6 +43,40 @@ const response = await apiClient.get<{ data: { matches: Match[] } }>(
 return response.data.data.matches;
 ```
 
+## Authentication Types
+
+Authentication types are crucial for maintaining type safety across the application:
+
+```typescript
+interface Session {
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+  };
+}
+
+interface LoginResult {
+  user: User;
+  token: string;
+  refreshToken: string;
+  expiresIn: number;
+}
+
+interface AuthResult {
+  userId: string;
+  error?: never;
+  status?: never;
+} | {
+  error: string;
+  status: number;
+  userId?: never;
+}
+```
+
+Always use discriminated unions (like AuthResult) for handling success/error cases.
+
 ## Type Versioning
 
 Several types have both "Old" and "New" versions to support backward compatibility during migration:
@@ -114,16 +148,47 @@ interface SafetyFeaturesProps {
 }
 ```
 
+## Type Safety Best Practices
+
+1. **Request Body Typing**: Always type your request bodies explicitly:
+   ```typescript
+   interface MessageContent {
+     content: string;
+   }
+   const body = (await request.json()) as MessageContent;
+   ```
+
+2. **Error Handling**: Use discriminated unions for error handling:
+   ```typescript
+   if ('error' in result) {
+     // Handle error case
+   } else {
+     // Handle success case
+   }
+   ```
+
+3. **Authentication**: Always properly type authentication results:
+   ```typescript
+   const session = await verifyToken(token);
+   if (!session) {
+     return { error: 'Invalid token', status: 401 };
+   }
+   return { userId: session.user.id };
+   ```
+
+4. **API Responses**: Consistently type API responses:
+   ```typescript
+   return NextResponse.json<ApiResponse<T>>(data);
+   ```
+
 ## Important Notes
 
 1. **Partial Updates**: Many update operations use `Partial<T>` to allow updating only specific fields:
-
    ```typescript
    onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
    ```
 
 2. **Date Handling**: Dates are consistently stored as ISO strings:
-
    ```typescript
    createdAt: string;
    updatedAt: string;
@@ -131,7 +196,6 @@ interface SafetyFeaturesProps {
    ```
 
 3. **Optional Fields**: Fields that may not always be present are marked with `?`:
-
    ```typescript
    location?: Location;
    description?: string;
@@ -151,7 +215,10 @@ interface SafetyFeaturesProps {
 1. Always use the most specific type possible
 2. Use "New" versions of types for new code
 3. Handle optional fields appropriately
-4. Consider using type guards for complex type checking
-5. Use the `ApiResponse` wrapper when making API calls
-6. Use `Partial<T>` for update operations
-7. Follow the established naming conventions for new types
+4. Use discriminated unions for error handling
+5. Explicitly type request bodies
+6. Use type guards for complex type checking
+7. Use the `ApiResponse` wrapper when making API calls
+8. Use `Partial<T>` for update operations
+9. Follow the established naming conventions for new types
+10. Never use `any` - always provide proper types
