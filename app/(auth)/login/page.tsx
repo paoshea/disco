@@ -9,8 +9,10 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { toast } from 'react-hot-toast';
 import Link from 'next/link';
-import { Logo } from '../../../src/components/ui/Logo';
+import { Logo } from '@/components/ui/Logo';
 import { useRouter } from 'next/navigation';
+import { useAsyncSubmit } from '@/hooks/useAsyncHandler';
+import type { FormEvent } from 'react';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -93,13 +95,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmitForm = useCallback(
-    (e: React.FormEvent<HTMLFormElement>): void => {
-      e.preventDefault();
-      void handleSubmit(onSubmit)(e);
-    },
-    [handleSubmit, onSubmit]
-  );
+  const handleSubmitForm = useAsyncSubmit<HTMLFormElement>(e => handleSubmit(onSubmit)(e));
 
   return (
     <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">

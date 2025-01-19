@@ -11,6 +11,7 @@ import { SafetyCheckModal } from '@/components/safety/SafetyCheckModal';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Layout } from '@/components/layout/Layout';
 import { fetchApi } from '@/lib/fetch';
+import { usePromiseHandler } from '@/hooks/useAsyncHandler';
 import type { SafetyCheckNew } from '@/types/safety';
 import type { EmergencyContact } from '@/types/user';
 
@@ -121,14 +122,6 @@ export default function DashboardPage() {
     }
   }, [user, fetchStats]);
 
-  const handleProfileClick = () => {
-    // Navigate to profile
-  };
-
-  const handleSettingsClick = () => {
-    // Navigate to settings
-  };
-
   const handleCheckComplete = useCallback(
     async (checkId: string) => {
       setIsLoading(true);
@@ -151,30 +144,24 @@ export default function DashboardPage() {
     [fetchStats]
   );
 
-  const handleSafetyCheck = useCallback(
-    async (checkId: string): Promise<void> => {
-      await handleCheckComplete(checkId);
-      setShowSafetyCheck(false);
-      setCurrentCheck(null);
-    },
-    [handleCheckComplete]
-  );
-
   const handleModalClose = useCallback((): void => {
     setShowSafetyCheck(false);
     setCurrentCheck(null);
   }, []);
 
-  const handleResolve = useCallback(
-    (checkId: string): void => {
-      void handleSafetyCheck(checkId);
-    },
-    [handleSafetyCheck]
-  );
-
-  const handleEditContact = (contact: EmergencyContact) => {
+  const handleEditContact = useCallback((contact: EmergencyContact) => {
     console.log('Editing contact:', contact);
-  };
+  }, []);
+
+  const handleProfileClick = useCallback(() => {
+    // Navigate to profile
+    console.log('Navigate to profile');
+  }, []);
+
+  const handleSettingsClick = useCallback(() => {
+    // Navigate to settings
+    console.log('Navigate to settings');
+  }, []);
 
   const handleDeleteContact = useCallback(
     async (contactId: string) => {
@@ -239,14 +226,16 @@ export default function DashboardPage() {
           check={currentCheck}
           isOpen={showSafetyCheck}
           onClose={handleModalClose}
-          onResolve={async function (
+          onResolve={usePromiseHandler(async (
             checkId: string,
-            _status: 'safe' | 'unsafe'
-          ) {
+            // Required by component API
+            _status: 'safe' | 'unsafe',
+            _notes?: string
+          ) => {
             await handleCheckComplete(checkId);
             setShowSafetyCheck(false);
             setCurrentCheck(null);
-          }}
+          })}
         />
       )}
     </Layout>
