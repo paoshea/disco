@@ -1,5 +1,22 @@
 import { db } from '@/lib/prisma';
-import type { Location, PrivacyZone } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
+
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  privacyMode: string;
+  sharingEnabled: boolean;
+  userId: string;
+}
+
+interface PrivacyZoneData {
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  userId: string;
+}
 
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 
@@ -7,8 +24,8 @@ const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 const locationDb = db.location;
 const privacyZoneDb = db.privacyZone;
 
-export function degreesToRadians(degrees: number): number {
-  return degrees * (Math.PI / 180);
+function toRad(degrees: number): number {
+  return (degrees * Math.PI) / 180;
 }
 
 export function calculateDistance(
@@ -17,13 +34,13 @@ export function calculateDistance(
   lat2: number,
   lon2: number
 ): number {
-  const dLat = degreesToRadians(lat2 - lat1);
-  const dLon = degreesToRadians(lon2 - lon1);
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
 
   const a =
     Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos(degreesToRadians(lat1)) *
-      Math.cos(degreesToRadians(lat2)) *
+    Math.cos(toRad(lat1)) *
+      Math.cos(toRad(lat2)) *
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
 
@@ -31,18 +48,37 @@ export function calculateDistance(
   return EARTH_RADIUS_KM * c;
 }
 
-export async function getPrivacyZones(userId: string): Promise<PrivacyZone[]> {
+export async function createLocation(data: LocationData) {
+  return await db.location.create({
+    data,
+    include: {
+      user: true,
+    },
+  });
+}
+
+export async function createPrivacyZone(data: PrivacyZoneData) {
+  return await db.privacyZone.create({
+    data,
+    include: {
+      user: true,
+    },
+  });
+}
+
+export async function getPrivacyZones(userId: string): Promise<PrivacyZoneData[]> {
   return await privacyZoneDb.findMany({
     where: { userId },
   });
 }
 
-export function isInPrivacyZone(
-  lat: number,
-  lon: number,
-  zone: PrivacyZone
-): boolean {
-  const distance = calculateDistance(lat, lon, zone.latitude, zone.longitude);
+export function isLocationInPrivacyZone(loc: LocationData, zone: PrivacyZoneData): boolean {
+  const distance = calculateDistance(
+    loc.latitude,
+    loc.longitude,
+    zone.latitude,
+    zone.longitude
+  );
   return distance <= zone.radius;
 }
 
@@ -51,7 +87,7 @@ export async function getNearbyLocations(
   latitude: number,
   longitude: number,
   radiusKm = 5
-): Promise<Location[]> {
+): Promise<LocationData[]> {
   // First get all locations from the last 24 hours
   const recentLocations = await locationDb.findMany({
     where: {
@@ -70,28 +106,10 @@ export async function getNearbyLocations(
   );
 }
 
-export async function createPrivacyZone(
-  userId: string,
-  name: string,
-  latitude: number,
-  longitude: number,
-  radius: number
-): Promise<PrivacyZone> {
-  return await privacyZoneDb.create({
-    data: {
-      userId,
-      name,
-      latitude,
-      longitude,
-      radius,
-    },
-  });
-}
-
 export async function deletePrivacyZone(
   userId: string,
   zoneId: string
-): Promise<PrivacyZone> {
+): Promise<PrivacyZoneData> {
   return await privacyZoneDb.delete({
     where: {
       id: zoneId,
@@ -101,11 +119,11 @@ export async function deletePrivacyZone(
 }
 
 export const locationUtils = {
-  degreesToRadians,
   calculateDistance,
-  getPrivacyZones,
-  isInPrivacyZone,
-  getNearbyLocations,
+  createLocation,
   createPrivacyZone,
+  getPrivacyZones,
+  isLocationInPrivacyZone,
+  getNearbyLocations,
   deletePrivacyZone,
 };

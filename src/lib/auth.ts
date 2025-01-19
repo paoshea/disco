@@ -276,3 +276,26 @@ export async function generatePasswordResetToken(
     expiresAt: new Date(exp * 1000),
   };
 }
+
+export async function getSession(): Promise<Session | null> {
+  const session = await auth();
+  if (!session?.user) return null;
+
+  return {
+    user: {
+      id: session.user.id,
+      email: session.user.email,
+      role: session.user.role,
+    },
+    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+  };
+}
+
+export async function getCurrentUser(): Promise<Session['user'] | undefined> {
+  const session = await getSession();
+  return session?.user;
+}
+
+export async function getToken(cookies: RequestCookies): Promise<string | undefined> {
+  return cookies.get('next-auth.session-token')?.value;
+}

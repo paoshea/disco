@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 
 export type EventWithParticipants = Prisma.EventGetPayload<{
   include: {
@@ -38,13 +38,28 @@ export type LocationWithUser = Prisma.LocationGetPayload<{
   };
 }>;
 
-export type ExtendedPrismaClient = Prisma.TransactionClient & {
-  event: Prisma.EventDelegate;
-  location: Prisma.LocationDelegate;
-  locationState: Prisma.LocationStateDelegate;
+export type ExtendedPrismaClient = PrismaClient & {
+  $extends: {
+    model: {
+      event: {
+        findNearby: (
+          latitude: number,
+          longitude: number,
+          radiusInMeters: number
+        ) => Promise<Prisma.EventGetPayload<{ include: EventWithParticipants }>[]>;
+      };
+      location: {
+        findNearby: (
+          latitude: number,
+          longitude: number,
+          radiusInMeters: number
+        ) => Promise<Prisma.LocationGetPayload<{ include: LocationWithUser }>[]>;
+      };
+    };
+  };
 };
 
-export type UserProfile = {
+export interface UserProfile {
   id: string;
   email: string;
   firstName: string;
@@ -53,7 +68,7 @@ export type UserProfile = {
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;
-};
+}
 
 export type UserWithProfile = Prisma.UserGetPayload<{
   select: {

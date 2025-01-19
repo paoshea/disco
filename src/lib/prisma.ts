@@ -1,4 +1,5 @@
 import { PrismaClient } from '@prisma/client';
+import type { Event, Location, PrivacyZone } from '@prisma/client';
 
 // Add prisma to the global type
 declare global {
@@ -17,11 +18,10 @@ if (process.env.NODE_ENV === 'production') {
   db = global.prisma;
 }
 
-// Define return types for model operations
 type ModelReturnTypes = {
-  event: any; // Will be replaced with proper type from schema
-  location: any; // Will be replaced with proper type from schema
-  privacyZone: any; // Will be replaced with proper type from schema
+  event: Event;
+  location: Location;
+  privacyZone: PrivacyZone;
 };
 
 // Define base model operations
@@ -34,39 +34,35 @@ type ModelOperations<T> = {
 };
 
 export type ExtendedPrismaClient = PrismaClient & {
-  $extends: {
-    model: {
-      event: ModelOperations<ModelReturnTypes['event']> & {
-        findNearby: (
-          latitude: number,
-          longitude: number,
-          radiusInMeters: number
-        ) => Promise<ModelReturnTypes['event'][]>;
-      };
-      location: ModelOperations<ModelReturnTypes['location']>;
-      privacyZone: ModelOperations<ModelReturnTypes['privacyZone']>;
-    };
+  event: ModelOperations<ModelReturnTypes['event']> & {
+    findNearby: (
+      latitude: number,
+      longitude: number,
+      radiusInMeters: number
+    ) => Promise<ModelReturnTypes['event'][]>;
   };
+  location: ModelOperations<ModelReturnTypes['location']>;
+  privacyZone: ModelOperations<ModelReturnTypes['privacyZone']>;
 };
 
 // Define the client extensions
 const clientExtensions = {
   model: {
     $allModels: {
-      async findFirst(args: unknown) {
-        return await (this as any).findFirst(args);
+      findFirst: async function<T>(args: unknown): Promise<T | null> {
+        return (this as any).findFirst(args);
       },
-      async findMany(args: unknown) {
-        return await (this as any).findMany(args);
+      findMany: async function<T>(args: unknown): Promise<T[]> {
+        return (this as any).findMany(args);
       },
-      async create(args: unknown) {
-        return await (this as any).create(args);
+      create: async function<T>(args: unknown): Promise<T> {
+        return (this as any).create(args);
       },
-      async update(args: unknown) {
-        return await (this as any).update(args);
+      update: async function<T>(args: unknown): Promise<T> {
+        return (this as any).update(args);
       },
-      async delete(args: unknown) {
-        return await (this as any).delete(args);
+      delete: async function<T>(args: unknown): Promise<T> {
+        return (this as any).delete(args);
       },
     },
   },
@@ -74,27 +70,39 @@ const clientExtensions = {
 
 // Define event-specific methods
 const eventExtensions = {
-  async findNearby(
+  findNearby: async function(
+    this: any,
     latitude: number,
     longitude: number,
     radiusInMeters: number
   ): Promise<ModelReturnTypes['event'][]> {
-    return await db.$queryRaw`
-      SELECT * FROM "Event"
-      WHERE ST_DWithin(
-        ST_MakePoint(longitude, latitude)::geography,
-        ST_MakePoint(${longitude}, ${latitude})::geography,
-        ${radiusInMeters}
-      );
-    `;
+    const radiusInDegrees = radiusInMeters / 111320; // rough approximation: 1 degree = 111.32 km
+    return (this as any).findMany({
+      where: {
+        AND: [
+          {
+            latitude: {
+              gte: latitude - radiusInDegrees,
+              lte: latitude + radiusInDegrees,
+            },
+          },
+          {
+            longitude: {
+              gte: longitude - radiusInDegrees,
+              lte: longitude + radiusInDegrees,
+            },
+          },
+        ],
+      },
+    });
   },
 };
 
 // Create the extended client
-const extendedDb = db.$extends(clientExtensions).$extends({
+const extendedDb = (db.$extends(clientExtensions).$extends({
   model: {
     event: eventExtensions,
   },
-}) as unknown as ExtendedPrismaClient;
+}) as unknown) as ExtendedPrismaClient;
 
-export { db, extendedDb };
+export { extendedDb as db };

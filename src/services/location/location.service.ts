@@ -3,6 +3,12 @@ import type { Prisma } from '@prisma/client';
 
 type Location = Prisma.LocationGetPayload<{}>;
 
+type ServiceResponse<T> = {
+  success: boolean;
+  data?: T;
+  error?: string;
+};
+
 export class LocationService {
   private static instance: LocationService;
   private prisma: typeof db.location;
@@ -58,6 +64,108 @@ export class LocationService {
     } catch (error) {
       console.error('Error updating location:', error);
       throw error;
+    }
+  }
+
+  async updateLocation(
+    userId: string,
+    data: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+      privacyMode: string;
+      sharingEnabled?: boolean;
+    }
+  ): Promise<ServiceResponse<Location>> {
+    try {
+      const location = await db.location.create({
+        data: {
+          userId,
+          ...data,
+          sharingEnabled: data.sharingEnabled ?? true,
+        },
+      });
+
+      return {
+        success: true,
+        data: location,
+      };
+    } catch (error) {
+      console.error('Error updating location:', error);
+      return {
+        success: false,
+        error: 'Failed to update location',
+      };
+    }
+  }
+
+  async getLocationState(userId: string): Promise<ServiceResponse<Location>> {
+    try {
+      const location = await db.location.findFirst({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+      });
+
+      if (!location) {
+        return {
+          success: false,
+          error: 'No location found',
+        };
+      }
+
+      return {
+        success: true,
+        data: location,
+      };
+    } catch (error) {
+      console.error('Error getting location state:', error);
+      return {
+        success: false,
+        error: 'Failed to get location state',
+      };
+    }
+  }
+
+  async updateLocationState(
+    userId: string,
+    data: {
+      privacyMode: string;
+      sharingEnabled: boolean;
+    }
+  ): Promise<ServiceResponse<Location>> {
+    try {
+      const currentLocation = await db.location.findFirst({
+        where: { userId },
+        orderBy: { timestamp: 'desc' },
+      });
+
+      if (!currentLocation) {
+        return {
+          success: false,
+          error: 'No location found to update',
+        };
+      }
+
+      const location = await db.location.create({
+        data: {
+          userId,
+          latitude: currentLocation.latitude,
+          longitude: currentLocation.longitude,
+          accuracy: currentLocation.accuracy,
+          ...data,
+        },
+      });
+
+      return {
+        success: true,
+        data: location,
+      };
+    } catch (error) {
+      console.error('Error updating location state:', error);
+      return {
+        success: false,
+        error: 'Failed to update location state',
+      };
     }
   }
 

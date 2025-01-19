@@ -1,14 +1,38 @@
 import { db } from '@/lib/prisma';
-import type { Event, User } from '@prisma/client';
-import type { EventWithParticipants } from '@/types/event';
+import type { Prisma } from '@prisma/client';
+import type { EventWithParticipants } from '@/types/prisma';
 import type { ServiceResponse } from '@/types/service';
+
+interface EventCreateInput {
+  title: string;
+  description?: string;
+  startTime: Date;
+  endTime?: Date;
+  latitude: number;
+  longitude: number;
+  type: string;
+  maxParticipants?: number;
+  tags?: string[];
+  creatorId: string;
+}
+
+interface EventUpdateInput {
+  title?: string;
+  description?: string;
+  startTime?: Date;
+  endTime?: Date;
+  latitude?: number;
+  longitude?: number;
+  type?: string;
+  maxParticipants?: number;
+  tags?: string[];
+}
 
 export type EventServiceResponse<T> = ServiceResponse<T>;
 
 export class EventService {
   private static instance: EventService;
 
-  // Private constructor to enforce singleton pattern
   private constructor() {}
 
   public static getInstance(): EventService {
@@ -18,105 +42,15 @@ export class EventService {
     return EventService.instance;
   }
 
-  async findNearbyEvents(
-    latitude: number,
-    longitude: number,
-    radiusInMeters = 5000
-  ): Promise<EventServiceResponse<EventWithParticipants[]>> {
-    try {
-      // Calculate bounding box for initial filtering
-      const metersPerDegree = 111320; // approximate meters per degree at equator
-      const latitudeDelta = radiusInMeters / metersPerDegree;
-      const longitudeDelta =
-        radiusInMeters / (metersPerDegree * Math.cos(latitude * (Math.PI / 180)));
-
-      const minLat = latitude - latitudeDelta;
-      const maxLat = latitude + latitudeDelta;
-      const minLon = longitude - longitudeDelta;
-      const maxLon = longitude + longitudeDelta;
-
-      const events = await db.event.findMany({
-        where: {
-          location: {
-            latitude: {
-              gte: minLat,
-              lte: maxLat,
-            },
-            longitude: {
-              gte: minLon,
-              lte: maxLon,
-            },
-          },
-        },
-        include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
-          participants: {
-            include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  image: true,
-                },
-              },
-            },
-          },
-        },
-      });
-
-      return {
-        success: true,
-        data: events.map(event => ({
-          ...event,
-          currentParticipants: event.participants.length,
-        })),
-      };
-    } catch (error) {
-      console.error('Error finding nearby events:', error);
-      return {
-        success: false,
-        error: 'Failed to find nearby events',
-      };
-    }
-  }
-
-  async createEvent(
-    eventData: Omit<Event, 'id' | 'createdAt' | 'updatedAt'>,
-    creator: User
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  async createEvent(data: EventCreateInput): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.create({
-        data: {
-          ...eventData,
-          creatorId: creator.id,
-        },
+        data,
         include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
+          creator: true,
           participants: {
             include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  image: true,
-                },
-              },
+              user: true,
             },
           },
         },
@@ -131,6 +65,134 @@ export class EventService {
       return {
         success: false,
         error: 'Failed to create event',
+      };
+    }
+  }
+
+  async getEvent(id: string): Promise<EventServiceResponse<EventWithParticipants>> {
+    try {
+      const event = await db.event.findUnique({
+        where: { id },
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      if (!event) {
+        return {
+          success: false,
+          error: 'Event not found',
+        };
+      }
+
+      return {
+        success: true,
+        data: event,
+      };
+    } catch (error) {
+      console.error('Error getting event:', error);
+      return {
+        success: false,
+        error: 'Failed to get event',
+      };
+    }
+  }
+
+  async updateEvent(id: string, data: EventUpdateInput): Promise<EventServiceResponse<EventWithParticipants>> {
+    try {
+      const event = await db.event.update({
+        where: { id },
+        data,
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        data: event,
+      };
+    } catch (error) {
+      console.error('Error updating event:', error);
+      return {
+        success: false,
+        error: 'Failed to update event',
+      };
+    }
+  }
+
+  async deleteEvent(id: string): Promise<EventServiceResponse<void>> {
+    try {
+      await db.event.delete({
+        where: { id },
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      return {
+        success: false,
+        error: 'Failed to delete event',
+      };
+    }
+  }
+
+  async getNearbyEvents(
+    latitude: number,
+    longitude: number,
+    radiusInKm: number = 5
+  ): Promise<EventServiceResponse<EventWithParticipants[]>> {
+    try {
+      const radiusInDegrees = radiusInKm / 111.32; // rough approximation: 1 degree = 111.32 km
+
+      const events = await db.event.findMany({
+        where: {
+          AND: [
+            {
+              latitude: {
+                gte: latitude - radiusInDegrees,
+                lte: latitude + radiusInDegrees,
+              },
+            },
+            {
+              longitude: {
+                gte: longitude - radiusInDegrees,
+                lte: longitude + radiusInDegrees,
+              },
+            },
+          ],
+        },
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      return {
+        success: true,
+        data: events,
+      };
+    } catch (error) {
+      console.error('Error getting nearby events:', error);
+      return {
+        success: false,
+        error: 'Failed to get nearby events',
       };
     }
   }
@@ -150,24 +212,10 @@ export class EventService {
           },
         },
         include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
+          creator: true,
           participants: {
             include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  image: true,
-                },
-              },
+              user: true,
             },
           },
         },
@@ -204,24 +252,10 @@ export class EventService {
           },
         },
         include: {
-          creator: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              image: true,
-            },
-          },
+          creator: true,
           participants: {
             include: {
-              user: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  image: true,
-                },
-              },
+              user: true,
             },
           },
         },
