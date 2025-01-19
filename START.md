@@ -157,6 +157,100 @@ npm start
 
 The application will be available at http://localhost:3000 in production mode.
 
+## Shutting Down the Development Environment
+
+When you're done working or need to shut down for the night, follow these steps in order:
+
+### 1. Stop Frontend Services
+
+1. Stop the Next.js development server:
+   - Press `Ctrl+C` in the terminal where Next.js is running
+   - Wait for the process to fully terminate
+
+### 2. Stop Backend Services
+
+1. Stop all Go services in any order:
+   - Press `Ctrl+C` in each terminal running a Go service:
+     - Core API Service
+     - Location Service
+     - Matching Service
+     - User Service
+   - Wait for each process to exit cleanly
+
+2. Verify no Go processes are still running:
+   ```bash
+   ps aux | grep go
+   ```
+   Kill any remaining processes if necessary:
+   ```bash
+   pkill -f "go run"
+   ```
+
+### 3. Stop Infrastructure Services
+
+1. Stop Docker containers:
+   ```bash
+   cd backend
+   docker compose down
+   ```
+   This will:
+   - Stop and remove all containers (PostgreSQL, Redis)
+   - Remove the Docker network
+   - Preserve your data volumes
+
+2. Verify all containers are stopped:
+   ```bash
+   docker ps
+   ```
+   Should show no running containers.
+
+### 4. Optional: Clean Up (if needed)
+
+1. Remove unused Docker resources:
+   ```bash
+   docker system prune
+   ```
+   This removes:
+   - Stopped containers
+   - Unused networks
+   - Dangling images
+   - Build cache
+
+2. Clear Node.js cache (if experiencing issues):
+   ```bash
+   npm cache clean --force
+   ```
+
+3. Remove development build artifacts:
+   ```bash
+   # In root directory
+   rm -rf .next
+   # In backend services
+   cd backend/services
+   find . -name "tmp" -type d -exec rm -rf {} +
+   ```
+
+### 5. Verify Clean Shutdown
+
+1. Check for any remaining processes:
+   ```bash
+   # Check for Node processes
+   ps aux | grep node
+   # Check for Go processes
+   ps aux | grep go
+   # Check for Docker containers
+   docker ps
+   ```
+
+2. Check system ports:
+   ```bash
+   # Check if main ports are free
+   lsof -i :3000  # Next.js
+   lsof -i :8080  # Core API
+   lsof -i :5432  # PostgreSQL
+   lsof -i :6379  # Redis
+   ```
+
 ## Switching Between Projects
 
 If you have other Docker projects running, follow these steps to switch to Disco:
@@ -201,37 +295,45 @@ This approach of running only essential services in Docker and other services lo
   docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
   ```
 
+- If containers won't stop:
+  ```bash
+  # Force stop containers
+  docker compose down -v --remove-orphans
+  # If still running
+  docker kill $(docker ps -q)
+  ```
+
+### Process Issues
+
+- If a service won't stop with Ctrl+C:
+  ```bash
+  # For Node.js
+  pkill -f "node"
+  # For Go
+  pkill -f "go run"
+  ```
+
+- If ports are in use:
+  ```bash
+  # Find process using a port
+  lsof -i :<port>
+  # Kill process
+  kill -9 <PID>
+  ```
+
 ### Database Issues
 
-- If migrations fail, check if PostgreSQL is running:
+- If PostgreSQL won't start:
   ```bash
-  docker ps | grep postgres
-  ```
-- Reset the database if needed:
-  ```bash
+  # Remove PostgreSQL volume and recreate
   docker compose down -v
-  docker compose up -d
+  docker compose up -d postgres
+  # Rerun migrations
+  cd backend/services/core-api
+  go run cmd/migrate/main.go up
   ```
 
-### Go Services Issues
-
-- If a Go service fails to start, check:
-  1. Port conflicts (make sure no other service is using the same port)
-  2. Database connection (verify PostgreSQL is running)
-  3. Environment variables (check .env file)
-
-### Frontend Issues
-
-- Clear node_modules and reinstall:
-  ```bash
-  rm -rf node_modules
-  npm install
-  ```
-- Clear Next.js cache:
-  ```bash
-  rm -rf .next
-  npm run build
-  ```
+Remember to always shut down services in the correct order to prevent data corruption or orphaned processes.
 
 ## Development Workflow
 
