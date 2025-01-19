@@ -22,15 +22,15 @@ export async function withAuth(
       );
     }
 
-    const decoded = await verifyToken(token);
+    const session = await verifyToken(token);
 
-    if (!decoded || !('userId' in decoded)) {
+    if (!session) {
       return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
     }
 
     // Add user info to the request
     const authenticatedRequest = request as AuthenticatedRequest;
-    authenticatedRequest.user = { userId: decoded.userId };
+    authenticatedRequest.user = { userId: session.user.id };
 
     return handler(authenticatedRequest);
   } catch (error) {

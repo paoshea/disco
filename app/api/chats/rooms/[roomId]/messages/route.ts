@@ -12,7 +12,21 @@ export const runtime = 'nodejs';
 // Disable static optimization
 export const dynamic = 'force-dynamic';
 
-async function authenticateRequest() {
+interface AuthSuccess {
+  userId: string;
+  error?: never;
+  status?: never;
+}
+
+interface AuthError {
+  error: string;
+  status: number;
+  userId?: never;
+}
+
+type AuthResult = AuthSuccess | AuthError;
+
+async function authenticateRequest(): Promise<AuthResult> {
   const headersList = await headers();
   const token = headersList.get('Authorization')?.replace('Bearer ', '');
 
@@ -21,11 +35,11 @@ async function authenticateRequest() {
   }
 
   try {
-    const decoded = await verifyToken(token);
-    if (!decoded || !('userId' in decoded)) {
+    const session = await verifyToken(token);
+    if (!session) {
       return { error: 'Invalid token', status: 401 };
     }
-    return { userId: decoded.userId };
+    return { userId: session.user.id };
   } catch (error) {
     console.error('Authentication error:', error);
     return { error: 'Invalid token', status: 401 };
@@ -92,15 +106,6 @@ export async function POST(
 
   try {
     const { roomId } = await params;
-    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        { message: 'Access denied to this chat room' },
-        { status: 403 }
-      );
-    }
-
     const body = (await request.json()) as MessageContent;
     const { content } = body;
 
@@ -111,7 +116,16 @@ export async function POST(
       );
     }
 
+    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
+    if (!hasAccess) {
+      return NextResponse.json(
+        { message: 'Access denied to this chat room' },
+        { status: 403 }
+      );
+    }
+
     const message = await createMessage(content, roomId, auth.userId);
+
     return NextResponse.json(message);
   } catch (error) {
     console.error('Error creating message:', error);

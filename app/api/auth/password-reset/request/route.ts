@@ -32,21 +32,25 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    const resetToken = await generatePasswordResetToken({
-      userId: user.id,
-      email: user.email,
-    });
+    const resetResult = await generatePasswordResetToken(user.email);
+
+    if (!resetResult) {
+      return NextResponse.json(
+        { message: 'An error occurred while processing your request' },
+        { status: 500 }
+      );
+    }
 
     // Create a new password reset record
     await db.passwordReset.create({
       data: {
-        token: resetToken,
+        token: resetResult.token,
         userId: user.id,
-        expiresAt: new Date(Date.now() + 1000 * 60 * 60), // 1 hour
+        expiresAt: resetResult.expiresAt,
       },
     });
 
-    await sendPasswordResetEmail(email, resetToken);
+    await sendPasswordResetEmail(email, resetResult.token);
 
     return NextResponse.json({
       message:

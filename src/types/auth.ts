@@ -16,6 +16,15 @@ export interface LoginInput {
 export interface AuthResponse {
   user: User;
   token: string;
+  refreshToken?: string;
+  expiresIn?: number;
+}
+
+export interface LoginResult {
+  user: User;
+  token: string;
+  refreshToken: string;
+  expiresIn: number;
 }
 
 export interface ResetPasswordInput {
@@ -40,27 +49,10 @@ export interface JWTPayload {
 }
 
 export interface Session {
-  user?: {
+  user: {
     id: string;
     email: string;
     role: string;
-  };
-  id: string;
-  email: string;
-  role: string;
-}
-
-export interface LoginResult {
-  success?: boolean;
-  token?: string;
-  error?: string;
-  needsVerification?: boolean;
-  user?: {
-    id: string;
-    email: string;
     firstName: string;
-    lastName: string;
-    role: string;
-    streakCount: number;
   };
 }

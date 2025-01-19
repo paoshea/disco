@@ -2,9 +2,11 @@ import { User } from '@/types/user';
 import { apiClient } from './api.client';
 import type { AxiosError } from 'axios';
 
-interface LoginResponse {
+interface AuthResponse {
   user: User;
   token: string;
+  expiresIn?: number;
+  message?: string;
 }
 
 interface RegisterData {
@@ -15,46 +17,52 @@ interface RegisterData {
 }
 
 class AuthService {
-  private readonly baseUrl = '/auth';
+  private readonly baseUrl = '/api/auth';
 
-  async login(email: string, password: string): Promise<LoginResponse> {
+  async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<LoginResponse>(
+      const response = await apiClient.post<AuthResponse>(
         `${this.baseUrl}/login`,
         {
           email,
           password,
         }
       );
-
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      return { token, user };
+      localStorage.setItem('token', response.data.token);
+      return response.data;
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Login service is not available. Please try again later.'
-        );
+      if (this.isAxiosError(error)) {
+        if (error.response?.status === 401) {
+          throw new Error('Invalid email or password');
+        }
+        if (error.response?.status === 404) {
+          throw new Error(
+            'Login service is not available. Please try again later.'
+          );
+        }
       }
       throw error;
     }
   }
 
-  async register(data: RegisterData): Promise<LoginResponse> {
+  async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<LoginResponse>(
+      const response = await apiClient.post<AuthResponse>(
         `${this.baseUrl}/signup`,
         data
       );
-
-      const { token, user } = response.data;
-      localStorage.setItem('token', token);
-      return { token, user };
+      localStorage.setItem('token', response.data.token);
+      return response.data;
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Registration service is not available. Please try again later.'
-        );
+      if (this.isAxiosError(error)) {
+        if (error.response?.status === 409) {
+          throw new Error('User already exists');
+        }
+        if (error.response?.status === 404) {
+          throw new Error(
+            'Registration service is not available. Please try again later.'
+          );
+        }
       }
       throw error;
     }
@@ -99,26 +107,58 @@ class AuthService {
   }
 
   async requestPasswordReset(email: string): Promise<void> {
-    await apiClient.post(`${this.baseUrl}/password-reset/request`, {
-      email,
-    });
+    try {
+      await apiClient.post(`${this.baseUrl}/password-reset/request`, { email });
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error(
+          'Password reset service is not available. Please try again later.'
+        );
+      }
+      throw error;
+    }
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
-    await apiClient.post(`${this.baseUrl}/password-reset/reset`, {
-      token,
-      password,
-    });
+    try {
+      await apiClient.post(`${this.baseUrl}/password-reset/verify`, {
+        token,
+        password,
+      });
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error(
+          'Password reset service is not available. Please try again later.'
+        );
+      }
+      throw error;
+    }
   }
 
   async verifyEmail(token: string): Promise<void> {
-    await apiClient.post(`${this.baseUrl}/verify-email`, {
-      token,
-    });
+    try {
+      await apiClient.post(`${this.baseUrl}/verify-email`, { token });
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error(
+          'Email verification service is not available. Please try again later.'
+        );
+      }
+      throw error;
+    }
   }
 
   async sendVerificationEmail(): Promise<void> {
-    await apiClient.post(`${this.baseUrl}/verify-email/resend`);
+    try {
+      await apiClient.post(`${this.baseUrl}/send-verification-email`);
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 404) {
+        throw new Error(
+          'Email verification service is not available. Please try again later.'
+        );
+      }
+      throw error;
+    }
   }
 
   async logout(): Promise<void> {

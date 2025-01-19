@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
-import type { JWTPayload } from '@/types/auth';
 
-const PUBLIC_PATHS = [
-  '/',
+// Routes that don't require authentication
+const publicRoutes = [
   '/login',
   '/signup',
-  '/chat',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/',
   '/features',
   '/pricing',
+  '/chat',
   '/security',
   '/about',
   '/blog',
@@ -17,58 +20,84 @@ const PUBLIC_PATHS = [
   '/privacy',
   '/terms',
   '/contact',
-  '/api/auth/login',
-  '/api/auth/signup',
-  '/api/auth/refresh',
-  '/api/auth/password-reset/request',
-  '/api/auth/password-reset/verify',
 ];
+
+// Routes that require admin role
+const adminRoutes = ['/admin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Allow public paths
-  if (PUBLIC_PATHS.includes(pathname)) {
+  // Allow public routes
+  if (publicRoutes.some(route => pathname.startsWith(route))) {
     return NextResponse.next();
   }
 
-  // Only check auth header for API routes
-  if (pathname.startsWith('/api/')) {
-    // Get token from header
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.substring(7);
-    try {
-      const payload = await verifyToken(token);
-      if (!payload) {
-        return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-      }
-    } catch (error) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+  // Check for API routes that don't need auth
+  if (
+    pathname.startsWith('/api/auth/login') ||
+    pathname.startsWith('/api/auth/signup') ||
+    pathname.startsWith('/api/auth/refresh') ||
+    pathname.startsWith('/api/auth/password-reset') ||
+    pathname.startsWith('/api/auth/verify-email')
+  ) {
+    return NextResponse.next();
   }
 
-  // For page loads, check cookies instead
+  // Get token from cookie
   const token = request.cookies.get('token')?.value;
+
   if (!token) {
-    return NextResponse.redirect(new URL('/login', request.url));
+    return redirectToLogin(request);
   }
 
   try {
-    const payload = await verifyToken(token);
-    if (!payload) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
-  } catch (error) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+    // Verify token and get session
+    const session = await verifyToken(token);
 
-  return NextResponse.next();
+    if (!session) {
+      return redirectToLogin(request);
+    }
+
+    // Check admin routes
+    if (adminRoutes.some(route => pathname.startsWith(route))) {
+      if (session.user.role !== 'admin') {
+        return new NextResponse(null, { status: 403 });
+      }
+    }
+
+    // Add user info to headers for route handlers
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user-id', session.user.id);
+    requestHeaders.set('x-user-email', session.user.email);
+    requestHeaders.set('x-user-role', session.user.role);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
+  } catch (error) {
+    return redirectToLogin(request);
+  }
+}
+
+function redirectToLogin(request: NextRequest) {
+  const url = request.nextUrl.clone();
+  url.pathname = '/login';
+  url.search = `?from=${encodeURIComponent(request.nextUrl.pathname)}`;
+  return NextResponse.redirect(url);
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+  matcher: [
+    /*
+     * Match all request paths except:
+     * 1. /api/auth/* (authentication routes)
+     * 2. /_next/* (Next.js internals)
+     * 3. /static/* (static files)
+     * 4. /*.* (files with extensions)
+     */
+    '/((?!api/auth|_next|static|[\\w-]+\\.\\w+).*)',
+  ],
 };

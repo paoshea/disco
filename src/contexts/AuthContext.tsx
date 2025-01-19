@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import type { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
 import { LoginResult } from '@/hooks/useAuth';
@@ -33,22 +34,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const initAuth = async () => {
       try {
-        const token = localStorage.getItem('token');
-        if (token) {
-          const userData = await authService.getCurrentUser();
-          setUser(userData);
-        }
+        const userData = await authService.getCurrentUser();
+        setUser(userData);
       } catch (err) {
         console.error('Error initializing auth:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while initializing authentication.'
-        );
       } finally {
         setLoading(false);
       }
@@ -75,13 +69,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setLoading(true);
       setError(null);
       const result = await authService.login(email, password);
-      // If we get here, login was successful
       setUser(result.user);
-      localStorage.setItem('token', result.token);
+      router.push('/dashboard');
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      // Check if the error indicates email verification is needed
       if (
         err instanceof Error &&
         err.message.toLowerCase().includes('email verification')
@@ -94,28 +86,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const register = async (data: RegisterData): Promise<void> => {
+  const signup = async (data: RegisterData): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
       const response = await authService.register(data);
       setUser(response.user);
-      localStorage.setItem('token', response.token);
+      router.push('/dashboard');
     } catch (err) {
-      console.error('Registration error:', err);
-      setError(err instanceof Error ? err.message : 'Registration failed');
-      throw err;
+      handleAuthError(err, 'Signup');
     } finally {
       setLoading(false);
     }
   };
 
+  // Alias for signup to maintain backward compatibility
+  const register = signup;
+
   const logout = async (): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      await Promise.resolve(authService.logout());
+      await authService.logout();
       setUser(null);
+      router.push('/login');
     } catch (err) {
       handleAuthError(err, 'Logout');
     } finally {
@@ -129,11 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError(null);
       await authService.requestPasswordReset(email);
     } catch (err) {
-      console.error('Password reset request error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to request password reset'
-      );
-      throw err;
+      handleAuthError(err, 'Password reset request');
     } finally {
       setLoading(false);
     }
@@ -148,9 +138,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError(null);
       await authService.resetPassword(token, password);
     } catch (err) {
-      console.error('Password reset error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to reset password');
-      throw err;
+      handleAuthError(err, 'Password reset');
     } finally {
       setLoading(false);
     }
@@ -164,9 +152,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       const userData = await authService.getCurrentUser();
       setUser(userData);
     } catch (err) {
-      console.error('Email verification error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to verify email');
-      throw err;
+      handleAuthError(err, 'Email verification');
     } finally {
       setLoading(false);
     }
@@ -178,17 +164,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setError(null);
       await authService.sendVerificationEmail();
     } catch (err) {
-      console.error('Send verification email error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to send verification email'
-      );
-      throw err;
+      handleAuthError(err, 'Send verification email');
     } finally {
       setLoading(false);
     }
   };
 
-  const updateProfile = async (updates: Partial<User>) => {
+  const updateProfile = async (updates: Partial<User>): Promise<void> => {
     if (!user?.id) {
       throw new Error('No user logged in');
     }
@@ -211,7 +193,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     error,
     login,
     logout,
-    signup: register,
+    signup,
     register,
     updateProfile,
     requestPasswordReset,

@@ -1,63 +1,109 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
-import { verifyToken, generateToken } from '@/lib/auth';
+import type { NextRequest } from 'next/server';
+import { verifyRefreshToken, generateToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
-export async function POST(): Promise<Response> {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const cookieStore = await cookies();
-    const refreshToken = cookieStore.get('refreshToken')?.value;
+    const refreshToken = request.cookies.get('refreshToken')?.value;
 
     if (!refreshToken) {
       return NextResponse.json(
-        { message: 'Refresh token not found' },
+        { message: 'Refresh token not found', code: 'REFRESH_TOKEN_MISSING' },
         { status: 401 }
       );
     }
 
-    const decoded = await verifyToken(refreshToken);
-    if (!decoded || !decoded.userId) {
+    // Verify refresh token
+    const decoded = await verifyRefreshToken(refreshToken);
+    if (!decoded) {
       return NextResponse.json(
-        { message: 'Invalid refresh token' },
+        { message: 'Invalid refresh token', code: 'REFRESH_TOKEN_INVALID' },
         { status: 401 }
       );
     }
 
-    // Verify user still exists and get their data
+    // Verify user and token in database
     const user = await db.user.findUnique({
-      where: { id: decoded.userId },
+      where: {
+        id: decoded.userId,
+        refreshToken,
+        refreshTokenExpiresAt: {
+          gt: new Date(),
+        },
+      },
       select: {
         id: true,
         email: true,
         firstName: true,
+        lastName: true,
         role: true,
       },
     });
 
     if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 404 });
+      return NextResponse.json(
+        { message: 'Invalid refresh token', code: 'REFRESH_TOKEN_EXPIRED' },
+        { status: 401 }
+      );
     }
 
-    const newToken = await generateToken({
+    // Generate new tokens
+    const {
+      token: newToken,
+      refreshToken: newRefreshToken,
+      expiresIn,
+    } = await generateToken({
       userId: user.id,
       email: user.email,
       firstName: user.firstName,
       role: user.role,
     });
 
-    const response = NextResponse.json({ token: newToken });
-    response.cookies.set('auth-token', newToken, {
+    // Update refresh token in database
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken: newRefreshToken,
+        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+      },
+    });
+
+    // Create response with new tokens
+    const response = NextResponse.json({
+      token: newToken,
+      expiresIn,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+      },
+    });
+
+    // Set new cookies in response
+    response.cookies.set('accessToken', newToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 15, // 15 minutes
+      maxAge: expiresIn,
+      path: '/',
+    });
+
+    response.cookies.set('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
     });
 
     return response;
   } catch (error) {
-    console.error('Error refreshing token:', error);
+    console.error('Error in refresh token:', error);
     return NextResponse.json(
-      { message: 'Failed to refresh token' },
+      { message: 'Internal server error', code: 'SERVER_ERROR' },
       { status: 500 }
     );
   }

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword } from '@/lib/auth';
+import { hashPassword, generateToken } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         email: true,
         firstName: true,
         lastName: true,
+        role: true,
       },
     });
 
@@ -74,7 +75,26 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('User created but verification email failed to send');
     }
 
-    return NextResponse.json({
+    // Generate tokens for automatic login
+    const { token, refreshToken, expiresIn } = await generateToken({
+      userId: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      role: user.role,
+    });
+
+    // Store refresh token in database
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken,
+        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        lastLogin: new Date(),
+      },
+    });
+
+    // Create response with tokens
+    const response = NextResponse.json({
       message:
         'User created successfully. Please check your email to verify your account.',
       user: {
@@ -82,8 +102,30 @@ export async function POST(request: NextRequest): Promise<Response> {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
+        role: user.role,
       },
+      token,
+      expiresIn,
     });
+
+    // Set auth cookies
+    response.cookies.set('accessToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: expiresIn,
+      path: '/',
+    });
+
+    response.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     const err = error as ErrorWithCode;
     console.error('Signup error details:', {

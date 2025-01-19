@@ -6,7 +6,8 @@ import axios, {
 } from 'axios';
 
 // Get the base URL from environment variables or use relative path for Next.js API routes
-const API_BASE_URL = '/api';
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 // Create axios instance with default config
 export const apiClient: AxiosInstance = axios.create({
@@ -37,7 +38,7 @@ apiClient.interceptors.request.use(
 // Add response interceptor to handle common errors
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
-  (error: AxiosError) => {
+  async (error: AxiosError) => {
     // Only handle browser-specific operations if we're in a browser environment
     if (typeof window !== 'undefined') {
       if (error.response) {

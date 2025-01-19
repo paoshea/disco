@@ -22,9 +22,7 @@ interface FeatureProps {
 function FeatureSection({ title, description, features, icon }: FeatureProps) {
   return (
     <div className="flex flex-col md:flex-row gap-8 items-start">
-      <div className="w-16 h-16 text-sky-600 flex-shrink-0">
-        {icon}
-      </div>
+      <div className="w-16 h-16 text-sky-600 flex-shrink-0">{icon}</div>
       <div className="flex-1">
         <h3 className="text-2xl font-bold mb-4">{title}</h3>
         <p className="text-gray-600 mb-6">{description}</p>
@@ -51,14 +49,17 @@ export default function FeaturesPage() {
             Everything You Need for Safe Social Discovery
           </h1>
           <p className="text-xl text-gray-600 mb-8">
-            Discover all the powerful features that make Disco the perfect platform for creating meaningful connections.
+            Discover all the powerful features that make Disco the perfect
+            platform for creating meaningful connections.
           </p>
           <div className="flex gap-4 justify-center">
             <Link href="/signup">
               <Button size="lg">Get Started Free</Button>
             </Link>
             <Link href="/pricing">
-              <Button variant="outline" size="lg">View Pricing</Button>
+              <Button variant="outline" size="lg">
+                View Pricing
+              </Button>
             </Link>
           </div>
         </div>
@@ -70,11 +71,11 @@ export default function FeaturesPage() {
             description="Find like-minded people nearby with our intelligent matching system."
             icon={<MapPinIcon className="w-full h-full" />}
             features={[
-              "Real-time notifications for nearby matches",
-              "Customizable radius from 100ft to 1 mile",
-              "Activity-based matching for coffee, lunch, or quick chats",
-              "Professional mode for networking-focused connections",
-              "Smart filtering based on shared interests and preferences"
+              'Real-time notifications for nearby matches',
+              'Customizable radius from 100ft to 1 mile',
+              'Activity-based matching for coffee, lunch, or quick chats',
+              'Professional mode for networking-focused connections',
+              'Smart filtering based on shared interests and preferences',
             ]}
           />
 
@@ -83,11 +84,11 @@ export default function FeaturesPage() {
             description="Your privacy is our top priority with state-of-the-art security measures."
             icon={<LockClosedIcon className="w-full h-full" />}
             features={[
-              "Zero personal data storage by default",
-              "End-to-end encrypted communications",
-              "Approximate distance indicators only",
-              "Customizable privacy zones",
-              "Auto-deleting chat history after 24 hours"
+              'Zero personal data storage by default',
+              'End-to-end encrypted communications',
+              'Approximate distance indicators only',
+              'Customizable privacy zones',
+              'Auto-deleting chat history after 24 hours',
             ]}
           />
 
@@ -96,11 +97,11 @@ export default function FeaturesPage() {
             description="Comprehensive safety features to ensure secure and comfortable meetings."
             icon={<ShieldCheckIcon className="w-full h-full" />}
             features={[
-              "Verified public meeting places through Google Places API",
-              "Real-time safety check-ins during meetups",
-              "Emergency contact system with one-tap activation",
-              "24/7 human moderation and support",
-              "AI-powered content and behavior monitoring"
+              'Verified public meeting places through Google Places API',
+              'Real-time safety check-ins during meetups',
+              'Emergency contact system with one-tap activation',
+              '24/7 human moderation and support',
+              'AI-powered content and behavior monitoring',
             ]}
           />
 
@@ -109,11 +110,11 @@ export default function FeaturesPage() {
             description="Connect with people who share your interests and schedule."
             icon={<UserGroupIcon className="w-full h-full" />}
             features={[
-              "Customizable interest tags and categories",
-              "Time-window preferences for availability",
-              "Activity-based matching preferences",
-              "Professional networking filters",
-              "Community rating system with mandatory feedback"
+              'Customizable interest tags and categories',
+              'Time-window preferences for availability',
+              'Activity-based matching preferences',
+              'Professional networking filters',
+              'Community rating system with mandatory feedback',
             ]}
           />
 
@@ -122,11 +123,11 @@ export default function FeaturesPage() {
             description="Never miss a potential connection with smart alerts."
             icon={<BellAlertIcon className="w-full h-full" />}
             features={[
-              "Real-time match notifications",
-              "Customizable alert preferences",
-              "Battery-efficient background operation",
-              "Optional Bluetooth proximity detection",
-              "Smart notification scheduling"
+              'Real-time match notifications',
+              'Customizable alert preferences',
+              'Battery-efficient background operation',
+              'Optional Bluetooth proximity detection',
+              'Smart notification scheduling',
             ]}
           />
 
@@ -135,18 +136,20 @@ export default function FeaturesPage() {
             description="Private and secure messaging system for safe interactions."
             icon={<ChatBubbleLeftRightIcon className="w-full h-full" />}
             features={[
-              "End-to-end encrypted messaging",
-              "24-hour message auto-deletion",
-              "AI-powered content moderation",
-              "Rich media sharing capabilities",
-              "In-app voice and video verification"
+              'End-to-end encrypted messaging',
+              '24-hour message auto-deletion',
+              'AI-powered content moderation',
+              'Rich media sharing capabilities',
+              'In-app voice and video verification',
             ]}
           />
         </div>
 
         {/* CTA Section */}
         <div className="max-w-3xl mx-auto text-center mt-20">
-          <h2 className="text-3xl font-bold mb-6">Ready to Start Discovering?</h2>
+          <h2 className="text-3xl font-bold mb-6">
+            Ready to Start Discovering?
+          </h2>
           <p className="text-xl text-gray-600 mb-8">
             Join thousands of users making meaningful connections every day.
           </p>
@@ -155,7 +158,9 @@ export default function FeaturesPage() {
               <Button size="lg">Create Your Account</Button>
             </Link>
             <Link href="/login">
-              <Button variant="outline" size="lg">Sign In</Button>
+              <Button variant="outline" size="lg">
+                Sign In
+              </Button>
             </Link>
           </div>
         </div>

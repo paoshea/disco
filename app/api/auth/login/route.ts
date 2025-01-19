@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyPassword } from '@/lib/auth';
+import { comparePasswords, generateToken } from '@/lib/auth';
 import { db } from '@/lib/prisma';
-import { generateToken } from '@/lib/jwt';
 
 interface LoginRequest {
   email: string;
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Verify password hash
-    const isPasswordValid = await verifyPassword(password, user.password);
+    const isPasswordValid = await comparePasswords(password, user.password);
     if (!isPasswordValid) {
       return NextResponse.json(
         { message: 'Invalid email or password' },
@@ -50,22 +49,65 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
-    const token = generateToken({
-      id: user.id,
+    // Generate tokens
+    const { token, refreshToken, expiresIn } = await generateToken({
+      userId: user.id,
       email: user.email,
+      role: user.role,
+      firstName: user.firstName,
     });
 
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        streakCount: user.streakCount,
+    // Store refresh token in database
+    await db.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken,
+        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
       },
-      token,
     });
+
+    // Update user's lastLogin
+    await db.user.update({
+      where: { id: user.id },
+      data: { lastLogin: new Date() },
+    });
+
+    // Remove password from response
+    const userWithoutPassword = {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      role: user.role,
+      streakCount: user.streakCount,
+    };
+
+    // Create response with cookies
+    const response = NextResponse.json({
+      user: userWithoutPassword,
+      token,
+      refreshToken,
+      expiresIn,
+    });
+
+    // Set cookies in response
+    response.cookies.set('accessToken', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: expiresIn,
+      path: '/',
+    });
+
+    response.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60, // 30 days
+      path: '/',
+    });
+
+    return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
