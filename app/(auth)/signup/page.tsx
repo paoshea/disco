@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -35,6 +36,7 @@ const signupSchema = z
 export default function SignupPage() {
   const { register: signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
   const form = useForm<z.infer<typeof signupSchema>>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -58,11 +60,8 @@ export default function SignupPage() {
       };
 
       await signUp(registerData);
-      toast.success(
-        'Account created successfully! Please check your email for verification.'
-      );
-      // Force navigation to chat page
-      window.location.href = '/chat';
+      toast.success('Account created successfully!');
+      router.push('/dashboard');
     } catch (err) {
       const errorMessage =
         err instanceof Error
@@ -79,7 +78,9 @@ export default function SignupPage() {
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
           <div className="flex flex-col items-center space-y-4">
-            <Logo priority />
+            <div className="flex justify-center">
+              <Logo />
+            </div>
           </div>
           <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Join Disco today

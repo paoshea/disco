@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-misused-promises, @typescript-eslint/no-unused-vars, @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,7 +11,6 @@ import { Alert } from '@/components/ui/Alert';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { useRouter } from 'next/navigation';
-import { useEventCallback } from '@/hooks/useEventCallback';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
@@ -26,8 +25,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [needsVerification, setNeedsVerification] = useState(false);
-  const [emailForVerification, setEmailForVerification] = useState<string>('');
+  const [error, setError] = useState<string | null>(null);
 
   const {
     register,
@@ -37,148 +35,102 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = useCallback(
-    async (data: LoginFormData) => {
-      setIsLoading(true);
-      setNeedsVerification(false);
-
-      try {
-        const result = await login(data.email, data.password);
-
-        if (result.error) {
-          toast.error(result.error);
-          return;
-        }
-
-        if (result.needsVerification) {
-          setNeedsVerification(true);
-          setEmailForVerification(data.email);
-          toast.error(
-            'Please verify your email address before logging in. Check your inbox for a verification link.'
-          );
-          return;
-        }
-
-        if (result.success) {
-          toast.success('Login successful! Redirecting...');
-          router.push('/dashboard');
-        }
-      } catch (err) {
-        console.error('Login error:', err);
-        const errorMessage =
-          err instanceof Error ? err.message : 'An error occurred during login';
-        toast.error(errorMessage);
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [login, router]
-  );
-
-  const handleResendVerification = async () => {
-    if (!emailForVerification) return;
+  const onSubmit = async (data: LoginFormData) => {
+    setIsLoading(true);
+    setError(null);
 
     try {
-      setIsLoading(true);
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: emailForVerification }),
-      });
+      const result = await login(data.email, data.password);
 
-      if (!response.ok) throw new Error('Failed to resend verification email');
+      if (result.success) {
+        toast.success('Login successful!');
+        router.push('/dashboard');
+        return;
+      }
 
-      toast.success('Verification email sent! Please check your inbox.');
+      if (result.error) {
+        setError(result.error);
+        toast.error(result.error);
+        return;
+      }
     } catch (err) {
-      toast.error('Failed to resend verification email');
+      const errorMessage = err instanceof Error ? err.message : 'Login failed';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleFormSubmit = useEventCallback(
-    async (e: React.FormEvent): Promise<void> => {
-      e.preventDefault();
-      await handleSubmit(onSubmit)(e);
-    }
-  );
-
   return (
-    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
-      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-300 to-blue-600 shadow-lg transform -skew-y-6 sm:skew-y-0 sm:-rotate-6 sm:rounded-3xl"></div>
-        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
-          <div className="max-w-md mx-auto">
-            <div className="divide-y divide-gray-200">
-              <Logo className="h-12 mx-auto" />
-              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h1 className="text-2xl font-bold text-center mb-8">
-                  Welcome Back
-                </h1>
-              </div>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
+        <div className="flex flex-col items-center">
+          <Logo />
+          <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
+            Sign in to your account
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            Or{' '}
+            <Link
+              href="/signup"
+              className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
+            >
+              create a new account
+            </Link>
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
+          {error && (
+            <Alert
+              type="error"
+              title="Login Error"
+              message={error}
+              className="mb-4"
+            />
+          )}
+
+          <div className="space-y-4">
+            <div>
+              <Input
+                label="Email"
+                type="email"
+                {...register('email')}
+                error={errors.email?.message}
+              />
             </div>
 
-            <form className="mt-8 space-y-6" onSubmit={handleFormSubmit}>
-              <div className="space-y-4">
-                <div>
-                  <Input
-                    id="email"
-                    type="email"
-                    label="Email address"
-                    error={errors.email?.message}
-                    {...register('email')}
-                  />
-                </div>
-
-                <div>
-                  <Input
-                    id="password"
-                    type="password"
-                    label="Password"
-                    error={errors.password?.message}
-                    {...register('password')}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Button
-                  type="submit"
-                  className="w-full"
-                  disabled={isLoading}
-                  loading={isLoading}
-                >
-                  {isLoading ? 'Signing in...' : 'Sign in'}
-                </Button>
-              </div>
-            </form>
-
-            {needsVerification && (
-              <div className="mt-4">
-                <p className="text-sm text-gray-600 mb-2">
-                  Need another verification email?
-                </p>
-                <Button
-                  onClick={handleResendVerification}
-                  variant="secondary"
-                  className="w-full"
-                  disabled={isLoading}
-                >
-                  Resend Verification Email
-                </Button>
-              </div>
-            )}
-
-            <div className="mt-4 text-center">
-              <Link
-                href="/signup"
-                className="text-sm text-blue-600 hover:text-blue-500"
-              >
-                Don&apos;t have an account? Sign up
-              </Link>
+            <div>
+              <Input
+                label="Password"
+                type="password"
+                {...register('password')}
+                error={errors.password?.message}
+              />
             </div>
           </div>
-        </div>
+
+          <div>
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isLoading}
+              loading={isLoading}
+            >
+              Sign in
+            </Button>
+          </div>
+
+          <div className="text-sm text-center">
+            <Link
+              href="/reset-password"
+              className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
+            >
+              Forgot your password?
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );
