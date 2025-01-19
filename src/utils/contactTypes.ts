@@ -1,14 +1,5 @@
 import type { EmergencyContact, EmergencyContactNew } from '@/types/safety';
 
-interface NotificationPreferences {
-  sosAlert: boolean;
-  meetupStart: boolean;
-  meetupEnd: boolean;
-  lowBattery: boolean;
-  enterPrivacyZone: boolean;
-  exitPrivacyZone: boolean;
-}
-
 /**
  * Safety Emergency Contact (from safety system)
  * - Used in emergency situations and safety features
@@ -99,3 +90,23 @@ export const CONTACT_TYPES = {
   SECONDARY: 'secondary',
   EMERGENCY: 'emergency',
 } as const;
+
+export type ContactType = 'emergency' | 'trusted' | 'blocked';
+
+export interface Contact {
+  id: string;
+  userId: string;
+  contactUserId: string;
+  type: ContactType;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ContactWithUser extends Contact {
+  user: {
+    id: string;
+    name: string | null;
+    email: string | null;
+    image: string | null;
+  };
+}

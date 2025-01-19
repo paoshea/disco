@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { showToast } from '@/utils/toast';
 import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { Session } from '@/types/auth';
 import React from 'react';
 
 interface LocationState {
@@ -18,7 +19,7 @@ export default function LocationPrivacy({
   onPrivacyChange,
   onSharingChange,
 }: LocationPrivacyProps) {
-  const { data: session } = useSession();
+  const { data: session } = useSession() as { data: Session | null };
   const [locationState, setLocationState] = useState<LocationState>({
     privacyMode: 'precise',
     sharingEnabled: true,
@@ -47,10 +48,13 @@ export default function LocationPrivacy({
       }
     };
 
-    fetchLocationState();
+    void fetchLocationState();
   }, [session]);
 
-  const handlePrivacyChange = async (mode: LocationState['privacyMode']) => {
+  const handlePrivacyChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const mode = e.target.value as LocationState['privacyMode'];
     try {
       const response = await fetch('/api/location', {
         method: 'PUT',
@@ -75,7 +79,10 @@ export default function LocationPrivacy({
     }
   };
 
-  const handleSharingChange = async (enabled: boolean) => {
+  const handleSharingChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const enabled = e.target.checked;
     try {
       const response = await fetch('/api/location', {
         method: 'PUT',
@@ -114,11 +121,7 @@ export default function LocationPrivacy({
                 name="privacyMode"
                 value="precise"
                 checked={locationState.privacyMode === 'precise'}
-                onChange={e =>
-                  handlePrivacyChange(
-                    e.target.value as LocationState['privacyMode']
-                  )
-                }
+                onChange={e => void handlePrivacyChange(e)}
                 className="form-radio"
               />
               <span>Precise Location</span>
@@ -129,11 +132,7 @@ export default function LocationPrivacy({
                 name="privacyMode"
                 value="approximate"
                 checked={locationState.privacyMode === 'approximate'}
-                onChange={e =>
-                  handlePrivacyChange(
-                    e.target.value as LocationState['privacyMode']
-                  )
-                }
+                onChange={e => void handlePrivacyChange(e)}
                 className="form-radio"
               />
               <span>Approximate Location</span>
@@ -144,11 +143,7 @@ export default function LocationPrivacy({
                 name="privacyMode"
                 value="zone"
                 checked={locationState.privacyMode === 'zone'}
-                onChange={e =>
-                  handlePrivacyChange(
-                    e.target.value as LocationState['privacyMode']
-                  )
-                }
+                onChange={e => void handlePrivacyChange(e)}
                 className="form-radio"
               />
               <span>Privacy Zone Only</span>
@@ -168,7 +163,7 @@ export default function LocationPrivacy({
             <input
               type="checkbox"
               checked={locationState.sharingEnabled}
-              onChange={e => handleSharingChange(e.target.checked)}
+              onChange={e => void handleSharingChange(e)}
               className="rounded border-gray-300 text-primary focus:ring-primary"
             />
             <span className="text-sm font-medium text-gray-700">

@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { emergencyService } from '@/services/api/emergency.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
-import type { Location } from '@/types/location';
 import { BaseMapView } from '@/components/map/BaseMapView';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';

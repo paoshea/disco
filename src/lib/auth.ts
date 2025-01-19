@@ -1,16 +1,37 @@
-import { NextRequest } from 'next/server';
-import { cookies } from 'next/headers';
+import { NextAuthOptions } from 'next-auth';
+import { JWT } from 'next-auth/jwt';
+import { Session } from 'next-auth';
+import { AdapterUser } from 'next-auth/adapters';
+import { db } from './prisma';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import * as bcrypt from 'bcrypt';
 import * as jose from 'jose';
-import * as bcrypt from 'bcryptjs';
-import type { Session } from '../types/auth';
-import { db } from '@/lib/prisma';
+import { cookies } from 'next/headers';
+import { NextRequest } from 'next/server';
+import type { User } from '@prisma/client';
+
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email?: string | null;
+      name?: string | null;
+      image?: string | null;
+      role?: string;
+    };
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    email?: string;
+    role?: string;
+  }
+}
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || 'your-secret-key'
-);
-
-const REFRESH_SECRET = new TextEncoder().encode(
-  process.env.REFRESH_SECRET || 'your-refresh-secret-key'
 );
 
 interface TokenResponse {
@@ -34,73 +55,136 @@ interface PasswordResetResponse {
   expiresAt: Date;
 }
 
+export const authOptions: NextAuthOptions = {
+  providers: [
+    CredentialsProvider({
+      name: 'Credentials',
+      credentials: {
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
+      },
+      async authorize(credentials) {
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Email and password required');
+        }
+
+        const user = await db.user.findUnique({
+          where: { email: credentials.email },
+        });
+
+        if (!user) {
+          throw new Error('No user found');
+        }
+
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
+
+        if (!isValid) {
+          throw new Error('Invalid password');
+        }
+
+        return {
+          id: user.id,
+          email: user.email,
+          name: `${user.firstName} ${user.lastName}`,
+          role: user.role,
+        };
+      },
+    }),
+  ],
+  secret: process.env.JWT_SECRET,
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+  },
+  callbacks: {
+    async session({ session, token }: { session: Session; token: JWT }) {
+      if (token) {
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.role = token.role;
+      }
+      return session;
+    },
+    async jwt({ token, user }: { token: JWT; user?: AdapterUser | User }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.role = (user as User).role;
+      }
+      return token;
+    },
+  },
+};
+
 export async function hashPassword(password: string): Promise<string> {
-  const salt = await bcrypt.genSalt(12);
-  return bcrypt.hash(password, salt);
+  return await bcrypt.hash(password, 10);
 }
 
 export async function comparePasswords(
   password: string,
   hashedPassword: string
 ): Promise<boolean> {
-  return bcrypt.compare(password, hashedPassword);
+  return await bcrypt.compare(password, hashedPassword);
 }
 
 export async function generateToken(
   payload: Omit<AuthJWTPayload, 'iat' | 'exp' | 'type'>
 ): Promise<TokenResponse> {
-  // Access token valid for 1 day
-  const token = await new jose.SignJWT({
+  const iat = Math.floor(Date.now() / 1000);
+  const exp = iat + 24 * 60 * 60; // 24 hours
+
+  const accessToken = await new jose.SignJWT({
     ...payload,
     type: 'access',
+    iat,
+    exp,
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('24h')
     .sign(JWT_SECRET);
 
-  // Refresh token valid for 30 days
   const refreshToken = await new jose.SignJWT({
-    userId: payload.userId,
+    ...payload,
     type: 'refresh',
+    iat,
+    exp: iat + 30 * 24 * 60 * 60, // 30 days
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime('30d')
-    .sign(REFRESH_SECRET);
+    .sign(JWT_SECRET);
 
   return {
-    token,
+    token: accessToken,
     refreshToken,
-    expiresIn: 24 * 60 * 60, // 24 hours in seconds
+    expiresIn: exp,
   };
 }
 
 export async function verifyToken(token: string): Promise<Session | null> {
   try {
     const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-
-    if (
-      typeof payload.userId !== 'string' ||
-      typeof payload.email !== 'string' ||
-      typeof payload.role !== 'string' ||
-      typeof payload.firstName !== 'string' ||
-      payload.type !== 'access'
-    ) {
+    
+    if (payload.type !== 'access') {
       return null;
     }
 
-    const session: Session = {
+    const user = await db.user.findUnique({
+      where: { id: payload.userId as string },
+    });
+
+    if (!user) {
+      return null;
+    }
+
+    return {
       user: {
-        id: payload.userId,
-        email: payload.email,
-        role: payload.role,
-        firstName: payload.firstName,
+        id: user.id,
+        email: user.email,
+        role: user.role,
       },
     };
-
-    return session;
-  } catch (error) {
+  } catch {
     return null;
   }
 }
@@ -109,14 +193,14 @@ export async function verifyRefreshToken(
   token: string
 ): Promise<{ userId: string } | null> {
   try {
-    const { payload } = await jose.jwtVerify(token, REFRESH_SECRET);
-
-    if (typeof payload.userId !== 'string' || payload.type !== 'refresh') {
+    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
+    
+    if (payload.type !== 'refresh') {
       return null;
     }
 
-    return { userId: payload.userId };
-  } catch (error) {
+    return { userId: payload.userId as string };
+  } catch {
     return null;
   }
 }
@@ -130,20 +214,34 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 }
 
 export async function getServerSession(): Promise<Session | null> {
+  const cookieStore = cookies();
+  const token = cookieStore.get('next-auth.session-token');
+
+  if (!token) {
+    return null;
+  }
+
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('accessToken')?.value;
+    const { payload } = await jose.jwtVerify(
+      token.value,
+      JWT_SECRET
+    );
 
-    if (!token) {
+    const user = await db.user.findUnique({
+      where: { id: payload.userId as string },
+    });
+
+    if (!user) {
       return null;
     }
 
-    const decoded = await verifyToken(token);
-    if (!decoded) {
-      return null;
-    }
-
-    return decoded;
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
+    };
   } catch {
     return null;
   }
@@ -152,36 +250,29 @@ export async function getServerSession(): Promise<Session | null> {
 export async function generatePasswordResetToken(
   email: string
 ): Promise<PasswordResetResponse | null> {
-  try {
-    const user = await db.user.findUnique({
-      where: { email },
-      select: { id: true, email: true },
-    });
+  const user = await db.user.findUnique({
+    where: { email },
+  });
 
-    if (!user) {
-      return null;
-    }
-
-    // Generate reset token using jose
-    const token = await new jose.SignJWT({
-      userId: user.id,
-      email: user.email,
-      type: 'reset' as const,
-      iat: Math.floor(Date.now() / 1000),
-      exp: Math.floor(Date.now() / 1000) + 60 * 60, // 1 hour from now
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('1h')
-      .sign(JWT_SECRET);
-
-    const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-
-    return {
-      token,
-      expiresAt,
-    };
-  } catch (error) {
-    console.error('Error generating password reset token:', error);
+  if (!user) {
     return null;
   }
+
+  const iat = Math.floor(Date.now() / 1000);
+  const exp = iat + 60 * 60; // 1 hour
+
+  const token = await new jose.SignJWT({
+    userId: user.id,
+    email: user.email,
+    type: 'reset',
+    iat,
+    exp,
+  })
+    .setProtectedHeader({ alg: 'HS256' })
+    .sign(JWT_SECRET);
+
+  return {
+    token,
+    expiresAt: new Date(exp * 1000),
+  };
 }

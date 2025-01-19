@@ -3,8 +3,10 @@ export type LocationPermissionStatus = 'granted' | 'denied' | 'prompt';
 export type LocationPrivacyMode = 'precise' | 'approximate' | 'zone';
 
 export interface Coordinates {
-  lat: number;
-  lng: number;
+  latitude: number;
+  longitude: number;
+  lat?: number;
+  lng?: number;
 }
 
 export interface Location {

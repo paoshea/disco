@@ -1,8 +1,8 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { eventService } from '@/services/event/event.service';
 import type { Event } from '@/types/event';
-import { EventList } from './EventList';
+import { EventCard } from './EventCard';
 import { toast } from 'react-hot-toast';
 
 interface NearbyEventsProps {
@@ -20,53 +20,35 @@ export function NearbyEvents({
   const [loading, setLoading] = useState(true);
   const { position } = useGeolocation();
 
-  useEffect(() => {
-    async function fetchNearbyEvents() {
-      if (!position) return;
+  const fetchNearbyEvents = useCallback(async () => {
+    if (!position) return;
 
-      try {
-        const { data, success, error } = await eventService.getNearbyEvents(
-          position.coords.latitude,
-          position.coords.longitude,
-          radius
-        );
+    try {
+      const { data, success, error } = await eventService.getNearbyEvents(
+        position.coords.latitude,
+        position.coords.longitude,
+        radius
+      );
 
-        if (success && data) {
-          setEvents(data);
-        } else if (error) {
-          toast.error(error);
-        }
-      } catch (err) {
-        console.error('Error fetching nearby events:', err);
-        toast.error('Failed to fetch nearby events');
-      } finally {
-        setLoading(false);
+      if (success && data) {
+        setEvents(data);
+      } else if (error) {
+        toast.error(error);
       }
+    } catch (err) {
+      console.error('Error fetching nearby events:', err);
+      toast.error('Failed to fetch nearby events');
+    } finally {
+      setLoading(false);
     }
-
-    fetchNearbyEvents();
   }, [position, radius]);
 
-  const handleEventJoined = async (updatedEvent: Event) => {
-    setEvents(prevEvents =>
-      prevEvents.map(e => (e.id === updatedEvent.id ? updatedEvent : e))
-    );
-    onEventJoined?.(updatedEvent);
-  };
-
-  const handleEventLeft = async (updatedEvent: Event) => {
-    setEvents(prevEvents =>
-      prevEvents.map(e => (e.id === updatedEvent.id ? updatedEvent : e))
-    );
-    onEventLeft?.(updatedEvent);
-  };
+  useEffect(() => {
+    void fetchNearbyEvents();
+  }, [fetchNearbyEvents]);
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-48">
-        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary" />
-      </div>
-    );
+    return <div>Loading nearby events...</div>;
   }
 
   if (!position) {
@@ -78,10 +60,16 @@ export function NearbyEvents({
   }
 
   return (
-    <EventList
-      events={events}
-      onEventJoined={handleEventJoined}
-      onEventLeft={handleEventLeft}
-    />
+    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+      {events.map(event => (
+        <EventCard
+          key={event.id}
+          event={event}
+          onEventJoined={onEventJoined}
+          onEventLeft={onEventLeft}
+          showActions={true}
+        />
+      ))}
+    </div>
   );
 }

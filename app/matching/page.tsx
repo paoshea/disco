@@ -1,236 +1,106 @@
 'use client';
 
-import React, { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
-import type { Match } from '@/types/match';
-import { matchService } from '@/services/api/match.service';
-import { MatchList } from '@/components/matching/MatchList';
-import { MatchMapView } from '@/components/matching/MatchMapView';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import LocationPrivacy from '@/components/location/LocationPrivacy';
-import { NearbyEvents } from '@/components/events/NearbyEvents';
-import { useToast } from '@/hooks/useToast';
-import type { Event } from '@/types/event';
-import type { LocationPrivacyMode } from '@/types/location';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'react-hot-toast';
+import { Switch } from '@headlessui/react';
+import { LocationService } from '@/services/location/location.service';
+
+interface MatchingSettings {
+  enabled: boolean;
+  radius: number;
+  interests: string[];
+}
+
+interface User {
+  id: string;
+}
 
 export default function MatchingPage() {
-  const { data: session } = useSession();
-  const toast = useToast();
   const router = useRouter();
-  const [matches, setMatches] = useState<Match[]>([]);
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<MatchingSettings>({
+    enabled: false,
+    radius: 5000,
+    interests: [],
+  });
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
-  const [radius, setRadius] = useState<number>(0.5); // Default 0.5 km (approx 500m)
-  const [timeWindow, setTimeWindow] = useState<
-    'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today'
-  >('anytime');
-  const [activityType, setActivityType] = useState<string>('any');
-  const [privacyMode, setPrivacyMode] =
-    useState<LocationPrivacyMode>('precise');
-  const { position } = useGeolocation();
-
-  const fetchMatches = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const matches = await matchService.getMatches(
-        position?.coords
-          ? {
-              latitude: position.coords.latitude,
-              longitude: position.coords.longitude,
-              radius,
-              timeWindow,
-              activityType: activityType === 'any' ? undefined : activityType,
-              privacyMode: privacyMode === 'precise' ? 'standard' : 'strict',
-            }
-          : undefined
-      );
-      setMatches(matches);
-    } catch (error) {
-      console.error('Error fetching matches:', error);
-      setError('Failed to fetch matches');
-    } finally {
-      setLoading(false);
-    }
-  }, [position, radius, timeWindow, activityType, privacyMode]);
 
   useEffect(() => {
-    if (!session) {
-      router.push('/login');
-      return;
+    const fetchSettings = async () => {
+      if (!user?.id) {
+        router.push('/auth/signin');
+        return;
+      }
+
+      try {
+        const locationService = LocationService.getInstance();
+        const { data: locationState } = await locationService.getLocationState(user.id);
+        
+        if (locationState) {
+          setSettings(prev => ({
+            ...prev,
+            enabled: locationState.enabled,
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+        toast.error('Failed to load matching settings');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void fetchSettings();
+  }, [user?.id, router]);
+
+  const handleToggleMatching = async (enabled: boolean) => {
+    if (!user?.id) return;
+
+    try {
+      const locationService = LocationService.getInstance();
+      await locationService.updateLocationState(user.id, {
+        enabled,
+      });
+      setSettings(prev => ({ ...prev, enabled }));
+      toast.success(enabled ? 'Matching enabled' : 'Matching disabled');
+    } catch (error) {
+      console.error('Error updating matching settings:', error);
+      toast.error('Failed to update matching settings');
     }
-    void fetchMatches();
-  }, [session, router, fetchMatches]);
-
-  const handleEventJoin = useCallback(
-    (event: Event) => {
-      toast.success(`Successfully joined ${event.title}`);
-      void fetchMatches();
-    },
-    [fetchMatches, toast]
-  );
-
-  const handleEventLeave = useCallback(
-    (event: Event) => {
-      toast.success(`Successfully left ${event.title}`);
-      void fetchMatches();
-    },
-    [fetchMatches, toast]
-  );
-
-  const handleRadiusChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      const newRadius = parseFloat(event.target.value);
-      setRadius(newRadius);
-    },
-    []
-  );
-
-  const handleTimeWindowChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setTimeWindow(event.target.value as typeof timeWindow);
-    },
-    []
-  );
-
-  const handleActivityTypeChange = useCallback(
-    (event: React.ChangeEvent<HTMLSelectElement>) => {
-      setActivityType(event.target.value);
-    },
-    []
-  );
-
-  if (!session) {
-    return null;
-  }
+  };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <LoadingSpinner />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-4">
-        <ErrorMessage message={error} />
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-8">
-        <div className="flex flex-col space-y-4 p-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Nearby Matches</h1>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-3 py-1 rounded ${
-                  viewMode === 'list'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                List
-              </button>
-              <button
-                onClick={() => setViewMode('map')}
-                className={`px-3 py-1 rounded ${
-                  viewMode === 'map'
-                    ? 'bg-blue-500 text-white'
-                    : 'bg-gray-200 text-gray-700'
-                }`}
-              >
-                Map
-              </button>
-            </div>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Matching Settings</h1>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold">Enable Matching</h2>
+            <p className="text-gray-600">
+              Allow others to discover and connect with you based on shared interests
+            </p>
           </div>
-
-          <LocationPrivacy
-            onPrivacyChange={(mode: LocationPrivacyMode) => {
-              setPrivacyMode(mode);
-            }}
-            onSharingChange={(enabled: boolean) => {
-              // Handle sharing change if needed
-            }}
-          />
+          <Switch
+            checked={settings.enabled}
+            onChange={(enabled: boolean) => handleToggleMatching(enabled)}
+            className={`${
+              settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
+            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+          >
+            <span
+              className={`${
+                settings.enabled ? 'translate-x-6' : 'translate-x-1'
+              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
+            />
+          </Switch>
         </div>
-      </div>
-
-      <div className="mb-8">
-        <h2 className="mb-4 text-2xl font-bold">Nearby Events</h2>
-        <NearbyEvents
-          radius={radius}
-          onEventJoined={handleEventJoin}
-          onEventLeft={handleEventLeave}
-        />
-      </div>
-
-      <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-2xl font-bold">Matches</h2>
-          <div className="flex space-x-4">
-            <select
-              value={radius}
-              onChange={handleRadiusChange}
-              className="rounded-lg border-gray-300"
-            >
-              <option value={0.5}>Within 500m</option>
-              <option value={1}>Within 1km</option>
-              <option value={2}>Within 2km</option>
-              <option value={5}>Within 5km</option>
-            </select>
-
-            <select
-              value={timeWindow}
-              onChange={handleTimeWindowChange}
-              className="rounded-lg border-gray-300"
-            >
-              <option value="anytime">Any Time</option>
-              <option value="now">Right Now</option>
-              <option value="15min">Next 15 Minutes</option>
-              <option value="30min">Next 30 Minutes</option>
-              <option value="1hour">Next Hour</option>
-              <option value="today">Today</option>
-            </select>
-
-            <select
-              value={activityType}
-              onChange={handleActivityTypeChange}
-              className="rounded-lg border-gray-300"
-            >
-              <option value="any">Any Activity</option>
-              <option value="social">Social</option>
-              <option value="exercise">Exercise</option>
-              <option value="study">Study</option>
-              <option value="hobby">Hobby</option>
-            </select>
-          </div>
-        </div>
-
-        {viewMode === 'list' ? (
-          <MatchList
-            matches={matches}
-            onMatchClick={matchId => {
-              router.push(`/matches/${matchId}`);
-            }}
-          />
-        ) : (
-          <MatchMapView
-            matches={matches}
-            onMarkerClick={matchId => {
-              router.push(`/matches/${matchId}`);
-            }}
-          />
-        )}
       </div>
     </div>
   );

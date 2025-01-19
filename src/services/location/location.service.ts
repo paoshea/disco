@@ -1,13 +1,14 @@
 import { db } from '@/lib/prisma';
-import type { ExtendedPrismaClient } from '@/lib/prisma';
-import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { Prisma } from '@prisma/client';
+
+type Location = Prisma.LocationGetPayload<{}>;
 
 export class LocationService {
   private static instance: LocationService;
-  private prisma: ExtendedPrismaClient['$extends']['model']['location'];
+  private prisma: typeof db.location;
 
   private constructor() {
-    this.prisma = (db as ExtendedPrismaClient).$extends.model.location;
+    this.prisma = db.location;
   }
 
   static getInstance(): LocationService {
@@ -22,7 +23,7 @@ export class LocationService {
     latitude: number,
     longitude: number,
     accuracy?: number,
-    privacyMode: LocationPrivacyMode = 'precise'
+    privacyMode: string = 'precise'
   ): Promise<Location> {
     try {
       if (!latitude || !longitude) {
@@ -53,7 +54,7 @@ export class LocationService {
         data: locationData,
       });
 
-      return data as Location;
+      return data;
     } catch (error) {
       console.error('Error updating location:', error);
       throw error;
@@ -67,11 +68,57 @@ export class LocationService {
         orderBy: { timestamp: 'desc' },
       });
 
-      return location as Location | null;
+      return location;
     } catch (error) {
       console.error('Error getting latest location:', error);
       throw error;
     }
+  }
+
+  static async getLocation(userId: string): Promise<Location | null> {
+    return await db.location.findFirst({
+      where: {
+        userId,
+      },
+      orderBy: {
+        timestamp: 'desc',
+      },
+    });
+  }
+
+  static async toggleLocationSharing(userId: string): Promise<Location | null> {
+    const currentLocation = await LocationService.getLocation(userId);
+    if (!currentLocation) {
+      return null;
+    }
+
+    return await db.location.update({
+      where: {
+        id: currentLocation.id,
+      },
+      data: {
+        sharingEnabled: !currentLocation.sharingEnabled,
+      },
+    });
+  }
+
+  static async updatePrivacyMode(
+    userId: string,
+    privacyMode: string
+  ): Promise<Location | null> {
+    const currentLocation = await LocationService.getLocation(userId);
+    if (!currentLocation) {
+      return null;
+    }
+
+    return await db.location.update({
+      where: {
+        id: currentLocation.id,
+      },
+      data: {
+        privacyMode,
+      },
+    });
   }
 }
 

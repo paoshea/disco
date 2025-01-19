@@ -3,297 +3,149 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
-import { Layout } from '@/components/layout/Layout';
-import { SafetyCenter } from '@/components/safety/SafetyCenter';
-import { EmergencyContactList } from '@/components/safety/EmergencyContactList';
-import { SafetyCheckList } from '@/components/safety/SafetyCheckList';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { useSafetyService } from '@/hooks/useSafetyService';
-import type { EmergencyContact } from '@/types/safety';
-import { Tab } from '@headlessui/react';
-import { safetyService } from '@/services/api/safety.service';
-import type { SafetyCheckNew as SafetyCheck } from '@/types/safety';
+import { SafetyService } from '@/services/safety/safety.service';
+import { toast } from 'react-hot-toast';
+import { Switch } from '@headlessui/react';
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
+interface SafetySettings {
+  enabled: boolean;
+  emergencyContacts: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+    priority: 'primary' | 'secondary';
+  }[];
 }
 
-export default function Safety() {
+interface SafetySettingsResponse {
+  enabled: boolean;
+  emergencyContacts: {
+    id: string;
+    name: string;
+    phone: string;
+    email: string;
+    priority: 'primary' | 'secondary';
+  }[];
+}
+
+export default function SafetyPage() {
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const {
-    alerts,
-    safetyChecks,
-    isLoading: safetyLoading,
-    triggerEmergencyAlert,
-    resolveSafetyCheck,
-    dismissAlert,
-  } = useSafetyAlert();
-
-  // Use alerts to show active alerts if any
-  const activeAlerts = alerts.filter(alert => alert.status === 'active');
+  const { user } = useAuth();
+  const [settings, setSettings] = useState<SafetySettings>({
+    enabled: false,
+    emergencyContacts: [],
+  });
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        if (!authLoading && !user) {
-          router.push('/login');
-          return;
-        }
+    const fetchSettings = async () => {
+      if (!user?.id) {
+        router.push('/auth/signin');
+        return;
+      }
 
-        // Trigger emergency alert if there's a pending SOS
-        if (activeAlerts.some(alert => alert.type === 'sos')) {
-          await triggerEmergencyAlert();
+      try {
+        const safetyService = SafetyService.getInstance();
+        const { data: safetySettings }: { data: SafetySettingsResponse } = await safetyService.getSafetySettings(user.id);
+        
+        if (safetySettings) {
+          setSettings({
+            enabled: safetySettings.enabled,
+            emergencyContacts: safetySettings.emergencyContacts,
+          });
         }
-      } catch (err) {
-        console.error('Error initializing safety page:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'An error occurred while loading the safety page.'
-        );
+      } catch (error) {
+        console.error('Error fetching safety settings:', error);
+        toast.error('Failed to load safety settings');
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     };
 
-    void init();
-  }, [router, user, authLoading, activeAlerts, triggerEmergencyAlert]);
+    void fetchSettings();
+  }, [user?.id, router]);
 
-  // Handle auto-dismissal of resolved alerts
-  useEffect(() => {
-    const dismissResolvedAlerts = async () => {
-      try {
-        // Since id is required in SafetyAlertNew interface, we can be sure it exists
-        const resolvedAlerts = alerts.filter(
-          alert => alert.status === 'resolved'
-        );
-        await Promise.all(resolvedAlerts.map(alert => dismissAlert(alert.id)));
-      } catch (err) {
-        console.error('Error dismissing resolved alerts:', err);
-      }
-    };
+  const handleToggleSafety = async (enabled: boolean) => {
+    if (!user?.id) return;
 
-    void dismissResolvedAlerts();
-  }, [alerts, dismissAlert]);
+    try {
+      const safetyService = SafetyService.getInstance();
+      await safetyService.updateSafetySettings(user.id, {
+        enabled,
+      });
+      setSettings(prev => ({ ...prev, enabled }));
+      toast.success(enabled ? 'Safety features enabled' : 'Safety features disabled');
+    } catch (error) {
+      console.error('Error updating safety settings:', error);
+      toast.error('Failed to update safety settings');
+    }
+  };
 
-  if (isLoading || safetyLoading || authLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+  if (loading) {
+    return <div>Loading...</div>;
   }
-
-  if (!user) {
-    return null;
-  }
-
-  const wrappedSettingsChange = (
-    settings: Parameters<typeof safetyService.updateSafetySettings>[1]
-  ) => {
-    void (async () => {
-      try {
-        await safetyService.updateSafetySettings(user.id, {
-          autoShareLocation: settings.autoShareLocation,
-          meetupCheckins: settings.meetupCheckins,
-          sosAlertEnabled: settings.sosAlertEnabled,
-          requireVerifiedMatch: settings.requireVerifiedMatch,
-          emergencyContacts: (user.emergencyContacts || []).map(contact => ({
-            ...contact,
-            userId: user.id,
-            phoneNumber: contact.phoneNumber || '',
-            email: contact.email || '',
-            createdAt: contact.createdAt || new Date().toISOString(),
-            updatedAt: contact.updatedAt || new Date().toISOString(),
-            notifyOn: {
-              sosAlert: contact.notifyOn?.sosAlert ?? true,
-              meetupStart: contact.notifyOn?.meetupStart ?? true,
-              meetupEnd: contact.notifyOn?.meetupEnd ?? true,
-              lowBattery: contact.notifyOn?.lowBattery ?? true,
-              enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
-              exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true,
-            },
-          })),
-        });
-      } catch (err) {
-        console.error('Error updating safety settings:', err);
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to update safety settings'
-        );
-      }
-    })();
-  };
-
-  const wrappedEditContact = (contact: EmergencyContact) => {
-    void (async () => {
-      try {
-        if (!contact.id) {
-          throw new Error('Contact ID is required');
-        }
-        // Convert user EmergencyContact to safety EmergencyContact
-        const safetyContact = {
-          ...contact,
-          userId: user.id,
-          createdAt: contact.createdAt || new Date().toISOString(),
-          updatedAt: contact.updatedAt || new Date().toISOString(),
-          notifyOn: {
-            sosAlert: contact.notifyOn?.sosAlert ?? true,
-            meetupStart: contact.notifyOn?.meetupStart ?? true,
-            meetupEnd: contact.notifyOn?.meetupEnd ?? true,
-            lowBattery: contact.notifyOn?.lowBattery ?? true,
-            enterPrivacyZone: contact.notifyOn?.enterPrivacyZone ?? true,
-            exitPrivacyZone: contact.notifyOn?.exitPrivacyZone ?? true,
-          },
-        };
-        await safetyService.updateEmergencyContact(
-          user.id,
-          contact.id,
-          safetyContact
-        );
-      } catch (err) {
-        console.error('Error updating contact:', err);
-        setError(
-          err instanceof Error ? err.message : 'Failed to update contact'
-        );
-      }
-    })();
-  };
-
-  const wrappedDeleteContact = (contactId: string) => {
-    void (async () => {
-      try {
-        await safetyService.deleteEmergencyContact(user.id, contactId);
-      } catch (err) {
-        console.error('Error deleting contact:', err);
-        setError(
-          err instanceof Error ? err.message : 'Failed to delete contact'
-        );
-      }
-    })();
-  };
-
-  const wrappedCompleteCheck = (checkId: string): Promise<void> => {
-    return (async () => {
-      try {
-        await resolveSafetyCheck(checkId, 'safe');
-      } catch (err) {
-        console.error('Error completing safety check:', err);
-        setError(
-          err instanceof Error ? err.message : 'Failed to complete safety check'
-        );
-      }
-    })();
-  };
-
-  // Convert safety checks to the correct type
-  const typedSafetyChecks: SafetyCheck[] = safetyChecks.map(check => ({
-    id: check.id,
-    userId: check.userId,
-    type: check.type || 'custom',
-    status:
-      check.status === 'completed'
-        ? 'completed'
-        : check.status === 'missed'
-          ? 'missed'
-          : 'pending',
-    scheduledFor: check.scheduledFor,
-    location: check.location,
-    description: check.description,
-    createdAt: check.createdAt,
-    updatedAt: check.updatedAt,
-    completedAt: check.completedAt,
-  }));
 
   return (
-    <Layout>
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Safety Center</h1>
-          <p className="mt-2 text-sm text-gray-600">
-            Manage your safety settings and emergency contacts
-          </p>
-          {activeAlerts.length > 0 && (
-            <ErrorMessage
-              message={`You have ${activeAlerts.length} active safety alert(s)`}
-              className="mt-4"
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-6">Safety Settings</h1>
+
+      <div className="bg-white rounded-lg shadow p-6 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold">Enable Safety Features</h2>
+            <p className="text-gray-600">
+              Activate safety monitoring and emergency contact features
+            </p>
+          </div>
+          <Switch
+            checked={settings.enabled}
+            onChange={handleToggleSafety}
+            className={`${
+              settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
+            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
+          >
+            <span
+              className={`${
+                settings.enabled ? 'translate-x-6' : 'translate-x-1'
+              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
             />
-          )}
+          </Switch>
         </div>
 
-        {error && <ErrorMessage message={error} className="mb-6" />}
-
-        <Tab.Group>
-          <Tab.List className="flex space-x-1 rounded-xl bg-primary-900/20 p-1">
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-primary-700 shadow'
-                    : 'text-primary-100 hover:bg-white/[0.12] hover:text-white'
-                )
-              }
-            >
-              Safety Center
-            </Tab>
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-primary-700 shadow'
-                    : 'text-primary-100 hover:bg-white/[0.12] hover:text-white'
-                )
-              }
-            >
-              Emergency Contacts
-            </Tab>
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-primary-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-primary-700 shadow'
-                    : 'text-primary-100 hover:bg-white/[0.12] hover:text-white'
-                )
-              }
-            >
-              Safety Checks
-            </Tab>
-          </Tab.List>
-          <Tab.Panels className="mt-6">
-            <Tab.Panel>
-              <SafetyCenter
-                userId={user.id}
-                onSettingsChange={wrappedSettingsChange}
-              />
-            </Tab.Panel>
-            <Tab.Panel>
-              <EmergencyContactList
-                contacts={[]}
-                onEdit={wrappedEditContact}
-                onDelete={wrappedDeleteContact}
-              />
-            </Tab.Panel>
-            <Tab.Panel>
-              <SafetyCheckList
-                checks={typedSafetyChecks}
-                onComplete={wrappedCompleteCheck}
-              />
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
+        {settings.enabled && (
+          <div className="mt-6">
+            <h3 className="text-lg font-semibold mb-4">Emergency Contacts</h3>
+            {settings.emergencyContacts.length > 0 ? (
+              <ul className="space-y-4">
+                {settings.emergencyContacts.map(contact => (
+                  <li
+                    key={contact.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="font-medium">{contact.name}</p>
+                      <p className="text-sm text-gray-600">{contact.email}</p>
+                      <p className="text-sm text-gray-600">{contact.phone}</p>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        contact.priority === 'primary'
+                          ? 'bg-blue-100 text-blue-800'
+                          : 'bg-gray-100 text-gray-800'
+                      }`}
+                    >
+                      {contact.priority}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-600">No emergency contacts added yet.</p>
+            )}
+          </div>
+        )}
       </div>
-    </Layout>
+    </div>
   );
 }

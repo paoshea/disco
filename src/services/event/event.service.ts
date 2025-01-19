@@ -1,19 +1,14 @@
 import { db } from '@/lib/prisma';
-import type { Event, EventWithParticipants } from '@/types/event';
-import type { User } from '@/types/user';
+import type { Event, User } from '@prisma/client';
+import type { EventWithParticipants } from '@/types/event';
+import type { ServiceResponse } from '@/types/service';
 
-// Initialize Prisma client model
-const eventDb = db.$extends.model.event;
-
-interface EventServiceResponse<T> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
+export type EventServiceResponse<T> = ServiceResponse<T>;
 
 export class EventService {
   private static instance: EventService;
 
+  // Private constructor to enforce singleton pattern
   private constructor() {}
 
   public static getInstance(): EventService {
@@ -23,23 +18,24 @@ export class EventService {
     return EventService.instance;
   }
 
-  async getNearbyEvents(
+  async findNearbyEvents(
     latitude: number,
     longitude: number,
-    radiusInMeters: number = 500
+    radiusInMeters = 5000
   ): Promise<EventServiceResponse<EventWithParticipants[]>> {
     try {
-      // Calculate bounding box for spatial query
-      const latitudeDelta = radiusInMeters / 111000; // 111km per degree
+      // Calculate bounding box for initial filtering
+      const metersPerDegree = 111320; // approximate meters per degree at equator
+      const latitudeDelta = radiusInMeters / metersPerDegree;
+      const longitudeDelta =
+        radiusInMeters / (metersPerDegree * Math.cos(latitude * (Math.PI / 180)));
+
       const minLat = latitude - latitudeDelta;
       const maxLat = latitude + latitudeDelta;
-
-      const longitudeDelta =
-        radiusInMeters / (111000 * Math.cos((latitude * Math.PI) / 180));
       const minLon = longitude - longitudeDelta;
       const maxLon = longitude + longitudeDelta;
 
-      const events = await eventDb.findMany({
+      const events = await db.event.findMany({
         where: {
           location: {
             latitude: {
@@ -57,15 +53,18 @@ export class EventService {
             select: {
               id: true,
               name: true,
+              email: true,
+              image: true,
             },
           },
           participants: {
-            select: {
-              userId: true,
+            include: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
+                  image: true,
                 },
               },
             },
@@ -73,19 +72,18 @@ export class EventService {
         },
       });
 
-      // Add currentParticipants count
       return {
         success: true,
-        data: events.map((event: EventWithParticipants) => ({
+        data: events.map(event => ({
           ...event,
           currentParticipants: event.participants.length,
         })),
       };
     } catch (error) {
-      console.error('Error fetching nearby events:', error);
+      console.error('Error finding nearby events:', error);
       return {
         success: false,
-        error: 'Failed to get nearby events',
+        error: 'Failed to find nearby events',
       };
     }
   }
@@ -95,32 +93,28 @@ export class EventService {
     creator: User
   ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
-      const event = await eventDb.create({
+      const event = await db.event.create({
         data: {
           ...eventData,
           creatorId: creator.id,
-          currentParticipants: 0,
-          participants: {
-            create: {
-              userId: creator.id,
-              status: 'confirmed',
-            },
-          },
         },
         include: {
           creator: {
             select: {
               id: true,
               name: true,
+              email: true,
+              image: true,
             },
           },
           participants: {
-            select: {
-              userId: true,
+            include: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
+                  image: true,
                 },
               },
             },
@@ -130,10 +124,7 @@ export class EventService {
 
       return {
         success: true,
-        data: {
-          ...event,
-          currentParticipants: event.participants.length,
-        },
+        data: event,
       };
     } catch (error) {
       console.error('Error creating event:', error);
@@ -149,13 +140,12 @@ export class EventService {
     userId: string
   ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
-      const event = await eventDb.update({
+      const event = await db.event.update({
         where: { id: eventId },
         data: {
           participants: {
             create: {
               userId,
-              status: 'confirmed',
             },
           },
         },
@@ -164,15 +154,18 @@ export class EventService {
             select: {
               id: true,
               name: true,
+              email: true,
+              image: true,
             },
           },
           participants: {
-            select: {
-              userId: true,
+            include: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
+                  image: true,
                 },
               },
             },
@@ -182,10 +175,7 @@ export class EventService {
 
       return {
         success: true,
-        data: {
-          ...event,
-          currentParticipants: event.participants.length,
-        },
+        data: event,
       };
     } catch (error) {
       console.error('Error joining event:', error);
@@ -201,7 +191,7 @@ export class EventService {
     userId: string
   ): Promise<EventServiceResponse<EventWithParticipants>> {
     try {
-      const event = await eventDb.update({
+      const event = await db.event.update({
         where: { id: eventId },
         data: {
           participants: {
@@ -218,15 +208,18 @@ export class EventService {
             select: {
               id: true,
               name: true,
+              email: true,
+              image: true,
             },
           },
           participants: {
-            select: {
-              userId: true,
+            include: {
               user: {
                 select: {
                   id: true,
                   name: true,
+                  email: true,
+                  image: true,
                 },
               },
             },
@@ -236,10 +229,7 @@ export class EventService {
 
       return {
         success: true,
-        data: {
-          ...event,
-          currentParticipants: event.participants.length,
-        },
+        data: event,
       };
     } catch (error) {
       console.error('Error leaving event:', error);
@@ -251,5 +241,4 @@ export class EventService {
   }
 }
 
-// Export singleton instance
 export const eventService = EventService.getInstance();

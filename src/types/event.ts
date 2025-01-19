@@ -1,44 +1,28 @@
-import type { User } from '@/types/user';
+import type { Coordinates } from './location';
+import type { Participant } from './participant';
 import { z } from 'zod';
 
 // Base event types
 export interface Event {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   type: string;
   eventType: 'social' | 'virtual' | 'hybrid';
   creatorId: string;
-  location: {
-    address: string;
-    latitude: number;
-    longitude: number;
-    placeId?: string;
-  };
-  startTime: string;
-  endTime?: string;
+  location: Coordinates;
+  startTime: Date;
+  endTime?: Date;
   maxParticipants: number | null;
   currentParticipants: number;
-  participants: Array<{
-    userId: string;
-    user: {
-      id: string;
-      name: string | null;
-    };
-  }>;
+  participants?: Participant[];
   tags: string[];
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface EventWithParticipants extends Event {
-  participants: Array<{
-    userId: string;
-    user: {
-      id: string;
-      name: string | null;
-    };
-  }>;
+  participants: Participant[];
   creator: {
     id: string;
     name: string | null;
@@ -93,19 +77,28 @@ export const actionSchema = z.object({
 
 export const createEventSchema = z.object({
   title: z.string(),
-  description: z.string(),
+  description: z.string().optional(),
   type: z.string(),
   eventType: z.enum(['social', 'virtual', 'hybrid']),
   location: z.object({
-    address: z.string(),
-    latitude: z.number(),
-    longitude: z.number(),
-    placeId: z.string().optional(),
+    lat: z.number(),
+    lng: z.number(),
   }),
-  startTime: z.string().datetime(),
-  endTime: z.string().datetime().optional(),
+  startTime: z.date(),
+  endTime: z.date().optional(),
   maxParticipants: z.number().optional(),
   tags: z.array(z.string()).optional(),
+});
+
+export const eventSchema = z.object({
+  title: z.string().min(1, 'Title is required'),
+  description: z.string().optional(),
+  location: z.object({
+    lat: z.number(),
+    lng: z.number(),
+  }),
+  startTime: z.date(),
+  endTime: z.date(),
 });
 
 export type CreateEventInput = z.infer<typeof createEventSchema>;

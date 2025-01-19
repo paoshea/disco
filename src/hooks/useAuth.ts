@@ -1,6 +1,26 @@
-import { useContext } from 'react';
-import { AuthContext, RegisterData } from '@/contexts/AuthContext';
-import type { User } from '@/types/user';
+import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { apiClient } from '@/services/api/api.client';
+import { z } from 'zod';
+
+interface User {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  streakCount: number;
+}
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  error: string | null;
+  login: (email: string, password: string) => Promise<LoginResult>;
+  logout: () => Promise<void>;
+  set: (state: Partial<AuthState>) => void;
+}
 
 export interface LoginResult {
   success?: boolean;
@@ -8,34 +28,90 @@ export interface LoginResult {
   needsVerification?: boolean;
 }
 
-export interface UseAuthReturn {
-  user: User | null;
-  loading: boolean;
-  isLoading: boolean;
-  error: string | null;
-  isAuthenticated: boolean;
-  login: (email: string, password: string) => Promise<LoginResult>;
-  logout: () => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
-  signup: (data: RegisterData) => Promise<void>;
-  updateProfile: (data: Partial<User>) => Promise<void>;
-  requestPasswordReset: (email: string) => Promise<void>;
-  resetPassword: (token: string, password: string) => Promise<void>;
-  verifyEmail: (token: string) => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
-}
+const loginResponseSchema = z.object({
+  user: z
+    .object({
+      id: z.string(),
+      email: z.string(),
+      firstName: z.string(),
+      lastName: z.string(),
+      role: z.string(),
+      streakCount: z.number(),
+    })
+    .optional(),
+  error: z.string().optional(),
+  needsVerification: z.boolean().optional(),
+  token: z.string().optional(),
+});
 
-export type { RegisterData };
+export const useAuth = create<AuthState>()(
+  persist(
+    set => ({
+      user: null,
+      token: null,
+      isLoading: false,
+      error: null,
+      set: state => set(state),
 
-export const useAuth = (): UseAuthReturn => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return {
-    ...context,
-    user: context.user,
-    isLoading: context.loading,
-    isAuthenticated: !!context.user,
-  };
-};
+      login: async (email: string, password: string) => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const data = await apiClient.post('/api/auth/login', {
+            email,
+            password,
+          });
+          const result = loginResponseSchema.safeParse(data);
+
+          if (!result.success) {
+            throw new Error('Invalid response from server');
+          }
+
+          if (result.data.user && result.data.token) {
+            set({
+              user: result.data.user,
+              token: result.data.token,
+              isLoading: false,
+            });
+            return { success: true };
+          } else if (result.data.needsVerification) {
+            set({ isLoading: false });
+            return { needsVerification: true };
+          } else if (result.data.error) {
+            set({ isLoading: false, error: result.data.error });
+            return { error: result.data.error };
+          }
+
+          throw new Error('Invalid response format');
+        } catch (error) {
+          const errorMessage =
+            error instanceof Error
+              ? error.message
+              : 'An error occurred during login';
+          set({
+            error: errorMessage,
+            isLoading: false,
+          });
+          return { error: errorMessage };
+        }
+      },
+
+      logout: async () => {
+        try {
+          await apiClient.post('/api/auth/logout');
+          set({ user: null, token: null });
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+      },
+    }),
+    {
+      name: 'auth-storage',
+      storage: createJSONStorage(() => localStorage),
+      partialize: state => ({
+        user: state.user,
+        token: state.token,
+      }),
+    }
+  )
+);

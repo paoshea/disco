@@ -1,26 +1,44 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
-import type { Event, EventSearchParams, CreateEventInput } from '@/types/event';
-import { createEventSchema } from '@/types/event';
-import type { User } from '@/types/user';
+import type { Prisma } from '@prisma/client';
 
-// Initialize Prisma client models
-const eventDb = db.$extends.model.event;
-const locationDb = db.$extends.model.location;
+type Event = Prisma.EventGetPayload<{
+  include: {
+    participants: {
+      include: {
+        user: true;
+      };
+    };
+    creator: true;
+  };
+}>;
+
+interface CreateEventBody {
+  title: string;
+  description?: string;
+  startTime: string;
+  endTime?: string;
+  latitude: number;
+  longitude: number;
+  type: string;
+  maxParticipants?: number;
+  tags?: string[];
+}
 
 export async function GET(request: NextRequest): Promise<Response> {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = new URL(request.url).searchParams;
-    const location = await locationDb.findFirst({
+    const location = await db.location.findFirst({
       where: {
-        userId: (session.user as User).id,
+        userId: (session.user as any).id,
       },
       orderBy: {
         timestamp: 'desc',
@@ -51,9 +69,41 @@ export async function GET(request: NextRequest): Promise<Response> {
     const minLon = userLocation.longitude - longitudeDelta;
     const maxLon = userLocation.longitude + longitudeDelta;
 
-    const events = await eventDb.findMany({
-      where: {
-        location: {
+    let events;
+    if (searchParams.get('latitude') && searchParams.get('longitude') && searchParams.get('radius')) {
+      const lat = parseFloat(searchParams.get('latitude'));
+      const lng = parseFloat(searchParams.get('longitude'));
+      const rad = parseFloat(searchParams.get('radius'));
+
+      events = await db.event.findMany({
+        where: {
+          AND: [
+            {
+              latitude: {
+                gte: lat - rad,
+                lte: lat + rad,
+              },
+            },
+            {
+              longitude: {
+                gte: lng - rad,
+                lte: lng + rad,
+              },
+            },
+          ],
+        },
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+    } else {
+      events = await db.event.findMany({
+        where: {
           latitude: {
             gte: minLat,
             lte: maxLat,
@@ -63,27 +113,16 @@ export async function GET(request: NextRequest): Promise<Response> {
             lte: maxLon,
           },
         },
-      },
-      include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        participants: {
-          select: {
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
             },
           },
         },
-      },
-    });
+      });
+    }
 
     // Add currentParticipants count
     const eventsWithCount = events.map(
@@ -105,52 +144,32 @@ export async function GET(request: NextRequest): Promise<Response> {
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
-    const validatedBody = createEventSchema.safeParse(body);
+    const eventData = body as CreateEventBody;
 
-    if (!validatedBody.success) {
-      return NextResponse.json(
-        { error: 'Invalid request body' },
-        { status: 400 }
-      );
-    }
-
-    const userId = (session.user as User).id;
-    const eventData = {
-      ...validatedBody.data,
-      creatorId: userId,
-      currentParticipants: 0,
-      participants: {
-        create: {
-          userId,
-          status: 'confirmed',
-        },
+    const event = await db.event.create({
+      data: {
+        title: eventData.title,
+        description: eventData.description,
+        startTime: new Date(eventData.startTime),
+        endTime: eventData.endTime ? new Date(eventData.endTime) : null,
+        latitude: eventData.latitude,
+        longitude: eventData.longitude,
+        type: eventData.type,
+        maxParticipants: eventData.maxParticipants,
+        tags: eventData.tags || [],
+        creatorId: session.user.id,
       },
-    };
-
-    const event = await eventDb.create({
-      data: eventData,
       include: {
-        creator: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+        creator: true,
         participants: {
-          select: {
-            userId: true,
-            user: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
+          include: {
+            user: true,
           },
         },
       },

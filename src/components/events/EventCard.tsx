@@ -1,6 +1,5 @@
-import { formatDistanceToNow, format } from 'date-fns';
+import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
-import Image from 'next/image';
 import { eventService } from '@/services/event/event.service';
 import type { Event } from '@/types/event';
 import { useAuth } from '@/hooks/useAuth';
@@ -10,6 +9,7 @@ import {
   UserGroupIcon,
   TagIcon,
 } from '@heroicons/react/24/outline';
+import { useCallback } from 'react';
 
 interface EventCardProps {
   event: Event;
@@ -26,40 +26,66 @@ export function EventCard({
 }: EventCardProps) {
   const { user } = useAuth();
   const isUpcoming = new Date(event.startTime) > new Date();
-  const isJoined = event.participants.some(p => p.userId === user?.id);
+  const isParticipating =
+    event.participants?.some(p => p.userId === user?.id) ?? false;
 
-  const handleJoinEvent = async () => {
-    if (!user) return;
+  const handleJoinEvent = useCallback(async () => {
+    if (!user?.id) {
+      toast.error('Please sign in to join events');
+      return;
+    }
+
     try {
-      const response = await eventService.joinEvent(event.id, user.id);
-      if (response.success && response.data) {
+      const { data, success, error } = await eventService.joinEvent(
+        event.id,
+        user.id
+      );
+      if (success && data) {
         toast.success('Successfully joined event!');
-        onEventJoined?.(response.data);
+        onEventJoined?.(data);
       } else {
-        throw new Error(response.error || 'Failed to join event');
+        toast.error(error || 'Failed to join event');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to join event');
+      console.error('Error joining event:', err);
+      toast.error('Failed to join event');
     }
+  }, [event.id, user?.id, onEventJoined]);
+
+  const handleLeaveEvent = useCallback(async () => {
+    if (!user?.id) {
+      toast.error('Please sign in to leave events');
+      return;
+    }
+
+    try {
+      const { data, success, error } = await eventService.leaveEvent(
+        event.id,
+        user.id
+      );
+      if (success && data) {
+        toast.success('Successfully left event');
+        onEventLeft?.(data);
+      } else {
+        toast.error(error || 'Failed to leave event');
+      }
+    } catch (err) {
+      console.error('Error leaving event:', err);
+      toast.error('Failed to leave event');
+    }
+  }, [event.id, user?.id, onEventLeft]);
+
+  // Create non-async click handlers
+  const onJoinClick = () => {
+    void handleJoinEvent();
   };
 
-  const handleLeaveEvent = async () => {
-    if (!user) return;
-    try {
-      const response = await eventService.leaveEvent(event.id, user.id);
-      if (response.success && response.data) {
-        toast.success('Successfully left event!');
-        onEventLeft?.(response.data);
-      } else {
-        throw new Error(response.error || 'Failed to leave event');
-      }
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to leave event');
-    }
+  const onLeaveClick = () => {
+    void handleLeaveEvent();
   };
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 space-y-4">
+    <div className="bg-white rounded-lg shadow-md p-6 space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold">{event.title}</h3>
@@ -84,17 +110,17 @@ export function EventCard({
 
       <div className="flex items-center space-x-4 text-sm text-gray-500">
         <div className="flex items-center">
-          <CalendarIcon className="h-4 w-4 mr-1" />
-          <span>
-            {format(new Date(event.startTime), 'MMM d, h:mm a')}
-            {event.endTime && ` - ${format(new Date(event.endTime), 'h:mm a')}`}
-          </span>
-        </div>
-        <div className="flex items-center">
           <MapPinIcon className="h-4 w-4 mr-1" />
           <span>
             {event.location.latitude?.toFixed(6)},{' '}
             {event.location.longitude?.toFixed(6)}
+          </span>
+        </div>
+        <div className="flex items-center">
+          <CalendarIcon className="h-4 w-4 mr-1" />
+          <span>
+            {format(new Date(event.startTime), 'MMM d, h:mm a')}
+            {event.endTime && ` - ${format(new Date(event.endTime), 'h:mm a')}`}
           </span>
         </div>
       </div>
@@ -103,7 +129,7 @@ export function EventCard({
         <div className="flex items-center">
           <UserGroupIcon className="h-4 w-4 mr-1" />
           <span>
-            {event.participants.length}
+            {event.participants?.length ?? 0}
             {event.maxParticipants && `/${event.maxParticipants}`} participants
           </span>
         </div>
@@ -117,16 +143,16 @@ export function EventCard({
 
       {showActions && isUpcoming && (
         <div className="flex justify-end space-x-2">
-          {isJoined ? (
+          {isParticipating ? (
             <button
-              onClick={handleLeaveEvent}
+              onClick={onLeaveClick}
               className="text-red-600 hover:text-red-700 font-medium"
             >
               Leave Event
             </button>
           ) : (
             <button
-              onClick={handleJoinEvent}
+              onClick={onJoinClick}
               className="text-blue-600 hover:text-blue-700 font-medium"
             >
               Join Event

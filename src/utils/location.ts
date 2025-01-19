@@ -1,15 +1,11 @@
 import { db } from '@/lib/prisma';
-import type { ExtendedPrismaClient } from '@/lib/prisma';
-import type { Location, PrivacyZone } from '@/types/location';
+import type { Location, PrivacyZone } from '@prisma/client';
 
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 
 // Initialize Prisma clients
-const locationDb: ExtendedPrismaClient['$extends']['model']['location'] = (
-  db as ExtendedPrismaClient
-).$extends.model.location;
-const privacyZoneDb: ExtendedPrismaClient['$extends']['model']['privacyZone'] =
-  (db as ExtendedPrismaClient).$extends.model.privacyZone;
+const locationDb = db.location;
+const privacyZoneDb = db.privacyZone;
 
 export function degreesToRadians(degrees: number): number {
   return degrees * (Math.PI / 180);
@@ -36,9 +32,9 @@ export function calculateDistance(
 }
 
 export async function getPrivacyZones(userId: string): Promise<PrivacyZone[]> {
-  return (await privacyZoneDb.findMany({
+  return await privacyZoneDb.findMany({
     where: { userId },
-  })) as PrivacyZone[];
+  });
 }
 
 export function isInPrivacyZone(
@@ -57,14 +53,14 @@ export async function getNearbyLocations(
   radiusKm = 5
 ): Promise<Location[]> {
   // First get all locations from the last 24 hours
-  const recentLocations = (await locationDb.findMany({
+  const recentLocations = await locationDb.findMany({
     where: {
       userId: { not: userId }, // Exclude the requesting user
       timestamp: {
         gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
       },
     },
-  })) as Location[];
+  });
 
   // Then filter by distance
   return recentLocations.filter(
@@ -81,7 +77,7 @@ export async function createPrivacyZone(
   longitude: number,
   radius: number
 ): Promise<PrivacyZone> {
-  return (await privacyZoneDb.create({
+  return await privacyZoneDb.create({
     data: {
       userId,
       name,
@@ -89,19 +85,19 @@ export async function createPrivacyZone(
       longitude,
       radius,
     },
-  })) as PrivacyZone;
+  });
 }
 
 export async function deletePrivacyZone(
   userId: string,
   zoneId: string
 ): Promise<PrivacyZone> {
-  return (await privacyZoneDb.delete({
+  return await privacyZoneDb.delete({
     where: {
       id: zoneId,
       userId, // Ensure the zone belongs to the user
     },
-  })) as PrivacyZone;
+  });
 }
 
 export const locationUtils = {
