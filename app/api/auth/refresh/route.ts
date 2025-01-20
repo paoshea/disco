@@ -58,6 +58,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       email: user.email,
       role: user.role,
       firstName: user.firstName,
+      lastName: user.lastName,
     });
 
     // Update refresh token in database

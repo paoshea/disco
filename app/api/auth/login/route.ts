@@ -56,7 +56,6 @@ export async function POST(request: NextRequest): Promise<Response> {
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
-      streakCount: user.streakCount,
     });
 
     // Store refresh token in database

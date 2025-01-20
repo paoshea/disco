@@ -11,10 +11,9 @@ export interface EventCreateInput {
   description?: string;
   startTime: Date;
   endTime?: Date;
-  latitude?: number;
-  longitude?: number;
-  address?: string;
-  type?: 'social' | 'virtual' | 'hybrid';
+  latitude: number;
+  longitude: number;
+  type: 'social' | 'virtual' | 'hybrid';
   maxParticipants?: number;
   tags?: string[];
   creatorId: string;
@@ -25,7 +24,6 @@ interface DbEvent {
   title: string;
   description: string | null;
   type: 'social' | 'virtual' | 'hybrid';
-  eventType: 'social' | 'virtual' | 'hybrid';
   creatorId: string;
   latitude: number;
   longitude: number;
@@ -43,7 +41,6 @@ interface DbParticipant {
   id: string;
   userId: string;
   eventId: string;
-  status: 'pending' | 'accepted' | 'declined';
   createdAt: Date;
   updatedAt: Date;
   user: DbUser;
@@ -89,53 +86,46 @@ export class EventService {
   }
 
   private mapDbEventToEvent(dbEvent: DbEvent): EventWithParticipants {
-    const participants = (dbEvent.participants || []).map(
-      (p: DbParticipant) =>
-        ({
-          id: p.id,
-          userId: p.userId,
-          eventId: p.eventId,
-          status: p.status || 'pending',
-          createdAt: new Date(p.createdAt),
-          updatedAt: new Date(p.updatedAt),
-          user: p.user
-            ? {
-                id: p.user.id,
-                email: p.user.email,
-                name:
-                  p.user.name ||
-                  `${p.user.firstName} ${p.user.lastName}`.trim() ||
-                  null,
-              }
-            : undefined,
-        }) as EventParticipant
-    );
+    const participants = dbEvent.participants.map((p) => ({
+      id: p.id,
+      userId: p.userId,
+      eventId: p.eventId,
+      status: 'accepted' as const, // Default status since we don't store it
+      createdAt: p.createdAt,
+      updatedAt: p.updatedAt,
+      user: {
+        id: p.user.id,
+        email: p.user.email,
+        name: p.user.firstName && p.user.lastName 
+          ? `${p.user.firstName} ${p.user.lastName}`
+          : null,
+      },
+    }));
 
     return {
       id: dbEvent.id,
       title: dbEvent.title,
       description: dbEvent.description || null,
-      type: dbEvent.type || 'social',
-      eventType: dbEvent.eventType || 'social',
+      type: dbEvent.type,
+      eventType: dbEvent.type, // Use the same value for both fields
       creatorId: dbEvent.creatorId,
       location: {
         latitude: dbEvent.latitude,
         longitude: dbEvent.longitude,
       },
-      startTime: new Date(dbEvent.startTime),
-      endTime: dbEvent.endTime ? new Date(dbEvent.endTime) : undefined,
-      maxParticipants: dbEvent.maxParticipants || null,
+      startTime: dbEvent.startTime,
+      endTime: dbEvent.endTime || undefined, // Convert null to undefined
+      maxParticipants: dbEvent.maxParticipants,
       currentParticipants: participants.length,
       participants,
-      tags: dbEvent.tags || [],
-      createdAt: new Date(dbEvent.createdAt),
-      updatedAt: new Date(dbEvent.updatedAt),
+      tags: dbEvent.tags,
+      createdAt: dbEvent.createdAt,
+      updatedAt: dbEvent.updatedAt,
       creator: {
         id: dbEvent.creator.id,
-        name:
-          dbEvent.creator.name ||
-          `${dbEvent.creator.firstName} ${dbEvent.creator.lastName}`.trim() ||
-          null,
+        name: dbEvent.creator.firstName && dbEvent.creator.lastName 
+          ? `${dbEvent.creator.firstName} ${dbEvent.creator.lastName}`
+          : null,
       },
     };
   }
@@ -145,7 +135,18 @@ export class EventService {
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.create({
-        data,
+        data: {
+          title: data.title,
+          description: data.description || null,
+          type: data.type,
+          latitude: data.latitude,
+          longitude: data.longitude,
+          startTime: data.startTime,
+          endTime: data.endTime || null,
+          maxParticipants: data.maxParticipants || null,
+          tags: data.tags || [],
+          creatorId: data.creatorId,
+        },
         include: {
           creator: true,
           participants: {
@@ -158,7 +159,7 @@ export class EventService {
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event),
+        data: this.mapDbEventToEvent(event as unknown as DbEvent),
       };
     } catch (error) {
       console.error('Error creating event:', error);
@@ -194,7 +195,7 @@ export class EventService {
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event),
+        data: this.mapDbEventToEvent(event as unknown as DbEvent),
       };
     } catch (error) {
       console.error('Error getting event:', error);
@@ -225,7 +226,7 @@ export class EventService {
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event),
+        data: this.mapDbEventToEvent(event as unknown as DbEvent),
       };
     } catch (error) {
       console.error('Error updating event:', error);
@@ -265,28 +266,28 @@ export class EventService {
           participants: {
             create: {
               userId,
-              status: 'pending' as const,
             },
           },
         },
         include: {
+          creator: true,
           participants: {
             include: {
               user: true,
             },
           },
-          creator: true,
         },
       });
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event),
+        data: this.mapDbEventToEvent(event as unknown as DbEvent),
       };
     } catch (error) {
+      console.error('Error joining event:', error);
       return {
         success: false,
-        error: `Failed to join event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        error: 'Failed to join event',
       };
     }
   }
@@ -317,7 +318,7 @@ export class EventService {
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event),
+        data: this.mapDbEventToEvent(event as unknown as DbEvent),
       };
     } catch (error) {
       console.error('Error leaving event:', error);
@@ -343,7 +344,7 @@ export class EventService {
 
       return {
         success: true,
-        data: events.map(event => this.mapDbEventToEvent(event)),
+        data: events.map(event => this.mapDbEventToEvent(event as unknown as DbEvent)),
       };
     } catch (error) {
       console.error('Error getting events:', error);
@@ -427,7 +428,7 @@ export class EventService {
         const distance = unit === 'km' ? distanceInKm : distanceInKm * 1000;
 
         return {
-          ...this.mapDbEventToEvent(event),
+          ...this.mapDbEventToEvent(event as unknown as DbEvent),
           distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
         };
       });
