@@ -184,7 +184,6 @@ export function MatchingContainer() {
           <MatchMapView
             matches={matches}
             onMarkerClick={(match) => {
-              // Handle map marker click
               toast({
                 title: match.name,
                 description: `${match.distance.toFixed(1)} km away`,

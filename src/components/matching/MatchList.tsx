@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 import { Match } from '@/types/match';
 import { MatchCard } from './MatchCard';
+import { Loader2 } from 'lucide-react';
 import { matchService } from '@/services/api/match.service';
 
-interface MatchListProps {
+export interface MatchListProps {
   matches: Match[];
   onMatchClick: (matchId: string) => void;
+  loading?: boolean;
 }
 
 export const MatchList: React.FC<MatchListProps> = ({
   matches,
   onMatchClick,
+  loading = false,
 }) => {
   const [error, setError] = useState<string | null>(null);
   const [processingMatchIds, setProcessingMatchIds] = useState<Set<string>>(
@@ -56,6 +59,14 @@ export const MatchList: React.FC<MatchListProps> = ({
       });
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   if (error) {
     return (

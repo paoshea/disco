@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { Match, MatchScore } from '@/types/match';
+import { MessageWithSender } from '@/types/chat';
 
 interface MatchUpdateEvent {
   type: 'new' | 'update' | 'remove';
@@ -13,23 +14,11 @@ interface MatchActionEvent {
 }
 
 interface MessageEvent {
-  type: 'message';
-  message: string;
   matchId: string;
+  message: MessageWithSender;
 }
 
 interface TypingEvent {
-  type: 'typing';
-  userId: string;
-  matchId: string;
-}
-
-interface MessageEventNew {
-  matchId: string;
-  message: any;
-}
-
-interface TypingEventNew {
   matchId: string;
   userId: string;
   isTyping: boolean;
@@ -52,129 +41,102 @@ export class MatchSocketService {
   public connect(token: string): void {
     if (this.socket?.connected) return;
 
-    this.socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
+    this.socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3001', {
       auth: { token },
       transports: ['websocket'],
-      autoConnect: true,
     });
 
     this.setupEventListeners();
   }
 
   public disconnect(): void {
-    this.socket?.disconnect();
+    if (!this.socket) return;
+    this.socket.disconnect();
     this.socket = null;
+    this.listeners.clear();
   }
 
   private setupEventListeners(): void {
     if (!this.socket) return;
 
-    this.socket.on('match:update', (data: MatchUpdateEvent) => {
-      this.notifyListeners('matchUpdate', data);
+    this.socket.on('connect', () => {
+      console.log('Connected to match websocket');
     });
 
-    this.socket.on('match:action', (data: MatchActionEvent) => {
-      this.notifyListeners('matchAction', data);
+    this.socket.on('disconnect', () => {
+      console.log('Disconnected from match websocket');
     });
 
-    this.socket.on('match:score', (data: { matchId: string; score: MatchScore }) => {
-      this.notifyListeners('matchScore', data);
+    this.socket.on('error', (error: Error) => {
+      console.error('Match websocket error:', error);
     });
 
-    this.socket.on('message', (data: MessageEvent) => {
-      this.notifyListeners('message', data);
+    this.socket.on('match_update', (data: MatchUpdateEvent) => {
+      this.notifyListeners('match_update', data);
+    });
+
+    this.socket.on('match_action', (data: MatchActionEvent) => {
+      this.notifyListeners('match_action', data);
+    });
+
+    this.socket.on('chat_message', (data: MessageEvent) => {
+      this.notifyListeners('chat_message', data);
     });
 
     this.socket.on('typing', (data: TypingEvent) => {
       this.notifyListeners('typing', data);
     });
-
-    this.socket.on('connect_error', (error) => {
-      console.error('WebSocket connection error:', error);
-      this.notifyListeners('error', error);
-    });
   }
 
   public subscribeToMatches(callback: (data: MatchUpdateEvent) => void): () => void {
-    return this.subscribe('matchUpdate', callback);
+    return this.subscribe('match_update', callback);
   }
 
   public subscribeToActions(callback: (data: MatchActionEvent) => void): () => void {
-    return this.subscribe('matchAction', callback);
-  }
-
-  public subscribeToScores(
-    callback: (data: { matchId: string; score: MatchScore }) => void
-  ): () => void {
-    return this.subscribe('matchScore', callback);
+    return this.subscribe('match_action', callback);
   }
 
   public subscribeToMessages(callback: (data: MessageEvent) => void): () => void {
-    return this.subscribe('message', callback);
+    return this.subscribe('chat_message', callback);
   }
 
   public subscribeToTyping(callback: (data: TypingEvent) => void): () => void {
     return this.subscribe('typing', callback);
   }
 
-  public subscribeToMessagesNew(callback: (data: MessageEventNew) => void): () => void {
-    if (!this.socket) {
-      console.error('Socket not connected');
-      return () => {};
-    }
-
-    this.socket.on('message', callback);
-    return () => {
-      this.socket?.off('message', callback);
-    };
-  }
-
-  public subscribeToTypingNew(callback: (data: TypingEventNew) => void): () => void {
-    if (!this.socket) {
-      console.error('Socket not connected');
-      return () => {};
-    }
-
-    this.socket.on('typing', callback);
-    return () => {
-      this.socket?.off('typing', callback);
-    };
-  }
-
   private subscribe(event: string, callback: Function): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
-    this.listeners.get(event)!.add(callback);
+
+    const eventListeners = this.listeners.get(event)!;
+    eventListeners.add(callback);
+
+    if (this.socket) {
+      this.socket.on(event, callback as any);
+    }
 
     return () => {
-      this.listeners.get(event)?.delete(callback);
+      if (this.socket) {
+        this.socket.off(event, callback as any);
+      }
+      eventListeners.delete(callback);
     };
   }
 
   public emitMessage(matchId: string, message: string): void {
-    this.emit('message', { type: 'message', message, matchId });
+    if (!this.socket?.connected) return;
+    this.socket.emit('chat_message', { matchId, message });
   }
 
-  public emitTyping(matchId: string, userId: string): void {
-    this.emit('typing', { type: 'typing', userId, matchId });
+  public emitTyping(matchId: string, isTyping: boolean): void {
+    if (!this.socket?.connected) return;
+    this.socket.emit('typing', { matchId, isTyping });
   }
 
-  public emitMessageNew(matchId: string, message: any): void {
-    this.emit('message', { matchId, message });
-  }
-
-  public emitTypingNew(matchId: string, userId: string, isTyping: boolean): void {
-    this.emit('typing', { matchId, userId, isTyping });
-  }
-
-  private emit(event: string, data: any): void {
-    if (!this.socket) {
-      console.error('Socket not connected');
-      return;
-    }
-
-    this.socket.emit(event, data);
+  public emitMatchAction(matchId: string, action: 'accept' | 'decline' | 'block'): void {
+    if (!this.socket?.connected) return;
+    this.socket.emit('match_action', { matchId, action });
   }
 
   private notifyListeners(event: string, data: any): void {

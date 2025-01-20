@@ -1,8 +1,17 @@
 import { db } from '@/lib/prisma';
-import type { Location as PrismaLocation } from '@prisma/client';
+import type { Location as PrismaLocation, User as PrismaUser, Prisma } from '@prisma/client';
 import type { Location, LocationPrivacyMode, GeolocationOptions } from '@/types/location';
 import type { ServiceResponse } from '@/types/api';
 import type { User } from '@/types/user';
+
+interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
+  sync?: {
+    register(tag: string): Promise<void>;
+  };
+  periodicSync?: {
+    register(tag: string, options: { minInterval: number }): Promise<void>;
+  };
+}
 
 export class LocationService {
   private static instance: LocationService;
@@ -26,16 +35,16 @@ export class LocationService {
   private async initServiceWorker() {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js');
+        const registration = await navigator.serviceWorker.register('/sw.js') as ExtendedServiceWorkerRegistration;
         
         // Request periodic background sync permission
-        if ('periodicSync' in registration) {
+        if (registration.periodicSync) {
           const status = await navigator.permissions.query({
             name: 'periodic-background-sync' as PermissionName,
           });
 
           if (status.state === 'granted') {
-            await (registration.periodicSync as any).register('location-sync', {
+            await registration.periodicSync.register('location-sync', {
               minInterval: this.SYNC_INTERVAL,
             });
           }
@@ -82,8 +91,10 @@ export class LocationService {
         );
 
         // Request background sync
-        const registration = await navigator.serviceWorker.ready;
-        await registration.sync.register('location-sync');
+        const registration = await navigator.serviceWorker.ready as ExtendedServiceWorkerRegistration;
+        if (registration.sync) {
+          await registration.sync.register('location-sync');
+        }
       } catch (error) {
         console.error('Error queuing location update:', error);
       }
@@ -97,16 +108,32 @@ export class LocationService {
     return LocationService.instance;
   }
 
-  private mapPrismaLocationToLocation(location: PrismaLocation): Location {
+  private async getUserWithProfile(userId: string): Promise<PrismaUser & { profile: any }> {
+    return await db.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+      },
+    }) as PrismaUser & { profile: any };
+  }
+
+  private mapPrismaLocationToLocation(location: PrismaLocation & { user?: PrismaUser }): Location {
     return {
       id: location.id,
       userId: location.userId,
       latitude: location.latitude,
       longitude: location.longitude,
-      accuracy: location.accuracy ?? undefined,
+      accuracy: location.accuracy,
       privacyMode: location.privacyMode as LocationPrivacyMode,
       sharingEnabled: location.sharingEnabled,
       timestamp: location.timestamp,
+      user: location.user ? {
+        id: location.user.id,
+        email: location.user.email,
+        firstName: location.user.firstName,
+        lastName: location.user.lastName,
+        role: location.user.role,
+      } : undefined,
     };
   }
 
@@ -364,8 +391,10 @@ export class LocationService {
       // Sync any remaining queued locations
       if (this.locationQueue.has(userId)) {
         try {
-          const registration = await navigator.serviceWorker.ready;
-          await registration.sync.register('location-sync');
+          const registration = await navigator.serviceWorker.ready as ExtendedServiceWorkerRegistration;
+          if (registration.sync) {
+            await registration.sync.register('location-sync');
+          }
         } catch (error) {
           console.error('Error syncing final locations:', error);
         }
