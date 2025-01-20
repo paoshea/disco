@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { db } from '@/lib/prisma';
 import { getServerAuthSession } from '@/lib/auth';
-import type { UserWithStats, Achievement } from '@/types/dashboard';
+import { db } from '@/lib/prisma';
 
 // Define types for our data
 // type Achievement = {
@@ -85,7 +84,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     // Check for achievements based on streak count
-    const achievement = await checkAndCreateAchievement(userId, user.streakCount || 0);
+    const achievement = await checkAndCreateAchievement(
+      userId,
+      user.streakCount || 0
+    );
 
     // Get total events participated
     const eventsParticipated = await db.eventParticipant.count({
@@ -107,12 +109,13 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         eventsParticipated,
         eventsCreated,
       },
-      achievement: achievement ? {
-        name: achievement.name,
-        description: achievement.description,
-      } : null,
+      achievement: achievement
+        ? {
+            name: achievement.name,
+            description: achievement.description,
+          }
+        : null,
     });
-
   } catch (error) {
     console.error('Error in GET /api/dashboard/stats:', error);
     return NextResponse.json(

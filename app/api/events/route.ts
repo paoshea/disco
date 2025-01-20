@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
-import type { Event } from '@/types/event';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -36,10 +35,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const result = await eventService.getNearbyEvents(lat, lng, radius);
 
       if (!result.success) {
-        return NextResponse.json(
-          { error: result.error },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: result.error }, { status: 400 });
       }
 
       return NextResponse.json(result.data);
@@ -47,10 +43,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       const result = await eventService.getEvents();
 
       if (!result.success) {
-        return NextResponse.json(
-          { error: result.error },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: result.error }, { status: 400 });
       }
 
       return NextResponse.json(result.data);
@@ -74,7 +67,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const body = (await request.json()) as CreateEventBody;
 
     // Validate required fields
-    if (!body.title || !body.startTime || !body.latitude || !body.longitude || !body.type) {
+    if (
+      !body.title ||
+      !body.startTime ||
+      !body.latitude ||
+      !body.longitude ||
+      !body.type
+    ) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -90,10 +89,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json(result.data);

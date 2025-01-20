@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { comparePasswords, generateToken } from '@/lib/auth';
+import { comparePasswords, generateTokens } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 interface LoginRequest {
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate tokens
-    const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
+    const { token, refreshToken, accessTokenExpiresIn } = await generateTokens({
       id: user.id,
       email: user.email,
       role: user.role,

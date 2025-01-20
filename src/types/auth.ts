@@ -57,6 +57,10 @@ export interface JWTPayload {
   streakCount: number;
 }
 
+export interface JoseJWTPayload {
+  [key: string]: unknown;
+}
+
 export interface LoginResult {
   user: User;
   token: string;

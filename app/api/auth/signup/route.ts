@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
-import { hashPassword, generateToken } from '@/lib/auth';
+import { hashPassword, generateTokens } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
 
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate tokens for automatic login
-    const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
+    const { token, refreshToken, accessTokenExpiresIn } = await generateTokens({
       id: user.id,
       email: user.email,
       role: user.role,

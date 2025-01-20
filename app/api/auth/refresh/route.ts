@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyRefreshToken, generateToken } from '@/lib/auth';
+import { verifyRefreshToken, generateTokens } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 
 export async function POST(request: NextRequest): Promise<Response> {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate new tokens
-    const tokenResult = await generateToken({
+    const tokenResult = await generateTokens({
       id: user.id,
       email: user.email,
       role: user.role,

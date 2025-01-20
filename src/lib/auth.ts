@@ -4,11 +4,11 @@ import crypto from 'crypto';
 import { db } from './prisma';
 import type { Session } from 'next-auth';
 import type { NextRequest } from 'next/server';
-import type { JWTPayload } from '@/types/auth';
+import type { JWTPayload, JoseJWTPayload } from '@/types/auth';
 import type { SessionStrategy } from 'next-auth';
 
 // Extend the built-in types
-interface User {
+export interface User {
   id: string;
   email: string;
   role: string;
@@ -16,7 +16,7 @@ interface User {
   lastName: string;
 }
 
-interface TokenUserPayload {
+export interface TokenUserPayload {
   userId: string;
   email: string;
   role: string;
@@ -38,24 +38,22 @@ export const hashPassword = async (password: string): Promise<string> => {
   return hash(password, 10);
 };
 
-export const generateTokens = async (
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-    lastName: string;
-    emailVerified?: boolean;
-    streakCount?: number;
-  }
-): Promise<{
+export const generateTokens = async (user: {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  emailVerified?: boolean;
+  streakCount?: number;
+}): Promise<{
   token: string;
   refreshToken: string;
   accessTokenExpiresIn: number;
   refreshTokenExpiresIn: number;
 }> => {
   // Create a payload that satisfies both our JWTPayload and jose's JWTPayload
-  const payload: JWTPayload & { [key: string]: any } = {
+  const payload: JWTPayload & JoseJWTPayload = {
     id: user.id,
     email: user.email,
     role: user.role,
@@ -204,7 +202,13 @@ export async function generatePasswordResetToken(
 
 export const authOptions = {
   // Configure JWT
-  jwt: async ({ token, user }: { token: Record<string, unknown>; user?: Record<string, unknown> }) => {
+  jwt: async ({
+    token,
+    user,
+  }: {
+    token: Record<string, unknown>;
+    user?: Record<string, unknown>;
+  }) => {
     if (user) {
       await Promise.resolve(); // Add await to satisfy require-await
       token.id = user.id;
@@ -223,7 +227,9 @@ export const authOptions = {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials: { email: string; password: string } | undefined) {
+      async authorize(
+        credentials: { email: string; password: string } | undefined
+      ) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
