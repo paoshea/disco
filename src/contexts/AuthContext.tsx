@@ -16,14 +16,12 @@ export interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<LoginResult>;
-  logout: () => Promise<void>;
+  logout: () => void;
   signup: (data: RegisterData) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   updateProfile: (updates: Partial<User>) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resetPassword: (token: string, password: string) => Promise<void>;
-  verifyEmail: (token: string) => Promise<void>;
-  sendVerificationEmail: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);
@@ -39,10 +37,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     const initAuth = async () => {
       try {
+        // Check if we have a token before trying to get user data
+        const token = localStorage.getItem('token');
+        if (!token) {
+          setLoading(false);
+          return;
+        }
+
         const userData = await authService.getCurrentUser();
         setUser(userData);
       } catch (err) {
         console.error('Error initializing auth:', err);
+        // Clear tokens if there was an error
+        if (err instanceof Error && err.message.includes('No authentication token found')) {
+          authService.logout();
+        }
       } finally {
         setLoading(false);
       }
@@ -74,12 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       return { success: true };
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      if (
-        err instanceof Error &&
-        err.message.toLowerCase().includes('email verification')
-      ) {
-        return { needsVerification: true };
-      }
       return { error: errorMessage };
     } finally {
       setLoading(false);
@@ -103,15 +106,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
   // Alias for signup to maintain backward compatibility
   const register = signup;
 
-  const logout = async (): Promise<void> => {
+  const updateProfile = async (updates: Partial<User>): Promise<void> => {
     try {
       setLoading(true);
       setError(null);
-      await authService.logout();
-      setUser(null);
-      router.push('/login');
+      const updatedUser = await authService.updateProfile(updates);
+      setUser(updatedUser);
     } catch (err) {
-      handleAuthError(err, 'Logout');
+      handleAuthError(err, 'Profile update');
     } finally {
       setLoading(false);
     }
@@ -144,65 +146,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   };
 
-  const verifyEmail = async (token: string): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      await authService.verifyEmail(token);
-      const userData = await authService.getCurrentUser();
-      setUser(userData);
-    } catch (err) {
-      handleAuthError(err, 'Email verification');
-    } finally {
-      setLoading(false);
-    }
+  const logout = () => {
+    authService.logout();
+    setUser(null);
   };
 
-  const sendVerificationEmail = async (): Promise<void> => {
-    try {
-      setLoading(true);
-      setError(null);
-      await authService.sendVerificationEmail();
-    } catch (err) {
-      handleAuthError(err, 'Send verification email');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const updateProfile = async (updates: Partial<User>): Promise<void> => {
-    if (!user?.id) {
-      throw new Error('No user logged in');
-    }
-
-    try {
-      setLoading(true);
-      setError(null);
-      const updatedUser = await authService.updateUser(user.id, updates);
-      setUser(updatedUser);
-    } catch (err) {
-      handleAuthError(err, 'Profile update');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const value = {
-    user,
-    loading,
-    error,
-    login,
-    logout,
-    signup,
-    register,
-    updateProfile,
-    requestPasswordReset,
-    resetPassword,
-    verifyEmail,
-    sendVerificationEmail,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        error,
+        login,
+        logout,
+        signup,
+        register,
+        updateProfile,
+        requestPasswordReset,
+        resetPassword,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
 };
 
 export const useAuth = () => {

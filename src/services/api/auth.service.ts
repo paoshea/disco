@@ -1,10 +1,11 @@
 import { User } from '@/types/user';
 import { apiClient } from './api.client';
-import type { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 
 interface AuthResponse {
   user: User;
   token: string;
+  refreshToken?: string;
   expiresIn?: number;
   message?: string;
 }
@@ -16,8 +17,45 @@ interface RegisterData {
   lastName: string;
 }
 
+interface ErrorResponse {
+  message: string;
+  error?: string;
+  statusCode?: number;
+}
+
 class AuthService {
   private readonly baseUrl = '/api/auth';
+
+  private handleError(error: unknown): never {
+    if (this.isAxiosError(error)) {
+      if (error.code === 'ERR_NETWORK') {
+        throw new Error('Unable to connect to the server. Please check your internet connection.');
+      }
+      if (error.response?.status === 401) {
+        // Clear tokens on unauthorized
+        this.clearTokens();
+        throw new Error('Invalid email or password');
+      }
+      if (error.response?.status === 404) {
+        throw new Error('Login service is not available. Please try again later.');
+      }
+      const errorData = error.response?.data as ErrorResponse | undefined;
+      throw new Error(errorData?.message || errorData?.error || 'An unexpected error occurred');
+    }
+    throw error;
+  }
+
+  private setTokens(token: string, refreshToken?: string) {
+    localStorage.setItem('token', token);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
+    }
+  }
+
+  private clearTokens() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+  }
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
@@ -28,20 +66,11 @@ class AuthService {
           password,
         }
       );
-      localStorage.setItem('token', response.data.token);
+      const { token, refreshToken } = response.data;
+      this.setTokens(token, refreshToken);
       return response.data;
     } catch (error) {
-      if (this.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          throw new Error('Invalid email or password');
-        }
-        if (error.response?.status === 404) {
-          throw new Error(
-            'Login service is not available. Please try again later.'
-          );
-        }
-      }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -51,58 +80,40 @@ class AuthService {
         `${this.baseUrl}/signup`,
         data
       );
-      localStorage.setItem('token', response.data.token);
+      const { token, refreshToken } = response.data;
+      this.setTokens(token, refreshToken);
       return response.data;
     } catch (error) {
-      if (this.isAxiosError(error)) {
-        if (error.response?.status === 409) {
-          throw new Error('User already exists');
-        }
-        if (error.response?.status === 404) {
-          throw new Error(
-            'Registration service is not available. Please try again later.'
-          );
-        }
-      }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiClient.get<User>(`${this.baseUrl}/me`);
-      return response.data;
-    } catch (error) {
-      if (this.isAxiosError(error)) {
-        if (error.response?.status === 401) {
-          // Token expired or invalid, clear it
-          localStorage.removeItem('token');
-          throw new Error('Your session has expired. Please log in again.');
-        }
-        if (error.response?.status === 404) {
-          throw new Error(
-            'User service is not available. Please try again later.'
-          );
-        }
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
       }
-      throw error;
+
+      const response = await apiClient.get<{ user: User }>(`${this.baseUrl}/me`);
+      return response.data.user;
+    } catch (error) {
+      if (this.isAxiosError(error) && error.response?.status === 401) {
+        this.clearTokens();
+      }
+      throw this.handleError(error);
     }
   }
 
-  async updateUser(userId: string, data: Partial<User>): Promise<User> {
+  async updateProfile(updates: Partial<User>): Promise<User> {
     try {
-      const response = await apiClient.put<{ user: User }>(
-        `${this.baseUrl}/users/${userId}`,
-        data
+      const response = await apiClient.patch<{ user: User }>(
+        `${this.baseUrl}/profile`,
+        updates
       );
       return response.data.user;
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'User update service is not available. Please try again later.'
-        );
-      }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
@@ -110,65 +121,53 @@ class AuthService {
     try {
       await apiClient.post(`${this.baseUrl}/password-reset/request`, { email });
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Password reset service is not available. Please try again later.'
-        );
-      }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
   async resetPassword(token: string, password: string): Promise<void> {
     try {
-      await apiClient.post(`${this.baseUrl}/password-reset/verify`, {
+      await apiClient.post(`${this.baseUrl}/password-reset/reset`, {
         token,
         password,
       });
     } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Password reset service is not available. Please try again later.'
-        );
-      }
-      throw error;
+      throw this.handleError(error);
     }
   }
 
-  async verifyEmail(token: string): Promise<void> {
+  async refreshToken(): Promise<{ token: string }> {
     try {
-      await apiClient.post(`${this.baseUrl}/verify-email`, { token });
-    } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Email verification service is not available. Please try again later.'
-        );
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        throw new Error('No refresh token found');
       }
-      throw error;
+
+      const response = await apiClient.post<{ token: string; refreshToken: string }>(
+        `${this.baseUrl}/refresh`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          },
+        }
+      );
+
+      this.setTokens(response.data.token, response.data.refreshToken);
+      return response.data;
+    } catch (error) {
+      this.clearTokens();
+      throw this.handleError(error);
     }
   }
 
-  async sendVerificationEmail(): Promise<void> {
-    try {
-      await apiClient.post(`${this.baseUrl}/send-verification-email`);
-    } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 404) {
-        throw new Error(
-          'Email verification service is not available. Please try again later.'
-        );
-      }
-      throw error;
-    }
-  }
-
-  async logout(): Promise<void> {
-    localStorage.removeItem('token');
-    await apiClient.post(`${this.baseUrl}/logout`, {});
+  logout(): void {
+    this.clearTokens();
     window.location.href = '/login';
   }
 
   private isAxiosError(error: unknown): error is AxiosError {
-    return (error as AxiosError).isAxiosError === true;
+    return axios.isAxiosError(error);
   }
 }
 
