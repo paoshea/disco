@@ -89,9 +89,12 @@ const loginResponseSchema = z.object({
 });
 
 const registerResponseSchema = z.object({
-  success: z.boolean(),
+  success: z.boolean().optional(),
   error: z.string().optional(),
   needsVerification: z.boolean().optional(),
+  token: z.string(),
+  refreshToken: z.string().optional(),
+  user: userSchema,
 });
 
 const updateProfileResponseSchema = z.object({
@@ -159,7 +162,7 @@ export const useAuth = create<AuthState>()(
       async register(data: RegisterData) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post('/api/auth/register', data);
+          const response = await apiClient.post('/api/auth/signup', data);
           const result = registerResponseSchema.safeParse(response.data);
 
           if (!result.success) {
@@ -174,11 +177,25 @@ export const useAuth = create<AuthState>()(
             return { success: false, error: responseData.error };
           }
 
-          if (responseData.needsVerification) {
-            return { success: true, needsVerification: true };
+          // Store tokens and user data
+          set({ 
+            user: responseData.user,
+            token: responseData.token,
+            error: null,
+          });
+
+          // Store tokens in localStorage for API client
+          localStorage.setItem('token', responseData.token);
+          if (responseData.refreshToken) {
+            localStorage.setItem('refreshToken', responseData.refreshToken);
           }
 
-          return { success: true };
+          // Return success even if verification is needed
+          // The UI can handle showing verification message
+          return { 
+            success: true, 
+            needsVerification: responseData.needsVerification 
+          };
         } catch (error) {
           const message =
             error instanceof Error ? error.message : 'Registration failed';

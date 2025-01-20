@@ -179,7 +179,7 @@ export default function DashboardPage() {
 
   const fetchUser = useCallback(async () => {
     try {
-      const response = await fetchApi('/api/user/me');
+      const response = await fetchApi('/api/auth/me');
       const parsedUser = userSchema.parse(response);
       setUser(parsedUser);
     } catch (error) {

@@ -39,19 +39,24 @@ const processQueue = (error: any = null, token: string | null = null) => {
 // Add request interceptor to add auth token
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Don't add token for auth endpoints except /me and refresh
+    // Don't add token for auth endpoints except /me, /refresh, and /profile
     const isAuthEndpoint = config.url?.includes('/api/auth/');
     const needsToken = isAuthEndpoint && 
       (config.url?.endsWith('/me') || 
        config.url?.includes('/refresh') || 
        config.url?.includes('/profile'));
 
+    // Add token for protected routes
     if (typeof window !== 'undefined' && (needsToken || !isAuthEndpoint)) {
       const token = localStorage.getItem('token');
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
+
+    // Log request for debugging
+    console.log(`Making ${config.method?.toUpperCase()} request to: ${config.url}`);
+    
     return config;
   },
   (error: AxiosError) => {

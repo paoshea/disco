@@ -104,11 +104,13 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Create response with tokens
     const response = NextResponse.json({
+      success: true,
       message:
         'User created successfully. Please check your email to verify your account.',
       token,
       refreshToken,
       expiresIn: accessTokenExpiresIn,
+      needsVerification: true,
       user: {
         id: user.id,
         email: user.email,

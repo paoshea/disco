@@ -59,9 +59,15 @@ export default function SignupPage() {
         lastName: data.lastName,
       };
 
-      await signUp(registerData);
-      toast.success('Account created successfully!');
-      router.push('/dashboard');
+      const result = await signUp(registerData);
+      
+      if (result.success) {
+        toast.success('Account created successfully!');
+        // Use replace to prevent back navigation to signup
+        router.replace('/dashboard');
+      } else if (result.error) {
+        toast.error(result.error);
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error

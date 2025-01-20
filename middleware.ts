@@ -47,57 +47,63 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Check if path requires authentication
-  const authPaths = [
-    '/api/chats',
-    '/api/events',
-    '/api/location',
-    '/api/dashboard',
-    '/api/safety',
-  ];
-  const requiresAuth = authPaths.some(authPath =>
-    pathname.startsWith(authPath)
-  );
-  const requiresAdmin = adminRoutes.some(adminPath =>
-    pathname.startsWith(adminPath)
-  );
+  // Get token from Authorization header
+  const authHeader = request.headers.get('Authorization');
+  const token = authHeader?.replace('Bearer ', '');
 
-  if (!requiresAuth && !requiresAdmin) {
-    return NextResponse.next();
+  // No token found
+  if (!token) {
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+    return redirectToLogin(request);
   }
 
   try {
-    const token = await getToken({ req: request });
+    // Verify token
+    const payload = await getToken({ 
+      req: request, 
+      secret: process.env.NEXTAUTH_SECRET 
+    });
 
-    if (!token) {
-      return new NextResponse(
-        JSON.stringify({ message: 'Authentication required' }),
-        { status: 401, headers: { 'content-type': 'application/json' } }
-      );
+    if (!payload) {
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json(
+          { message: 'Invalid token' },
+          { status: 401 }
+        );
+      }
+      return redirectToLogin(request);
     }
 
-    // For admin routes, check role
-    if (requiresAdmin && token.role !== 'admin') {
-      return new NextResponse(
-        JSON.stringify({ message: 'Admin access required' }),
-        { status: 403, headers: { 'content-type': 'application/json' } }
-      );
+    // Check admin routes
+    if (
+      adminRoutes.some(route => pathname.startsWith(route)) &&
+      payload.role !== 'admin'
+    ) {
+      return NextResponse.redirect(new URL('/403', request.url));
     }
 
     return NextResponse.next();
   } catch (error) {
-    console.error('Middleware error:', error);
-    return new NextResponse(
-      JSON.stringify({ message: 'Internal server error' }),
-      { status: 500, headers: { 'content-type': 'application/json' } }
-    );
+    console.error('Auth middleware error:', error);
+    if (request.nextUrl.pathname.startsWith('/api/')) {
+      return NextResponse.json(
+        { message: 'Authentication failed' },
+        { status: 401 }
+      );
+    }
+    return redirectToLogin(request);
   }
 }
 
 function redirectToLogin(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.pathname = '/login';
-  url.searchParams.set('from', request.nextUrl.pathname);
+  url.search = `?from=${encodeURIComponent(request.nextUrl.pathname)}`;
   return NextResponse.redirect(url);
 }
 
@@ -105,11 +111,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * - public files (public directory)
+     * 1. /api/auth/* (authentication routes)
+     * 2. /_next/* (Next.js internals)
+     * 3. /_static/* (static files)
+     * 4. /favicon.ico, /sitemap.xml (static files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/|_static/|favicon.ico|sitemap.xml).*)',
   ],
 };
