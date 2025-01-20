@@ -87,6 +87,28 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/403', request.url));
     }
 
+    // Public paths that don't require auth
+    const publicPaths = ['/', '/login', '/signup', '/verify-email', '/forgot-password'];
+    const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
+
+    // Protected paths that require auth
+    const protectedPaths = ['/dashboard', '/profile', '/settings'];
+    const isProtectedPath = protectedPaths.some(path => 
+      request.nextUrl.pathname.startsWith(path)
+    );
+
+    // Redirect to login if accessing protected path without auth
+    if (isProtectedPath && !token) {
+      const response = NextResponse.redirect(new URL('/login', request.url));
+      return response;
+    }
+
+    // Redirect to dashboard if accessing auth pages while logged in
+    if (isPublicPath && token) {
+      const response = NextResponse.redirect(new URL('/dashboard', request.url));
+      return response;
+    }
+
     return NextResponse.next();
   } catch (error) {
     console.error('Auth middleware error:', error);

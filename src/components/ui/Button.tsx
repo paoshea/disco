@@ -17,23 +17,23 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseStyles = cn(
-    'inline-flex items-center justify-center font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors',
+    'inline-flex items-center justify-center font-medium rounded-md transition-colors',
     {
       // Size variations
-      'px-2.5 py-1.5 text-sm': size === 'sm',
-      'px-4 py-2 text-base': size === 'md',
-      'px-6 py-3 text-lg': size === 'lg',
+      'px-3 py-1.5 text-sm': size === 'sm',
+      'px-4 py-2 text-sm': size === 'md',
+      'px-6 py-3 text-base': size === 'lg',
 
       // Variant variations
-      'bg-sky-600 text-white hover:bg-sky-700 focus:ring-sky-500':
+      'bg-sky-600 text-white hover:bg-sky-700':
         variant === 'primary',
-      'bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500':
+      'bg-gray-600 text-white hover:bg-gray-700':
         variant === 'secondary',
-      'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500':
+      'bg-red-600 text-white hover:bg-red-700':
         variant === 'danger',
-      'bg-transparent text-gray-700 hover:bg-gray-100 focus:ring-gray-500':
+      'bg-transparent text-gray-600 hover:text-gray-900':
         variant === 'ghost',
-      'border-2 border-sky-600 bg-transparent text-sky-600 hover:bg-sky-50 focus:ring-sky-500':
+      'border border-gray-300 bg-white text-gray-600 hover:bg-gray-50':
         variant === 'outline',
 
       // Disabled state

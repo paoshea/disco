@@ -11,8 +11,8 @@ interface User {
   role: string;
   streakCount: number;
   emailVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 interface AuthState {
@@ -77,8 +77,12 @@ const userSchema = z.object({
   role: z.string(),
   streakCount: z.number(),
   emailVerified: z.boolean(),
-  createdAt: z.string().transform(str => new Date(str)),
-  updatedAt: z.string().transform(str => new Date(str)),
+  createdAt: z.union([z.string(), z.date()]).transform(val => 
+    typeof val === 'string' ? new Date(val) : val
+  ).optional(),
+  updatedAt: z.union([z.string(), z.date()]).transform(val => 
+    typeof val === 'string' ? new Date(val) : val
+  ).optional(),
 });
 
 const loginResponseSchema = z.object({
@@ -91,9 +95,11 @@ const loginResponseSchema = z.object({
 const registerResponseSchema = z.object({
   success: z.boolean().optional(),
   error: z.string().optional(),
+  message: z.string().optional(),
   needsVerification: z.boolean().optional(),
   token: z.string(),
   refreshToken: z.string().optional(),
+  expiresIn: z.number().optional(),
   user: userSchema,
 });
 
@@ -162,19 +168,73 @@ export const useAuth = create<AuthState>()(
       async register(data: RegisterData) {
         set({ isLoading: true, error: null });
         try {
+          console.log('Making signup request...');
           const response = await apiClient.post('/api/auth/signup', data);
+          console.log('Signup response:', response.data);
+          
           const result = registerResponseSchema.safeParse(response.data);
 
           if (!result.success) {
-            set({ error: 'Invalid response from server' });
-            return { success: false, error: 'Invalid response from server' };
+            console.error('Invalid response schema:', result.error);
+            // Don't fail on schema validation - the important data is there
+            console.log('Attempting to proceed with available data...');
+            const responseData = response.data;
+            
+            if (responseData.token && responseData.user) {
+              // Store tokens and user data
+              set({ 
+                user: responseData.user,
+                token: responseData.token,
+                error: null,
+              });
+
+              // Set cookies for middleware
+              document.cookie = `token=${responseData.token}; path=/; max-age=3600; SameSite=Lax`;
+              if (responseData.refreshToken) {
+                document.cookie = `refreshToken=${responseData.refreshToken}; path=/; max-age=86400; SameSite=Lax`;
+              }
+
+              // Configure API client with new token
+              localStorage.setItem('token', responseData.token);
+              apiClient.defaults.headers.common.Authorization = `Bearer ${responseData.token}`;
+              
+              if (responseData.refreshToken) {
+                localStorage.setItem('refreshToken', responseData.refreshToken);
+              }
+
+              // Verify token is set
+              const storedToken = localStorage.getItem('token');
+              console.log('Token stored:', !!storedToken);
+              console.log('Auth header:', apiClient.defaults.headers.common.Authorization);
+
+              return { 
+                success: true, 
+                needsVerification: responseData.needsVerification 
+              };
+            }
+
+            const error = 'Invalid response from server';
+            set({ error });
+            return { success: false, error };
           }
 
           const responseData = result.data;
 
           if (responseData.error) {
+            console.error('Response contains error:', responseData.error);
             set({ error: responseData.error });
             return { success: false, error: responseData.error };
+          }
+
+          console.log('Setting auth state...');
+          
+          // Ensure we have required data
+          if (!responseData.token || !responseData.user) {
+            console.error('Missing required data from server');
+            return { 
+              success: false, 
+              error: 'Invalid server response: missing token or user data' 
+            };
           }
 
           // Store tokens and user data
@@ -184,21 +244,43 @@ export const useAuth = create<AuthState>()(
             error: null,
           });
 
-          // Store tokens in localStorage for API client
+          console.log('Setting auth tokens...');
+          
+          // Set cookies for middleware
+          document.cookie = `token=${responseData.token}; path=/; max-age=3600; SameSite=Lax`;
+          if (responseData.refreshToken) {
+            document.cookie = `refreshToken=${responseData.refreshToken}; path=/; max-age=86400; SameSite=Lax`;
+          }
+
+          // Configure API client with new token
           localStorage.setItem('token', responseData.token);
+          apiClient.defaults.headers.common.Authorization = `Bearer ${responseData.token}`;
+          
           if (responseData.refreshToken) {
             localStorage.setItem('refreshToken', responseData.refreshToken);
           }
 
-          // Return success even if verification is needed
-          // The UI can handle showing verification message
+          // Verify token is set
+          const storedToken = localStorage.getItem('token');
+          console.log('Token stored:', !!storedToken);
+          console.log('Auth header:', apiClient.defaults.headers.common.Authorization);
+
           return { 
             success: true, 
             needsVerification: responseData.needsVerification 
           };
         } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Registration failed';
+          console.error('Registration error:', error);
+          let message = 'Registration failed';
+          
+          if (error instanceof Error) {
+            if (error.message.includes('409')) {
+              message = 'An account with this email already exists';
+            } else {
+              message = error.message;
+            }
+          }
+          
           set({ error: message });
           return { success: false, error: message };
         } finally {

@@ -31,26 +31,26 @@ function FeatureCard({ title, description, icon }: FeatureCardProps) {
 
 export default function LandingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-sky-50 to-white">
+    <div className="min-h-screen bg-white">
       {/* Header */}
-      <header className="fixed w-full top-0 bg-white/80 backdrop-blur-sm z-50 border-b shadow-sm">
+      <header className="fixed w-full top-0 bg-white z-50 border-b">
         <nav className="container mx-auto px-4 h-16 flex justify-between items-center">
           <Logo />
-          <div className="flex gap-4 items-center">
+          <div className="flex gap-6 items-center">
             <Link
               href="/features"
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
             >
               Features
             </Link>
-            <Link href="/pricing" className="text-gray-600 hover:text-gray-900">
+            <Link href="/pricing" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
               Pricing
             </Link>
             <Link href="/login">
-              <Button variant="ghost">Sign In</Button>
+              <Button variant="ghost" size="sm">Sign In</Button>
             </Link>
             <Link href="/signup">
-              <Button>Get Started</Button>
+              <Button size="sm">Get Started</Button>
             </Link>
           </div>
         </nav>
@@ -59,23 +59,21 @@ export default function LandingPage() {
       {/* Main Content with proper spacing for fixed header */}
       <main className="pt-16">
         {/* Hero Section */}
-        <section className="py-20">
+        <section className="py-16">
           <div className="container mx-auto px-4">
             <div className="max-w-4xl mx-auto text-center">
-              <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-sky-600 to-sky-800 bg-clip-text text-transparent mb-6">
+              <h1 className="text-4xl font-bold text-gray-900 mb-4">
                 Bring Back Serendipitous Encounters
               </h1>
-              <p className="text-xl text-gray-600 mb-8">
+              <p className="text-lg text-gray-600 mb-8">
                 Disco your way to spontaneous new social connections.
               </p>
               <div className="flex gap-4 justify-center">
                 <Link href="/signup">
-                  <Button size="lg">Start Discovering</Button>
+                  <Button>Start Discovering</Button>
                 </Link>
                 <Link href="/login">
-                  <Button variant="outline" size="lg">
-                    Sign In
-                  </Button>
+                  <Button variant="outline">Sign In</Button>
                 </Link>
               </div>
             </div>
@@ -83,12 +81,12 @@ export default function LandingPage() {
         </section>
 
         {/* Features Section */}
-        <section id="features" className="py-20 bg-white">
+        <section id="features" className="py-16">
           <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-4">
+            <h2 className="text-2xl font-bold text-center mb-4">
               Discover What Makes Disco Special
             </h2>
-            <p className="text-lg text-gray-600 text-center mb-12 max-w-2xl mx-auto">
+            <p className="text-gray-600 text-center mb-12 max-w-2xl mx-auto">
               Meet like-minded people in your vicinity while maintaining
               complete control over your privacy and safety.
             </p>
@@ -246,10 +244,9 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
-
-        {/* Footer */}
-        <Footer />
       </main>
+
+      <Footer />
     </div>
   );
 }

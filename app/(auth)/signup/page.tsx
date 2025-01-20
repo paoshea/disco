@@ -59,20 +59,50 @@ export default function SignupPage() {
         lastName: data.lastName,
       };
 
+      console.log('Starting signup...');
       const result = await signUp(registerData);
+      console.log('Signup result:', result);
       
       if (result.success) {
-        toast.success('Account created successfully!');
-        // Use replace to prevent back navigation to signup
-        router.replace('/dashboard');
-      } else if (result.error) {
-        toast.error(result.error);
+        console.log('Signup successful, preparing to redirect...');
+        toast.success('Account created successfully! Check your email for verification instructions.');
+        
+        // Small delay to ensure state is updated
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Ensure we wait for the redirect
+        try {
+          console.log('Redirecting to dashboard...');
+          // Redirect to dashboard
+          window.location.href = '/dashboard';
+        } catch (navError) {
+          console.error('Navigation error:', navError);
+          // Fallback to router navigation
+          await router.replace('/dashboard');
+        }
+      } else {
+        console.log('Signup failed:', result.error);
+        // Show the specific error message
+        toast.error(result.error || 'Registration failed');
+        // Reset the form on conflict
+        if (result.error?.includes('already exists')) {
+          form.reset();
+        }
       }
     } catch (err) {
-      const errorMessage =
-        err instanceof Error
-          ? err.message
-          : 'An error occurred during registration';
+      console.error('Signup error:', err);
+      let errorMessage = 'An error occurred during registration';
+      
+      // Handle specific error cases
+      if (err instanceof Error) {
+        if (err.message.includes('409') || err.message.includes('already exists')) {
+          errorMessage = 'An account with this email already exists';
+          form.reset();
+        } else {
+          errorMessage = err.message;
+        }
+      }
+      
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);
