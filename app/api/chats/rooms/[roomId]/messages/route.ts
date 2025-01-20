@@ -1,6 +1,6 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { headers } from 'next/headers';
-import { verifyToken } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import type { MessageWithSender } from '@/types/chat';
 
@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 export const revalidate = 0; // No caching
 
 interface AuthSuccess {
-  userId: string;
+  id: string;
   error?: never;
   status?: never;
 }
@@ -18,26 +18,18 @@ interface AuthSuccess {
 interface AuthError {
   error: string;
   status: number;
-  userId?: never;
+  id?: never;
 }
 
 type AuthResult = AuthSuccess | AuthError;
 
 async function authenticateRequest(request: NextRequest): Promise<AuthResult> {
-  const headersList = request.headers;
-  const authHeader = headersList.get('Authorization') || headersList.get('authorization') || '';
-  const token = authHeader.replace('Bearer ', '');
-
-  if (!token) {
-    return { error: 'Unauthorized', status: 401 };
-  }
-
   try {
-    const session = await verifyToken(token);
-    if (!session) {
+    const session = await getServerAuthSession(request);
+    if (!session?.user?.id) {
       return { error: 'Invalid token', status: 401 };
     }
-    return { userId: session.user.id };
+    return { id: session.user.id };
   } catch (error) {
     console.error('Authentication error:', error);
     return { error: 'Invalid token', status: 401 };
@@ -65,20 +57,20 @@ interface RouteContext {
 
 export async function GET(
   request: NextRequest,
-  { params }: RouteContext
+  context: { params: { roomId: string } }
 ): Promise<NextResponse> {
   const auth = await authenticateRequest(request);
   if ('error' in auth) {
-    return NextResponse.json({ message: auth.error }, { status: auth.status });
+    return NextResponse.json({ message: auth.error }, { status: 401 });
   }
 
   try {
-    const { roomId } = params;
-    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
+    const { roomId } = context.params;
+    const hasAccess = await verifyRoomAccess(roomId, auth.id);
 
     if (!hasAccess) {
       return NextResponse.json(
-        { message: 'Access denied to this chat room' },
+        { message: 'Unauthorized access to chat room' },
         { status: 403 }
       );
     }
@@ -157,15 +149,15 @@ async function createMessage(content: string, roomId: string, userId: string) {
 
 export async function POST(
   request: NextRequest,
-  { params }: RouteContext
+  context: { params: { roomId: string } }
 ): Promise<NextResponse> {
   const auth = await authenticateRequest(request);
   if ('error' in auth) {
-    return NextResponse.json({ message: auth.error }, { status: auth.status });
+    return NextResponse.json({ message: auth.error }, { status: 401 });
   }
 
   try {
-    const { roomId } = params;
+    const { roomId } = context.params;
     const body = (await request.json()) as MessageContent;
     const { content } = body;
 
@@ -176,15 +168,15 @@ export async function POST(
       );
     }
 
-    const hasAccess = await verifyRoomAccess(roomId, auth.userId);
+    const hasAccess = await verifyRoomAccess(roomId, auth.id);
     if (!hasAccess) {
       return NextResponse.json(
-        { message: 'Access denied to this chat room' },
+        { message: 'Unauthorized access to chat room' },
         { status: 403 }
       );
     }
 
-    const message = await createMessage(content, roomId, auth.userId);
+    const message = await createMessage(content, roomId, auth.id);
     return NextResponse.json(message);
   } catch (error) {
     console.error('Error creating message:', error);

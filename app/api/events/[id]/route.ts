@@ -1,5 +1,4 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
 import type { EventUpdateInput } from '@/services/event/event.service';
@@ -7,15 +6,15 @@ import { z } from 'zod';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = context.params;
     const result = await eventService.getEventById(id);
 
     if (!result.success) {
@@ -34,15 +33,15 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = context.params;
     const body = (await request.json()) as EventUpdateInput;
 
     const result = await eventService.updateEvent(id, body);
@@ -63,15 +62,15 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = context.params;
 
     // First check if the user is authorized to delete this event
     const eventResult = await eventService.getEventById(id);
@@ -104,15 +103,15 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: { params: { id: string } }
+): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = context.params;
     const body = await request.json();
 
     const actionSchema = z.object({

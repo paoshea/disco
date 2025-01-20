@@ -1,11 +1,13 @@
 import { compare, hash } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
+import type { JWTPayload as JoseJWTPayload } from 'jose';
 import type { NextRequest } from 'next/server';
 import type { User as NextAuthUser, Session } from 'next-auth';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from './prisma';
 import type { JWTPayload } from '@/types/auth';
+import crypto from 'crypto';
 
 // Extend the built-in types
 interface User extends NextAuthUser {
@@ -35,71 +37,56 @@ export const hashPassword = async (password: string): Promise<string> => {
   return hash(password, 10);
 };
 
-export const generateToken = async (
-  payload: TokenUserPayload,
-  secret: string = process.env.NEXTAUTH_SECRET || '',
-  accessExpiresIn: number = 60 * 60, // 1 hour in seconds
-  refreshExpiresIn: number = 30 * 24 * 60 * 60 // 30 days in seconds
-): Promise<{
-  token: string;
-  refreshToken: string;
-  accessTokenExpiresIn: number;
-  refreshTokenExpiresIn: number;
-}> => {
-  const secretKey = new TextEncoder().encode(secret);
-
-  // Generate access token
-  const accessToken = await new SignJWT({
-    id: payload.userId,
-    email: payload.email,
-    role: payload.role,
-    firstName: payload.firstName,
-    lastName: payload.lastName,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(Math.floor(Date.now() / 1000) + accessExpiresIn)
-    .sign(secretKey);
-
-  // Generate refresh token
-  const refreshToken = await new SignJWT({
-    id: payload.userId,
-    email: payload.email,
-    role: payload.role,
-    firstName: payload.firstName,
-    lastName: payload.lastName,
-    type: 'refresh',
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .setIssuedAt()
-    .setExpirationTime(Math.floor(Date.now() / 1000) + refreshExpiresIn)
-    .sign(secretKey);
-
-  return {
-    token: accessToken,
-    refreshToken,
-    accessTokenExpiresIn: accessExpiresIn,
-    refreshTokenExpiresIn: refreshExpiresIn,
+export const generateToken = async (user: User): Promise<string> => {
+  // Create a payload that satisfies both our JWTPayload and jose's JWTPayload
+  const payload: JWTPayload & { [key: string]: any } = {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    firstName: user.firstName,
+    lastName: user.lastName,
+    sub: user.id // Add sub property, using user.id as per JWT standard
   };
+
+  const secret = new TextEncoder().encode(
+    process.env.NEXTAUTH_SECRET || 'your-secret-key'
+  );
+
+  const token = await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime('24h')
+    .sign(secret);
+
+  return token;
 };
 
-export const verifyToken = async (
-  token: string,
-  secret: string = process.env.NEXTAUTH_SECRET || ''
-): Promise<{ user: JWTPayload } | null> => {
+export const verifyToken = async (token: string): Promise<JWTPayload | null> => {
   try {
-    const secretKey = new TextEncoder().encode(secret);
-    const { payload } = await jwtVerify(token, secretKey);
+    const secret = new TextEncoder().encode(
+      process.env.NEXTAUTH_SECRET || 'your-secret-key'
+    );
 
-    return {
-      user: {
-        id: payload.id as string,
-        email: payload.email as string,
-        role: payload.role as string,
-        firstName: payload.firstName as string,
-        lastName: payload.lastName as string,
-      },
-    };
+    const { payload } = await jwtVerify(token, secret);
+    
+    // Verify the payload has all required fields
+    if (
+      typeof payload.id === 'string' &&
+      typeof payload.email === 'string' &&
+      typeof payload.role === 'string' &&
+      typeof payload.firstName === 'string' &&
+      typeof payload.lastName === 'string' &&
+      typeof payload.sub === 'string'
+    ) {
+      return {
+        id: payload.id,
+        email: payload.email,
+        role: payload.role,
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        sub: payload.sub,
+      };
+    }
+    return null;
   } catch (error) {
     console.error('Error verifying token:', error);
     return null;
@@ -147,6 +134,31 @@ export const generateRefreshToken = async (
 
   return token;
 };
+
+export async function generatePasswordResetToken(email: string): Promise<string> {
+  const token = crypto.randomBytes(32).toString('hex');
+  const hashedToken = await hash(token, 10);
+  
+  // First find the user
+  const user = await db.user.findUnique({
+    where: { email }
+  });
+
+  if (!user) {
+    throw new Error('User not found');
+  }
+  
+  // Store the token in the database with expiration
+  await db.passwordReset.create({
+    data: {
+      token: hashedToken,
+      userId: user.id,
+      expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+    },
+  });
+
+  return token;
+}
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -232,11 +244,11 @@ export const getServerAuthSession = async (
 
     return {
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        role: session.user.role,
-        firstName: session.user.firstName,
-        lastName: session.user.lastName,
+        id: session.id,
+        email: session.email,
+        role: session.role,
+        firstName: session.firstName,
+        lastName: session.lastName,
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };
@@ -263,11 +275,11 @@ export const getSession = async (
 
     return {
       user: {
-        id: session.user.id,
-        email: session.user.email,
-        role: session.user.role,
-        firstName: session.user.firstName,
-        lastName: session.user.lastName,
+        id: session.id,
+        email: session.email,
+        role: session.role,
+        firstName: session.firstName,
+        lastName: session.lastName,
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };

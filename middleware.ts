@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth';
+import { getToken } from 'next-auth/jwt';
 
 // Routes that don't require authentication
 const publicRoutes = [
@@ -47,31 +47,46 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from cookie
-  const token = request.cookies.get('token')?.value;
+  // Check if path requires authentication
+  const authPaths = [
+    '/api/chats',
+    '/api/events',
+    '/api/location',
+    '/api/dashboard',
+    '/api/safety',
+  ];
+  const requiresAuth = authPaths.some((authPath) => pathname.startsWith(authPath));
+  const requiresAdmin = adminRoutes.some((adminPath) => pathname.startsWith(adminPath));
 
-  if (!token) {
-    return redirectToLogin(request);
+  if (!requiresAuth && !requiresAdmin) {
+    return NextResponse.next();
   }
 
   try {
-    const session = await verifyToken(token);
+    const token = await getToken({ req: request });
 
-    if (!session) {
-      return redirectToLogin(request);
+    if (!token) {
+      return new NextResponse(
+        JSON.stringify({ message: 'Authentication required' }),
+        { status: 401, headers: { 'content-type': 'application/json' } }
+      );
     }
 
-    // Check admin routes
-    if (adminRoutes.some(route => pathname.startsWith(route))) {
-      if (session.user.role !== 'admin') {
-        return new NextResponse(null, { status: 403 });
-      }
+    // For admin routes, check role
+    if (requiresAdmin && token.role !== 'admin') {
+      return new NextResponse(
+        JSON.stringify({ message: 'Admin access required' }),
+        { status: 403, headers: { 'content-type': 'application/json' } }
+      );
     }
 
     return NextResponse.next();
   } catch (error) {
-    console.error('Error verifying token:', error);
-    return redirectToLogin(request);
+    console.error('Middleware error:', error);
+    return new NextResponse(
+      JSON.stringify({ message: 'Internal server error' }),
+      { status: 500, headers: { 'content-type': 'application/json' } }
+    );
   }
 }
 

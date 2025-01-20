@@ -2,15 +2,19 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { getServerAuthSession } from '@/lib/auth';
 import { db } from '@/lib/prisma';
-import {
-  withAuth,
-  type AuthenticatedRequest,
-} from '@/middleware/authMiddleware';
 import type { ChatRoomWithRelations } from '@/types/chat';
 
-async function handleGet(request: AuthenticatedRequest) {
+async function handleGet(request: NextRequest) {
   try {
+    const session = await getServerAuthSession(request);
+    if (!session) {
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    }
+
+    const userId = session.user.id;
+
     const chatRooms = await db.$queryRaw<ChatRoomWithRelations[]>`
       SELECT 
         cr.id,
@@ -53,8 +57,8 @@ async function handleGet(request: AuthenticatedRequest) {
       FROM "ChatRoom" cr
       JOIN "User" creator ON cr."creatorId" = creator.id
       JOIN "User" participant ON cr."participantId" = participant.id
-      WHERE cr."creatorId" = ${request.user.userId}
-      OR cr."participantId" = ${request.user.userId}
+      WHERE cr."creatorId" = ${userId}
+      OR cr."participantId" = ${userId}
     `;
 
     return NextResponse.json({
@@ -80,6 +84,4 @@ async function handleGet(request: AuthenticatedRequest) {
 }
 
 export const GET = (request: NextRequest) =>
-  withAuth(request, (req: NextRequest) =>
-    handleGet(req as AuthenticatedRequest)
-  );
+  handleGet(request);
