@@ -1,5 +1,5 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { headers } from 'next/headers';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import type { MessageWithSender } from '@/types/chat';
@@ -22,6 +22,16 @@ interface AuthError {
 }
 
 type AuthResult = AuthSuccess | AuthError;
+
+type RouteContext = {
+  params: Promise<{
+    roomId: string;
+  }>;
+};
+
+interface MessageContent {
+  content: string;
+}
 
 async function authenticateRequest(request: NextRequest): Promise<AuthResult> {
   try {
@@ -49,23 +59,18 @@ async function verifyRoomAccess(
   return !!chatRoom;
 }
 
-interface RouteContext {
-  params: {
-    roomId: string;
-  };
-}
-
 export async function GET(
   request: NextRequest,
-  context: { params: { roomId: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   const auth = await authenticateRequest(request);
   if ('error' in auth) {
-    return NextResponse.json({ message: auth.error }, { status: 401 });
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
   }
 
   try {
-    const { roomId } = context.params;
+    const params = await context.params;
+    const { roomId } = params;
     const hasAccess = await verifyRoomAccess(roomId, auth.id);
 
     if (!hasAccess) {
@@ -114,10 +119,6 @@ export async function GET(
   }
 }
 
-interface MessageContent {
-  content: string;
-}
-
 async function createMessage(content: string, roomId: string, userId: string) {
   const message = await db.message.create({
     data: {
@@ -149,15 +150,16 @@ async function createMessage(content: string, roomId: string, userId: string) {
 
 export async function POST(
   request: NextRequest,
-  context: { params: { roomId: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   const auth = await authenticateRequest(request);
   if ('error' in auth) {
-    return NextResponse.json({ message: auth.error }, { status: 401 });
+    return NextResponse.json({ message: auth.error }, { status: auth.status });
   }
 
   try {
-    const { roomId } = context.params;
+    const params = await context.params;
+    const { roomId } = params;
     const body = (await request.json()) as MessageContent;
     const { content } = body;
 

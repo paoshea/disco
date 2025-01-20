@@ -1,12 +1,23 @@
-import { NextResponse, type NextRequest } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
 import type { EventUpdateInput } from '@/services/event/event.service';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const revalidate = 0;
+
+type RouteContext = {
+  params: Promise<{
+    id: string;
+  }>;
+};
+
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
@@ -14,16 +25,20 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const params = await context.params;
+    const { id } = params;
     const result = await eventService.getEventById(id);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 404 });
+      return NextResponse.json(
+        { error: result.error },
+        { status: 404 }
+      );
     }
 
     return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Error getting event:', error);
+    console.error('Error in GET /api/events/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -33,7 +48,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
@@ -41,18 +56,22 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const params = await context.params;
+    const { id } = params;
     const body = (await request.json()) as EventUpdateInput;
 
     const result = await eventService.updateEvent(id, body);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      );
     }
 
     return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Error updating event:', error);
+    console.error('Error in PUT /api/events/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -62,7 +81,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
@@ -70,30 +89,30 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const params = await context.params;
+    const { id } = params;
 
     // First check if the user is authorized to delete this event
     const eventResult = await eventService.getEventById(id);
-    if (!eventResult.success || !eventResult.data) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
-    }
-
-    if (eventResult.data.creatorId !== session.user.id) {
+    if (!eventResult.success) {
       return NextResponse.json(
-        { error: 'Not authorized to delete this event' },
-        { status: 403 }
+        { error: eventResult.error },
+        { status: 404 }
       );
     }
 
-    // Delete the event
     const result = await eventService.deleteEvent(id);
+
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 400 });
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json({ success: true });
+    return NextResponse.json({ message: 'Event deleted successfully' });
   } catch (error) {
-    console.error('Error deleting event:', error);
+    console.error('Error in DELETE /api/events/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -103,7 +122,7 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  context: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
   try {
     const session = await getServerAuthSession(request);
@@ -111,34 +130,41 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const params = await context.params;
+    const { id } = params;
     const body = await request.json();
 
     const actionSchema = z.object({
       action: z.enum(['join', 'leave']),
     });
 
-    const result = actionSchema.safeParse(body);
-    if (!result.success) {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    const parseResult = actionSchema.safeParse(body);
+    if (!parseResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid action' },
+        { status: 400 }
+      );
     }
 
-    const { action } = result.data;
+    const { action } = parseResult.data;
+    let result;
 
-    let serviceResult;
     if (action === 'join') {
-      serviceResult = await eventService.joinEvent(id, session.user.id);
+      result = await eventService.joinEvent(id, session.user.id);
     } else {
-      serviceResult = await eventService.leaveEvent(id, session.user.id);
+      result = await eventService.leaveEvent(id, session.user.id);
     }
 
-    if (!serviceResult.success) {
-      return NextResponse.json({ error: serviceResult.error }, { status: 400 });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      );
     }
 
-    return NextResponse.json(serviceResult.data);
+    return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Error updating event participation:', error);
+    console.error('Error in PATCH /api/events/[id]:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
