@@ -39,7 +39,7 @@ export async function POST(request: Request): Promise<Response> {
     await sendPasswordResetEmail(email, resetToken);
 
     return NextResponse.json({
-      message: 'Password reset email sent successfully'
+      message: 'Password reset email sent successfully',
     });
   } catch (error) {
     console.error('Password reset request error:', error);

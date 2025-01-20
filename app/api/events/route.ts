@@ -1,34 +1,12 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import { getServerAuthSession } from '@/lib/auth';
+import { eventService } from '@/services/event/event.service';
+import type { Event } from '@/types/event';
 
-// Define the Event type with proper Prisma typing
-type Event = Prisma.EventGetPayload<{
-  include: {
-    participants: {
-      include: {
-        user: true;
-      };
-    };
-    creator: true;
-  };
-}>;
-
-// Define participant type for better type safety
-type EventParticipant = Prisma.EventParticipantGetPayload<{
-  include: {
-    user: true;
-  };
-}>;
-
-// Define the complete event type with participants
-interface EventWithParticipants extends Event {
-  participants: EventParticipant[];
-  currentParticipants: number;
-}
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const revalidate = 0;
 
 interface CreateEventBody {
   title: string;
@@ -37,127 +15,48 @@ interface CreateEventBody {
   endTime?: string;
   latitude: number;
   longitude: number;
-  type: string;
+  type: 'social' | 'virtual' | 'hybrid';
   maxParticipants?: number;
   tags?: string[];
 }
 
-export async function GET(request: NextRequest): Promise<Response> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const searchParams = new URL(request.url).searchParams;
-    const location = await db.location.findFirst({
-      where: {
-        userId: session.user.id,
-      },
-      orderBy: {
-        timestamp: 'desc',
-      },
-    });
+    const lat = parseFloat(searchParams.get('lat') ?? '0');
+    const lng = parseFloat(searchParams.get('lng') ?? '0');
+    const radius = parseFloat(searchParams.get('radius') ?? '500');
 
-    if (!location) {
-      return NextResponse.json(
-        { error: 'Location not found' },
-        { status: 404 }
-      );
-    }
+    if (lat && lng) {
+      const result = await eventService.getNearbyEvents(lat, lng, radius);
 
-    const radiusInMeters = parseFloat(searchParams.get('radius') ?? '500');
-    const userLocation = {
-      latitude: location.latitude,
-      longitude: location.longitude,
-    };
-
-    // Calculate bounding box for spatial query
-    const latitudeDelta = radiusInMeters / 111000; // 111km per degree
-    const minLat = userLocation.latitude - latitudeDelta;
-    const maxLat = userLocation.latitude + latitudeDelta;
-
-    const longitudeDelta =
-      radiusInMeters /
-      (111000 * Math.cos((userLocation.latitude * Math.PI) / 180));
-    const minLon = userLocation.longitude - longitudeDelta;
-    const maxLon = userLocation.longitude + longitudeDelta;
-
-    let events: Event[];
-    const latitude = searchParams.get('latitude');
-    const longitude = searchParams.get('longitude');
-    const radius = searchParams.get('radius');
-
-    if (latitude && longitude && radius) {
-      const lat = parseFloat(latitude);
-      const lng = parseFloat(longitude);
-      const rad = parseFloat(radius);
-
-      if (isNaN(lat) || isNaN(lng) || isNaN(rad)) {
+      if (!result.success) {
         return NextResponse.json(
-          { error: 'Invalid latitude, longitude, or radius parameters' },
+          { error: result.error },
           { status: 400 }
         );
       }
 
-      events = await db.event.findMany({
-        where: {
-          AND: [
-            {
-              latitude: {
-                gte: lat - rad,
-                lte: lat + rad,
-              },
-            },
-            {
-              longitude: {
-                gte: lng - rad,
-                lte: lng + rad,
-              },
-            },
-          ],
-        },
-        include: {
-          creator: true,
-          participants: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      });
+      return NextResponse.json(result.data);
     } else {
-      events = await db.event.findMany({
-        where: {
-          latitude: {
-            gte: minLat,
-            lte: maxLat,
-          },
-          longitude: {
-            gte: minLon,
-            lte: maxLon,
-          },
-        },
-        include: {
-          creator: true,
-          participants: {
-            include: {
-              user: true,
-            },
-          },
-        },
-      });
+      const result = await eventService.getEvents();
+
+      if (!result.success) {
+        return NextResponse.json(
+          { error: result.error },
+          { status: 400 }
+        );
+      }
+
+      return NextResponse.json(result.data);
     }
-
-    // Add currentParticipants count with proper typing
-    const eventsWithCount: EventWithParticipants[] = events.map(event => ({
-      ...event,
-      currentParticipants: event.participants.length,
-    }));
-
-    return NextResponse.json(eventsWithCount);
   } catch (error) {
-    console.error('Error fetching events:', error);
+    console.error('Error in GET /api/events:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -165,51 +64,41 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 }
 
-export async function POST(request: NextRequest): Promise<Response> {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = (await request.json()) as {
-      title: string;
-      description?: string;
-      startTime: string;
-      endTime?: string;
-      latitude: number;
-      longitude: number;
-      type: 'social' | 'virtual' | 'hybrid';
-      maxParticipants?: number;
-      tags?: string[];
-    };
+    const body = (await request.json()) as CreateEventBody;
 
-    const event = await db.event.create({
-      data: {
-        title: body.title,
-        description: body.description,
-        startTime: new Date(body.startTime),
-        endTime: body.endTime ? new Date(body.endTime) : undefined,
-        latitude: body.latitude,
-        longitude: body.longitude,
-        type: body.type,
-        maxParticipants: body.maxParticipants,
-        tags: body.tags,
-        creatorId: session.user.id,
-      },
-      include: {
-        creator: true,
-        participants: {
-          include: {
-            user: true,
-          },
-        },
-      },
+    // Validate required fields
+    if (!body.title || !body.startTime || !body.latitude || !body.longitude || !body.type) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Create event using the validated body
+    const result = await eventService.createEvent({
+      ...body,
+      startTime: new Date(body.startTime),
+      endTime: body.endTime ? new Date(body.endTime) : undefined,
+      creatorId: session.user.id,
     });
 
-    return NextResponse.json(event);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(result.data);
   } catch (error) {
-    console.error('Error creating event:', error);
+    console.error('Error in POST /api/events:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

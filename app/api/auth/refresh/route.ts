@@ -54,7 +54,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       email: user.email,
       role: user.role,
       firstName: user.firstName,
-      lastName: user.lastName
+      lastName: user.lastName,
     });
 
     // Update refresh token in database
@@ -62,7 +62,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       where: { id: user.id },
       data: {
         refreshToken: tokenResult.refreshToken,
-        refreshTokenExpiresAt: new Date(Date.now() + tokenResult.refreshTokenExpiresIn * 1000),
+        refreshTokenExpiresAt: new Date(
+          Date.now() + tokenResult.refreshTokenExpiresIn * 1000
+        ),
       },
     });
 
@@ -77,10 +79,9 @@ export async function POST(request: NextRequest): Promise<Response> {
         email: user.email,
         role: user.role,
         firstName: user.firstName,
-        lastName: user.lastName
-      }
+        lastName: user.lastName,
+      },
     });
-
   } catch (error) {
     console.error('Error in refresh token:', error);
     return NextResponse.json(

@@ -83,5 +83,4 @@ async function handleGet(request: NextRequest) {
   }
 }
 
-export const GET = (request: NextRequest) =>
-  handleGet(request);
+export const GET = (request: NextRequest) => handleGet(request);

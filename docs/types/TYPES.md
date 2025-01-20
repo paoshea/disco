@@ -92,18 +92,25 @@
 
    - Used for Next.js 15.x App Router route handlers
    - Provides type-safe access to dynamic route parameters
+   - Route params are handled as Promises to support async operations during route resolution
 
    ```typescript
    // Route handler parameter type
-   type Context = {
-     params: Record<string, string>;  // Dynamic route parameters
+   type RouteContext = {
+     params: Promise<{
+       [key: string]: string; // Dynamic route parameters (e.g., id, roomId)
+     }>;
    };
 
-   // Usage in route handler
+   // Example usage in route handler
    export async function GET(
      request: NextRequest,
-     context: { params: Record<string, string> }
-   ): Promise<NextResponse>
+     context: RouteContext
+   ): Promise<NextResponse> {
+     const params = await context.params;
+     const { id } = params; // Access dynamic route parameter
+     // ... rest of the handler
+   }
    ```
 
 2. **Example Usage**
@@ -112,9 +119,10 @@
    // Dynamic route: app/api/chats/rooms/[roomId]/messages/route.ts
    export async function GET(
      request: NextRequest,
-     context: { params: Record<string, string> }
+     context: RouteContext
    ): Promise<NextResponse> {
-     const roomId = context.params.roomId;  // Type-safe access to roomId
+     const params = await context.params;
+     const roomId = params.roomId; // Type-safe access to roomId
      // ... rest of handler code
    }
    ```
@@ -123,9 +131,9 @@
 
    ```typescript
    // Next.js 15.x specific configurations
-   export const dynamic = 'force-dynamic';  // Disable static optimization
-   export const runtime = 'nodejs';         // Use Node.js runtime
-   export const revalidate = 0;            // Disable caching
+   export const dynamic = 'force-dynamic'; // Disable static optimization
+   export const runtime = 'nodejs'; // Use Node.js runtime
+   export const revalidate = 0; // Disable caching
    ```
 
 4. **Best Practices**
@@ -139,11 +147,13 @@
 ### Key Design Principles
 
 1. **Version Management**
+
    - Multiple types have "Old" and "New" versions (e.g., SafetySettingsOld → SafetySettingsNew)
    - This indicates an ongoing migration that needs careful handling
    - Always use "New" versions in new code, "Old" versions maintained for legacy API compatibility
 
 2. **Response Wrapping**
+
    ```typescript
    interface ApiResponse<T> {
      data: T;
@@ -151,22 +161,24 @@
      message?: string;
    }
    ```
+
    - All API responses are wrapped in an ApiResponse<T> structure
    - Requires careful type handling in services to access nested data
    - Example usage:
      ```typescript
-     const response = await apiClient.get<ApiResponse<{ matches: Match[] }>>(
-       '/matches'
-     );
+     const response =
+       await apiClient.get<ApiResponse<{ matches: Match[] }>>('/matches');
      return response.data.matches;
      ```
 
 3. **Cross-Domain Types**
+
    - Location type is used across multiple domains (safety, matches, events)
    - User type is referenced by many features
    - These shared types need careful coordination when making changes
 
 4. **Status Management**
+
    - Multiple status enums exist for different features
    - Some overlap in status names but with different meanings
    - Need to be careful not to mix up similar-sounding statuses
@@ -361,14 +373,13 @@ src/
    - Maintain backward compatibility
 
 2. **Performance**
+
    - Monitor type bundle size
    - Use type-only imports where possible
    - Consider code splitting impact
 
+   TO BE MERGED
 
-
-
-   TO BE MERGED 
    # Disco Type System Documentation
 
 This document provides a comprehensive overview of the type system used in the Disco application, highlighting important relationships, versioning, and special features.
@@ -1008,4 +1019,3 @@ type ViewProps = {
 8. Use `Partial<T>` for update operations
 9. Follow the established naming conventions for new types
 10. Never use `any` - always provide proper types
-

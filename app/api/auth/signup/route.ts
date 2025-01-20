@@ -95,7 +95,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       where: { id: user.id },
       data: {
         refreshToken,
-        refreshTokenExpiresAt: new Date(now.getTime() + accessTokenExpiresIn * 1000),
+        refreshTokenExpiresAt: new Date(
+          now.getTime() + accessTokenExpiresIn * 1000
+        ),
         lastLogin: now,
       },
     });

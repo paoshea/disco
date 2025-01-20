@@ -55,8 +55,12 @@ export async function middleware(request: NextRequest) {
     '/api/dashboard',
     '/api/safety',
   ];
-  const requiresAuth = authPaths.some((authPath) => pathname.startsWith(authPath));
-  const requiresAdmin = adminRoutes.some((adminPath) => pathname.startsWith(adminPath));
+  const requiresAuth = authPaths.some(authPath =>
+    pathname.startsWith(authPath)
+  );
+  const requiresAdmin = adminRoutes.some(adminPath =>
+    pathname.startsWith(adminPath)
+  );
 
   if (!requiresAuth && !requiresAdmin) {
     return NextResponse.next();

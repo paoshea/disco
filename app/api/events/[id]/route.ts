@@ -30,10 +30,7 @@ export async function GET(
     const result = await eventService.getEventById(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 404 });
     }
 
     return NextResponse.json(result.data);
@@ -63,10 +60,7 @@ export async function PUT(
     const result = await eventService.updateEvent(id, body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json(result.data);
@@ -95,19 +89,13 @@ export async function DELETE(
     // First check if the user is authorized to delete this event
     const eventResult = await eventService.getEventById(id);
     if (!eventResult.success) {
-      return NextResponse.json(
-        { error: eventResult.error },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: eventResult.error }, { status: 404 });
     }
 
     const result = await eventService.deleteEvent(id);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({ message: 'Event deleted successfully' });
@@ -132,7 +120,7 @@ export async function PATCH(
 
     const params = await context.params;
     const { id } = params;
-    const body = await request.json();
+    const body = (await request.json()) as { action?: string };
 
     const actionSchema = z.object({
       action: z.enum(['join', 'leave']),
@@ -140,10 +128,7 @@ export async function PATCH(
 
     const parseResult = actionSchema.safeParse(body);
     if (!parseResult.success) {
-      return NextResponse.json(
-        { error: 'Invalid action' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     const { action } = parseResult.data;
@@ -156,10 +141,7 @@ export async function PATCH(
     }
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json(result.data);

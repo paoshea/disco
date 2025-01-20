@@ -1,7 +1,7 @@
 import { db } from '@/lib/prisma';
-import type { EventWithParticipants } from '@/types/event';
 import type { ServiceResponse } from '@/types/service';
-import type { ParticipantUser, ParticipantStatus } from '@/types/participant';
+import type { EventWithParticipants } from '@/types/event';
+import type { ParticipantStatus } from '@/types/participant';
 
 export interface EventCreateInput {
   title: string;

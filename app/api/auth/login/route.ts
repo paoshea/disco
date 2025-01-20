@@ -68,7 +68,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: {
         lastLogin: now,
         refreshToken,
-        refreshTokenExpiresAt: new Date(now.getTime() + accessTokenExpiresIn * 1000),
+        refreshTokenExpiresAt: new Date(
+          now.getTime() + accessTokenExpiresIn * 1000
+        ),
       },
     });
 

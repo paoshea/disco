@@ -32,7 +32,7 @@ declare module 'next-auth/jwt' {
     role: string;
     firstName: string;
     lastName: string;
-    sub: string;  // Add sub as it's used in the me route
+    sub: string; // Add sub as it's used in the me route
   }
 }
 
@@ -52,7 +52,7 @@ export interface JWTPayload {
   role: string;
   firstName: string;
   lastName: string;
-  sub: string;  // Add sub to match JWT interface
+  sub: string; // Add sub to match JWT interface
   emailVerified: boolean;
   streakCount: number;
 }

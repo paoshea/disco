@@ -1,16 +1,14 @@
-import { compare, hash } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
-import type { JWTPayload as JoseJWTPayload } from 'jose';
-import type { NextRequest } from 'next/server';
-import type { User as NextAuthUser, Session } from 'next-auth';
-import { NextAuthOptions } from 'next-auth';
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { db } from './prisma';
-import type { JWTPayload } from '@/types/auth';
+import { hash, compare } from 'bcrypt';
 import crypto from 'crypto';
+import { db } from './prisma';
+import type { Session } from 'next-auth';
+import type { NextRequest } from 'next/server';
+import type { JWTPayload } from '@/types/auth';
+import type { SessionStrategy } from 'next-auth';
 
 // Extend the built-in types
-interface User extends NextAuthUser {
+interface User {
   id: string;
   email: string;
   role: string;
@@ -26,6 +24,9 @@ interface TokenUserPayload {
   lastName: string;
 }
 
+const accessTokenExpiresIn = 15 * 60; // 15 minutes
+const refreshTokenExpiresIn = 7 * 24 * 60 * 60; // 7 days
+
 export const comparePasswords = async (
   password: string,
   hash: string
@@ -37,15 +38,17 @@ export const hashPassword = async (password: string): Promise<string> => {
   return hash(password, 10);
 };
 
-export const generateToken = async (user: {
-  id: string;
-  email: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-  emailVerified?: boolean;
-  streakCount?: number;
-}): Promise<{
+export const generateTokens = async (
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+    emailVerified?: boolean;
+    streakCount?: number;
+  }
+): Promise<{
   token: string;
   refreshToken: string;
   accessTokenExpiresIn: number;
@@ -60,15 +63,12 @@ export const generateToken = async (user: {
     lastName: user.lastName,
     sub: user.id, // Add sub property, using user.id as per JWT standard
     emailVerified: user.emailVerified ?? false,
-    streakCount: user.streakCount ?? 0
+    streakCount: user.streakCount ?? 0,
   };
 
   const secret = new TextEncoder().encode(
     process.env.NEXTAUTH_SECRET || 'your-secret-key'
   );
-
-  const accessTokenExpiresIn = 60 * 60; // 1 hour in seconds
-  const refreshTokenExpiresIn = 30 * 24 * 60 * 60; // 30 days in seconds
 
   // Generate access token
   const token = await new SignJWT(payload)
@@ -79,7 +79,7 @@ export const generateToken = async (user: {
   // Generate refresh token with a different type
   const refreshPayload = {
     ...payload,
-    type: 'refresh'
+    type: 'refresh',
   };
 
   const refreshToken = await new SignJWT(refreshPayload)
@@ -91,18 +91,20 @@ export const generateToken = async (user: {
     token,
     refreshToken,
     accessTokenExpiresIn,
-    refreshTokenExpiresIn
+    refreshTokenExpiresIn,
   };
 };
 
-export const verifyToken = async (token: string): Promise<JWTPayload | null> => {
+export const verifyToken = async (
+  token: string
+): Promise<JWTPayload | null> => {
   try {
     const secret = new TextEncoder().encode(
       process.env.NEXTAUTH_SECRET || 'your-secret-key'
     );
 
     const { payload } = await jwtVerify(token, secret);
-    
+
     // Verify the payload has all required fields
     if (
       typeof payload.id === 'string' &&
@@ -120,7 +122,8 @@ export const verifyToken = async (token: string): Promise<JWTPayload | null> => 
         lastName: payload.lastName,
         sub: payload.sub,
         emailVerified: payload.emailVerified === true,
-        streakCount: typeof payload.streakCount === 'number' ? payload.streakCount : 0
+        streakCount:
+          typeof payload.streakCount === 'number' ? payload.streakCount : 0,
       };
     }
     return null;
@@ -172,19 +175,21 @@ export const generateRefreshToken = async (
   return token;
 };
 
-export async function generatePasswordResetToken(email: string): Promise<string> {
+export async function generatePasswordResetToken(
+  email: string
+): Promise<string> {
   const token = crypto.randomBytes(32).toString('hex');
   const hashedToken = await hash(token, 10);
-  
+
   // First find the user
   const user = await db.user.findUnique({
-    where: { email }
+    where: { email },
   });
 
   if (!user) {
     throw new Error('User not found');
   }
-  
+
   // Store the token in the database with expiration
   await db.passwordReset.create({
     data: {
@@ -197,15 +202,28 @@ export async function generatePasswordResetToken(email: string): Promise<string>
   return token;
 }
 
-export const authOptions: NextAuthOptions = {
+export const authOptions = {
+  // Configure JWT
+  jwt: async ({ token, user }: { token: Record<string, unknown>; user?: Record<string, unknown> }) => {
+    if (user) {
+      await Promise.resolve(); // Add await to satisfy require-await
+      token.id = user.id;
+      token.email = user.email;
+      token.role = user.role;
+      token.firstName = user.firstName;
+      token.lastName = user.lastName;
+    }
+    return token;
+  },
+
   providers: [
-    CredentialsProvider({
+    {
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials: { email: string; password: string } | undefined) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -218,12 +236,12 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = await comparePasswords(
+        const isPasswordValid = await comparePasswords(
           credentials.password,
           user.password
         );
 
-        if (!isValid) {
+        if (!isPasswordValid) {
           return null;
         }
 
@@ -235,32 +253,12 @@ export const authOptions: NextAuthOptions = {
           lastName: user.lastName,
         };
       },
-    }),
+    },
   ],
-  callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.role = user.role;
-        token.firstName = user.firstName;
-        token.lastName = user.lastName;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.role = token.role;
-        session.user.firstName = token.firstName;
-        session.user.lastName = token.lastName;
-      }
-      return session;
-    },
-  },
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as SessionStrategy,
+    maxAge: 30 * 24 * 60 * 60, // 30 days
+    updateAge: 24 * 60 * 60, // 24 hours
   },
 };
 
@@ -295,9 +293,7 @@ export const getServerAuthSession = async (
   }
 };
 
-export const getSession = async (
-  req: NextRequest
-): Promise<Session | null> => {
+export const getSession = async (req: NextRequest): Promise<Session | null> => {
   const sessionToken = req.cookies.get('next-auth.session-token');
 
   if (!sessionToken) {

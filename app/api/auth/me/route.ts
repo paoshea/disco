@@ -53,9 +53,8 @@ export async function GET(
         lastName: user.lastName,
         emailVerified: user.emailVerified,
         streakCount: user.streakCount,
-      }
+      },
     });
-
   } catch (error) {
     console.error('Error in GET /api/auth/me:', error);
     return NextResponse.json(
