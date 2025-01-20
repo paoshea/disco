@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { LocationService } from '@/services/location/location.service';
-import type { Location } from '@prisma/client';
+import type { LocationPrivacyMode } from '@/types/location';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,10 +15,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const location = await LocationService.getLocation(session.user.id);
-    return NextResponse.json({ location });
+    const locationService = LocationService.getInstance();
+    const locationState = await locationService.getLocationState(session.user.id);
+
+    return NextResponse.json(locationState);
   } catch (error) {
-    console.error('Error fetching location:', error);
+    console.error('Error getting location state:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -36,8 +38,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { latitude, longitude, accuracy, privacyMode } = body;
+    const { latitude, longitude, accuracy, privacyMode } = await request.json();
 
     if (!latitude || !longitude) {
       return NextResponse.json(
@@ -46,15 +47,25 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const location = await LocationService.updateLocation(
+    const locationService = LocationService.getInstance();
+    const result = await locationService.updateLocation(
       session.user.id,
-      latitude,
-      longitude,
-      accuracy,
-      privacyMode
+      {
+        latitude,
+        longitude,
+        accuracy,
+        privacyMode: privacyMode as LocationPrivacyMode
+      }
     );
 
-    return NextResponse.json({ location });
+    if (!result.success) {
+      return NextResponse.json(
+        { error: result.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ location: result.data });
   } catch (error) {
     console.error('Error updating location:', error);
     return NextResponse.json(
@@ -74,35 +85,24 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    const body = await request.json();
-    const { action } = body;
+    const { privacyMode, sharingEnabled } = await request.json();
 
-    let location: Location | null = null;
+    const locationService = LocationService.getInstance();
+    const result = await locationService.updateLocationState(session.user.id, {
+      privacyMode: privacyMode as LocationPrivacyMode,
+      sharingEnabled
+    });
 
-    if (action === 'toggleSharing') {
-      location = await LocationService.toggleLocationSharing(session.user.id);
-    } else if (action === 'updatePrivacy' && body.privacyMode) {
-      location = await LocationService.updatePrivacyMode(
-        session.user.id,
-        body.privacyMode
-      );
-    } else {
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Invalid action' },
+        { error: result.error },
         { status: 400 }
       );
     }
 
-    if (!location) {
-      return NextResponse.json(
-        { error: 'Location not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ location });
+    return NextResponse.json({ location: result.data });
   } catch (error) {
-    console.error('Error updating location:', error);
+    console.error('Error updating location state:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,41 +1,45 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
-export type EventWithParticipants = Prisma.EventGetPayload<{
-  include: {
-    creator: {
-      select: {
-        id: true;
-        name: true;
-        email: true;
-        image: true;
-      };
+type EventInclude = {
+  creator: boolean | {
+    select: {
+      id: true;
+      email: true;
+      firstName: true;
+      lastName: true;
     };
-    participants: {
-      include: {
-        user: {
-          select: {
-            id: true;
-            name: true;
-            email: true;
-            image: true;
-          };
+  };
+  participants: boolean | {
+    include: {
+      user: {
+        select: {
+          id: true;
+          email: true;
+          firstName: true;
+          lastName: true;
         };
       };
     };
   };
+};
+
+export type EventWithParticipants = Prisma.EventGetPayload<{
+  include: EventInclude;
 }>;
 
-export type LocationWithUser = Prisma.LocationGetPayload<{
-  include: {
-    user: {
-      select: {
-        id: true;
-        name: true;
-        email: true;
-        image: true;
-      };
+type LocationInclude = {
+  user: boolean | {
+    select: {
+      id: true;
+      email: true;
+      firstName: true;
+      lastName: true;
     };
   };
+};
+
+export type LocationWithUser = Prisma.LocationGetPayload<{
+  include: LocationInclude;
 }>;
 
 export type ExtendedPrismaClient = PrismaClient & {
@@ -46,14 +50,14 @@ export type ExtendedPrismaClient = PrismaClient & {
           latitude: number,
           longitude: number,
           radiusInMeters: number
-        ) => Promise<Prisma.EventGetPayload<{ include: EventWithParticipants }>[]>;
+        ) => Promise<EventWithParticipants[]>;
       };
       location: {
         findNearby: (
           latitude: number,
           longitude: number,
           radiusInMeters: number
-        ) => Promise<Prisma.LocationGetPayload<{ include: LocationWithUser }>[]>;
+        ) => Promise<LocationWithUser[]>;
       };
     };
   };

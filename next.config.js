@@ -9,6 +9,20 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
   },
+  webpack: (config, { isServer }) => {
+    if (!isServer) {
+      // Don't include these packages on the client side
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        bcrypt: false,
+        'mock-aws-s3': false,
+        'aws-sdk': false,
+        nock: false,
+        '@mapbox/node-pre-gyp': false,
+      };
+    }
+    return config;
+  },
 };
 
 module.exports = nextConfig;

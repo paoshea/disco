@@ -4,11 +4,13 @@ import { Session } from 'next-auth';
 import { AdapterUser } from 'next-auth/adapters';
 import { db } from './prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import * as jose from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import type { User } from '@prisma/client';
+import { RequestCookies } from 'next/dist/server/web/spec-extension/cookies';
+import { getServerSession as nextAuthGetServerSession } from 'next-auth/next';
 
 declare module 'next-auth' {
   interface Session {
@@ -19,6 +21,7 @@ declare module 'next-auth' {
       image?: string | null;
       role?: string;
     };
+    expires: string;
   }
 }
 
@@ -60,12 +63,12 @@ export const authOptions: NextAuthOptions = {
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
+        email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          throw new Error('Email and password required');
+          return null;
         }
 
         const user = await db.user.findUnique({
@@ -73,34 +76,34 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (!user) {
-          throw new Error('No user found');
+          return null;
         }
 
-        const isValid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const isValid = await bcrypt.compare(credentials.password, user.password);
 
         if (!isValid) {
-          throw new Error('Invalid password');
+          return null;
         }
 
         return {
           id: user.id,
           email: user.email,
-          name: `${user.firstName} ${user.lastName}`,
+          name: `${user.firstName} ${user.lastName}`.trim(),
           role: user.role,
         };
       },
     }),
   ],
-  secret: process.env.JWT_SECRET,
-  session: {
-    strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-  },
   callbacks: {
-    async session({ session, token }: { session: Session; token: JWT }) {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email ?? undefined;
+        token.role = (user as any).role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
       if (token) {
         session.user.id = token.id;
         session.user.email = token.email;
@@ -108,14 +111,11 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user }: { token: JWT; user?: AdapterUser | User }) {
-      if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.role = (user as User).role;
-      }
-      return token;
-    },
+  },
+  secret: process.env.JWT_SECRET,
+  session: {
+    strategy: 'jwt',
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 };
 
@@ -163,11 +163,10 @@ export async function generateToken(
 
 export async function verifyToken(token: string): Promise<Session | null> {
   try {
-    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    
-    if (payload.type !== 'access') {
-      return null;
-    }
+    const payload = await jose.jwtVerify(
+      token,
+      JWT_SECRET
+    ) as unknown as AuthJWTPayload;
 
     const user = await db.user.findUnique({
       where: { id: payload.userId as string },
@@ -183,6 +182,7 @@ export async function verifyToken(token: string): Promise<Session | null> {
         email: user.email,
         role: user.role,
       },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
     };
   } catch {
     return null;
@@ -214,37 +214,27 @@ export function getTokenFromRequest(request: NextRequest): string | null {
 }
 
 export async function getServerSession(): Promise<Session | null> {
-  const cookieStore = cookies();
-  const token = cookieStore.get('next-auth.session-token');
+  return nextAuthGetServerSession(authOptions);
+}
+
+export async function getSession(): Promise<Session | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('next-auth.session-token')?.value;
 
   if (!token) {
     return null;
   }
 
-  try {
-    const { payload } = await jose.jwtVerify(
-      token.value,
-      JWT_SECRET
-    );
+  return verifyToken(token);
+}
 
-    const user = await db.user.findUnique({
-      where: { id: payload.userId as string },
-    });
+export async function getCurrentUser(): Promise<Session['user'] | undefined> {
+  const session = await getSession();
+  return session?.user;
+}
 
-    if (!user) {
-      return null;
-    }
-
-    return {
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
-    };
-  } catch {
-    return null;
-  }
+export async function getToken(cookieStore: RequestCookies): Promise<string | undefined> {
+  return cookieStore.get('next-auth.session-token')?.value;
 }
 
 export async function generatePasswordResetToken(
@@ -275,27 +265,4 @@ export async function generatePasswordResetToken(
     token,
     expiresAt: new Date(exp * 1000),
   };
-}
-
-export async function getSession(): Promise<Session | null> {
-  const session = await auth();
-  if (!session?.user) return null;
-
-  return {
-    user: {
-      id: session.user.id,
-      email: session.user.email,
-      role: session.user.role,
-    },
-    expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-  };
-}
-
-export async function getCurrentUser(): Promise<Session['user'] | undefined> {
-  const session = await getSession();
-  return session?.user;
-}
-
-export async function getToken(cookies: RequestCookies): Promise<string | undefined> {
-  return cookies.get('next-auth.session-token')?.value;
 }

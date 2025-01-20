@@ -22,7 +22,7 @@ export default function MatchingPage() {
   const { user } = useAuth();
   const [settings, setSettings] = useState<MatchingSettings>({
     enabled: false,
-    radius: 5000,
+    radius: 10,
     interests: [],
   });
   const [loading, setLoading] = useState(true);
@@ -30,7 +30,7 @@ export default function MatchingPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       if (!user?.id) {
-        router.push('/auth/signin');
+        router.push('/login');
         return;
       }
 
@@ -41,7 +41,7 @@ export default function MatchingPage() {
         if (locationState) {
           setSettings(prev => ({
             ...prev,
-            enabled: locationState.enabled,
+            enabled: locationState.sharingEnabled,
           }));
         }
       } catch (error) {
@@ -61,7 +61,8 @@ export default function MatchingPage() {
     try {
       const locationService = LocationService.getInstance();
       await locationService.updateLocationState(user.id, {
-        enabled,
+        privacyMode: 'precise',
+        sharingEnabled: enabled
       });
       setSettings(prev => ({ ...prev, enabled }));
       toast.success(enabled ? 'Matching enabled' : 'Matching disabled');

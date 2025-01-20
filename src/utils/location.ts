@@ -1,13 +1,15 @@
 import { db } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import type { Location, LocationPrivacyMode } from '@/types/location';
 
-interface LocationData {
+export interface LocationData {
+  id: string;
+  userId: string;
   latitude: number;
   longitude: number;
   accuracy?: number;
-  privacyMode: string;
+  privacyMode: LocationPrivacyMode;
   sharingEnabled: boolean;
-  userId: string;
+  timestamp: Date;
 }
 
 interface PrivacyZoneData {
@@ -98,12 +100,18 @@ export async function getNearbyLocations(
     },
   });
 
-  // Then filter by distance
-  return recentLocations.filter(
-    loc =>
-      calculateDistance(latitude, longitude, loc.latitude, loc.longitude) <=
-      radiusKm
-  );
+  // Then filter by distance and map to LocationData
+  return recentLocations
+    .map(loc => ({
+      ...loc,
+      accuracy: loc.accuracy ?? undefined,
+      privacyMode: loc.privacyMode as LocationPrivacyMode
+    }))
+    .filter(
+      loc =>
+        calculateDistance(latitude, longitude, loc.latitude, loc.longitude) <=
+        radiusKm
+    );
 }
 
 export async function deletePrivacyZone(

@@ -1,13 +1,7 @@
 import { db } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
-
-type Location = Prisma.LocationGetPayload<{}>;
-
-type ServiceResponse<T> = {
-  success: boolean;
-  data?: T;
-  error?: string;
-};
+import type { Location as PrismaLocation } from '@prisma/client';
+import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { ServiceResponse } from '@/types/api';
 
 export class LocationService {
   private static instance: LocationService;
@@ -17,22 +11,38 @@ export class LocationService {
     this.prisma = db.location;
   }
 
-  static getInstance(): LocationService {
+  public static getInstance(): LocationService {
     if (!LocationService.instance) {
       LocationService.instance = new LocationService();
     }
     return LocationService.instance;
   }
 
+  private mapPrismaLocationToLocation(location: PrismaLocation): Location {
+    return {
+      id: location.id,
+      userId: location.userId,
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy ?? undefined,
+      privacyMode: location.privacyMode as LocationPrivacyMode,
+      sharingEnabled: location.sharingEnabled,
+      timestamp: location.timestamp
+    };
+  }
+
   async updateLocation(
     userId: string,
-    latitude: number,
-    longitude: number,
-    accuracy?: number,
-    privacyMode: string = 'precise'
-  ): Promise<Location> {
+    data: {
+      latitude: number;
+      longitude: number;
+      accuracy?: number;
+      privacyMode: LocationPrivacyMode;
+      sharingEnabled?: boolean;
+    }
+  ): Promise<ServiceResponse<Location>> {
     try {
-      if (!latitude || !longitude) {
+      if (!data.latitude || !data.longitude) {
         throw new Error('Latitude and longitude are required');
       }
 
@@ -48,65 +58,39 @@ export class LocationService {
 
       const locationData = {
         userId,
-        latitude,
-        longitude,
-        accuracy,
-        privacyMode,
-        sharingEnabled: true,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        accuracy: data.accuracy ?? null,
+        privacyMode: data.privacyMode,
+        sharingEnabled: data.sharingEnabled ?? true,
         timestamp: new Date(),
       };
 
-      const data = await this.prisma.create({
+      const prismaLocation = await this.prisma.create({
         data: locationData,
-      });
-
-      return data;
-    } catch (error) {
-      console.error('Error updating location:', error);
-      throw error;
-    }
-  }
-
-  async updateLocation(
-    userId: string,
-    data: {
-      latitude: number;
-      longitude: number;
-      accuracy?: number;
-      privacyMode: string;
-      sharingEnabled?: boolean;
-    }
-  ): Promise<ServiceResponse<Location>> {
-    try {
-      const location = await db.location.create({
-        data: {
-          userId,
-          ...data,
-          sharingEnabled: data.sharingEnabled ?? true,
-        },
       });
 
       return {
         success: true,
-        data: location,
+        data: this.mapPrismaLocationToLocation(prismaLocation)
       };
     } catch (error) {
       console.error('Error updating location:', error);
       return {
         success: false,
-        error: 'Failed to update location',
+        error: 'Failed to update location'
       };
     }
   }
 
   async getLocationState(userId: string): Promise<ServiceResponse<Location>> {
     try {
-      const location = await db.location.findFirst({
+      const prismaLocation = await this.prisma.findFirst({
         where: { userId },
         orderBy: { timestamp: 'desc' },
       });
 
-      if (!location) {
+      if (!prismaLocation) {
         return {
           success: false,
           error: 'No location found',
@@ -115,13 +99,13 @@ export class LocationService {
 
       return {
         success: true,
-        data: location,
+        data: this.mapPrismaLocationToLocation(prismaLocation),
       };
     } catch (error) {
       console.error('Error getting location state:', error);
       return {
         success: false,
-        error: 'Failed to get location state',
+        error: 'Failed to get location state'
       };
     }
   }
@@ -129,12 +113,12 @@ export class LocationService {
   async updateLocationState(
     userId: string,
     data: {
-      privacyMode: string;
+      privacyMode: LocationPrivacyMode;
       sharingEnabled: boolean;
     }
   ): Promise<ServiceResponse<Location>> {
     try {
-      const currentLocation = await db.location.findFirst({
+      const currentLocation = await this.prisma.findFirst({
         where: { userId },
         orderBy: { timestamp: 'desc' },
       });
@@ -142,49 +126,47 @@ export class LocationService {
       if (!currentLocation) {
         return {
           success: false,
-          error: 'No location found to update',
+          error: 'No location found',
         };
       }
 
-      const location = await db.location.create({
+      const prismaLocation = await this.prisma.update({
+        where: { id: currentLocation.id },
         data: {
-          userId,
-          latitude: currentLocation.latitude,
-          longitude: currentLocation.longitude,
-          accuracy: currentLocation.accuracy,
-          ...data,
+          privacyMode: data.privacyMode,
+          sharingEnabled: data.sharingEnabled,
         },
       });
 
       return {
         success: true,
-        data: location,
+        data: this.mapPrismaLocationToLocation(prismaLocation),
       };
     } catch (error) {
       console.error('Error updating location state:', error);
       return {
         success: false,
-        error: 'Failed to update location state',
+        error: 'Failed to update location state'
       };
     }
   }
 
   async getLatestLocation(userId: string): Promise<Location | null> {
     try {
-      const location = await this.prisma.findFirst({
+      const prismaLocation = await this.prisma.findFirst({
         where: { userId },
         orderBy: { timestamp: 'desc' },
       });
 
-      return location;
+      return prismaLocation ? this.mapPrismaLocationToLocation(prismaLocation) : null;
     } catch (error) {
       console.error('Error getting latest location:', error);
       throw error;
     }
   }
 
-  static async getLocation(userId: string): Promise<Location | null> {
-    return await db.location.findFirst({
+  async getLocation(userId: string): Promise<Location | null> {
+    const prismaLocation = await this.prisma.findFirst({
       where: {
         userId,
       },
@@ -192,15 +174,17 @@ export class LocationService {
         timestamp: 'desc',
       },
     });
+
+    return prismaLocation ? this.mapPrismaLocationToLocation(prismaLocation) : null;
   }
 
-  static async toggleLocationSharing(userId: string): Promise<Location | null> {
-    const currentLocation = await LocationService.getLocation(userId);
+  async toggleLocationSharing(userId: string): Promise<Location | null> {
+    const currentLocation = await this.getLocation(userId);
     if (!currentLocation) {
       return null;
     }
 
-    return await db.location.update({
+    const prismaLocation = await this.prisma.update({
       where: {
         id: currentLocation.id,
       },
@@ -208,18 +192,20 @@ export class LocationService {
         sharingEnabled: !currentLocation.sharingEnabled,
       },
     });
+
+    return this.mapPrismaLocationToLocation(prismaLocation);
   }
 
-  static async updatePrivacyMode(
+  async updatePrivacyMode(
     userId: string,
-    privacyMode: string
+    privacyMode: LocationPrivacyMode
   ): Promise<Location | null> {
-    const currentLocation = await LocationService.getLocation(userId);
+    const currentLocation = await this.getLocation(userId);
     if (!currentLocation) {
       return null;
     }
 
-    return await db.location.update({
+    const prismaLocation = await this.prisma.update({
       where: {
         id: currentLocation.id,
       },
@@ -227,6 +213,8 @@ export class LocationService {
         privacyMode,
       },
     });
+
+    return this.mapPrismaLocationToLocation(prismaLocation);
   }
 }
 
