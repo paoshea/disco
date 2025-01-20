@@ -24,6 +24,113 @@ declare module 'next-auth' {
   }
 }
 
+export const comparePasswords = async (
+  password: string,
+  hash: string
+): Promise<boolean> => {
+  return bcrypt.compare(password, hash);
+};
+
+export const hashPassword = async (password: string): Promise<string> => {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+};
+
+export const generateToken = async (
+  payload: Record<string, unknown>,
+  secret: string,
+  expiresIn: number = 24 * 60 * 60 // 24 hours in seconds
+): Promise<string> => {
+  const secretKey = new TextEncoder().encode(secret);
+  return new jose.SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + expiresIn)
+    .sign(secretKey);
+};
+
+export const generatePasswordResetToken = async (
+  email: string,
+  secret: string = process.env.NEXTAUTH_SECRET || '',
+  expiresIn: number = 60 * 60 // 1 hour in seconds
+): Promise<{ token: string; expiresAt: Date }> => {
+  const secretKey = new TextEncoder().encode(secret);
+  const expiresAt = new Date(Date.now() + expiresIn * 1000);
+  
+  const token = await new jose.SignJWT({ email })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime(expiresAt)
+    .sign(secretKey);
+
+  return {
+    token,
+    expiresAt,
+  };
+};
+
+export const verifyToken = async (
+  token: string,
+  secret: string = process.env.NEXTAUTH_SECRET || ''
+): Promise<{ user: { id: string; email: string; role: string } } | null> => {
+  try {
+    const secretKey = new TextEncoder().encode(secret);
+    const { payload } = await jose.jwtVerify(token, secretKey);
+    
+    if (!payload.sub || !payload.email || !payload.role) {
+      return null;
+    }
+
+    return {
+      user: {
+        id: payload.sub as string,
+        email: payload.email as string,
+        role: payload.role as string,
+      }
+    };
+  } catch (error) {
+    console.error('Error verifying token:', error);
+    return null;
+  }
+};
+
+export const verifyRefreshToken = async (
+  token: string,
+  secret: string = process.env.NEXTAUTH_SECRET || ''
+): Promise<{ userId: string; email: string } | null> => {
+  try {
+    const secretKey = new TextEncoder().encode(secret);
+    const { payload } = await jose.jwtVerify(token, secretKey);
+    
+    if (!payload.sub || !payload.email) {
+      return null;
+    }
+
+    return {
+      userId: payload.sub as string,
+      email: payload.email as string,
+    };
+  } catch (error) {
+    console.error('Error verifying refresh token:', error);
+    return null;
+  }
+};
+
+export const generateRefreshToken = async (
+  userId: string,
+  email: string,
+  secret: string = process.env.NEXTAUTH_SECRET || '',
+  expiresIn: number = 7 * 24 * 60 * 60 // 7 days in seconds
+): Promise<string> => {
+  const secretKey = new TextEncoder().encode(secret);
+  return new jose.SignJWT({ email })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setSubject(userId)
+    .setIssuedAt()
+    .setExpirationTime(Math.floor(Date.now() / 1000) + expiresIn)
+    .sign(secretKey);
+};
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -56,7 +163,7 @@ export const authOptions: NextAuthOptions = {
           throw new Error('Please reset your password');
         }
 
-        const isValid = await bcrypt.compare(
+        const isValid = await comparePasswords(
           credentials.password,
           user.password
         );

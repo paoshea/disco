@@ -25,6 +25,9 @@ const publicRoutes = [
 // Routes that require admin role
 const adminRoutes = ['/admin'];
 
+// Specify that this middleware should run in the Node.js runtime
+export const runtime = 'nodejs';
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -52,10 +55,9 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Verify token and get session
     const session = await verifyToken(token);
 
-    if (!session?.user) {
+    if (!session) {
       return redirectToLogin(request);
     }
 
@@ -66,24 +68,9 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    // Add user info to headers for route handlers
-    const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('x-user-id', session.user.id);
-
-    if (session.user.email) {
-      requestHeaders.set('x-user-email', session.user.email);
-    }
-
-    if (session.user.role) {
-      requestHeaders.set('x-user-role', session.user.role);
-    }
-
-    return NextResponse.next({
-      request: {
-        headers: requestHeaders,
-      },
-    });
+    return NextResponse.next();
   } catch (error) {
+    console.error('Error verifying token:', error);
     return redirectToLogin(request);
   }
 }
@@ -91,7 +78,7 @@ export async function middleware(request: NextRequest) {
 function redirectToLogin(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.pathname = '/login';
-  url.search = `?from=${encodeURIComponent(request.nextUrl.pathname)}`;
+  url.searchParams.set('from', request.nextUrl.pathname);
   return NextResponse.redirect(url);
 }
 
@@ -99,11 +86,11 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except:
-     * 1. /api/auth/* (authentication routes)
-     * 2. /_next/* (Next.js internals)
-     * 3. /static/* (static files)
-     * 4. /*.* (files with extensions)
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public files (public directory)
      */
-    '/((?!api/auth|_next|static|[\\w-]+\\.\\w+).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 };
