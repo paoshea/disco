@@ -15,7 +15,7 @@ interface PrivacyUpdateRequest {
   privacyMode: LocationPrivacyMode;
 }
 
-export async function GET(_request: NextRequest): Promise<Response> {
+export async function GET(_: NextRequest): Promise<Response> {
   try {
     const session = await getServerAuthSession();
     if (!session?.user?.id) {

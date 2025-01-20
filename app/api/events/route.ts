@@ -172,7 +172,17 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = (await request.json()) as CreateEventBody;
+    const body = (await request.json()) as {
+      title: string;
+      description?: string;
+      startTime: string;
+      endTime?: string;
+      latitude: number;
+      longitude: number;
+      type: 'social' | 'virtual' | 'hybrid';
+      maxParticipants?: number;
+      tags?: string[];
+    };
 
     const event = await db.event.create({
       data: {

@@ -1,10 +1,7 @@
 import { db } from '@/lib/prisma';
-import type {
-  Event,
-  EventWithParticipants,
-  EventParticipant,
-} from '@/types/event';
+import type { EventWithParticipants } from '@/types/event';
 import type { ServiceResponse } from '@/types/service';
+import type { ParticipantUser, ParticipantStatus } from '@/types/participant';
 
 export interface EventCreateInput {
   title: string;
@@ -49,9 +46,8 @@ interface DbParticipant {
 interface DbUser {
   id: string;
   email: string;
-  name: string | null;
-  firstName: string | null;
-  lastName: string | null;
+  firstName: string;
+  lastName: string;
 }
 
 export interface EventUpdateInput {
@@ -86,11 +82,11 @@ export class EventService {
   }
 
   private mapDbEventToEvent(dbEvent: DbEvent): EventWithParticipants {
-    const participants = dbEvent.participants.map((p) => ({
+    const participants = dbEvent.participants.map(p => ({
       id: p.id,
       userId: p.userId,
       eventId: p.eventId,
-      status: 'accepted' as const, // Default status since we don't store it
+      status: 'accepted' as ParticipantStatus,
       createdAt: p.createdAt,
       updatedAt: p.updatedAt,
       user: {
@@ -107,14 +103,14 @@ export class EventService {
       title: dbEvent.title,
       description: dbEvent.description || null,
       type: dbEvent.type,
-      eventType: dbEvent.type, // Use the same value for both fields
+      eventType: dbEvent.type,
       creatorId: dbEvent.creatorId,
       location: {
         latitude: dbEvent.latitude,
         longitude: dbEvent.longitude,
       },
       startTime: dbEvent.startTime,
-      endTime: dbEvent.endTime || undefined, // Convert null to undefined
+      endTime: dbEvent.endTime || undefined,
       maxParticipants: dbEvent.maxParticipants,
       currentParticipants: participants.length,
       participants,
@@ -344,7 +340,9 @@ export class EventService {
 
       return {
         success: true,
-        data: events.map(event => this.mapDbEventToEvent(event as unknown as DbEvent)),
+        data: events.map(event =>
+          this.mapDbEventToEvent(event as unknown as DbEvent)
+        ),
       };
     } catch (error) {
       console.error('Error getting events:', error);

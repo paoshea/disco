@@ -1,5 +1,35 @@
 import { User } from './user';
-import type { DefaultSession } from 'next-auth';
+import type { DefaultSession, DefaultUser } from 'next-auth';
+import type { JWT } from 'next-auth/jwt';
+
+// Extend next-auth types
+declare module 'next-auth' {
+  interface Session extends DefaultSession {
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      firstName: string;
+    };
+  }
+
+  interface User extends DefaultUser {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+  }
+}
+
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+  }
+}
 
 export interface SignupInput {
   email: string;
@@ -47,13 +77,4 @@ export interface JWTPayload {
   type?: string;
   iat?: number;
   exp?: number;
-}
-
-export interface Session extends DefaultSession {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-  };
 }

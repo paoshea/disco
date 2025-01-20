@@ -68,27 +68,38 @@ export async function GET() {
     }
 
     // Fetch user with raw SQL
-    const [user] = await db.$queryRaw<[UserWithStats]>`
+    const user = await db.$queryRaw<[UserWithStats | null]>`
       SELECT 
         id, email, "firstName", "lastName", "emailVerified",
         "lastLogin", "streakCount", "lastStreak", "createdAt", "updatedAt"
       FROM "User"
       WHERE id = ${session.user.id}
-    `;
+    ` as { 
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+      emailVerified: boolean;
+      lastLogin: Date | null;
+      streakCount: number;
+      lastStreak: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+    } | null;
 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     // Fetch latest streak achievement with raw SQL
-    const [latestAchievement] = await db.$queryRaw<[Achievement | undefined]>`
+    const latestAchievement = await db.$queryRaw<[Achievement | undefined]>`
       SELECT *
       FROM "Achievement"
       WHERE "userId" = ${user.id}
         AND type = 'streak'
       ORDER BY "earnedAt" DESC
       LIMIT 1
-    `;
+    ` as Achievement | undefined;
 
     // Check for new achievements
     const newAchievement = await checkAndCreateAchievement(

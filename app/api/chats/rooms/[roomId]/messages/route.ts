@@ -106,7 +106,7 @@ export async function POST(
 
   try {
     const { roomId } = await params;
-    const body = (await request.json()) as MessageContent;
+    const body = (await request.json()) as { content: string };
     const { content } = body;
 
     if (!content) {

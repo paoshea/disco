@@ -60,7 +60,10 @@ type PrismaModel = {
 const clientExtensions = {
   model: {
     $allModels: {
-      async findFirst<T>(this: PrismaModel, args: PrismaArgs): Promise<T | null> {
+      async findFirst<T>(
+        this: PrismaModel,
+        args: PrismaArgs
+      ): Promise<T | null> {
         return this.findFirst(args) as Promise<T | null>;
       },
       async findMany<T>(this: PrismaModel, args: PrismaArgs): Promise<T[]> {

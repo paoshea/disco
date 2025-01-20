@@ -11,7 +11,7 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
   },
-  webpack: (config, { isServer }) => {
+  webpack: (config /** @type {import('webpack').Configuration} */, { isServer /** @type {boolean} */ }) => {
     if (!isServer) {
       // Don't include these packages on the client side
       config.resolve.fallback = {
@@ -23,6 +23,16 @@ const nextConfig = {
         '@mapbox/node-pre-gyp': false,
       };
     }
+    // Resolve path aliases
+    const path = require('path');
+    config.resolve = {
+      ...config.resolve,
+      alias: {
+        ...config.resolve.alias,
+        '@': path.resolve(__dirname, './src'),
+      },
+    };
+
     return config;
   },
 };

@@ -22,6 +22,8 @@ export async function GET(
   request: NextRequest
 ): Promise<NextResponse<{ user: UserResponse } | ErrorResponse>> {
   try {
+    const body = (await request.json()) as { name?: string };
+
     // Get token from Authorization header or cookie
     const authHeader = request.headers.get('authorization') || '';
     let token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
@@ -46,7 +48,7 @@ export async function GET(
 
     const user = await db.user.findUnique({
       where: {
-        id: session.user.id,
+        id: session.user.sub,
       },
       select: {
         id: true,

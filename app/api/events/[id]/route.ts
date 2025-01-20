@@ -72,7 +72,7 @@ export async function DELETE(
     }
 
     const { id } = params;
-    
+
     // First check if the user is authorized to delete this event
     const eventResult = await eventService.getEventById(id);
     if (!eventResult.success || !eventResult.data) {
@@ -121,10 +121,7 @@ export async function PATCH(
 
     const result = actionSchema.safeParse(body);
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid action' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     const { action } = result.data;
@@ -137,10 +134,7 @@ export async function PATCH(
     }
 
     if (!serviceResult.success) {
-      return NextResponse.json(
-        { error: serviceResult.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: serviceResult.error }, { status: 400 });
     }
 
     return NextResponse.json(serviceResult.data);

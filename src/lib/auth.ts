@@ -1,18 +1,11 @@
 import { compare, hash } from 'bcryptjs';
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
-import type { User as NextAuthUser } from 'next-auth';
+import type { User as NextAuthUser, Session } from 'next-auth';
 import { NextAuthOptions } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from './prisma';
-import type { Session, JWTPayload } from '@/types/auth';
-import type { User as CustomUser } from '@/types/user';
-
-interface TokenPayload {
-  token: string;
-  refreshToken: string;
-  expiresIn: number;
-}
+import type { JWTPayload } from '@/types/auth';
 
 // Extend the built-in types
 interface User extends NextAuthUser {
@@ -47,7 +40,12 @@ export const generateToken = async (
   secret: string = process.env.NEXTAUTH_SECRET || '',
   accessExpiresIn: number = 60 * 60, // 1 hour in seconds
   refreshExpiresIn: number = 30 * 24 * 60 * 60 // 30 days in seconds
-): Promise<TokenPayload> => {
+): Promise<{
+  token: string;
+  refreshToken: string;
+  accessTokenExpiresIn: number;
+  refreshTokenExpiresIn: number;
+}> => {
   const secretKey = new TextEncoder().encode(secret);
 
   // Generate access token
@@ -72,7 +70,8 @@ export const generateToken = async (
   return {
     token,
     refreshToken,
-    expiresIn: accessExpiresIn,
+    accessTokenExpiresIn: accessExpiresIn,
+    refreshTokenExpiresIn: refreshExpiresIn,
   };
 };
 
@@ -212,22 +211,21 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.sub = user.id;
         token.email = user.email;
-        token.role = (user as User).role;
-        token.firstName = (user as User).firstName;
+        token.role = user.role;
+        token.firstName = user.firstName;
       }
       return token;
     },
-    async session({ session, token }): Promise<Session> {
-      return {
-        ...session,
-        user: {
-          id: token.id as string,
-          email: token.email as string,
-          role: token.role as string,
-          firstName: token.firstName as string,
-        },
-      };
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.sub!;
+        session.user.email = token.email!;
+        session.user.role = token.role;
+        session.user.firstName = token.firstName;
+      }
+      return session;
     },
   },
   session: {

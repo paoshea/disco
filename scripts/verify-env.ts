@@ -4,11 +4,6 @@ import { transporter } from '../src/lib/email/transporter';
 import { generateToken, verifyToken } from '../src/lib/jwt';
 
 // Import types
-interface JWTPayload {
-  userId: string;
-  email: string;
-}
-
 interface UserPayload {
   id: string;
   email: string;

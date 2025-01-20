@@ -2,10 +2,14 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { verifyToken } from '@/lib/auth';
 
+interface AuthenticatedUser {
+  id: string;
+  email: string;
+  role: string;
+}
+
 export interface AuthenticatedRequest extends NextRequest {
-  user: {
-    userId: string;
-  };
+  user: AuthenticatedUser;
 }
 
 export async function withAuth(
@@ -30,7 +34,11 @@ export async function withAuth(
 
     // Add user info to the request
     const authenticatedRequest = request as AuthenticatedRequest;
-    authenticatedRequest.user = { userId: session.user.id };
+    authenticatedRequest.user = {
+      id: session.user.id,
+      email: session.user.email,
+      role: session.user.role,
+    } as AuthenticatedUser;
 
     return handler(authenticatedRequest);
   } catch (error) {
