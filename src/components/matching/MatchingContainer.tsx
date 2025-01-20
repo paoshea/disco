@@ -8,6 +8,20 @@ import { MatchMapView } from './MatchMapView';
 import { useToast } from '@/components/ui/toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+// Extend the Session type from next-auth
+declare module "next-auth" {
+  interface Session {
+    accessToken?: string;
+    user: {
+      id: string;
+      email: string;
+      role: string;
+      firstName: string;
+      lastName: string;
+    }
+  }
+}
+
 export function MatchingContainer() {
   const { data: session } = useSession();
   const [matches, setMatches] = useState<Match[]>([]);
@@ -111,7 +125,7 @@ export function MatchingContainer() {
   useEffect(() => {
     if (!session?.user?.id) return;
 
-    socketService.connect(session.accessToken);
+    socketService.connect(session.accessToken ?? '');
 
     const matchUpdateUnsub = socketService.subscribeToMatches((data) => {
       if (data.type === 'new') {
@@ -152,7 +166,7 @@ export function MatchingContainer() {
     <div className="container mx-auto px-4 py-6">
       <MatchPreferencesPanel onUpdate={handlePreferencesUpdate} />
       
-      <Tabs value={view} onValueChange={(v) => setView(v as 'list' | 'map')} className="mt-6">
+      <Tabs value={view} onValueChange={(v: string) => setView(v as 'list' | 'map')} className="mt-6">
         <TabsList>
           <TabsTrigger value="list">List View</TabsTrigger>
           <TabsTrigger value="map">Map View</TabsTrigger>
@@ -161,10 +175,7 @@ export function MatchingContainer() {
         <TabsContent value="list">
           <MatchList
             matches={matches}
-            onAccept={id => handleMatchAction(id, 'accept')}
-            onDecline={id => handleMatchAction(id, 'decline')}
-            onBlock={id => handleMatchAction(id, 'block')}
-            onReport={(id, reason) => handleMatchAction(id, 'report', reason)}
+            onMatchClick={(matchId: string) => handleMatchAction(matchId, 'accept')}
             loading={loading}
           />
         </TabsContent>

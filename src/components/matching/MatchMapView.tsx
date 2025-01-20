@@ -1,17 +1,17 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { Match } from '@/types/match';
-import { BaseMapView, LatLng, MapMarker } from '../map/BaseMapView';
-import { Button } from '@/components/ui/button';
-import { Slider } from '@/components/ui/slider';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
-import { Card, CardContent } from '@/components/ui/card';
+import { BaseMapView, MapMarker } from '../map/BaseMapView';
+import { Button } from '@/components/ui/Button';
+import { Slider } from '@/components/ui/Slider';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select';
+import { Card, CardContent } from '@/components/ui/Card';
 import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface MatchMapViewProps {
   matches: Match[];
   onMarkerClick: (match: Match) => void;
-  center?: LatLng;
+  center?: google.maps.LatLngLiteral;
   zoom?: number;
 }
 
@@ -21,6 +21,22 @@ interface FilterState {
   timeWindow: string;
   minAge: number;
   maxAge: number;
+}
+
+interface ExtendedMapMarker extends MapMarker {
+  data: Match;
+  icon: {
+    url: string;
+    scaledSize: google.maps.Size;
+    anchor: google.maps.Point;
+  };
+  label?: {
+    text: string;
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+    className: string;
+  };
 }
 
 export const MatchMapView: React.FC<MatchMapViewProps> = ({
@@ -45,7 +61,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     setMapBounds(bounds);
   }, []);
 
-  const filteredMarkers: MapMarker[] = useMemo(() => {
+  const filteredMarkers = useMemo<ExtendedMapMarker[]>(() => {
     return matches
       .filter(match => {
         // Filter by search query
@@ -92,12 +108,14 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
           url: hoveredMarkerId === match.id 
             ? '/images/match-marker-active.svg'
             : '/images/match-marker.svg',
-          scaledSize: hoveredMarkerId === match.id
-            ? { width: 48, height: 48 }
-            : { width: 40, height: 40 },
-          anchor: hoveredMarkerId === match.id
-            ? { x: 24, y: 48 }
-            : { x: 20, y: 40 },
+          scaledSize: new google.maps.Size(
+            hoveredMarkerId === match.id ? 48 : 40,
+            hoveredMarkerId === match.id ? 48 : 40
+          ),
+          anchor: new google.maps.Point(
+            hoveredMarkerId === match.id ? 24 : 20,
+            hoveredMarkerId === match.id ? 48 : 40
+          ),
         },
         data: match,
         label: hoveredMarkerId === match.id ? {
@@ -132,16 +150,25 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     []
   );
 
+  const handleMarkerClick = useCallback((marker: ExtendedMapMarker) => {
+    onMarkerClick(marker.data);
+  }, [onMarkerClick]);
+
+  const handleMarkerMouseEnter = useCallback((marker: ExtendedMapMarker) => {
+    setHoveredMarkerId(marker.id);
+  }, []);
+
+  const handleMarkerMouseLeave = useCallback(() => {
+    setHoveredMarkerId(null);
+  }, []);
+
   return (
     <div className="relative h-full">
       <BaseMapView
         markers={filteredMarkers}
-        onMarkerClick={(marker) => {
-          const match = matches.find(m => m.id === marker.id);
-          if (match) onMarkerClick(match);
-        }}
-        onMarkerMouseEnter={(marker) => setHoveredMarkerId(marker.id)}
-        onMarkerMouseLeave={() => setHoveredMarkerId(null)}
+        onMarkerClick={handleMarkerClick}
+        onMarkerMouseEnter={handleMarkerMouseEnter}
+        onMarkerMouseLeave={handleMarkerMouseLeave}
         center={center}
         zoom={zoom}
         options={mapOptions}
@@ -174,9 +201,10 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
           </div>
         </div>
+
         <Button
           variant="secondary"
-          size="icon"
+          size="sm"
           onClick={() => setShowFilters(!showFilters)}
           className="bg-white shadow-lg"
         >
@@ -199,8 +227,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   <label className="text-sm font-medium">Distance ({filters.radius}km)</label>
                   <Slider
                     value={[filters.radius]}
-                    onValueChange={([value]) =>
-                      setFilters(prev => ({ ...prev, radius: value }))
+                    onValueChange={(value: number[]) =>
+                      setFilters(prev => ({ ...prev, radius: value[0] }))
                     }
                     min={1}
                     max={100}
@@ -212,7 +240,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   <label className="text-sm font-medium">Activity Type</label>
                   <Select
                     value={filters.activity}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFilters(prev => ({ ...prev, activity: value }))
                     }
                   >
@@ -233,7 +261,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   <label className="text-sm font-medium">Time Window</label>
                   <Select
                     value={filters.timeWindow}
-                    onValueChange={(value) =>
+                    onValueChange={(value: string) =>
                       setFilters(prev => ({ ...prev, timeWindow: value }))
                     }
                   >

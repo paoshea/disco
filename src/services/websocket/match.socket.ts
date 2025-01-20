@@ -1,4 +1,4 @@
-import { Socket, io } from 'socket.io-client';
+import { io, Socket } from 'socket.io-client';
 import { Match, MatchScore } from '@/types/match';
 
 interface MatchUpdateEvent {
@@ -10,6 +10,29 @@ interface MatchActionEvent {
   type: 'accepted' | 'declined' | 'blocked';
   matchId: string;
   userId: string;
+}
+
+interface MessageEvent {
+  type: 'message';
+  message: string;
+  matchId: string;
+}
+
+interface TypingEvent {
+  type: 'typing';
+  userId: string;
+  matchId: string;
+}
+
+interface MessageEventNew {
+  matchId: string;
+  message: any;
+}
+
+interface TypingEventNew {
+  matchId: string;
+  userId: string;
+  isTyping: boolean;
 }
 
 export class MatchSocketService {
@@ -58,6 +81,14 @@ export class MatchSocketService {
       this.notifyListeners('matchScore', data);
     });
 
+    this.socket.on('message', (data: MessageEvent) => {
+      this.notifyListeners('message', data);
+    });
+
+    this.socket.on('typing', (data: TypingEvent) => {
+      this.notifyListeners('typing', data);
+    });
+
     this.socket.on('connect_error', (error) => {
       console.error('WebSocket connection error:', error);
       this.notifyListeners('error', error);
@@ -78,6 +109,38 @@ export class MatchSocketService {
     return this.subscribe('matchScore', callback);
   }
 
+  public subscribeToMessages(callback: (data: MessageEvent) => void): () => void {
+    return this.subscribe('message', callback);
+  }
+
+  public subscribeToTyping(callback: (data: TypingEvent) => void): () => void {
+    return this.subscribe('typing', callback);
+  }
+
+  public subscribeToMessagesNew(callback: (data: MessageEventNew) => void): () => void {
+    if (!this.socket) {
+      console.error('Socket not connected');
+      return () => {};
+    }
+
+    this.socket.on('message', callback);
+    return () => {
+      this.socket?.off('message', callback);
+    };
+  }
+
+  public subscribeToTypingNew(callback: (data: TypingEventNew) => void): () => void {
+    if (!this.socket) {
+      console.error('Socket not connected');
+      return () => {};
+    }
+
+    this.socket.on('typing', callback);
+    return () => {
+      this.socket?.off('typing', callback);
+    };
+  }
+
   private subscribe(event: string, callback: Function): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
@@ -87,6 +150,31 @@ export class MatchSocketService {
     return () => {
       this.listeners.get(event)?.delete(callback);
     };
+  }
+
+  public emitMessage(matchId: string, message: string): void {
+    this.emit('message', { type: 'message', message, matchId });
+  }
+
+  public emitTyping(matchId: string, userId: string): void {
+    this.emit('typing', { type: 'typing', userId, matchId });
+  }
+
+  public emitMessageNew(matchId: string, message: any): void {
+    this.emit('message', { matchId, message });
+  }
+
+  public emitTypingNew(matchId: string, userId: string, isTyping: boolean): void {
+    this.emit('typing', { matchId, userId, isTyping });
+  }
+
+  private emit(event: string, data: any): void {
+    if (!this.socket) {
+      console.error('Socket not connected');
+      return;
+    }
+
+    this.socket.emit(event, data);
   }
 
   private notifyListeners(event: string, data: any): void {

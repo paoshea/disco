@@ -2,11 +2,10 @@ import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/Select';
-import { Label } from '@/components/ui/Label';
-import { Switch } from '@/components/ui/Switch';
-import { Slider } from '@/components/ui/Slider';
+import { Card, CardContent, CardHeader, CardTitle, Label } from '@/components/ui/Card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Slider } from '@/components/ui/slider';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
@@ -39,123 +38,124 @@ const schema = z.object({
 });
 
 export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferencesPanelProps) {
-  const { register, handleSubmit, watch, setValue } = useForm<MatchPreferencesFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<MatchPreferencesFormData>({
     resolver: zodResolver(schema),
     defaultValues: {
-      maxDistance: 10,
+      maxDistance: 50,
       interests: [],
       useBluetoothProximity: false,
       ...initialValues
     }
   });
 
-  const handleValueChange = (field: keyof MatchPreferencesFormData, value: unknown) => {
-    setValue(field, value as never);
+  const [newInterest, setNewInterest] = React.useState('');
+  const interests = watch('interests');
+
+  const handleAddInterest = () => {
+    if (newInterest && !interests.includes(newInterest)) {
+      setValue('interests', [...interests, newInterest]);
+      setNewInterest('');
+    }
+  };
+
+  const handleRemoveInterest = (interest: string) => {
+    setValue('interests', interests.filter(i => i !== interest));
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)}>
-      <Card>
-        <CardHeader>
-          <CardTitle>Match Preferences</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label>Distance Range (miles)</Label>
-              <Slider
-                value={[watch('maxDistance')]}
-                min={0}
-                max={100}
-                step={1}
-                onValueChange={([value]) => handleValueChange('maxDistance', value)}
-              />
-              <span className="text-sm text-gray-500">{watch('maxDistance')} miles</span>
-            </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>Match Preferences</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-2">
+            <Label>Time Window</Label>
+            <Select 
+              {...register('timeWindow')}
+              value={watch('timeWindow')}
+              onChange={(value: string) => setValue('timeWindow', value as MatchPreferencesFormData['timeWindow'])}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select time window" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="anytime">Anytime</SelectItem>
+                <SelectItem value="now">Now</SelectItem>
+                <SelectItem value="15min">15 minutes</SelectItem>
+                <SelectItem value="30min">30 minutes</SelectItem>
+                <SelectItem value="1hour">1 hour</SelectItem>
+                <SelectItem value="today">Today</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Time Window</Label>
-              <Select
-                value={watch('timeWindow')}
-                onValueChange={(value) => handleValueChange('timeWindow', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select time window" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="anytime">Anytime</SelectItem>
-                  <SelectItem value="now">Right Now</SelectItem>
-                  <SelectItem value="15min">Next 15 Minutes</SelectItem>
-                  <SelectItem value="30min">Next 30 Minutes</SelectItem>
-                  <SelectItem value="1hour">Next Hour</SelectItem>
-                  <SelectItem value="today">Today</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-2">
+            <Label>Privacy Mode</Label>
+            <Select 
+              {...register('privacyMode')}
+              value={watch('privacyMode')}
+              onChange={(value: string) => setValue('privacyMode', value as MatchPreferencesFormData['privacyMode'])}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select privacy mode" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard</SelectItem>
+                <SelectItem value="strict">Strict</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div className="space-y-2">
-              <Label>Privacy Mode</Label>
-              <Select
-                value={watch('privacyMode')}
-                onValueChange={(value) => handleValueChange('privacyMode', value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select privacy mode" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="strict">Strict</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Interests</Label>
-              <div className="flex flex-wrap gap-2">
-                {watch('interests').map((interest) => (
-                  <Badge
-                    key={interest}
-                    variant="secondary"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      const interests = watch('interests').filter((i) => i !== interest);
-                      handleValueChange('interests', interests);
-                    }}
-                  >
-                    {interest} ×
-                  </Badge>
-                ))}
-              </div>
+          <div className="space-y-2">
+            <Label>Interests</Label>
+            <div className="flex gap-2">
               <Input
-                placeholder="Add interest..."
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    const value = (e.target as HTMLInputElement).value.trim();
-                    if (value) {
-                      const interests = [...watch('interests'), value];
-                      handleValueChange('interests', interests);
-                      (e.target as HTMLInputElement).value = '';
-                    }
-                  }
-                }}
+                value={newInterest}
+                onChange={(e) => setNewInterest(e.target.value)}
+                placeholder="Add an interest"
               />
+              <Button type="button" onClick={handleAddInterest}>Add</Button>
             </div>
+            <div className="flex flex-wrap gap-2 mt-2">
+              {interests.map((interest) => (
+                <Badge
+                  key={interest}
+                  variant="secondary"
+                  className="cursor-pointer"
+                  onClick={() => handleRemoveInterest(interest)}
+                >
+                  {interest} ×
+                </Badge>
+              ))}
+            </div>
+          </div>
 
+          <div className="space-y-2">
+            <Label>Maximum Distance (km)</Label>
+            <Slider
+              {...register('maxDistance')}
+              value={[watch('maxDistance')]}
+              onValueChange={(value: number[]) => setValue('maxDistance', value[0])}
+              min={0}
+              max={100}
+              step={1}
+            />
+          </div>
+
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label>Use Bluetooth Proximity</Label>
               <Switch
                 checked={watch('useBluetoothProximity')}
-                onCheckedChange={(checked) => handleValueChange('useBluetoothProximity', checked)}
+                onChange={(checked: boolean) => setValue('useBluetoothProximity', checked)}
               />
             </div>
-
-            <Button type="submit" className="w-full">
-              Save Preferences
-            </Button>
           </div>
-        </CardContent>
-      </Card>
-    </form>
+
+          <Button type="submit">Save Preferences</Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

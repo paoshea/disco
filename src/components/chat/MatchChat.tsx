@@ -4,10 +4,10 @@ import { Match } from '@/types/match';
 import { useAuth } from '@/hooks/useAuth';
 import { formatDistanceToNow } from 'date-fns';
 import { Send, Image as ImageIcon, Smile, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Avatar } from '@/components/ui/avatar';
-import { EmojiPicker } from '@/components/ui/emoji-picker';
+import { Button } from '@/components/ui/Button';
+import { Input } from '@/components/ui/Input';
+import { Avatar } from '@/components/ui/Avatar';
+import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
 import { MatchSocketService } from '@/services/websocket/match.socket';
 import { LocationShareModal } from './LocationShareModal';
 import { MessageReactions } from './MessageReactions';
@@ -39,6 +39,17 @@ interface MatchChatProps {
   onClose: () => void;
 }
 
+interface MessageEvent {
+  matchId: string;
+  message: Message;
+}
+
+interface TypingEvent {
+  matchId: string;
+  userId: string;
+  isTyping: boolean;
+}
+
 export function MatchChat({ match, onClose }: MatchChatProps) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
@@ -67,7 +78,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
     void loadMessages();
 
     // Subscribe to new messages
-    const messageUnsub = socketService.subscribeToMessages((data) => {
+    const messageUnsub = socketService.subscribeToMessages((data: MessageEvent) => {
       if (data.matchId === match.id) {
         setMessages(prev => [...prev, data.message]);
         scrollToBottom();
@@ -75,7 +86,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
     });
 
     // Subscribe to typing indicators
-    const typingUnsub = socketService.subscribeToTyping((data) => {
+    const typingUnsub = socketService.subscribeToTyping((data: TypingEvent) => {
       if (data.matchId === match.id && data.userId !== user?.id) {
         setIsTyping(data.isTyping);
       }
@@ -345,7 +356,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
 
           <MessageReactions
             messageId={message.id}
-            reactions={message.reactions}
+            reactions={Object.values(message.reactions)}
             onReact={handleReaction}
             currentUserId={user!.id}
           />
@@ -364,7 +375,9 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
       {/* Chat Header */}
       <div className="flex items-center justify-between p-4 border-b">
         <div className="flex items-center space-x-3">
-          <Avatar src={match.profileImage} alt={match.name} />
+          <Avatar userId={user?.id || ''}>
+            <img src={match.profileImage} alt={match.name} className="w-8 h-8 rounded-full" />
+          </Avatar>
           <div>
             <h3 className="font-semibold">{match.name}</h3>
             <p className="text-sm text-gray-500">
@@ -372,7 +385,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button variant="ghost" size="sm" onClick={onClose}>
           ×
         </Button>
       </div>
@@ -423,7 +436,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
 
           <Button
             variant="ghost"
-            size="icon"
+            size="sm"
             onClick={handleLocationModalOpen}
           >
             <MapPin className="w-6 h-6 text-gray-500 hover:text-gray-700" />
@@ -445,7 +458,7 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
             </button>
           </div>
 
-          <Button onClick={handleSend} size="icon">
+          <Button onClick={handleSend} size="sm">
             <Send className="w-4 h-4" />
           </Button>
         </div>
@@ -453,10 +466,11 @@ export function MatchChat({ match, onClose }: MatchChatProps) {
         {showEmoji && (
           <div className="absolute bottom-full right-0 mb-2">
             <EmojiPicker
-              onSelect={(emoji) => {
-                setNewMessage(prev => prev + emoji);
+              onEmojiSelect={(emoji: Emoji) => {
+                setNewMessage(prev => prev + emoji.native);
                 setShowEmoji(false);
               }}
+              theme="light"
             />
           </div>
         )}
