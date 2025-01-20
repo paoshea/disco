@@ -42,6 +42,8 @@ model User {
   privacyZones         PrivacyZone[]
   events               Event[]
   eventParticipants    EventParticipant[]
+  matches              UserMatch[]      @relation("UserMatches")
+  matchedBy            UserMatch[]      @relation("MatchedUsers")
 }
 
 model PasswordReset {
@@ -183,4 +185,20 @@ model EventParticipant {
 
   @@unique([eventId, userId])
   @@index([userId])
+}
+
+model UserMatch {
+  id            String    @id @default(uuid())
+  userId        String
+  user          User      @relation("UserMatches", fields: [userId], references: [id])
+  matchedUserId String
+  matchedUser   User      @relation("MatchedUsers", fields: [matchedUserId], references: [id])
+  status        String    // 'PENDING', 'ACCEPTED', 'REJECTED', 'BLOCKED', 'REPORTED'
+  score         Float
+  reportReason  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([matchedUserId])
 }
