@@ -8,16 +8,16 @@ export interface LatLng {
 
 export interface MapMarker {
   id: string;
-  position: LatLng;
+  position: google.maps.LatLngLiteral;
   title?: string;
   icon?: {
     url: string;
-    scaledSize?: { width: number; height: number };
+    scaledSize: google.maps.Size;
   };
 }
 
 export interface BaseMapViewProps {
-  center: LatLng;
+  center: google.maps.LatLngLiteral;
   zoom?: number;
   markers?: MapMarker[];
   onClick?: (e: google.maps.MapMouseEvent) => void;
@@ -58,45 +58,34 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   });
 
-  const handleMarkerClick = React.useCallback(
-    (markerId: string) => {
-      if (onMarkerClick) {
-        onMarkerClick(markerId);
-      }
-    },
-    [onMarkerClick]
-  );
+  const handleMarkerClick = (markerId: string) => {
+    if (onMarkerClick) {
+      onMarkerClick(markerId);
+    }
+  };
 
-  if (!isLoaded) {
-    return <div>Loading map...</div>;
-  }
+  if (!isLoaded) return null;
 
   return (
     <GoogleMap
       mapContainerStyle={containerStyle}
       center={center}
       zoom={zoom}
-      onClick={onClick}
       options={{ ...defaultMapOptions, ...mapOptions }}
+      onClick={onClick}
     >
-      {markers.map(marker => (
+      {markers.map((marker) => (
         <Marker
           key={marker.id}
           position={marker.position}
           title={marker.title}
-          icon={
-            marker.icon
-              ? {
-                  url: marker.icon.url,
-                  scaledSize: marker.icon.scaledSize
-                    ? new google.maps.Size(
-                        marker.icon.scaledSize.width,
-                        marker.icon.scaledSize.height
-                      )
-                    : undefined,
-                }
-              : undefined
-          }
+          icon={marker.icon ? {
+            url: marker.icon.url,
+            scaledSize: new google.maps.Size(
+              marker.icon.scaledSize.width,
+              marker.icon.scaledSize.height
+            )
+          } : undefined}
           onClick={() => handleMarkerClick(marker.id)}
         />
       ))}

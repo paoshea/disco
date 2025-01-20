@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Coffee, Utensils, Briefcase, Beer, Star, MapPin } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
+import { ScrollArea } from '@/components/ui/ScrollArea';
 
 interface Place {
   id: string;
@@ -59,7 +59,7 @@ export function PlaceSuggestions({
         location: new google.maps.LatLng(midpoint.lat, midpoint.lng),
         radius: 1000, // 1km radius
         type: category,
-        rankBy: google.maps.places.RankBy.RATING,
+        rankBy: google.maps.places.RankBy.DISTANCE,
       };
 
       const results = await new Promise<google.maps.places.PlaceResult[]>(
@@ -101,7 +101,7 @@ export function PlaceSuggestions({
         {CATEGORIES.map(({ id, label, icon: Icon }) => (
           <Button
             key={id}
-            variant={selectedCategory === id ? 'default' : 'outline'}
+            variant={selectedCategory === id ? 'primary' : 'outline'}
             className="flex-shrink-0"
             onClick={() => fetchPlaces(id)}
           >
@@ -149,9 +149,7 @@ export function PlaceSuggestions({
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="text-xs text-gray-500">
-                      {'$'.repeat(place.priceLevel)}
-                    </div>
-                    <div className="text-xs text-gray-500">
+                      <MapPin className="w-3 h-3 inline mr-1" />
                       {Math.round(
                         google.maps.geometry.spherical.computeDistanceBetween(
                           new google.maps.LatLng(
@@ -159,9 +157,15 @@ export function PlaceSuggestions({
                             place.position.lng
                           ),
                           userLocation
-                        )
-                      )}m away
+                        ) / 1000
+                      )}
+                      km away
                     </div>
+                    {place.priceLevel > 0 && (
+                      <div className="text-xs text-gray-500">
+                        {'$'.repeat(place.priceLevel)}
+                      </div>
+                    )}
                   </div>
                 </motion.div>
               ))}

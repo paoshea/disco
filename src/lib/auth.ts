@@ -200,36 +200,18 @@ export async function generatePasswordResetToken(
   return token;
 }
 
-export const authOptions = {
-  // Configure JWT
-  jwt: async ({
-    token,
-    user,
-  }: {
-    token: Record<string, unknown>;
-    user?: Record<string, unknown>;
-  }) => {
-    if (user) {
-      await Promise.resolve(); // Add await to satisfy require-await
-      token.id = user.id;
-      token.email = user.email;
-      token.role = user.role;
-      token.firstName = user.firstName;
-      token.lastName = user.lastName;
-    }
-    return token;
-  },
-
+// Export properly typed auth config
+export const authConfig = {
   providers: [
     {
+      id: 'credentials',
+      type: 'credentials',
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(
-        credentials: { email: string; password: string } | undefined
-      ) {
+      authorize: async (credentials: { email: string; password: string } | undefined) => {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
@@ -262,9 +244,30 @@ export const authOptions = {
     },
   ],
   session: {
-    strategy: 'jwt' as SessionStrategy,
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
     updateAge: 24 * 60 * 60, // 24 hours
+  },
+} as const;
+
+export const authOptions = {
+  // Configure JWT
+  jwt: async ({
+    token,
+    user,
+  }: {
+    token: Record<string, unknown>;
+    user?: Record<string, unknown>;
+  }) => {
+    if (user) {
+      await Promise.resolve(); // Add await to satisfy require-await
+      token.id = user.id;
+      token.email = user.email;
+      token.role = user.role;
+      token.firstName = user.firstName;
+      token.lastName = user.lastName;
+    }
+    return token;
   },
 };
 

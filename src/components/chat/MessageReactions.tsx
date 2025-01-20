@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Heart, ThumbsUp, Star, Smile, Plus } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Smile, Heart, ThumbsUp, Star, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/Button';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 interface Reaction {
+  id: string;
   emoji: string;
   count: number;
   users: string[];
@@ -12,104 +13,95 @@ interface Reaction {
 
 interface MessageReactionsProps {
   messageId: string;
-  reactions: Record<string, Reaction>;
-  onReact: (messageId: string, emoji: string) => void;
+  reactions: Reaction[];
   currentUserId: string;
+  onReactionAdd: (messageId: string, emoji: string) => void;
+  onReactionRemove: (messageId: string, emoji: string) => void;
 }
 
-const QUICK_REACTIONS = [
-  { emoji: '❤️', icon: Heart },
-  { emoji: '👍', icon: ThumbsUp },
-  { emoji: '⭐', icon: Star },
-  { emoji: '😊', icon: Smile },
-];
-
-const ALL_REACTIONS = [
-  '❤️', '👍', '⭐', '😊', '😂', '🎉', '👏', '🔥', 
-  '💯', '🙌', '💪', '💭', '💡', '💫', '✨', '🌟'
+const commonEmojis = [
+  { emoji: '❤️', label: 'Heart' },
+  { emoji: '👍', label: 'Thumbs Up' },
+  { emoji: '⭐', label: 'Star' },
+  { emoji: '😊', label: 'Smile' },
+  { emoji: '🎉', label: 'Party' },
+  { emoji: '👏', label: 'Clap' },
+  { emoji: '🔥', label: 'Fire' },
+  { emoji: '💯', label: 'Perfect' },
 ];
 
 export function MessageReactions({
   messageId,
   reactions,
-  onReact,
   currentUserId,
+  onReactionAdd,
+  onReactionRemove,
 }: MessageReactionsProps) {
-  const [showReactionPicker, setShowReactionPicker] = useState(false);
+  const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
-  const handleReaction = (emoji: string) => {
-    onReact(messageId, emoji);
-    setShowReactionPicker(false);
+  const handleReactionClick = (emoji: string) => {
+    const existingReaction = reactions.find((r) => r.emoji === emoji);
+    if (existingReaction?.users.includes(currentUserId)) {
+      onReactionRemove(messageId, emoji);
+    } else {
+      onReactionAdd(messageId, emoji);
+    }
   };
 
-  const reactionsList = Object.entries(reactions).map(([emoji, data]) => ({
-    emoji,
-    count: data.count,
-    hasReacted: data.users.includes(currentUserId),
-  }));
-
   return (
-    <div className="flex flex-wrap gap-1 mt-1">
+    <div className="flex items-center gap-1">
       <AnimatePresence>
-        {reactionsList.map(({ emoji, count, hasReacted }) => (
-          <motion.button
-            key={emoji}
+        {reactions.map((reaction) => (
+          <motion.div
+            key={reaction.id}
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             exit={{ scale: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => handleReaction(emoji)}
-            className={`inline-flex items-center px-2 py-1 rounded-full text-xs
-              ${hasReacted 
-                ? 'bg-primary/10 text-primary' 
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }`}
+            className="relative"
           >
-            <span className="mr-1">{emoji}</span>
-            <span>{count}</span>
-          </motion.button>
+            <Button
+              variant={reaction.users.includes(currentUserId) ? 'secondary' : 'ghost'}
+              size="sm"
+              onClick={() => handleReactionClick(reaction.emoji)}
+              className="flex items-center gap-1 px-2 py-1 text-sm"
+            >
+              <span>{reaction.emoji}</span>
+              {reaction.count > 1 && (
+                <span className="text-xs text-muted-foreground">
+                  {reaction.count}
+                </span>
+              )}
+            </Button>
+          </motion.div>
         ))}
       </AnimatePresence>
 
-      <Popover open={showReactionPicker} onOpenChange={setShowReactionPicker}>
+      <Popover open={isEmojiPickerOpen} onOpenChange={setIsEmojiPickerOpen}>
         <PopoverTrigger asChild>
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-gray-100 hover:bg-gray-200"
+          <Button
+            variant="ghost"
+            size="sm"
+            className="px-2 py-1"
           >
-            <Plus className="w-4 h-4 text-gray-600" />
-          </motion.button>
+            <Plus className="h-4 w-4" />
+          </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-64 p-2" sideOffset={5}>
-          <div className="space-y-2">
-            <div className="flex gap-1">
-              {QUICK_REACTIONS.map(({ emoji, icon: Icon }) => (
-                <Button
-                  key={emoji}
-                  variant="ghost"
-                  size="icon"
-                  className="hover:bg-primary/10 hover:text-primary"
-                  onClick={() => handleReaction(emoji)}
-                >
-                  <Icon className="w-4 h-4" />
-                </Button>
-              ))}
-            </div>
-            <div className="grid grid-cols-8 gap-1">
-              {ALL_REACTIONS.map((emoji) => (
-                <motion.button
-                  key={emoji}
-                  whileHover={{ scale: 1.2 }}
-                  whileTap={{ scale: 0.9 }}
-                  onClick={() => handleReaction(emoji)}
-                  className="w-6 h-6 flex items-center justify-center hover:bg-primary/10 rounded"
-                >
-                  {emoji}
-                </motion.button>
-              ))}
-            </div>
+        <PopoverContent className="w-64 p-2">
+          <div className="grid grid-cols-4 gap-2">
+            {commonEmojis.map((item) => (
+              <Button
+                key={item.emoji}
+                variant="ghost"
+                size="sm"
+                className="flex items-center justify-center p-2"
+                onClick={() => {
+                  handleReactionClick(item.emoji);
+                  setIsEmojiPickerOpen(false);
+                }}
+              >
+                <span className="text-lg">{item.emoji}</span>
+              </Button>
+            ))}
           </div>
         </PopoverContent>
       </Popover>

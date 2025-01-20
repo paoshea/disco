@@ -2,8 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
-import { rateLimit } from '@/lib/rateLimit';
-import { authOptions } from '@/lib/auth';
+import { RateLimiter } from '@/lib/rateLimit';
+import { authConfig } from '@/lib/auth';
+
+const rateLimiter = new RateLimiter({
+  interval: 60000, // 1 minute
+  maxRequests: 100
+});
 
 // Validation schema for match actions
 const matchActionSchema = z.object({
@@ -17,7 +22,7 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authConfig);
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -48,7 +53,7 @@ export async function POST(
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authConfig);
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -58,7 +63,7 @@ export async function POST(
 
     // Rate limiting
     const identifier = session.user.id;
-    const isLimited = await rateLimit(identifier, 'match_action');
+    const isLimited = await rateLimiter.isLimited(identifier, 'match_action');
     if (isLimited) {
       return NextResponse.json(
         { error: 'Too many requests' },

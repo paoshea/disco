@@ -2,12 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
-import { rateLimit } from '@/lib/rateLimit';
-import { authOptions } from '@/lib/auth';
+import { RateLimiter } from '@/lib/rateLimit';
+import { authConfig } from '@/lib/auth';
+
+const rateLimiter = new RateLimiter({
+  interval: 60000, // 1 minute
+  maxRequests: 100
+});
 
 // Validation schema for match preferences
 const matchPreferencesSchema = z.object({
-  maxDistance: z.number().min(1).max(100),
+  maxDistance: z.number().min(0).max(100),
   minAge: z.number().min(18).max(100).optional(),
   maxAge: z.number().min(18).max(100).optional(),
   interests: z.array(z.string()).optional(),
@@ -23,7 +28,7 @@ const matchPreferencesSchema = z.object({
 export async function GET(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authConfig);
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -33,7 +38,7 @@ export async function GET(req: NextRequest) {
 
     // Rate limiting
     const identifier = session.user.id;
-    const isLimited = await rateLimit(identifier, 'get_matches');
+    const isLimited = await rateLimiter.isLimited(identifier, 'get_matches');
     if (isLimited) {
       return NextResponse.json(
         { error: 'Too many requests' },
@@ -86,7 +91,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authConfig);
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -100,7 +105,7 @@ export async function POST(req: NextRequest) {
 
     // Update preferences
     const matchingService = MatchingService.getInstance();
-    await matchingService.updatePreferences(
+    await matchingService.setPreferences(
       session.user.id,
       validatedPrefs
     );

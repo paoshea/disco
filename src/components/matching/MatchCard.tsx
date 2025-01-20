@@ -2,8 +2,8 @@ import React from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MatchPreview } from '@/types/match';
-import { Button } from '@/components/forms';
-import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/Button';
+import { Badge } from '@/components/ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
 
 interface MatchCardProps {
