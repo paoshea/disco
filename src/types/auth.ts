@@ -70,6 +70,7 @@ export interface VerifyEmailInput {
 }
 
 export interface JWTPayload {
+  id: string; // user id (same as sub)
   sub: string; // subject (user id)
   email: string;
   role: string;

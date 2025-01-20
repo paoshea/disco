@@ -11,7 +11,10 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
   },
-  webpack: (config /** @type {import('webpack').Configuration} */, { isServer /** @type {boolean} */ }) => {
+  webpack: (
+    config /** @type {import('webpack').Configuration} */,
+    { isServer /** @type {boolean} */ }
+  ) => {
     if (!isServer) {
       // Don't include these packages on the client side
       config.resolve.fallback = {

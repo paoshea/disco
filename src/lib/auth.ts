@@ -49,20 +49,25 @@ export const generateToken = async (
   const secretKey = new TextEncoder().encode(secret);
 
   // Generate access token
-  const token = await new SignJWT({ ...payload })
+  const token = await new SignJWT({
+    id: payload.userId,
+    sub: payload.userId,
+    email: payload.email,
+    role: payload.role,
+    firstName: payload.firstName,
+  })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(payload.userId)
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + accessExpiresIn)
     .sign(secretKey);
 
   // Generate refresh token with minimal claims
   const refreshToken = await new SignJWT({
-    userId: payload.userId,
+    id: payload.userId,
+    sub: payload.userId,
     email: payload.email,
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(payload.userId)
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + refreshExpiresIn)
     .sign(secretKey);
@@ -103,20 +108,17 @@ export const verifyToken = async (
     const secretKey = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, secretKey);
 
-    if (!payload.sub || !payload.email || !payload.role || !payload.firstName) {
-      return null;
-    }
-
     return {
       user: {
-        sub: payload.sub,
+        id: payload.sub as string,
+        sub: payload.sub as string,
         email: payload.email as string,
         role: payload.role as string,
         firstName: payload.firstName as string,
       },
     };
   } catch (error) {
-    console.error('Error verifying token:', error);
+    console.error('Token verification failed:', error);
     return null;
   }
 };
@@ -150,9 +152,12 @@ export const generateRefreshToken = async (
   expiresIn: number = 7 * 24 * 60 * 60 // 7 days in seconds
 ): Promise<string> => {
   const secretKey = new TextEncoder().encode(secret);
-  return new SignJWT({ email })
+  return new SignJWT({
+    id: userId,
+    sub: userId,
+    email,
+  })
     .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(userId)
     .setIssuedAt()
     .setExpirationTime(Math.floor(Date.now() / 1000) + expiresIn)
     .sign(secretKey);
@@ -215,6 +220,7 @@ export const authOptions: NextAuthOptions = {
         token.email = user.email;
         token.role = user.role;
         token.firstName = user.firstName;
+        token.id = user.id;
       }
       return token;
     },

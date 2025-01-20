@@ -5,8 +5,10 @@
 ### User Types Hierarchy
 
 1. **BaseUser** (`src/types/user.ts`)
+
    - Core user fields that are always required
    - Used as the foundation for all user-related types
+
    ```typescript
    interface BaseUser {
      id: string;
@@ -21,6 +23,7 @@
    ```
 
 2. **User** (`src/types/user.ts`)
+
    - Extends BaseUser with optional fields
    - Used for full user profiles and settings
    - Includes preferences, notifications, and safety settings
@@ -33,6 +36,7 @@
 ### Authentication Types
 
 1. **NextAuth Extensions** (`src/types/auth.ts`)
+
    ```typescript
    // Session extension
    interface Session {
@@ -41,7 +45,7 @@
        email: string;
        role: string;
        firstName: string;
-     }
+     };
    }
 
    // User extension
@@ -69,10 +73,12 @@
 ### Event Types
 
 1. **Event** (`src/types/event.ts`)
+
    - Base event type with core fields
    - Used for event listings and basic event information
 
 2. **EventWithParticipants** (`src/types/event.ts`)
+
    - Extends Event with full participant information
    - Used when detailed participant data is needed
 
@@ -83,6 +89,7 @@
 ## File Organization
 
 ### Library Structure
+
 ```
 src/
 ├── lib/
@@ -111,11 +118,13 @@ src/
 ### Type Location Guidelines
 
 1. **Shared Types**
+
    - Location: `src/types/`
    - Purpose: Types used across multiple modules
    - Examples: User, Event, Participant
 
 2. **Module-Specific Types**
+
    - Location: `types.ts` within module directory
    - Purpose: Types specific to a module
    - Example: `src/lib/auth/types.ts`
@@ -130,8 +139,10 @@ src/
 ### User Context
 
 1. **Full User Profile**
+
    - Use the `User` type when you need complete user information
    - Includes all optional fields and preferences
+
    ```typescript
    import type { User } from '@/types/user';
    ```
@@ -146,8 +157,10 @@ src/
 ### Authentication Context
 
 1. **Session Handling**
+
    - Use NextAuth's extended Session type for auth contexts
    - Available through getServerSession()
+
    ```typescript
    import type { Session } from 'next-auth';
    ```
@@ -159,6 +172,7 @@ src/
 ### Event Context
 
 1. **Event Listings**
+
    - Use `Event` type for basic event information
    - Use `EventWithParticipants` when participant details are needed
 
@@ -169,6 +183,7 @@ src/
 ## Database Adapter Types
 
 1. **Prisma Types**
+
    - Generated from schema
    - Located in `@prisma/client`
    - Used in database operations
@@ -185,14 +200,17 @@ src/
 ## Best Practices
 
 1. **Type Extensions**
+
    - Extend existing types instead of creating new ones
    - Use interfaces for better type composition
 
 2. **Type Guards**
+
    - Use type guards to narrow types when needed
    - Implement validation functions for complex types
 
 3. **Shared Types**
+
    - Keep shared types in dedicated files
    - Use barrel exports for convenient importing
 
@@ -204,6 +222,7 @@ src/
 ## Common Patterns
 
 1. **Service Layer**
+
    ```typescript
    interface ServiceResponse<T> {
      data?: T;
@@ -212,6 +231,7 @@ src/
    ```
 
 2. **API Responses**
+
    ```typescript
    interface ApiResponse<T> {
      success: boolean;
@@ -231,6 +251,7 @@ src/
 ## Type Generation
 
 1. **Prisma**
+
    - Run `prisma generate` to update database types
    - Types are automatically generated from schema
 
@@ -241,6 +262,7 @@ src/
 ## Future Considerations
 
 1. **Type Evolution**
+
    - Plan for type versioning
    - Document breaking changes
    - Maintain backward compatibility

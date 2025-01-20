@@ -59,3 +59,28 @@ export async function createMessage(
 
   return newMessage;
 }
+
+export function transformToMessageWithSender(message: {
+  id: string;
+  content: string;
+  chatRoomId: string;
+  senderId: string;
+  createdAt: Date;
+  updatedAt: Date;
+  sender: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    avatar: string | null;
+  };
+}): MessageWithSender {
+  return {
+    ...message,
+    timestamp: message.createdAt.toISOString(),
+    sender: {
+      ...message.sender,
+      avatar: message.sender.avatar ?? null,
+    },
+  };
+}

@@ -92,9 +92,10 @@ export class EventService {
       user: {
         id: p.user.id,
         email: p.user.email,
-        name: p.user.firstName && p.user.lastName 
-          ? `${p.user.firstName} ${p.user.lastName}`
-          : null,
+        name:
+          p.user.firstName && p.user.lastName
+            ? `${p.user.firstName} ${p.user.lastName}`
+            : null,
       },
     }));
 
@@ -119,9 +120,10 @@ export class EventService {
       updatedAt: dbEvent.updatedAt,
       creator: {
         id: dbEvent.creator.id,
-        name: dbEvent.creator.firstName && dbEvent.creator.lastName 
-          ? `${dbEvent.creator.firstName} ${dbEvent.creator.lastName}`
-          : null,
+        name:
+          dbEvent.creator.firstName && dbEvent.creator.lastName
+            ? `${dbEvent.creator.firstName} ${dbEvent.creator.lastName}`
+            : null,
       },
     };
   }

@@ -1,29 +1,30 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/prisma';
-import { getServerSession } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
+import type { UserWithStats, Achievement } from '@/types/dashboard';
 
 // Define types for our data
-type Achievement = {
-  id: string;
-  userId: string;
-  type: string;
-  name: string;
-  description: string;
-  earnedAt: Date;
-};
+// type Achievement = {
+//   id: string;
+//   userId: string;
+//   type: string;
+//   level: string;
+//   progress: string;
+//   completedAt: Date | null;
+// };
 
-type UserWithStats = {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  emailVerified: boolean;
-  lastLogin: Date | null;
-  streakCount: number;
-  lastStreak: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-};
+// type UserWithStats = {
+//   id: string;
+//   email: string;
+//   firstName: string;
+//   lastName: string;
+//   emailVerified: boolean;
+//   lastLogin: Date | null;
+//   streakCount: number;
+//   lastStreak: Date | null;
+//   createdAt: Date;
+//   updatedAt: Date;
+// };
 
 async function checkAndCreateAchievement(userId: string, streakCount: number) {
   const streakAchievements = [
@@ -61,78 +62,72 @@ async function checkAndCreateAchievement(userId: string, streakCount: number) {
 
 export async function GET() {
   try {
-    const session = await getServerSession();
+    const session = await getServerAuthSession();
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Fetch user with raw SQL
-    const user = await db.$queryRaw<[UserWithStats | null]>`
-      SELECT 
-        id, email, "firstName", "lastName", "emailVerified",
-        "lastLogin", "streakCount", "lastStreak", "createdAt", "updatedAt"
-      FROM "User"
-      WHERE id = ${session.user.id}
-    ` as { 
-      id: string;
-      email: string;
-      firstName: string;
-      lastName: string;
-      emailVerified: boolean;
-      lastLogin: Date | null;
-      streakCount: number;
-      lastStreak: Date | null;
-      createdAt: Date;
-      updatedAt: Date;
-    } | null;
+    // Get user stats
+    const userWithStats = await db.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        emailVerified: true,
+        lastLogin: true,
+        streakCount: true,
+        lastStreak: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
 
-    if (!user) {
+    if (!userWithStats) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    // Fetch latest streak achievement with raw SQL
-    const latestAchievement = await db.$queryRaw<[Achievement | undefined]>`
-      SELECT *
-      FROM "Achievement"
-      WHERE "userId" = ${user.id}
-        AND type = 'streak'
-      ORDER BY "earnedAt" DESC
-      LIMIT 1
-    ` as Achievement | undefined;
+    // Get user achievements
+    const achievement = await db.achievement.findFirst({
+      where: {
+        userId: session.user.id,
+        type: 'STREAK',
+      },
+      select: {
+        id: true,
+        type: true,
+        name: true,
+        description: true,
+        earnedAt: true,
+      },
+    });
 
-    // Check for new achievements
-    const newAchievement = await checkAndCreateAchievement(
-      user.id,
-      user.streakCount
-    );
-
-    // Calculate days until next achievement
-    const nextAchievementThresholds = [7, 30, 100];
-    const nextThreshold =
-      nextAchievementThresholds.find(t => t > user.streakCount) || null;
-    const daysUntilNextAchievement = nextThreshold
-      ? nextThreshold - user.streakCount
+    // Transform achievement to match expected types
+    const transformedAchievement = achievement
+      ? ({
+          id: achievement.id,
+          type: achievement.type as Achievement['type'],
+          level: 1, // Default level since not in schema
+          progress: 100, // Default progress since not in schema
+          completedAt: achievement.earnedAt,
+        } satisfies Achievement)
       : null;
 
     return NextResponse.json({
-      stats: {
-        ...user,
-        lastActive: user.lastLogin || user.updatedAt,
-        memberSince: user.createdAt,
-        streakStats: {
-          currentStreak: user.streakCount,
-          lastStreakUpdate: user.lastStreak,
-          nextAchievementIn: daysUntilNextAchievement,
-          latestAchievement: latestAchievement || null,
-        },
-        newAchievement,
-      },
+      user: {
+        ...userWithStats,
+        lastLogin: userWithStats.lastLogin || null,
+        streakCount: userWithStats.streakCount || 0,
+        lastStreak: userWithStats.lastStreak || null,
+      } satisfies UserWithStats,
+      achievement: transformedAchievement,
     });
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch dashboard stats' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
