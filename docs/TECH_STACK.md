@@ -2,7 +2,8 @@
 
 ## System Overview
 
-DISCO! is built on a microservices architecture to ensure scalability, maintainability, and robust handling of location-based services. The system is designed to handle real-time location updates while maintaining strict privacy and security standards.
+DISCO! is built on a microservices architecture to ensure scalability, maintainability, and robust handling of location-based services. 
+The system is designed to handle real-time location updates while maintaining strict privacy and security standards.
 
 ## Tech Stack Components
 
@@ -273,4 +274,68 @@ Mobile App
 
 ---
 
+## Note
 This technical architecture is designed to be both scalable and maintainable while prioritizing user privacy and safety. Regular reviews and updates will be conducted to incorporate new technologies and security measures as they become available.
+There's no current implementation of Rust or Elixir/Phoenix in the codebase. 
+
+# Currently using:
+The spatial calculations, real-time location matching, and WebSocket features are currently implemented using Go and TypeScript.
+
+Go for the WebSocket and real-time features:
+go
+CopyInsert
+// In backend/services/core-api/internal/websocket/hub.go
+type Hub struct {
+    clients    map[*Client]bool
+    userClients map[uuid.UUID][]*Client
+    broadcast  chan []byte
+    register   chan *Client
+    unregister chan *Client
+    mu         sync.RWMutex
+}
+TypeScript/Node.js for location services:
+typescript
+CopyInsert
+// In src/services/location/location.service.ts
+export class LocationService {
+  // Location service implementation
+  // Handles geohashing and spatial calculations
+}
+
+# Here's why we might want to stick with the current implementation rather than switching to Rust and Elixir:
+
+- Current Go Implementation Benefits:
+Already has a working WebSocket hub implementation
+Good performance characteristics for concurrent connections
+Strong type system and memory safety
+Excellent standard library support
+Simple deployment and maintenance
+- Current TypeScript/Node.js Benefits:
+Seamless integration with our Next.js frontend
+Rich ecosystem of location and spatial libraries
+Easy to maintain and modify
+Team familiarity (based on the codebase)
+While Rust and Elixir are excellent technologies:
+
+- Rust would offer:
+Extremely high performance for spatial calculations
+Zero-cost abstractions
+Memory safety without garbage collection
+- Elixir/Phoenix would offer:
+Excellent WebSocket handling through Phoenix Channels
+Built-in PubSub system
+Fault tolerance through the BEAM VM
+
+- However, switching now would require:
+Rewriting existing working implementations
+Additional deployment complexity
+Potential team training
+Migration of existing data and services
+
+Unless there are specific performance bottlenecks or scaling issues with the current implementation, I would recommend continuing with the current Go/TypeScript stack as it's already proven to work well for our needs. 
+
+- If you do want to make the switch, we should first:
+Identify specific performance metrics that need improvement
+Create a gradual migration plan
+Set up proper benchmarking to compare implementations
+Consider the maintenance and deployment overhead
