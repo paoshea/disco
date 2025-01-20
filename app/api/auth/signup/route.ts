@@ -56,6 +56,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         verificationToken,
         role: 'user',
         emailVerified: false,
+        streakCount: 0,
       },
       select: {
         id: true,
@@ -63,6 +64,8 @@ export async function POST(request: NextRequest): Promise<Response> {
         firstName: true,
         lastName: true,
         role: true,
+        emailVerified: true,
+        streakCount: true,
       },
     });
 
@@ -77,20 +80,23 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Generate tokens for automatic login
     const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
-      userId: user.id,
+      id: user.id,
       email: user.email,
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
+      emailVerified: user.emailVerified,
+      streakCount: user.streakCount,
     });
 
     // Store refresh token in database
+    const now = new Date();
     await db.user.update({
       where: { id: user.id },
       data: {
         refreshToken,
-        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
-        lastLogin: new Date(),
+        refreshTokenExpiresAt: new Date(now.getTime() + accessTokenExpiresIn * 1000),
+        lastLogin: now,
       },
     });
 
@@ -107,6 +113,8 @@ export async function POST(request: NextRequest): Promise<Response> {
         firstName: user.firstName,
         lastName: user.lastName,
         role: user.role,
+        emailVerified: user.emailVerified,
+        streakCount: user.streakCount,
       },
     });
 

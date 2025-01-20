@@ -49,61 +49,38 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate new tokens
-    const {
-      token,
-      refreshToken: newRefreshToken,
-      accessTokenExpiresIn,
-      refreshTokenExpiresIn,
-    } = await generateToken({
-      userId: user.id,
+    const tokenResult = await generateToken({
+      id: user.id,
       email: user.email,
       role: user.role,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName
     });
 
     // Update refresh token in database
     await db.user.update({
       where: { id: user.id },
       data: {
-        refreshToken: newRefreshToken,
-        refreshTokenExpiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
+        refreshToken: tokenResult.refreshToken,
+        refreshTokenExpiresAt: new Date(Date.now() + tokenResult.refreshTokenExpiresIn * 1000),
       },
     });
 
     // Create response with new tokens
-    const response = NextResponse.json({
-      token,
-      refreshToken: newRefreshToken,
-      expiresIn: accessTokenExpiresIn,
-      refreshExpiresIn: refreshTokenExpiresIn,
+    return NextResponse.json({
+      token: tokenResult.token,
+      refreshToken: tokenResult.refreshToken,
+      accessTokenExpiresIn: tokenResult.accessTokenExpiresIn,
+      refreshExpiresIn: tokenResult.refreshTokenExpiresIn,
       user: {
         id: user.id,
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
         role: user.role,
-      },
+        firstName: user.firstName,
+        lastName: user.lastName
+      }
     });
 
-    // Set new cookies in response
-    response.cookies.set('accessToken', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: accessTokenExpiresIn,
-      path: '/',
-    });
-
-    response.cookies.set('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: refreshTokenExpiresIn,
-      path: '/',
-    });
-
-    return response;
   } catch (error) {
     console.error('Error in refresh token:', error);
     return NextResponse.json(

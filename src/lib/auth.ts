@@ -37,7 +37,20 @@ export const hashPassword = async (password: string): Promise<string> => {
   return hash(password, 10);
 };
 
-export const generateToken = async (user: User): Promise<string> => {
+export const generateToken = async (user: {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+  emailVerified?: boolean;
+  streakCount?: number;
+}): Promise<{
+  token: string;
+  refreshToken: string;
+  accessTokenExpiresIn: number;
+  refreshTokenExpiresIn: number;
+}> => {
   // Create a payload that satisfies both our JWTPayload and jose's JWTPayload
   const payload: JWTPayload & { [key: string]: any } = {
     id: user.id,
@@ -45,19 +58,41 @@ export const generateToken = async (user: User): Promise<string> => {
     role: user.role,
     firstName: user.firstName,
     lastName: user.lastName,
-    sub: user.id // Add sub property, using user.id as per JWT standard
+    sub: user.id, // Add sub property, using user.id as per JWT standard
+    emailVerified: user.emailVerified ?? false,
+    streakCount: user.streakCount ?? 0
   };
 
   const secret = new TextEncoder().encode(
     process.env.NEXTAUTH_SECRET || 'your-secret-key'
   );
 
+  const accessTokenExpiresIn = 60 * 60; // 1 hour in seconds
+  const refreshTokenExpiresIn = 30 * 24 * 60 * 60; // 30 days in seconds
+
+  // Generate access token
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('24h')
+    .setExpirationTime(Math.floor(Date.now() / 1000) + accessTokenExpiresIn)
     .sign(secret);
 
-  return token;
+  // Generate refresh token with a different type
+  const refreshPayload = {
+    ...payload,
+    type: 'refresh'
+  };
+
+  const refreshToken = await new SignJWT(refreshPayload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setExpirationTime(Math.floor(Date.now() / 1000) + refreshTokenExpiresIn)
+    .sign(secret);
+
+  return {
+    token,
+    refreshToken,
+    accessTokenExpiresIn,
+    refreshTokenExpiresIn
+  };
 };
 
 export const verifyToken = async (token: string): Promise<JWTPayload | null> => {
@@ -84,6 +119,8 @@ export const verifyToken = async (token: string): Promise<JWTPayload | null> => 
         firstName: payload.firstName,
         lastName: payload.lastName,
         sub: payload.sub,
+        emailVerified: payload.emailVerified === true,
+        streakCount: typeof payload.streakCount === 'number' ? payload.streakCount : 0
       };
     }
     return null;

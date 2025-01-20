@@ -30,6 +30,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         lastName: true,
         role: true,
         streakCount: true,
+        emailVerified: true,
       },
     });
 
@@ -51,26 +52,24 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Generate tokens
     const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
-      userId: user.id,
+      id: user.id,
       email: user.email,
       role: user.role,
       firstName: user.firstName,
       lastName: user.lastName,
+      emailVerified: user.emailVerified,
+      streakCount: user.streakCount,
     });
 
-    // Store refresh token in database
+    // Update last login and streak
+    const now = new Date();
     await db.user.update({
       where: { id: user.id },
       data: {
+        lastLogin: now,
         refreshToken,
-        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        refreshTokenExpiresAt: new Date(now.getTime() + accessTokenExpiresIn * 1000),
       },
-    });
-
-    // Update user's lastLogin
-    await db.user.update({
-      where: { id: user.id },
-      data: { lastLogin: new Date() },
     });
 
     // Create response with cookies
@@ -85,6 +84,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         lastName: user.lastName,
         role: user.role,
         streakCount: user.streakCount,
+        emailVerified: user.emailVerified,
       },
     });
 

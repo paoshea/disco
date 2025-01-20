@@ -32,29 +32,14 @@ export async function POST(request: Request): Promise<Response> {
       });
     }
 
-    const resetResult = await generatePasswordResetToken(user.email);
+    // Generate reset token
+    const resetToken = await generatePasswordResetToken(email);
 
-    if (!resetResult) {
-      return NextResponse.json(
-        { message: 'An error occurred while processing your request' },
-        { status: 500 }
-      );
-    }
-
-    // Create a new password reset record
-    await db.passwordReset.create({
-      data: {
-        token: resetResult.token,
-        userId: user.id,
-        expiresAt: resetResult.expiresAt,
-      },
-    });
-
-    await sendPasswordResetEmail(email, resetResult.token);
+    // Send email with reset token
+    await sendPasswordResetEmail(email, resetToken);
 
     return NextResponse.json({
-      message:
-        'If an account exists with that email, a password reset link has been sent.',
+      message: 'Password reset email sent successfully'
     });
   } catch (error) {
     console.error('Password reset request error:', error);

@@ -53,6 +53,8 @@ export interface JWTPayload {
   firstName: string;
   lastName: string;
   sub: string;  // Add sub to match JWT interface
+  emailVerified: boolean;
+  streakCount: number;
 }
 
 export interface LoginResult {
