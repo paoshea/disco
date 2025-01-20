@@ -7,6 +7,21 @@ export interface MatchPreview {
   lastActive: string;
 }
 
+export interface MatchScore {
+  total: number;
+  criteria: {
+    distance: number;
+    interests: number;
+    activityPreference: number;
+    timeWindow: number;
+    verificationStatus: number;
+    responseRate: number;
+    meetupSuccess: number;
+  };
+  commonInterests: string[];
+  distance: number;
+}
+
 export interface Match extends MatchPreview {
   bio: string;
   age: number;
@@ -25,6 +40,7 @@ export interface Match extends MatchPreview {
     mode: 'standard' | 'strict';
     bluetoothEnabled: boolean;
   };
+  matchScore: MatchScore;
 }
 
 export type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';

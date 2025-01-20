@@ -1,11 +1,17 @@
 import { db } from '@/lib/prisma';
 import type { Location as PrismaLocation } from '@prisma/client';
-import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { Location, LocationPrivacyMode, GeolocationOptions } from '@/types/location';
 import type { ServiceResponse } from '@/types/api';
 
 export class LocationService {
   private static instance: LocationService;
   private prisma: typeof db.location;
+  private trackingIntervals: Map<string, number> = new Map();
+  private readonly defaultOptions: GeolocationOptions = {
+    enableHighAccuracy: true,
+    timeout: 10000,
+    maximumAge: 0,
+  };
 
   private constructor() {
     this.prisma = db.location;
@@ -198,6 +204,65 @@ export class LocationService {
     });
 
     return this.mapPrismaLocationToLocation(prismaLocation);
+  }
+
+  async startTracking(userId: string, options: GeolocationOptions = {}): Promise<void> {
+    if (this.trackingIntervals.has(userId)) {
+      console.warn('Location tracking already active for user:', userId);
+      return;
+    }
+
+    if (!navigator.geolocation) {
+      throw new Error('Geolocation is not supported by this browser.');
+    }
+
+    const updateLocation = async (position: GeolocationPosition) => {
+      const { latitude, longitude, accuracy } = position.coords;
+      
+      try {
+        const currentState = await this.getLocationState(userId);
+        await this.updateLocation(userId, {
+          latitude,
+          longitude,
+          accuracy,
+          privacyMode: currentState.data?.privacyMode ?? 'precise',
+          sharingEnabled: currentState.data?.sharingEnabled ?? true,
+        });
+      } catch (error) {
+        console.error('Error updating location during tracking:', error);
+      }
+    };
+
+    const handleError = (error: GeolocationPositionError) => {
+      console.error('Error getting location:', error);
+      // Stop tracking on persistent errors
+      if (error.code === error.PERMISSION_DENIED) {
+        this.stopTracking(userId);
+      }
+    };
+
+    const watchOptions = {
+      ...this.defaultOptions,
+      ...options,
+    };
+
+    // Start watching position
+    const watchId = navigator.geolocation.watchPosition(
+      updateLocation,
+      handleError,
+      watchOptions
+    );
+
+    // Store the watch ID for cleanup
+    this.trackingIntervals.set(userId, watchId);
+  }
+
+  stopTracking(userId: string): void {
+    const watchId = this.trackingIntervals.get(userId);
+    if (watchId !== undefined) {
+      navigator.geolocation.clearWatch(watchId);
+      this.trackingIntervals.delete(userId);
+    }
   }
 
   async updatePrivacyMode(

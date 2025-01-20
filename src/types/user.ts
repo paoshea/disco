@@ -25,6 +25,29 @@ export interface User extends BaseUser {
     safety: boolean;
   };
   preferences?: UserPreferences;
+  location: {
+    latitude: number;
+    longitude: number;
+    lastUpdated: Date;
+  };
+  verificationStatus: 'verified' | 'unverified';
+  stats?: {
+    responseRate: number;
+    meetupSuccessRate: number;
+    matchRate: number;
+    lastActive: Date;
+  };
+  age?: number;
+  name: string;
+  lastActive: string;
+  activityPreferences?: {
+    type: string;
+    timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  };
+  privacySettings?: {
+    mode: 'standard' | 'strict';
+    bluetoothEnabled: boolean;
+  };
 }
 
 export interface UserSettings {
