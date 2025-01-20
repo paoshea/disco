@@ -10,6 +10,9 @@ interface User {
   lastName: string;
   role: string;
   streakCount: number;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 interface AuthState {
@@ -17,8 +20,13 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<LoginResult>;
+  login: (email: string, password: string) => Promise<{ success?: boolean; error?: string; needsVerification?: boolean }>;
   logout: () => Promise<void>;
+  register: (data: RegisterData) => Promise<{ success: boolean; error?: string; needsVerification?: boolean }>;
+  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>;
+  sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
   set: (state: Partial<AuthState>) => void;
 }
 
@@ -28,20 +36,50 @@ export interface LoginResult {
   needsVerification?: boolean;
 }
 
+export interface RegisterData {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface UpdateProfileData {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  currentPassword?: string;
+  newPassword?: string;
+}
+
+const userSchema = z.object({
+  id: z.string(),
+  email: z.string(),
+  firstName: z.string(),
+  lastName: z.string(),
+  role: z.string(),
+  streakCount: z.number(),
+  emailVerified: z.boolean(),
+  createdAt: z.string().transform(str => new Date(str)),
+  updatedAt: z.string().transform(str => new Date(str)),
+});
+
 const loginResponseSchema = z.object({
-  user: z
-    .object({
-      id: z.string(),
-      email: z.string(),
-      firstName: z.string(),
-      lastName: z.string(),
-      role: z.string(),
-      streakCount: z.number(),
-    })
-    .optional(),
+  user: userSchema.optional(),
   error: z.string().optional(),
   needsVerification: z.boolean().optional(),
   token: z.string().optional(),
+});
+
+const registerResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+  needsVerification: z.boolean().optional(),
+});
+
+const updateProfileResponseSchema = z.object({
+  success: z.boolean(),
+  error: z.string().optional(),
+  user: userSchema.optional(),
 });
 
 export const useAuth = create<AuthState>()(
@@ -51,59 +89,159 @@ export const useAuth = create<AuthState>()(
       token: null,
       isLoading: false,
       error: null,
-      set: state => set(state),
-
-      login: async (email: string, password: string) => {
+      async login(email: string, password: string) {
         set({ isLoading: true, error: null });
-
         try {
-          const data = await apiClient.post('/api/auth/login', {
+          const response = await apiClient.post('/api/auth/login', {
             email,
             password,
           });
-          const result = loginResponseSchema.safeParse(data);
+
+          const result = loginResponseSchema.safeParse(response.data);
 
           if (!result.success) {
-            throw new Error('Invalid response from server');
+            set({ error: 'Invalid response from server' });
+            return { error: 'Invalid response from server' };
           }
 
-          if (result.data.user && result.data.token) {
-            set({
-              user: result.data.user,
-              token: result.data.token,
-              isLoading: false,
-            });
-            return { success: true };
-          } else if (result.data.needsVerification) {
-            set({ isLoading: false });
+          const data = result.data;
+
+          if (data.error) {
+            set({ error: data.error });
+            return { error: data.error };
+          }
+
+          if (data.needsVerification) {
             return { needsVerification: true };
-          } else if (result.data.error) {
-            set({ isLoading: false, error: result.data.error });
-            return { error: result.data.error };
           }
 
-          throw new Error('Invalid response format');
+          if (data.user && data.token) {
+            set({ user: data.user, token: data.token });
+            return { success: true };
+          }
+
+          set({ error: 'Login failed' });
+          return { error: 'Login failed' };
         } catch (error) {
-          const errorMessage =
-            error instanceof Error
-              ? error.message
-              : 'An error occurred during login';
-          set({
-            error: errorMessage,
-            isLoading: false,
-          });
-          return { error: errorMessage };
+          const message = error instanceof Error ? error.message : 'Login failed';
+          set({ error: message });
+          return { error: message };
+        } finally {
+          set({ isLoading: false });
         }
       },
-
-      logout: async () => {
+      async logout() {
         try {
           await apiClient.post('/api/auth/logout');
+        } finally {
           set({ user: null, token: null });
-        } catch (error) {
-          console.error('Logout error:', error);
         }
       },
+      async register(data: RegisterData) {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.post('/api/auth/register', data);
+          const result = registerResponseSchema.safeParse(response.data);
+
+          if (!result.success) {
+            set({ error: 'Invalid response from server' });
+            return { success: false, error: 'Invalid response from server' };
+          }
+
+          const responseData = result.data;
+
+          if (responseData.error) {
+            set({ error: responseData.error });
+            return { success: false, error: responseData.error };
+          }
+
+          if (responseData.needsVerification) {
+            return { success: true, needsVerification: true };
+          }
+
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Registration failed';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      async updateProfile(data: UpdateProfileData) {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.patch('/api/auth/profile', data);
+          const result = updateProfileResponseSchema.safeParse(response.data);
+
+          if (!result.success) {
+            set({ error: 'Invalid response from server' });
+            return { success: false, error: 'Invalid response from server' };
+          }
+
+          const responseData = result.data;
+
+          if (responseData.error) {
+            set({ error: responseData.error });
+            return { success: false, error: responseData.error };
+          }
+
+          if (responseData.user) {
+            set({ user: responseData.user });
+          }
+
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to update profile';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      async sendVerificationEmail() {
+        set({ isLoading: true, error: null });
+        try {
+          await apiClient.post('/api/auth/send-verification');
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to send verification email';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      async requestPasswordReset(email: string) {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.post('/api/auth/request-reset', { email });
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to request password reset';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      async resetPassword(token: string, password: string) {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.post('/api/auth/reset-password', {
+            token,
+            password,
+          });
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to reset password';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      set,
     }),
     {
       name: 'auth-storage',

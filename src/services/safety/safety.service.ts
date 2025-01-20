@@ -143,7 +143,7 @@ export class SafetyService {
 
   async getSafetySettings(userId: string): Promise<{ data: SafetySettings }> {
     const contacts = await this.getEmergencyContacts(userId);
-    
+
     // Get the user's safety preferences from the database
     const user = await db.user.findUnique({
       where: { id: userId },

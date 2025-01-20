@@ -1,22 +1,30 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { eventService } from '@/services/event/event.service';
-import type { Event } from '@/types/event';
+import type { EventWithParticipants } from '@/types/event';
 import { EventCard } from './EventCard';
 import { toast } from 'react-hot-toast';
 
+type DistanceUnit = 'km' | 'm';
+
 interface NearbyEventsProps {
-  radius?: number; // in meters
-  onEventJoined?: (event: Event) => void;
-  onEventLeft?: (event: Event) => void;
+  radius: number;
+  unit?: DistanceUnit;
+  onEventJoined?: (event: EventWithParticipants) => void;
+  onEventLeft?: (event: EventWithParticipants) => void;
+}
+
+interface EventWithDistance extends EventWithParticipants {
+  distance: number;
 }
 
 export function NearbyEvents({
   radius = 500,
+  unit = 'm',
   onEventJoined,
   onEventLeft,
 }: NearbyEventsProps) {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [events, setEvents] = useState<EventWithDistance[]>([]);
   const [loading, setLoading] = useState(true);
   const { position } = useGeolocation();
 
@@ -27,7 +35,8 @@ export function NearbyEvents({
       const { data, success, error } = await eventService.getNearbyEvents(
         position.coords.latitude,
         position.coords.longitude,
-        radius
+        radius,
+        unit
       );
 
       if (success && data) {
@@ -41,7 +50,7 @@ export function NearbyEvents({
     } finally {
       setLoading(false);
     }
-  }, [position, radius]);
+  }, [position, radius, unit]);
 
   useEffect(() => {
     void fetchNearbyEvents();
@@ -60,15 +69,18 @@ export function NearbyEvents({
   }
 
   return (
-    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    <div className="space-y-4">
       {events.map(event => (
-        <EventCard
-          key={event.id}
-          event={event}
-          onEventJoined={onEventJoined}
-          onEventLeft={onEventLeft}
-          showActions={true}
-        />
+        <div key={event.id} className="relative">
+          <EventCard
+            event={event}
+            onEventJoined={onEventJoined}
+            onEventLeft={onEventLeft}
+          />
+          <div className="absolute top-2 right-2 bg-blue-500 text-white px-2 py-1 rounded text-sm">
+            {event.distance.toFixed(1)} {unit}
+          </div>
+        </div>
       ))}
     </div>
   );

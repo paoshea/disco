@@ -1,17 +1,9 @@
 import { Prisma, PrismaClient } from '@prisma/client';
 
 type EventInclude = {
-  creator: boolean | {
-    select: {
-      id: true;
-      email: true;
-      firstName: true;
-      lastName: true;
-    };
-  };
-  participants: boolean | {
-    include: {
-      user: {
+  creator:
+    | boolean
+    | {
         select: {
           id: true;
           email: true;
@@ -19,8 +11,20 @@ type EventInclude = {
           lastName: true;
         };
       };
-    };
-  };
+  participants:
+    | boolean
+    | {
+        include: {
+          user: {
+            select: {
+              id: true;
+              email: true;
+              firstName: true;
+              lastName: true;
+            };
+          };
+        };
+      };
 };
 
 export type EventWithParticipants = Prisma.EventGetPayload<{
@@ -28,14 +32,16 @@ export type EventWithParticipants = Prisma.EventGetPayload<{
 }>;
 
 type LocationInclude = {
-  user: boolean | {
-    select: {
-      id: true;
-      email: true;
-      firstName: true;
-      lastName: true;
-    };
-  };
+  user:
+    | boolean
+    | {
+        select: {
+          id: true;
+          email: true;
+          firstName: true;
+          lastName: true;
+        };
+      };
 };
 
 export type LocationWithUser = Prisma.LocationGetPayload<{

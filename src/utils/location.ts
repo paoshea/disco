@@ -68,13 +68,18 @@ export async function createPrivacyZone(data: PrivacyZoneData) {
   });
 }
 
-export async function getPrivacyZones(userId: string): Promise<PrivacyZoneData[]> {
+export async function getPrivacyZones(
+  userId: string
+): Promise<PrivacyZoneData[]> {
   return await privacyZoneDb.findMany({
     where: { userId },
   });
 }
 
-export function isLocationInPrivacyZone(loc: LocationData, zone: PrivacyZoneData): boolean {
+export function isLocationInPrivacyZone(
+  loc: LocationData,
+  zone: PrivacyZoneData
+): boolean {
   const distance = calculateDistance(
     loc.latitude,
     loc.longitude,
@@ -105,7 +110,7 @@ export async function getNearbyLocations(
     .map(loc => ({
       ...loc,
       accuracy: loc.accuracy ?? undefined,
-      privacyMode: loc.privacyMode as LocationPrivacyMode
+      privacyMode: loc.privacyMode as LocationPrivacyMode,
     }))
     .filter(
       loc =>

@@ -47,8 +47,9 @@ export default function SafetyPage() {
 
       try {
         const safetyService = SafetyService.getInstance();
-        const { data: safetySettings }: { data: SafetySettingsResponse } = await safetyService.getSafetySettings(user.id);
-        
+        const { data: safetySettings }: { data: SafetySettingsResponse } =
+          await safetyService.getSafetySettings(user.id);
+
         if (safetySettings) {
           setSettings({
             enabled: safetySettings.enabled,
@@ -75,7 +76,9 @@ export default function SafetyPage() {
         enabled,
       });
       setSettings(prev => ({ ...prev, enabled }));
-      toast.success(enabled ? 'Safety features enabled' : 'Safety features disabled');
+      toast.success(
+        enabled ? 'Safety features enabled' : 'Safety features disabled'
+      );
     } catch (error) {
       console.error('Error updating safety settings:', error);
       toast.error('Failed to update safety settings');

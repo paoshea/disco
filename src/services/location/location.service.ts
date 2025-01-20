@@ -27,7 +27,7 @@ export class LocationService {
       accuracy: location.accuracy ?? undefined,
       privacyMode: location.privacyMode as LocationPrivacyMode,
       sharingEnabled: location.sharingEnabled,
-      timestamp: location.timestamp
+      timestamp: location.timestamp,
     };
   }
 
@@ -72,13 +72,13 @@ export class LocationService {
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(prismaLocation)
+        data: this.mapPrismaLocationToLocation(prismaLocation),
       };
     } catch (error) {
       console.error('Error updating location:', error);
       return {
         success: false,
-        error: 'Failed to update location'
+        error: 'Failed to update location',
       };
     }
   }
@@ -105,7 +105,7 @@ export class LocationService {
       console.error('Error getting location state:', error);
       return {
         success: false,
-        error: 'Failed to get location state'
+        error: 'Failed to get location state',
       };
     }
   }
@@ -146,7 +146,7 @@ export class LocationService {
       console.error('Error updating location state:', error);
       return {
         success: false,
-        error: 'Failed to update location state'
+        error: 'Failed to update location state',
       };
     }
   }
@@ -158,7 +158,9 @@ export class LocationService {
         orderBy: { timestamp: 'desc' },
       });
 
-      return prismaLocation ? this.mapPrismaLocationToLocation(prismaLocation) : null;
+      return prismaLocation
+        ? this.mapPrismaLocationToLocation(prismaLocation)
+        : null;
     } catch (error) {
       console.error('Error getting latest location:', error);
       throw error;
@@ -175,7 +177,9 @@ export class LocationService {
       },
     });
 
-    return prismaLocation ? this.mapPrismaLocationToLocation(prismaLocation) : null;
+    return prismaLocation
+      ? this.mapPrismaLocationToLocation(prismaLocation)
+      : null;
   }
 
   async toggleLocationSharing(userId: string): Promise<Location | null> {

@@ -30,14 +30,16 @@ export default function MatchingPage() {
   useEffect(() => {
     const fetchSettings = async () => {
       if (!user?.id) {
-        router.push('/login');
+        void router.push('/login');
         return;
       }
 
       try {
         const locationService = LocationService.getInstance();
-        const { data: locationState } = await locationService.getLocationState(user.id);
-        
+        const { data: locationState } = await locationService.getLocationState(
+          user.id
+        );
+
         if (locationState) {
           setSettings(prev => ({
             ...prev,
@@ -62,7 +64,7 @@ export default function MatchingPage() {
       const locationService = LocationService.getInstance();
       await locationService.updateLocationState(user.id, {
         privacyMode: 'precise',
-        sharingEnabled: enabled
+        sharingEnabled: enabled,
       });
       setSettings(prev => ({ ...prev, enabled }));
       toast.success(enabled ? 'Matching enabled' : 'Matching disabled');
@@ -85,12 +87,13 @@ export default function MatchingPage() {
           <div>
             <h2 className="text-lg font-semibold">Enable Matching</h2>
             <p className="text-gray-600">
-              Allow others to discover and connect with you based on shared interests
+              Allow others to discover and connect with you based on shared
+              interests
             </p>
           </div>
           <Switch
             checked={settings.enabled}
-            onChange={(enabled: boolean) => handleToggleMatching(enabled)}
+            onChange={enabled => void handleToggleMatching(enabled)}
             className={`${
               settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
             } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}

@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/prisma';
 import type { Prisma } from '@prisma/client';
 
+// Define the Event type with proper Prisma typing
 type Event = Prisma.EventGetPayload<{
   include: {
     participants: {
@@ -15,6 +16,19 @@ type Event = Prisma.EventGetPayload<{
     creator: true;
   };
 }>;
+
+// Define participant type for better type safety
+type EventParticipant = Prisma.EventParticipantGetPayload<{
+  include: {
+    user: true;
+  };
+}>;
+
+// Define the complete event type with participants
+interface EventWithParticipants extends Event {
+  participants: EventParticipant[];
+  currentParticipants: number;
+}
 
 interface CreateEventBody {
   title: string;
@@ -38,7 +52,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     const searchParams = new URL(request.url).searchParams;
     const location = await db.location.findFirst({
       where: {
-        userId: (session.user as any).id,
+        userId: session.user.id,
       },
       orderBy: {
         timestamp: 'desc',
@@ -69,7 +83,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     const minLon = userLocation.longitude - longitudeDelta;
     const maxLon = userLocation.longitude + longitudeDelta;
 
-    let events;
+    let events: Event[];
     const latitude = searchParams.get('latitude');
     const longitude = searchParams.get('longitude');
     const radius = searchParams.get('radius');
@@ -135,13 +149,11 @@ export async function GET(request: NextRequest): Promise<Response> {
       });
     }
 
-    // Add currentParticipants count
-    const eventsWithCount = events.map(
-      (event: Event & { participants: Array<{ userId: string }> }) => ({
-        ...event,
-        currentParticipants: event.participants.length,
-      })
-    );
+    // Add currentParticipants count with proper typing
+    const eventsWithCount: EventWithParticipants[] = events.map((event) => ({
+      ...event,
+      currentParticipants: event.participants.length,
+    }));
 
     return NextResponse.json(eventsWithCount);
   } catch (error) {
@@ -160,20 +172,19 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const eventData = body as CreateEventBody;
+    const body = (await request.json()) as CreateEventBody;
 
     const event = await db.event.create({
       data: {
-        title: eventData.title,
-        description: eventData.description,
-        startTime: new Date(eventData.startTime),
-        endTime: eventData.endTime ? new Date(eventData.endTime) : null,
-        latitude: eventData.latitude,
-        longitude: eventData.longitude,
-        type: eventData.type,
-        maxParticipants: eventData.maxParticipants,
-        tags: eventData.tags || [],
+        title: body.title,
+        description: body.description,
+        startTime: new Date(body.startTime),
+        endTime: body.endTime ? new Date(body.endTime) : undefined,
+        latitude: body.latitude,
+        longitude: body.longitude,
+        type: body.type,
+        maxParticipants: body.maxParticipants,
+        tags: body.tags,
         creatorId: session.user.id,
       },
       include: {

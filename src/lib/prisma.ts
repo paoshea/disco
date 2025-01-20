@@ -49,19 +49,19 @@ export type ExtendedPrismaClient = PrismaClient & {
 const clientExtensions = {
   model: {
     $allModels: {
-      findFirst: async function<T>(args: unknown): Promise<T | null> {
+      findFirst: async function <T>(args: unknown): Promise<T | null> {
         return (this as any).findFirst(args);
       },
-      findMany: async function<T>(args: unknown): Promise<T[]> {
+      findMany: async function <T>(args: unknown): Promise<T[]> {
         return (this as any).findMany(args);
       },
-      create: async function<T>(args: unknown): Promise<T> {
+      create: async function <T>(args: unknown): Promise<T> {
         return (this as any).create(args);
       },
-      update: async function<T>(args: unknown): Promise<T> {
+      update: async function <T>(args: unknown): Promise<T> {
         return (this as any).update(args);
       },
-      delete: async function<T>(args: unknown): Promise<T> {
+      delete: async function <T>(args: unknown): Promise<T> {
         return (this as any).delete(args);
       },
     },
@@ -70,7 +70,7 @@ const clientExtensions = {
 
 // Define event-specific methods
 const eventExtensions = {
-  findNearby: async function(
+  findNearby: async function (
     this: any,
     latitude: number,
     longitude: number,
@@ -99,10 +99,10 @@ const eventExtensions = {
 };
 
 // Create the extended client
-const extendedDb = (db.$extends(clientExtensions).$extends({
+const extendedDb = db.$extends(clientExtensions).$extends({
   model: {
     event: eventExtensions,
   },
-}) as unknown) as ExtendedPrismaClient;
+}) as unknown as ExtendedPrismaClient;
 
 export { extendedDb as db };

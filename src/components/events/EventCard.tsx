@@ -1,7 +1,7 @@
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { eventService } from '@/services/event/event.service';
-import type { Event, EventWithParticipants } from '@/types/event';
+import type { EventWithParticipants } from '@/types/event';
 import { useAuth } from '@/hooks/useAuth';
 import {
   MapPinIcon,

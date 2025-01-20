@@ -55,7 +55,7 @@ export async function middleware(request: NextRequest) {
     // Verify token and get session
     const session = await verifyToken(token);
 
-    if (!session) {
+    if (!session?.user) {
       return redirectToLogin(request);
     }
 
@@ -69,8 +69,14 @@ export async function middleware(request: NextRequest) {
     // Add user info to headers for route handlers
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', session.user.id);
-    requestHeaders.set('x-user-email', session.user.email);
-    requestHeaders.set('x-user-role', session.user.role);
+    
+    if (session.user.email) {
+      requestHeaders.set('x-user-email', session.user.email);
+    }
+    
+    if (session.user.role) {
+      requestHeaders.set('x-user-role', session.user.role);
+    }
 
     return NextResponse.next({
       request: {

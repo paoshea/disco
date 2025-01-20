@@ -16,6 +16,7 @@ npm install prisma --save-dev
 ### Configuration
 
 1. **Environment Variables**
+
    - Store database URL in `.env`:
      ```
      DATABASE_URL="your-database-url"
@@ -31,16 +32,16 @@ npm install prisma --save-dev
 We use a singleton pattern to prevent multiple Prisma Client instances in development:
 
 ```typescript
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
 
 declare global {
-  var prisma: PrismaClient | undefined
+  var prisma: PrismaClient | undefined;
 }
 
-const db = global.prisma || new PrismaClient()
-if (process.env.NODE_ENV !== 'production') global.prisma = db
+const db = global.prisma || new PrismaClient();
+if (process.env.NODE_ENV !== 'production') global.prisma = db;
 
-export { db }
+export { db };
 ```
 
 ## Type Safety
@@ -48,16 +49,17 @@ export { db }
 ### Model Types
 
 1. **Direct Import**
+
    ```typescript
-   import type { Event, Location, PrivacyZone } from '@prisma/client'
+   import type { Event, Location, PrivacyZone } from '@prisma/client';
    ```
 
 2. **Payload Types**
    ```typescript
-   import { Prisma } from '@prisma/client'
+   import { Prisma } from '@prisma/client';
    type EventWithRelations = Prisma.EventGetPayload<{
-     include: { attendees: true }
-   }>
+     include: { attendees: true };
+   }>;
    ```
 
 ### Client Extensions
@@ -75,12 +77,12 @@ When extending the Prisma Client:
 ```typescript
 try {
   const result = await db.event.create({
-    data: eventData
-  })
-  return { success: true, data: result }
+    data: eventData,
+  });
+  return { success: true, data: result };
 } catch (error) {
-  console.error('Database error:', error)
-  return { success: false, error: 'Failed to create event' }
+  console.error('Database error:', error);
+  return { success: false, error: 'Failed to create event' };
 }
 ```
 
@@ -89,20 +91,22 @@ try {
 ```typescript
 const [event, notification] = await db.$transaction([
   db.event.create({ data: eventData }),
-  db.notification.create({ data: notificationData })
-])
+  db.notification.create({ data: notificationData }),
+]);
 ```
 
 ### Middleware
 
 ```typescript
 db.$use(async (params, next) => {
-  const before = Date.now()
-  const result = await next(params)
-  const after = Date.now()
-  console.log(`Query ${params.model}.${params.action} took ${after - before}ms`)
-  return result
-})
+  const before = Date.now();
+  const result = await next(params);
+  const after = Date.now();
+  console.log(
+    `Query ${params.model}.${params.action} took ${after - before}ms`
+  );
+  return result;
+});
 ```
 
 ## Next.js Integration
@@ -111,20 +115,20 @@ db.$use(async (params, next) => {
 
 ```typescript
 // pages/api/events.ts
-import { db } from '@/lib/prisma'
+import { db } from '@/lib/prisma';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ message: 'Method not allowed' })
+    return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
     const event = await db.event.create({
-      data: req.body
-    })
-    res.status(201).json(event)
+      data: req.body,
+    });
+    res.status(201).json(event);
   } catch (error) {
-    res.status(500).json({ message: 'Failed to create event' })
+    res.status(500).json({ message: 'Failed to create event' });
   }
 }
 ```
@@ -144,10 +148,12 @@ export default async function EventsPage() {
 ## Performance Considerations
 
 1. **Connection Pooling**
+
    - Use connection pooling in production
    - Configure max connections based on serverless function limits
 
 2. **Query Optimization**
+
    - Use `select` and `include` judiciously
    - Implement pagination for large datasets
    - Use compound queries to reduce roundtrips
@@ -159,11 +165,13 @@ export default async function EventsPage() {
 ## Deployment
 
 1. **Database Migrations**
+
    ```bash
    npx prisma migrate deploy
    ```
 
 2. **Environment Variables**
+
    - Set `DATABASE_URL` in production environment
    - Use connection pooling URL if applicable
 
@@ -180,10 +188,12 @@ export default async function EventsPage() {
 ### Common Issues
 
 1. **Hot Reload Issues**
+
    - Use singleton pattern
    - Clear `node_modules/.prisma` if schema sync issues occur
 
 2. **Type Generation**
+
    - Run `prisma generate` after schema changes
    - Ensure `@prisma/client` is up to date
 
@@ -194,11 +204,11 @@ export default async function EventsPage() {
 
 ## Version Compatibility
 
-| Dependency    | Version | Notes                                |
-|--------------|---------|--------------------------------------|
-| Next.js      | 13+     | Server Components support            |
-| Prisma       | 6.2.1   | Latest with improved type inference  |
-| TypeScript   | 5.0+    | Required for latest type features    |
+| Dependency | Version | Notes                               |
+| ---------- | ------- | ----------------------------------- |
+| Next.js    | 13+     | Server Components support           |
+| Prisma     | 6.2.1   | Latest with improved type inference |
+| TypeScript | 5.0+    | Required for latest type features   |
 
 ## Resources
 

@@ -3,20 +3,30 @@ import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { LocationService } from '@/services/location/location.service';
-import type { LocationPrivacyMode } from '@/types/location';
+import type { LocationPrivacyMode, Location } from '@/types/location';
 
-export async function GET(request: NextRequest) {
+interface LocationUpdateRequest {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  privacyMode?: LocationPrivacyMode;
+}
+
+interface PrivacyUpdateRequest {
+  privacyMode: LocationPrivacyMode;
+}
+
+export async function GET(request: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const locationService = LocationService.getInstance();
-    const locationState = await locationService.getLocationState(session.user.id);
+    const locationState = await locationService.getLocationState(
+      session.user.id
+    );
 
     return NextResponse.json(locationState);
   } catch (error) {
@@ -28,44 +38,38 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { latitude, longitude, accuracy, privacyMode } = await request.json();
+    const body = await request.json() as LocationUpdateRequest;
 
-    if (!latitude || !longitude) {
+    if (!body.latitude || !body.longitude) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
       );
     }
 
-    const locationService = LocationService.getInstance();
-    const result = await locationService.updateLocation(
-      session.user.id,
-      {
-        latitude,
-        longitude,
-        accuracy,
-        privacyMode: privacyMode as LocationPrivacyMode
-      }
-    );
-
-    if (!result.success) {
+    if (body.privacyMode && !['precise', 'approximate', 'zone'].includes(body.privacyMode)) {
       return NextResponse.json(
-        { error: result.error },
+        { error: 'Invalid privacy mode' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ location: result.data });
+    const locationService = LocationService.getInstance();
+    const result = await locationService.updateLocation(session.user.id, {
+      latitude: body.latitude,
+      longitude: body.longitude,
+      accuracy: body.accuracy,
+      privacyMode: body.privacyMode || 'precise',
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error('Error updating location:', error);
     return NextResponse.json(
@@ -75,34 +79,31 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function PATCH(request: NextRequest) {
+export async function PATCH(request: NextRequest): Promise<Response> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { privacyMode, sharingEnabled } = await request.json();
+    const body = await request.json() as PrivacyUpdateRequest;
 
-    const locationService = LocationService.getInstance();
-    const result = await locationService.updateLocationState(session.user.id, {
-      privacyMode: privacyMode as LocationPrivacyMode,
-      sharingEnabled
-    });
-
-    if (!result.success) {
+    if (!body.privacyMode || !['precise', 'approximate', 'zone'].includes(body.privacyMode)) {
       return NextResponse.json(
-        { error: result.error },
+        { error: 'Invalid privacy mode' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json({ location: result.data });
+    const locationService = LocationService.getInstance();
+    const result = await locationService.updatePrivacyMode(
+      session.user.id,
+      body.privacyMode
+    );
+
+    return NextResponse.json(result);
   } catch (error) {
-    console.error('Error updating location state:', error);
+    console.error('Error updating privacy mode:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

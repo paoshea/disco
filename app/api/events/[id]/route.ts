@@ -16,21 +16,22 @@ type Event = Prisma.EventGetPayload<{
   };
 }>;
 
+type RouteContext = {
+  params: { id: string };
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: RouteContext
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const event = await db.event.findUnique({
-      where: { id: params.id },
+      where: { id: context.params.id },
       include: {
         participants: {
           include: {
@@ -42,10 +43,7 @@ export async function GET(
     });
 
     if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     return NextResponse.json({ event });
@@ -60,37 +58,29 @@ export async function GET(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: RouteContext
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const event = await db.event.findUnique({
-      where: { id: params.id },
+      where: { id: context.params.id },
+      select: { creatorId: true },
     });
 
     if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     if (event.creatorId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Forbidden' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     await db.event.delete({
-      where: { id: params.id },
+      where: { id: context.params.id },
     });
 
     return NextResponse.json({ success: true });
@@ -105,44 +95,31 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<Response> {
+  context: RouteContext
+): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const eventData = body as Partial<Event>;
-
     const event = await db.event.findUnique({
-      where: { id: params.id },
-      select: {
-        creatorId: true,
-      },
+      where: { id: context.params.id },
+      select: { creatorId: true },
     });
 
     if (!event) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
     if (event.creatorId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Not authorized to update this event' },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    const data = await request.json();
     const updatedEvent = await db.event.update({
-      where: { id: params.id },
-      data: eventData,
+      where: { id: context.params.id },
+      data,
       include: {
         participants: {
           include: {

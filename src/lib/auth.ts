@@ -23,6 +23,13 @@ declare module 'next-auth' {
     };
     expires: string;
   }
+
+  interface User {
+    id: string;
+    email?: string;
+    name?: string;
+    role?: string;
+  }
 }
 
 declare module 'next-auth/jwt' {
@@ -79,7 +86,10 @@ export const authOptions: NextAuthOptions = {
           return null;
         }
 
-        const isValid = await bcrypt.compare(credentials.password, user.password);
+        const isValid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
 
         if (!isValid) {
           return null;
@@ -99,7 +109,7 @@ export const authOptions: NextAuthOptions = {
       if (user) {
         token.id = user.id;
         token.email = user.email ?? undefined;
-        token.role = (user as any).role;
+        token.role = user.role as string | undefined;
       }
       return token;
     },
@@ -163,10 +173,10 @@ export async function generateToken(
 
 export async function verifyToken(token: string): Promise<Session | null> {
   try {
-    const payload = await jose.jwtVerify(
+    const payload = (await jose.jwtVerify(
       token,
       JWT_SECRET
-    ) as unknown as AuthJWTPayload;
+    )) as unknown as AuthJWTPayload;
 
     const user = await db.user.findUnique({
       where: { id: payload.userId as string },
@@ -194,7 +204,7 @@ export async function verifyRefreshToken(
 ): Promise<{ userId: string } | null> {
   try {
     const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-    
+
     if (payload.type !== 'refresh') {
       return null;
     }
@@ -233,7 +243,9 @@ export async function getCurrentUser(): Promise<Session['user'] | undefined> {
   return session?.user;
 }
 
-export async function getToken(cookieStore: RequestCookies): Promise<string | undefined> {
+export async function getToken(
+  cookieStore: RequestCookies
+): Promise<string | undefined> {
   return cookieStore.get('next-auth.session-token')?.value;
 }
 

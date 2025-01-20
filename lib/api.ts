@@ -1,4 +1,4 @@
-import useAuth from '@/app/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
 import type { LoginResult } from '@/types/auth';
 
 class ApiError extends Error {

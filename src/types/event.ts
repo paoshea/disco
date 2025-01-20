@@ -25,6 +25,10 @@ export interface Event {
   type: string;
   eventType: 'social' | 'virtual' | 'hybrid';
   creatorId: string;
+  creator: {
+    id: string;
+    name: string | null;
+  };
   location: Coordinates;
   startTime: Date;
   endTime?: Date;
@@ -38,10 +42,6 @@ export interface Event {
 
 export interface EventWithParticipants extends Event {
   participants: EventParticipant[];
-  creator: {
-    id: string;
-    name: string | null;
-  };
 }
 
 // Event category and type enums
