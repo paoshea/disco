@@ -1,14 +1,12 @@
 import { db } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
 import type {
   Event,
   EventWithParticipants,
   EventParticipant,
 } from '@/types/event';
-import type { ParticipantStatus } from '@/types/participant';
 import type { ServiceResponse } from '@/types/service';
 
-interface EventCreateInput {
+export interface EventCreateInput {
   title: string;
   description?: string;
   startTime: Date;
@@ -16,10 +14,47 @@ interface EventCreateInput {
   latitude?: number;
   longitude?: number;
   address?: string;
-  type?: string;
+  type?: 'social' | 'virtual' | 'hybrid';
   maxParticipants?: number;
   tags?: string[];
   creatorId: string;
+}
+
+interface DbEvent {
+  id: string;
+  title: string;
+  description: string | null;
+  type: 'social' | 'virtual' | 'hybrid';
+  eventType: 'social' | 'virtual' | 'hybrid';
+  creatorId: string;
+  latitude: number;
+  longitude: number;
+  startTime: Date;
+  endTime: Date | null;
+  maxParticipants: number | null;
+  participants: DbParticipant[];
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  creator: DbUser;
+}
+
+interface DbParticipant {
+  id: string;
+  userId: string;
+  eventId: string;
+  status: 'pending' | 'accepted' | 'declined';
+  createdAt: Date;
+  updatedAt: Date;
+  user: DbUser;
+}
+
+interface DbUser {
+  id: string;
+  email: string;
+  name: string | null;
+  firstName: string | null;
+  lastName: string | null;
 }
 
 export interface EventUpdateInput {
@@ -30,7 +65,7 @@ export interface EventUpdateInput {
   latitude?: number;
   longitude?: number;
   address?: string;
-  type?: string;
+  type?: 'social' | 'virtual' | 'hybrid';
   maxParticipants?: number;
   tags?: string[];
 }
@@ -41,7 +76,10 @@ export type DistanceUnit = 'km' | 'm';
 export class EventService {
   private static instance: EventService;
 
-  private constructor() {}
+  // Private constructor to enforce singleton pattern
+  private constructor() {
+    // Intentionally empty - initialization is handled through getInstance()
+  }
 
   public static getInstance(): EventService {
     if (!EventService.instance) {
@@ -50,9 +88,9 @@ export class EventService {
     return EventService.instance;
   }
 
-  private mapDbEventToEvent(dbEvent: any): EventWithParticipants {
+  private mapDbEventToEvent(dbEvent: DbEvent): EventWithParticipants {
     const participants = (dbEvent.participants || []).map(
-      (p: any) =>
+      (p: DbParticipant) =>
         ({
           id: p.id,
           userId: p.userId,
@@ -104,7 +142,7 @@ export class EventService {
 
   async createEvent(
     data: EventCreateInput
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.create({
         data,
@@ -133,7 +171,7 @@ export class EventService {
 
   async getEventById(
     id: string
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.findUnique({
         where: { id },
@@ -170,7 +208,7 @@ export class EventService {
   async updateEvent(
     id: string,
     data: EventUpdateInput
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.update({
         where: { id },
@@ -198,10 +236,28 @@ export class EventService {
     }
   }
 
+  async deleteEvent(id: string): Promise<ServiceResponse<void>> {
+    try {
+      await db.event.delete({
+        where: { id },
+      });
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error('Error deleting event:', error);
+      return {
+        success: false,
+        error: `Failed to delete event: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      };
+    }
+  }
+
   async joinEvent(
     eventId: string,
     userId: string
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.update({
         where: { id: eventId },
@@ -209,17 +265,17 @@ export class EventService {
           participants: {
             create: {
               userId,
-              status: 'joined',
+              status: 'pending' as const,
             },
           },
         },
         include: {
-          creator: true,
           participants: {
             include: {
               user: true,
             },
           },
+          creator: true,
         },
       });
 
@@ -228,10 +284,9 @@ export class EventService {
         data: this.mapDbEventToEvent(event),
       };
     } catch (error) {
-      console.error('Error joining event:', error);
       return {
         success: false,
-        error: 'Failed to join event',
+        error: `Failed to join event: ${error instanceof Error ? error.message : 'Unknown error'}`,
       };
     }
   }
@@ -239,7 +294,7 @@ export class EventService {
   async leaveEvent(
     eventId: string,
     userId: string
-  ): Promise<EventServiceResponse<EventWithParticipants>> {
+  ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
       const event = await db.event.update({
         where: { id: eventId },
@@ -273,7 +328,7 @@ export class EventService {
     }
   }
 
-  async getEvents(): Promise<EventServiceResponse<EventWithParticipants[]>> {
+  async getEvents(): Promise<ServiceResponse<EventWithParticipants[]>> {
     try {
       const events = await db.event.findMany({
         include: {
@@ -304,9 +359,9 @@ export class EventService {
     longitude: number,
     radius: number,
     unit: DistanceUnit = 'm',
-    limit: number = 10
+    limit = 10
   ): Promise<
-    EventServiceResponse<(EventWithParticipants & { distance: number })[]>
+    ServiceResponse<(EventWithParticipants & { distance: number })[]>
   > {
     try {
       // Convert radius to kilometers for internal calculations

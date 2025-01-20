@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
 import { LocationService } from '@/services/location/location.service';
-import type { LocationPrivacyMode, Location } from '@/types/location';
+import type { LocationPrivacyMode } from '@/types/location';
 
 interface LocationUpdateRequest {
   latitude: number;
@@ -16,9 +15,9 @@ interface PrivacyUpdateRequest {
   privacyMode: LocationPrivacyMode;
 }
 
-export async function GET(request: NextRequest): Promise<Response> {
+export async function GET(_request: NextRequest): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -40,7 +39,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -84,7 +83,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
 export async function PATCH(request: NextRequest): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

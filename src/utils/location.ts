@@ -1,5 +1,5 @@
 import { db } from '@/lib/prisma';
-import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { LocationPrivacyMode } from '@/types/location';
 
 export interface LocationData {
   id: string;

@@ -239,7 +239,7 @@ export const useAuth = create<AuthState>()(
       async requestPasswordReset(email: string) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post('/api/auth/request-reset', {
+          await apiClient.post('/api/auth/request-reset', {
             email,
           });
           return { success: true };
@@ -257,7 +257,7 @@ export const useAuth = create<AuthState>()(
       async resetPassword(token: string, password: string) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post('/api/auth/reset-password', {
+          await apiClient.post('/api/auth/reset-password', {
             token,
             password,
           });

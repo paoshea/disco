@@ -50,14 +50,14 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Generate new tokens
     const {
-      token: newToken,
+      token,
       refreshToken: newRefreshToken,
       expiresIn,
     } = await generateToken({
       userId: user.id,
       email: user.email,
-      firstName: user.firstName,
       role: user.role,
+      firstName: user.firstName,
     });
 
     // Update refresh token in database
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Create response with new tokens
     const response = NextResponse.json({
-      token: newToken,
+      token,
       expiresIn,
       user: {
         id: user.id,
@@ -83,7 +83,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     // Set new cookies in response
-    response.cookies.set('accessToken', newToken, {
+    response.cookies.set('accessToken', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -79,8 +79,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     const { token, refreshToken, expiresIn } = await generateToken({
       userId: user.id,
       email: user.email,
-      firstName: user.firstName,
       role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
     });
 
     // Store refresh token in database

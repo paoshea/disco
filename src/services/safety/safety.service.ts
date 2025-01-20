@@ -15,7 +15,10 @@ interface SafetySettings {
 export class SafetyService {
   private static instance: SafetyService;
 
-  private constructor() {}
+  // Private constructor to enforce singleton pattern
+  private constructor() {
+    // Intentionally empty - initialization is handled through getInstance()
+  }
 
   public static getInstance(): SafetyService {
     if (!SafetyService.instance) {

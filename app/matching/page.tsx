@@ -13,10 +13,6 @@ interface MatchingSettings {
   interests: string[];
 }
 
-interface User {
-  id: string;
-}
-
 export default function MatchingPage() {
   const router = useRouter();
   const { user } = useAuth();

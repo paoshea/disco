@@ -1,3 +1,5 @@
+// @ts-check
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
@@ -8,7 +10,6 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
-    runtime: 'nodejs', // Specify Node.js runtime
   },
   webpack: (config, { isServer }) => {
     if (!isServer) {

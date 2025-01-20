@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 
 // Add prisma to the global type
 declare global {
+  // eslint-disable-next-line no-var
   var prisma: PrismaClient | undefined;
 }
 
@@ -18,19 +19,21 @@ if (process.env.NODE_ENV === 'production') {
   db = global.prisma;
 }
 
+type PrismaArgs = Record<string, unknown>;
+
 type ModelReturnTypes = {
-  event: Prisma.EventGetPayload<{}>;
-  location: Prisma.LocationGetPayload<{}>;
-  privacyZone: Prisma.PrivacyZoneGetPayload<{}>;
+  event: Prisma.EventGetPayload<Record<string, never>>;
+  location: Prisma.LocationGetPayload<Record<string, never>>;
+  privacyZone: Prisma.PrivacyZoneGetPayload<Record<string, never>>;
 };
 
 // Define base model operations
 type ModelOperations<T> = {
-  findFirst: (args: unknown) => Promise<T | null>;
-  findMany: (args: unknown) => Promise<T[]>;
-  create: (args: unknown) => Promise<T>;
-  update: (args: unknown) => Promise<T>;
-  delete: (args: unknown) => Promise<T>;
+  findFirst: (args: PrismaArgs) => Promise<T | null>;
+  findMany: (args: PrismaArgs) => Promise<T[]>;
+  create: (args: PrismaArgs) => Promise<T>;
+  update: (args: PrismaArgs) => Promise<T>;
+  delete: (args: PrismaArgs) => Promise<T>;
 };
 
 export type ExtendedPrismaClient = PrismaClient & {
@@ -45,24 +48,32 @@ export type ExtendedPrismaClient = PrismaClient & {
   privacyZone: ModelOperations<ModelReturnTypes['privacyZone']>;
 };
 
+type PrismaModel = {
+  findFirst: (args: PrismaArgs) => Promise<unknown>;
+  findMany: (args: PrismaArgs) => Promise<unknown[]>;
+  create: (args: PrismaArgs) => Promise<unknown>;
+  update: (args: PrismaArgs) => Promise<unknown>;
+  delete: (args: PrismaArgs) => Promise<unknown>;
+};
+
 // Define the client extensions
 const clientExtensions = {
   model: {
     $allModels: {
-      findFirst: async function <T>(args: unknown): Promise<T | null> {
-        return (this as any).findFirst(args);
+      async findFirst<T>(this: PrismaModel, args: PrismaArgs): Promise<T | null> {
+        return this.findFirst(args) as Promise<T | null>;
       },
-      findMany: async function <T>(args: unknown): Promise<T[]> {
-        return (this as any).findMany(args);
+      async findMany<T>(this: PrismaModel, args: PrismaArgs): Promise<T[]> {
+        return this.findMany(args) as Promise<T[]>;
       },
-      create: async function <T>(args: unknown): Promise<T> {
-        return (this as any).create(args);
+      async create<T>(this: PrismaModel, args: PrismaArgs): Promise<T> {
+        return this.create(args) as Promise<T>;
       },
-      update: async function <T>(args: unknown): Promise<T> {
-        return (this as any).update(args);
+      async update<T>(this: PrismaModel, args: PrismaArgs): Promise<T> {
+        return this.update(args) as Promise<T>;
       },
-      delete: async function <T>(args: unknown): Promise<T> {
-        return (this as any).delete(args);
+      async delete<T>(this: PrismaModel, args: PrismaArgs): Promise<T> {
+        return this.delete(args) as Promise<T>;
       },
     },
   },
@@ -70,14 +81,14 @@ const clientExtensions = {
 
 // Define event-specific methods
 const eventExtensions = {
-  findNearby: async function (
-    this: any,
+  async findNearby(
+    this: PrismaModel,
     latitude: number,
     longitude: number,
     radiusInMeters: number
   ): Promise<ModelReturnTypes['event'][]> {
     const radiusInDegrees = radiusInMeters / 111320; // rough approximation: 1 degree = 111.32 km
-    return (this as any).findMany({
+    return this.findMany({
       where: {
         AND: [
           {
@@ -94,15 +105,13 @@ const eventExtensions = {
           },
         ],
       },
-    });
+    }) as Promise<ModelReturnTypes['event'][]>;
   },
 };
 
 // Create the extended client
-const extendedDb = db.$extends(clientExtensions).$extends({
-  model: {
-    event: eventExtensions,
-  },
+export const prisma = db.$extends(clientExtensions).$extends({
+  model: { event: eventExtensions },
 }) as unknown as ExtendedPrismaClient;
 
-export { extendedDb as db };
+export { db };

@@ -1,39 +1,28 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
-import type { Event } from '@/types/event';
 import type { EventUpdateInput } from '@/services/event/event.service';
-
-interface RouteParams {
-  id: string;
-}
+import { z } from 'zod';
 
 export async function GET(
-  request: NextRequest,
-  { params }: { params: RouteParams }
-): Promise<NextResponse> {
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = params;
-    const { data, success, error } = await eventService.getEventById(id);
+    const result = await eventService.getEventById(id);
 
-    if (!success || !data) {
-      return NextResponse.json(
-        { error: error || 'Event not found' },
-        { status: 404 }
-      );
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 404 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json(result.data);
   } catch (error) {
     console.error('Error getting event:', error);
     return NextResponse.json(
@@ -43,46 +32,64 @@ export async function GET(
   }
 }
 
-export async function DELETE(
+export async function PUT(
   request: NextRequest,
-  { params }: { params: RouteParams }
-): Promise<NextResponse> {
+  { params }: { params: { id: string } }
+): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = params;
-    const event = await eventService.getEventById(id);
+    const body = (await request.json()) as EventUpdateInput;
 
-    if (!event.success || !event.data) {
-      return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
+    const result = await eventService.updateEvent(id, body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
-    if (event.data.creatorId !== session.user.id) {
+    return NextResponse.json(result.data);
+  } catch (error) {
+    console.error('Error updating event:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<Response> {
+  try {
+    const session = await getServerAuthSession();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id } = params;
+    
+    // First check if the user is authorized to delete this event
+    const eventResult = await eventService.getEventById(id);
+    if (!eventResult.success || !eventResult.data) {
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    }
+
+    if (eventResult.data.creatorId !== session.user.id) {
       return NextResponse.json(
         { error: 'Not authorized to delete this event' },
         { status: 403 }
       );
     }
 
-    const { success, error } = await eventService.leaveEvent(
-      id,
-      session.user.id
-    );
-
-    if (!success) {
-      return NextResponse.json(
-        { error: error || 'Failed to delete event' },
-        { status: 400 }
-      );
+    // Delete the event
+    const result = await eventService.deleteEvent(id);
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });
@@ -97,47 +104,48 @@ export async function DELETE(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: RouteParams }
-): Promise<NextResponse> {
+  { params }: { params: { id: string } }
+): Promise<Response> {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getServerAuthSession();
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = params;
-    const event = await eventService.getEventById(id);
+    const body = await request.json();
 
-    if (!event.success || !event.data) {
+    const actionSchema = z.object({
+      action: z.enum(['join', 'leave']),
+    });
+
+    const result = actionSchema.safeParse(body);
+    if (!result.success) {
       return NextResponse.json(
-        { error: 'Event not found' },
-        { status: 404 }
-      );
-    }
-
-    if (event.data.creatorId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Not authorized to update this event' },
-        { status: 403 }
-      );
-    }
-
-    const body = (await request.json()) as EventUpdateInput;
-    const { success, error, data } = await eventService.updateEvent(id, body);
-
-    if (!success) {
-      return NextResponse.json(
-        { error: error || 'Failed to update event' },
+        { error: 'Invalid action' },
         { status: 400 }
       );
     }
 
-    return NextResponse.json(data);
+    const { action } = result.data;
+
+    let serviceResult;
+    if (action === 'join') {
+      serviceResult = await eventService.joinEvent(id, session.user.id);
+    } else {
+      serviceResult = await eventService.leaveEvent(id, session.user.id);
+    }
+
+    if (!serviceResult.success) {
+      return NextResponse.json(
+        { error: serviceResult.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json(serviceResult.data);
   } catch (error) {
-    console.error('Error updating event:', error);
+    console.error('Error updating event participation:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

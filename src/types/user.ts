@@ -1,6 +1,7 @@
 import type { EmergencyContact } from './safety';
 
-export interface User {
+// Core user fields that are always required
+export interface BaseUser {
   id: string;
   email: string;
   firstName: string;
@@ -8,9 +9,11 @@ export interface User {
   emailVerified: boolean;
   createdAt: string | Date;
   updatedAt: string | Date;
-  // Additional fields used in components
-  name?: string; // Optional, can be computed from firstName + lastName
   avatar?: string;
+}
+
+// Full user type with all optional fields
+export interface User extends BaseUser {
   bio?: string;
   interests?: string[];
   phoneNumber?: string;

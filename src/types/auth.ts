@@ -1,4 +1,5 @@
 import { User } from './user';
+import type { DefaultSession } from 'next-auth';
 
 export interface SignupInput {
   email: string;
@@ -39,7 +40,7 @@ export interface VerifyEmailInput {
 }
 
 export interface JWTPayload {
-  userId: string;
+  sub: string; // subject (user id)
   email: string;
   role: string;
   firstName: string;
@@ -48,7 +49,7 @@ export interface JWTPayload {
   exp?: number;
 }
 
-export interface Session {
+export interface Session extends DefaultSession {
   user: {
     id: string;
     email: string;

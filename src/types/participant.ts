@@ -2,11 +2,13 @@ import type { Event } from './event';
 
 export type ParticipantStatus = 'pending' | 'accepted' | 'declined';
 
-// Simplified user type for participants to avoid circular dependencies
+// Base user fields needed for participant context
 export interface ParticipantUser {
   id: string;
   email: string;
-  name: string | null;
+  firstName: string;
+  lastName: string;
+  avatar?: string;
 }
 
 export interface Participant {

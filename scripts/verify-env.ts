@@ -1,5 +1,7 @@
 import * as nodemailer from 'nodemailer';
 import { WebSocket } from 'ws';
+import { transporter } from '../src/lib/email/transporter';
+import { generateToken, verifyToken } from '../src/lib/jwt';
 
 // Import types
 interface JWTPayload {
@@ -12,12 +14,10 @@ interface UserPayload {
   email: string;
 }
 
-// Import services
-const emailTransporter = require('../src/lib/email/transporter')
-  .transporter as nodemailer.Transporter;
-const jwtService = require('../src/lib/jwt') as {
-  generateToken: (user: UserPayload) => string;
-  verifyToken: (token: string) => JWTPayload;
+const emailTransporter: nodemailer.Transporter = transporter;
+const jwtService = {
+  generateToken,
+  verifyToken,
 };
 
 async function verifyEmailService(): Promise<void> {
