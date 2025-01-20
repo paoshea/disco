@@ -50,7 +50,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate tokens
-    const { token, refreshToken, expiresIn } = await generateToken({
+    const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
@@ -73,22 +73,19 @@ export async function POST(request: NextRequest): Promise<Response> {
       data: { lastLogin: new Date() },
     });
 
-    // Remove password from response
-    const userWithoutPassword = {
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      streakCount: user.streakCount,
-    };
-
     // Create response with cookies
     const response = NextResponse.json({
-      user: userWithoutPassword,
       token,
       refreshToken,
-      expiresIn,
+      expiresIn: accessTokenExpiresIn,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        role: user.role,
+        streakCount: user.streakCount,
+      },
     });
 
     // Set cookies in response
@@ -96,7 +93,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: expiresIn,
+      maxAge: accessTokenExpiresIn,
       path: '/',
     });
 

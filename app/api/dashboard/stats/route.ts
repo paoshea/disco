@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 import { db } from '@/lib/prisma';
 import { getServerAuthSession } from '@/lib/auth';
 import type { UserWithStats, Achievement } from '@/types/dashboard';
@@ -60,9 +60,9 @@ async function checkAndCreateAchievement(userId: string, streakCount: number) {
   return null;
 }
 
-export async function GET() {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   try {
-    const session = await getServerAuthSession();
+    const session = await getServerAuthSession(request);
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

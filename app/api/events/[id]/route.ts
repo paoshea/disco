@@ -6,11 +6,11 @@ import type { EventUpdateInput } from '@/services/event/event.service';
 import { z } from 'zod';
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<Response> {
   try {
-    const session = await getServerAuthSession();
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -37,7 +37,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ): Promise<Response> {
   try {
-    const session = await getServerAuthSession();
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -62,11 +62,11 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<Response> {
   try {
-    const session = await getServerAuthSession();
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -107,7 +107,7 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ): Promise<Response> {
   try {
-    const session = await getServerAuthSession();
+    const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

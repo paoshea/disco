@@ -52,7 +52,8 @@ export async function POST(request: NextRequest): Promise<Response> {
     const {
       token,
       refreshToken: newRefreshToken,
-      expiresIn,
+      accessTokenExpiresIn,
+      refreshTokenExpiresIn,
     } = await generateToken({
       userId: user.id,
       email: user.email,
@@ -66,14 +67,16 @@ export async function POST(request: NextRequest): Promise<Response> {
       where: { id: user.id },
       data: {
         refreshToken: newRefreshToken,
-        refreshTokenExpiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days
+        refreshTokenExpiresAt: new Date(Date.now() + refreshTokenExpiresIn * 1000),
       },
     });
 
     // Create response with new tokens
     const response = NextResponse.json({
       token,
-      expiresIn,
+      refreshToken: newRefreshToken,
+      expiresIn: accessTokenExpiresIn,
+      refreshExpiresIn: refreshTokenExpiresIn,
       user: {
         id: user.id,
         email: user.email,
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: expiresIn,
+      maxAge: accessTokenExpiresIn,
       path: '/',
     });
 
@@ -96,7 +99,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
+      maxAge: refreshTokenExpiresIn,
       path: '/',
     });
 

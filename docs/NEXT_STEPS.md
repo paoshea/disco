@@ -6,6 +6,30 @@
 
 Reorganize the Disco codebase to improve maintainability, reduce duplication, and clarify frontend/backend separation while preserving Next.js conventions.
 
+# Rem Useful terminal commands
+npm audit fix
+npm run format:check
+npm run format  
+npx prettier --write .
+npx eslint . --fix   
+
+npm run type-check  
+npm run lint --fix
+npm run lint 
+
+npm run type-check:watch
+npm run lint:watch
+
+npm run test
+npm run test:watch
+
+npm run verify-env
+
+
+rm -rf .next/    
+npm run build
+
+
 ## Pre-Migration Checklist
 
 - [ ] Create git branch: `refactor/codebase-reorganization`
@@ -135,6 +159,12 @@ Reorganize the Disco codebase to improve maintainability, reduce duplication, an
 - Maintain backwards compatibility
 - Follow atomic commits
 - Update PR with before/after metrics
+
+## Other pendings
+1. Potential Cleanup: 
+`@types/bcryptjs`: If you’re not using bcryptjs directly, but rather its Edge-compatible alternative (`@edge-runtime/bcrypt`), this can be removed. 
+`@types/react-router-dom`: Since you’re using `react-router-dom`v6+, you don’t need this if you don’t rely on deprecated methods.  
+2. Mobile Responsiveness. 
 
 ## Core Infrastructure
 

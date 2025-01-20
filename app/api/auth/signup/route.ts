@@ -76,7 +76,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Generate tokens for automatic login
-    const { token, refreshToken, expiresIn } = await generateToken({
+    const { token, refreshToken, accessTokenExpiresIn } = await generateToken({
       userId: user.id,
       email: user.email,
       role: user.role,
@@ -98,6 +98,9 @@ export async function POST(request: NextRequest): Promise<Response> {
     const response = NextResponse.json({
       message:
         'User created successfully. Please check your email to verify your account.',
+      token,
+      refreshToken,
+      expiresIn: accessTokenExpiresIn,
       user: {
         id: user.id,
         email: user.email,
@@ -105,8 +108,6 @@ export async function POST(request: NextRequest): Promise<Response> {
         lastName: user.lastName,
         role: user.role,
       },
-      token,
-      expiresIn,
     });
 
     // Set auth cookies
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: expiresIn,
+      maxAge: accessTokenExpiresIn,
       path: '/',
     });
 

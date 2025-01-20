@@ -1,6 +1,7 @@
 import { User } from './user';
 import type { DefaultSession, DefaultUser } from 'next-auth';
-import type { JWT } from 'next-auth/jwt';
+import type { Session as NextAuthSession } from 'next-auth';
+import type { DefaultJWT } from 'next-auth/jwt';
 
 // Extend next-auth types
 declare module 'next-auth' {
@@ -10,6 +11,7 @@ declare module 'next-auth' {
       email: string;
       role: string;
       firstName: string;
+      lastName: string;
     };
   }
 
@@ -23,12 +25,32 @@ declare module 'next-auth' {
 }
 
 declare module 'next-auth/jwt' {
-  interface JWT {
+  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+  interface JWT extends DefaultJWT {
     id: string;
     email: string;
     role: string;
     firstName: string;
+    lastName: string;
   }
+}
+
+export interface Session extends NextAuthSession {
+  user: {
+    id: string;
+    email: string;
+    role: string;
+    firstName: string;
+    lastName: string;
+  };
+}
+
+export interface JWTPayload {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
 }
 
 export interface SignupInput {
@@ -36,7 +58,6 @@ export interface SignupInput {
   password: string;
   firstName: string;
   lastName: string;
-  phoneNumber?: string;
 }
 
 export interface LoginInput {
@@ -44,38 +65,17 @@ export interface LoginInput {
   password: string;
 }
 
-export interface AuthResponse {
-  user: User;
-  token: string;
-  refreshToken?: string;
-  expiresIn?: number;
-}
-
-export interface LoginResult {
-  user: User;
-  token: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
 export interface ResetPasswordInput {
   email: string;
   token: string;
-  newPassword: string;
+  password: string;
+}
+
+export interface ForgotPasswordInput {
+  email: string;
 }
 
 export interface VerifyEmailInput {
   email: string;
   token: string;
-}
-
-export interface JWTPayload {
-  id: string; // user id (same as sub)
-  sub: string; // subject (user id)
-  email: string;
-  role: string;
-  firstName: string;
-  type?: string;
-  iat?: number;
-  exp?: number;
 }

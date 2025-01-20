@@ -1,41 +1,24 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
-import { getServerAuthSession } from '@/lib/auth';
-
-interface AuthenticatedRequest extends NextRequest {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-  };
-}
+import { NextResponse, type NextRequest } from 'next/server';
+import { getSession } from '@/lib/auth';
 
 export async function withAuth(
-  handler: (req: AuthenticatedRequest) => Promise<Response>,
-  req: NextRequest
-): Promise<Response> {
+  request: NextRequest,
+  handler: (req: NextRequest) => Promise<NextResponse>
+): Promise<NextResponse> {
   try {
-    const session = await getServerAuthSession();
-
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    const session = await getSession(request);
+    if (!session) {
+      return NextResponse.json(
+        { message: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
-    // Add user info to the request
-    const authenticatedRequest = req as AuthenticatedRequest;
-    authenticatedRequest.user = {
-      id: session.user.id,
-      email: session.user.email,
-      role: session.user.role,
-      firstName: session.user.firstName,
-    };
-
-    return handler(authenticatedRequest);
+    return handler(request);
   } catch (error) {
     console.error('Auth middleware error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { message: 'Internal server error' },
       { status: 500 }
     );
   }
