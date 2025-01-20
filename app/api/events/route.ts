@@ -150,7 +150,7 @@ export async function GET(request: NextRequest): Promise<Response> {
     }
 
     // Add currentParticipants count with proper typing
-    const eventsWithCount: EventWithParticipants[] = events.map((event) => ({
+    const eventsWithCount: EventWithParticipants[] = events.map(event => ({
       ...event,
       currentParticipants: event.participants.length,
     }));

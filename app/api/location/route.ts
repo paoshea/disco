@@ -45,7 +45,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json() as LocationUpdateRequest;
+    const body = (await request.json()) as LocationUpdateRequest;
 
     if (!body.latitude || !body.longitude) {
       return NextResponse.json(
@@ -54,7 +54,10 @@ export async function POST(request: NextRequest): Promise<Response> {
       );
     }
 
-    if (body.privacyMode && !['precise', 'approximate', 'zone'].includes(body.privacyMode)) {
+    if (
+      body.privacyMode &&
+      !['precise', 'approximate', 'zone'].includes(body.privacyMode)
+    ) {
       return NextResponse.json(
         { error: 'Invalid privacy mode' },
         { status: 400 }
@@ -86,9 +89,12 @@ export async function PATCH(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json() as PrivacyUpdateRequest;
+    const body = (await request.json()) as PrivacyUpdateRequest;
 
-    if (!body.privacyMode || !['precise', 'approximate', 'zone'].includes(body.privacyMode)) {
+    if (
+      !body.privacyMode ||
+      !['precise', 'approximate', 'zone'].includes(body.privacyMode)
+    ) {
       return NextResponse.json(
         { error: 'Invalid privacy mode' },
         { status: 400 }

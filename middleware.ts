@@ -69,11 +69,11 @@ export async function middleware(request: NextRequest) {
     // Add user info to headers for route handlers
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-user-id', session.user.id);
-    
+
     if (session.user.email) {
       requestHeaders.set('x-user-email', session.user.email);
     }
-    
+
     if (session.user.role) {
       requestHeaders.set('x-user-role', session.user.role);
     }

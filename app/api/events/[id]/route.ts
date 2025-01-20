@@ -2,27 +2,18 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
+import { eventService } from '@/services/event/event.service';
+import type { Event } from '@/types/event';
+import type { EventUpdateInput } from '@/services/event/event.service';
 
-type Event = Prisma.EventGetPayload<{
-  include: {
-    participants: {
-      include: {
-        user: true;
-      };
-    };
-    creator: true;
-  };
-}>;
-
-type RouteContext = {
+type RouteParams = {
   params: { id: string };
+  searchParams?: { [key: string]: string | string[] | undefined };
 };
 
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  { params }: RouteParams
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
@@ -30,35 +21,23 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const event = await db.event.findUnique({
-      where: { id: context.params.id },
-      include: {
-        participants: {
-          include: {
-            user: true,
-          },
-        },
-        creator: true,
-      },
-    });
+    const { id } = params;
+    const { data, success, error } = await eventService.getEventById(id);
 
-    if (!event) {
-      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
+    if (!success || !data) {
+      return NextResponse.json({ error: error || 'Event not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ event });
+    return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching event:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error getting event:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: NextRequest,
-  context: RouteContext
+  { params }: RouteParams
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
@@ -66,36 +45,36 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const event = await db.event.findUnique({
-      where: { id: context.params.id },
-      select: { creatorId: true },
-    });
+    const { id } = params;
+    const event = await eventService.getEventById(id);
 
-    if (!event) {
+    if (!event.success || !event.data) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    if (event.creatorId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (event.data.creatorId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Not authorized to delete this event' },
+        { status: 403 }
+      );
     }
 
-    await db.event.delete({
-      where: { id: context.params.id },
-    });
+    const { success, error } = await eventService.leaveEvent(id, session.user.id);
+
+    if (!success) {
+      return NextResponse.json({ error: error || 'Failed to delete event' }, { status: 400 });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error deleting event:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
 export async function PATCH(
   request: NextRequest,
-  context: RouteContext
+  { params }: RouteParams
 ): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
@@ -103,39 +82,30 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const event = await db.event.findUnique({
-      where: { id: context.params.id },
-      select: { creatorId: true },
-    });
+    const { id } = params;
+    const event = await eventService.getEventById(id);
 
-    if (!event) {
+    if (!event.success || !event.data) {
       return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
 
-    if (event.creatorId !== session.user.id) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    if (event.data.creatorId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Not authorized to update this event' },
+        { status: 403 }
+      );
     }
 
-    const data = await request.json();
-    const updatedEvent = await db.event.update({
-      where: { id: context.params.id },
-      data,
-      include: {
-        participants: {
-          include: {
-            user: true,
-          },
-        },
-        creator: true,
-      },
-    });
+    const body = await request.json() as EventUpdateInput;
+    const { success, error, data } = await eventService.updateEvent(id, body);
 
-    return NextResponse.json({ event: updatedEvent });
+    if (!success) {
+      return NextResponse.json({ error: error || 'Failed to update event' }, { status: 400 });
+    }
+
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating event:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -1,7 +1,5 @@
-import { NextAuthOptions } from 'next-auth';
-import { JWT } from 'next-auth/jwt';
-import { Session } from 'next-auth';
-import { AdapterUser } from 'next-auth/adapters';
+import type { NextAuthOptions } from 'next-auth';
+import type { Session } from 'next-auth';
 import { db } from './prisma';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import * as bcrypt from 'bcryptjs';
@@ -9,81 +7,53 @@ import * as jose from 'jose';
 import { cookies } from 'next/headers';
 import { NextRequest } from 'next/server';
 import type { User } from '@prisma/client';
-import { RequestCookies } from 'next/dist/server/web/spec-extension/cookies';
-import { getServerSession as nextAuthGetServerSession } from 'next-auth/next';
 
 declare module 'next-auth' {
   interface Session {
     user: {
       id: string;
-      email?: string | null;
-      name?: string | null;
-      image?: string | null;
-      role?: string;
+      email: string;
+      role: string;
     };
-    expires: string;
   }
 
   interface User {
     id: string;
-    email?: string;
-    name?: string;
-    role?: string;
+    email: string;
+    role: string;
   }
-}
-
-declare module 'next-auth/jwt' {
-  interface JWT {
-    id: string;
-    email?: string;
-    role?: string;
-  }
-}
-
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'your-secret-key'
-);
-
-interface TokenResponse {
-  token: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-interface AuthJWTPayload {
-  userId: string;
-  email: string;
-  role: string;
-  firstName: string;
-  type: 'access' | 'refresh' | 'reset';
-  iat: number;
-  exp: number;
-}
-
-interface PasswordResetResponse {
-  token: string;
-  expiresAt: Date;
 }
 
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null;
+          throw new Error('Missing credentials');
         }
 
         const user = await db.user.findUnique({
           where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            password: true,
+            emailVerified: true,
+            role: true,
+          },
         });
 
         if (!user) {
-          return null;
+          throw new Error('Invalid credentials');
+        }
+
+        if (!user.password) {
+          throw new Error('Please reset your password');
         }
 
         const isValid = await bcrypt.compare(
@@ -92,139 +62,70 @@ export const authOptions: NextAuthOptions = {
         );
 
         if (!isValid) {
-          return null;
+          throw new Error('Invalid credentials');
+        }
+
+        if (!user.emailVerified) {
+          throw new Error('Please verify your email first');
         }
 
         return {
           id: user.id,
           email: user.email,
-          name: `${user.firstName} ${user.lastName}`.trim(),
           role: user.role,
         };
       },
     }),
   ],
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.id = user.id;
-        token.email = user.email ?? undefined;
-        token.role = user.role as string | undefined;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token) {
-        session.user.id = token.id;
-        session.user.email = token.email;
-        session.user.role = token.role;
+      if (token && session.user) {
+        session.user.id = token.sub || '';
+        session.user.email = token.email || '';
+        session.user.role = (token.role as string) || '';
       }
       return session;
     },
   },
-  secret: process.env.JWT_SECRET,
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
 };
 
-export async function hashPassword(password: string): Promise<string> {
-  return await bcrypt.hash(password, 10);
-}
+export async function getServerSession(): Promise<Session | null> {
+  const cookieStore = await cookies();
+  const sessionToken = cookieStore.get('next-auth.session-token')?.value;
 
-export async function comparePasswords(
-  password: string,
-  hashedPassword: string
-): Promise<boolean> {
-  return await bcrypt.compare(password, hashedPassword);
-}
+  if (!sessionToken) return null;
 
-export async function generateToken(
-  payload: Omit<AuthJWTPayload, 'iat' | 'exp' | 'type'>
-): Promise<TokenResponse> {
-  const iat = Math.floor(Date.now() / 1000);
-  const exp = iat + 24 * 60 * 60; // 24 hours
-
-  const accessToken = await new jose.SignJWT({
-    ...payload,
-    type: 'access',
-    iat,
-    exp,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .sign(JWT_SECRET);
-
-  const refreshToken = await new jose.SignJWT({
-    ...payload,
-    type: 'refresh',
-    iat,
-    exp: iat + 30 * 24 * 60 * 60, // 30 days
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .sign(JWT_SECRET);
-
-  return {
-    token: accessToken,
-    refreshToken,
-    expiresIn: exp,
-  };
-}
-
-export async function verifyToken(token: string): Promise<Session | null> {
   try {
-    const payload = (await jose.jwtVerify(
-      token,
-      JWT_SECRET
-    )) as unknown as AuthJWTPayload;
-
-    const user = await db.user.findUnique({
-      where: { id: payload.userId as string },
-    });
-
-    if (!user) {
-      return null;
-    }
+    const { payload } = await jose.jwtVerify(
+      sessionToken,
+      new TextEncoder().encode(process.env.NEXTAUTH_SECRET || '')
+    );
 
     return {
       user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
+        id: (payload.sub as string) || '',
+        email: (payload.email as string) || '',
+        role: (payload.role as string) || '',
       },
-      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+      expires: new Date((payload.exp as number) * 1000).toISOString(),
     };
-  } catch {
+  } catch (error) {
+    console.error('Error verifying session token:', error);
     return null;
   }
-}
-
-export async function verifyRefreshToken(
-  token: string
-): Promise<{ userId: string } | null> {
-  try {
-    const { payload } = await jose.jwtVerify(token, JWT_SECRET);
-
-    if (payload.type !== 'refresh') {
-      return null;
-    }
-
-    return { userId: payload.userId as string };
-  } catch {
-    return null;
-  }
-}
-
-export function getTokenFromRequest(request: NextRequest): string | null {
-  const authHeader = request.headers.get('authorization');
-  if (authHeader?.startsWith('Bearer ')) {
-    return authHeader.substring(7);
-  }
-  return null;
-}
-
-export async function getServerSession(): Promise<Session | null> {
-  return nextAuthGetServerSession(authOptions);
 }
 
 export async function getSession(): Promise<Session | null> {
@@ -235,46 +136,24 @@ export async function getSession(): Promise<Session | null> {
     return null;
   }
 
-  return verifyToken(token);
-}
+  try {
+    const { payload } = await jose.jwtVerify(
+      token,
+      new TextEncoder().encode(process.env.NEXTAUTH_SECRET || '')
+    );
 
-export async function getCurrentUser(): Promise<Session['user'] | undefined> {
-  const session = await getSession();
-  return session?.user;
-}
+    if (!payload.exp) return null;
 
-export async function getToken(
-  cookieStore: RequestCookies
-): Promise<string | undefined> {
-  return cookieStore.get('next-auth.session-token')?.value;
-}
-
-export async function generatePasswordResetToken(
-  email: string
-): Promise<PasswordResetResponse | null> {
-  const user = await db.user.findUnique({
-    where: { email },
-  });
-
-  if (!user) {
+    return {
+      user: {
+        id: (payload.sub as string) || '',
+        email: (payload.email as string) || '',
+        role: (payload.role as string) || '',
+      },
+      expires: new Date(payload.exp * 1000).toISOString(),
+    };
+  } catch (error) {
+    console.error('Error verifying token:', error);
     return null;
   }
-
-  const iat = Math.floor(Date.now() / 1000);
-  const exp = iat + 60 * 60; // 1 hour
-
-  const token = await new jose.SignJWT({
-    userId: user.id,
-    email: user.email,
-    type: 'reset',
-    iat,
-    exp,
-  })
-    .setProtectedHeader({ alg: 'HS256' })
-    .sign(JWT_SECRET);
-
-  return {
-    token,
-    expiresAt: new Date(exp * 1000),
-  };
 }

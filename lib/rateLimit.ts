@@ -1,4 +1,4 @@
-import { db } from './prisma';
+import { db } from '@/lib/prisma';
 import * as crypto from 'crypto';
 
 const WINDOW_SIZE = 60 * 1000; // 1 minute

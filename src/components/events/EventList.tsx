@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { EventCard } from './EventCard';
-import type { Event, EventType } from '@/types/event';
+import type { EventWithParticipants, EventType } from '@/types/event';
 
 interface EventListProps {
-  events: Event[];
-  onEventJoined?: (event: Event) => void;
-  onEventLeft?: (event: Event) => void;
+  events: EventWithParticipants[];
+  onEventJoined?: (event: EventWithParticipants) => void;
+  onEventLeft?: (event: EventWithParticipants) => void;
   filterType?: EventType | 'all';
   showActions?: boolean;
 }

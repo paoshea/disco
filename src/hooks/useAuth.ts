@@ -20,12 +20,30 @@ interface AuthState {
   token: string | null;
   isLoading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<{ success?: boolean; error?: string; needsVerification?: boolean }>;
+  login: (
+    email: string,
+    password: string
+  ) => Promise<{
+    success?: boolean;
+    error?: string;
+    needsVerification?: boolean;
+  }>;
   logout: () => Promise<void>;
-  register: (data: RegisterData) => Promise<{ success: boolean; error?: string; needsVerification?: boolean }>;
-  requestPasswordReset: (email: string) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (token: string, password: string) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (data: UpdateProfileData) => Promise<{ success: boolean; error?: string }>;
+  register: (data: RegisterData) => Promise<{
+    success: boolean;
+    error?: string;
+    needsVerification?: boolean;
+  }>;
+  requestPasswordReset: (
+    email: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (
+    token: string,
+    password: string
+  ) => Promise<{ success: boolean; error?: string }>;
+  updateProfile: (
+    data: UpdateProfileData
+  ) => Promise<{ success: boolean; error?: string }>;
   sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
   set: (state: Partial<AuthState>) => void;
 }
@@ -123,7 +141,8 @@ export const useAuth = create<AuthState>()(
           set({ error: 'Login failed' });
           return { error: 'Login failed' };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login failed';
+          const message =
+            error instanceof Error ? error.message : 'Login failed';
           set({ error: message });
           return { error: message };
         } finally {
@@ -161,7 +180,8 @@ export const useAuth = create<AuthState>()(
 
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Registration failed';
+          const message =
+            error instanceof Error ? error.message : 'Registration failed';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -192,7 +212,8 @@ export const useAuth = create<AuthState>()(
 
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to update profile';
+          const message =
+            error instanceof Error ? error.message : 'Failed to update profile';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -205,7 +226,10 @@ export const useAuth = create<AuthState>()(
           await apiClient.post('/api/auth/send-verification');
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to send verification email';
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to send verification email';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -215,10 +239,15 @@ export const useAuth = create<AuthState>()(
       async requestPasswordReset(email: string) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post('/api/auth/request-reset', { email });
+          const response = await apiClient.post('/api/auth/request-reset', {
+            email,
+          });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to request password reset';
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to request password reset';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -234,7 +263,8 @@ export const useAuth = create<AuthState>()(
           });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to reset password';
+          const message =
+            error instanceof Error ? error.message : 'Failed to reset password';
           set({ error: message });
           return { success: false, error: message };
         } finally {

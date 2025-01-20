@@ -6,8 +6,8 @@ export interface User {
   firstName: string;
   lastName: string;
   emailVerified: boolean;
-  createdAt: string;
-  updatedAt: string;
+  createdAt: string | Date;
+  updatedAt: string | Date;
   // Additional fields used in components
   name?: string; // Optional, can be computed from firstName + lastName
   avatar?: string;

@@ -22,7 +22,7 @@ interface EventCreateInput {
   creatorId: string;
 }
 
-interface EventUpdateInput {
+export interface EventUpdateInput {
   title?: string;
   description?: string;
   startTime?: Date;
@@ -34,8 +34,6 @@ interface EventUpdateInput {
   maxParticipants?: number;
   tags?: string[];
 }
-
-export type EventServiceResponse<T> = ServiceResponse<T>;
 
 // Distance unit type for clarity
 export type DistanceUnit = 'km' | 'm';
@@ -307,11 +305,13 @@ export class EventService {
     radius: number,
     unit: DistanceUnit = 'm',
     limit: number = 10
-  ): Promise<EventServiceResponse<(EventWithParticipants & { distance: number })[]>> {
+  ): Promise<
+    EventServiceResponse<(EventWithParticipants & { distance: number })[]>
+  > {
     try {
       // Convert radius to kilometers for internal calculations
       const radiusInKm = unit === 'km' ? radius : radius / 1000;
-      
+
       // Convert radius to degrees (approximate)
       // 1 degree of latitude = ~111.32 kilometers at the equator
       // This varies slightly with latitude due to Earth's ellipsoid shape
@@ -330,8 +330,10 @@ export class EventService {
               longitude: {
                 // Adjust for longitude distance variation with latitude
                 // cos(latitude) accounts for longitude degrees getting shorter at higher latitudes
-                gte: longitude - radiusInDegrees / Math.cos(this.toRad(latitude)),
-                lte: longitude + radiusInDegrees / Math.cos(this.toRad(latitude)),
+                gte:
+                  longitude - radiusInDegrees / Math.cos(this.toRad(latitude)),
+                lte:
+                  longitude + radiusInDegrees / Math.cos(this.toRad(latitude)),
               },
             },
             {
@@ -365,10 +367,10 @@ export class EventService {
           event.latitude,
           event.longitude
         );
-        
+
         // Convert distance to requested unit
         const distance = unit === 'km' ? distanceInKm : distanceInKm * 1000;
-        
+
         return {
           ...this.mapDbEventToEvent(event),
           distance: Math.round(distance * 100) / 100, // Round to 2 decimal places
@@ -411,7 +413,7 @@ export class EventService {
     const R = 6371; // Earth's mean radius in kilometers
     const dLat = this.toRad(lat2 - lat1);
     const dLon = this.toRad(lon2 - lon1);
-    
+
     // Use spherical law of cosines for better accuracy
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
@@ -419,9 +421,9 @@ export class EventService {
         Math.cos(this.toRad(lat2)) *
         Math.sin(dLon / 2) *
         Math.sin(dLon / 2);
-    
+
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    
+
     // Return distance in kilometers
     return R * c;
   }
@@ -433,5 +435,7 @@ export class EventService {
     return (degrees * Math.PI) / 180;
   }
 }
+
+export type EventServiceResponse<T> = ServiceResponse<T>;
 
 export const eventService = EventService.getInstance();
