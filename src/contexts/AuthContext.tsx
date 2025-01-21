@@ -49,7 +49,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       } catch (err) {
         console.error('Error initializing auth:', err);
         // Clear tokens if there was an error
-        if (err instanceof Error && err.message.includes('No authentication token found')) {
+        if (
+          err instanceof Error &&
+          err.message.includes('No authentication token found')
+        ) {
           authService.logout();
         }
       } finally {

@@ -55,27 +55,30 @@ export function RoutePlanner({
         });
 
         if (result.routes && result.routes.length > 0) {
-          const routeInfos: RouteInfo[] = result.routes.map((route) => {
-            const leg = route.legs[0];
-            if (!leg) return null;
+          const routeInfos: RouteInfo[] = result.routes
+            .map(route => {
+              const leg = route.legs[0];
+              if (!leg) return null;
 
-            const path = route.overview_path;
-            if (onRoutePathUpdate && path) {
-              onRoutePathUpdate(path);
-            }
+              const path = route.overview_path;
+              if (onRoutePathUpdate && path) {
+                onRoutePathUpdate(path);
+              }
 
-            return {
-              mode: selectedMode,
-              duration: leg.duration?.text || '',
-              distance: leg.distance?.text || '',
-              steps: leg.steps?.map((step) => ({
-                instruction: step.instructions || '',
-                distance: step.distance?.text || '',
-                duration: step.duration?.text || '',
-                mode: step.travel_mode,
-              })) || [],
-            };
-          }).filter((route): route is RouteInfo => route !== null);
+              return {
+                mode: selectedMode,
+                duration: leg.duration?.text || '',
+                distance: leg.distance?.text || '',
+                steps:
+                  leg.steps?.map(step => ({
+                    instruction: step.instructions || '',
+                    distance: step.distance?.text || '',
+                    duration: step.duration?.text || '',
+                    mode: step.travel_mode,
+                  })) || [],
+              };
+            })
+            .filter((route): route is RouteInfo => route !== null);
 
           setRoutes(routeInfos);
           if (onRouteSelect && routeInfos.length > 0) {
@@ -100,7 +103,7 @@ export function RoutePlanner({
         {TRAVEL_MODES.map(({ mode, icon: Icon, label }) => (
           <Button
             key={mode}
-            variant={selectedMode === mode ? "primary" : "secondary"}
+            variant={selectedMode === mode ? 'primary' : 'secondary'}
             size="sm"
             onClick={() => setSelectedMode(mode)}
             className="flex items-center gap-2"

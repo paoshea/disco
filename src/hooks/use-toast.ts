@@ -2,6 +2,8 @@
 import * as React from "react";
 import { toast } from 'sonner';
 
+export { toast } from 'sonner';
+
 export interface ToastProps {
   title?: string;
   description?: string;

@@ -64,11 +64,13 @@ const contentVariants = {
 const createMarkerIcon = (url: string) => ({
   url,
   scaledSize: new google.maps.Size(32, 32),
-  anchor: new google.maps.Point(16, 32) // Center bottom anchor point
+  anchor: new google.maps.Point(16, 32), // Center bottom anchor point
 });
 
 const searchMarkerIcon = createMarkerIcon('/images/markers/search-marker.png');
-const selectedMarkerIcon = createMarkerIcon('/images/markers/selected-marker.png');
+const selectedMarkerIcon = createMarkerIcon(
+  '/images/markers/selected-marker.png'
+);
 const matchMarkerIcon = createMarkerIcon('/images/markers/match-marker.png');
 
 export function LocationShareModal({
@@ -79,8 +81,12 @@ export function LocationShareModal({
   matchLocation,
 }: LocationShareModalProps) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
-  const [userLocation, setUserLocation] = useState<google.maps.LatLng | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(
+    null
+  );
+  const [userLocation, setUserLocation] = useState<google.maps.LatLng | null>(
+    null
+  );
   const [markers, setMarkers] = useState<MapMarker[]>([]);
   const [polylines, setPolylines] = useState<RoutePolyline[]>([]);
 
@@ -88,14 +94,14 @@ export function LocationShareModal({
     // Get user's location
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
+        position => {
           const location = new google.maps.LatLng(
             position.coords.latitude,
             position.coords.longitude
           );
           setUserLocation(location);
         },
-        (error) => {
+        error => {
           console.error('Error getting user location:', error);
         }
       );
@@ -109,21 +115,21 @@ export function LocationShareModal({
           id: 'match',
           position: {
             lat: Number(matchLocation.lat()),
-            lng: Number(matchLocation.lng())
+            lng: Number(matchLocation.lng()),
           },
           title: 'Match Location',
-          icon: matchMarkerIcon
-        }
+          icon: matchMarkerIcon,
+        },
       ]);
     }
   }, [matchLocation]);
 
   const handleMapClick = async (event: google.maps.MapMouseEvent) => {
     if (!event.latLng) return;
-    
+
     const geocoder = new google.maps.Geocoder();
     const latlng = event.latLng.toJSON();
-    
+
     try {
       const response = await geocoder.geocode({ location: latlng });
       if (response.results[0]) {
@@ -132,7 +138,7 @@ export function LocationShareModal({
           latitude: latlng.lat,
           longitude: latlng.lng,
           name: place.formatted_address,
-          address: place.formatted_address
+          address: place.formatted_address,
         };
         setSelectedLocation(location);
       }
@@ -162,22 +168,22 @@ export function LocationShareModal({
               id: 'match',
               position: {
                 lat: Number(matchLocation.lat()),
-                lng: Number(matchLocation.lng())
+                lng: Number(matchLocation.lng()),
               },
               title: 'Match Location',
-              icon: matchMarkerIcon
-            }
+              icon: matchMarkerIcon,
+            },
           ]
         : []),
       {
         id: 'selected',
         position: {
           lat: Number(location.lat()),
-          lng: Number(location.lng())
+          lng: Number(location.lng()),
         },
         title: 'Selected Location',
-        icon: selectedMarkerIcon
-      }
+        icon: selectedMarkerIcon,
+      },
     ];
     setMarkers(newMarkers);
   };
@@ -194,7 +200,10 @@ export function LocationShareModal({
   // Helper function to get current map center
   const getMapCenter = (): google.maps.LatLngLiteral => {
     if (selectedLocation) {
-      return { lat: selectedLocation.latitude, lng: selectedLocation.longitude };
+      return {
+        lat: selectedLocation.latitude,
+        lng: selectedLocation.longitude,
+      };
     }
     if (matchLocation) {
       return { lat: matchLocation.lat(), lng: matchLocation.lng() };
@@ -281,14 +290,16 @@ export function LocationShareModal({
                   origin={matchLocation}
                   destination={locationToLatLng(selectedLocation)}
                   onRoutePathUpdate={(path: google.maps.LatLng[]) => {
-                    setPolylines([{
-                      path,
-                      options: {
-                        strokeColor: '#4A90E2',
-                        strokeOpacity: 0.8,
-                        strokeWeight: 3
-                      }
-                    }]);
+                    setPolylines([
+                      {
+                        path,
+                        options: {
+                          strokeColor: '#4A90E2',
+                          strokeOpacity: 0.8,
+                          strokeWeight: 3,
+                        },
+                      },
+                    ]);
                   }}
                   onRouteSelect={() => {}}
                 />

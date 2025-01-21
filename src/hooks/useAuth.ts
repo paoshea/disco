@@ -77,12 +77,14 @@ const userSchema = z.object({
   role: z.string(),
   streakCount: z.number(),
   emailVerified: z.boolean(),
-  createdAt: z.union([z.string(), z.date()]).transform(val => 
-    typeof val === 'string' ? new Date(val) : val
-  ).optional(),
-  updatedAt: z.union([z.string(), z.date()]).transform(val => 
-    typeof val === 'string' ? new Date(val) : val
-  ).optional(),
+  createdAt: z
+    .union([z.string(), z.date()])
+    .transform(val => (typeof val === 'string' ? new Date(val) : val))
+    .optional(),
+  updatedAt: z
+    .union([z.string(), z.date()])
+    .transform(val => (typeof val === 'string' ? new Date(val) : val))
+    .optional(),
 });
 
 const loginResponseSchema = z.object({
@@ -171,7 +173,7 @@ export const useAuth = create<AuthState>()(
           console.log('Making signup request...');
           const response = await apiClient.post('/api/auth/signup', data);
           console.log('Signup response:', response.data);
-          
+
           const result = registerResponseSchema.safeParse(response.data);
 
           if (!result.success) {
@@ -179,10 +181,10 @@ export const useAuth = create<AuthState>()(
             // Don't fail on schema validation - the important data is there
             console.log('Attempting to proceed with available data...');
             const responseData = response.data;
-            
+
             if (responseData.token && responseData.user) {
               // Store tokens and user data
-              set({ 
+              set({
                 user: responseData.user,
                 token: responseData.token,
                 error: null,
@@ -197,7 +199,7 @@ export const useAuth = create<AuthState>()(
               // Configure API client with new token
               localStorage.setItem('token', responseData.token);
               apiClient.defaults.headers.common.Authorization = `Bearer ${responseData.token}`;
-              
+
               if (responseData.refreshToken) {
                 localStorage.setItem('refreshToken', responseData.refreshToken);
               }
@@ -205,11 +207,14 @@ export const useAuth = create<AuthState>()(
               // Verify token is set
               const storedToken = localStorage.getItem('token');
               console.log('Token stored:', !!storedToken);
-              console.log('Auth header:', apiClient.defaults.headers.common.Authorization);
+              console.log(
+                'Auth header:',
+                apiClient.defaults.headers.common.Authorization
+              );
 
-              return { 
-                success: true, 
-                needsVerification: responseData.needsVerification 
+              return {
+                success: true,
+                needsVerification: responseData.needsVerification,
               };
             }
 
@@ -227,25 +232,25 @@ export const useAuth = create<AuthState>()(
           }
 
           console.log('Setting auth state...');
-          
+
           // Ensure we have required data
           if (!responseData.token || !responseData.user) {
             console.error('Missing required data from server');
-            return { 
-              success: false, 
-              error: 'Invalid server response: missing token or user data' 
+            return {
+              success: false,
+              error: 'Invalid server response: missing token or user data',
             };
           }
 
           // Store tokens and user data
-          set({ 
+          set({
             user: responseData.user,
             token: responseData.token,
             error: null,
           });
 
           console.log('Setting auth tokens...');
-          
+
           // Set cookies for middleware
           document.cookie = `token=${responseData.token}; path=/; max-age=3600; SameSite=Lax`;
           if (responseData.refreshToken) {
@@ -255,7 +260,7 @@ export const useAuth = create<AuthState>()(
           // Configure API client with new token
           localStorage.setItem('token', responseData.token);
           apiClient.defaults.headers.common.Authorization = `Bearer ${responseData.token}`;
-          
+
           if (responseData.refreshToken) {
             localStorage.setItem('refreshToken', responseData.refreshToken);
           }
@@ -263,16 +268,19 @@ export const useAuth = create<AuthState>()(
           // Verify token is set
           const storedToken = localStorage.getItem('token');
           console.log('Token stored:', !!storedToken);
-          console.log('Auth header:', apiClient.defaults.headers.common.Authorization);
+          console.log(
+            'Auth header:',
+            apiClient.defaults.headers.common.Authorization
+          );
 
-          return { 
-            success: true, 
-            needsVerification: responseData.needsVerification 
+          return {
+            success: true,
+            needsVerification: responseData.needsVerification,
           };
         } catch (error) {
           console.error('Registration error:', error);
           let message = 'Registration failed';
-          
+
           if (error instanceof Error) {
             if (error.message.includes('409')) {
               message = 'An account with this email already exists';
@@ -280,7 +288,7 @@ export const useAuth = create<AuthState>()(
               message = error.message;
             }
           }
-          
+
           set({ error: message });
           return { success: false, error: message };
         } finally {

@@ -21,14 +21,16 @@ export default function MatchingPage() {
     }
 
     // Start location tracking
-    locationService.startTracking(user.id, {}, backgroundTracking).catch((error) => {
-      console.error('Failed to start location tracking:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to start location tracking',
-        variant: 'destructive',
+    locationService
+      .startTracking(user.id, {}, backgroundTracking)
+      .catch(error => {
+        console.error('Failed to start location tracking:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to start location tracking',
+          variant: 'destructive',
+        });
       });
-    });
 
     return () => {
       if (user?.id) {
@@ -50,18 +52,18 @@ export default function MatchingPage() {
     try {
       // Stop current tracking
       await locationService.stopTracking(user.id);
-      
+
       // Start tracking with new background mode
       await locationService.startTracking(user.id, {}, checked);
-      
+
       setBackgroundTracking(checked);
-      
+
       toast({
         title: 'Background Tracking',
-        description: checked 
+        description: checked
           ? 'Background location tracking enabled'
           : 'Background location tracking disabled',
-        variant: 'default'
+        variant: 'default',
       });
     } catch (error) {
       console.error('Error updating tracking settings:', error);

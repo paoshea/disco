@@ -3,7 +3,13 @@ import { Match } from '@/types/match';
 import { BaseMapView, MapMarker } from '../map/BaseMapView';
 import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/Select';
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from '@/components/ui/Select';
 import { Card, CardContent } from '@/components/ui/Card';
 import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -56,7 +62,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     minAge: 18,
     maxAge: 100,
   });
-  const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
+  const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(
+    null
+  );
   const [mapStyle, setMapStyle] = useState('roadmap');
   const [matchDistance, setMatchDistance] = useState('10km');
 
@@ -76,9 +84,12 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     { value: '50km', label: '50km' },
   ];
 
-  const handleBoundsChanged = useCallback((bounds: google.maps.LatLngBounds) => {
-    setMapBounds(bounds);
-  }, []);
+  const handleBoundsChanged = useCallback(
+    (bounds: google.maps.LatLngBounds) => {
+      setMapBounds(bounds);
+    },
+    []
+  );
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -100,7 +111,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     setFilters(prev => ({
       ...prev,
       minAge: values[0],
-      maxAge: values[1]
+      maxAge: values[1],
     }));
   };
 
@@ -108,7 +119,10 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     return matches
       .filter(match => {
         // Filter by search query
-        if (searchQuery && !match.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        if (
+          searchQuery &&
+          !match.name.toLowerCase().includes(searchQuery.toLowerCase())
+        ) {
           return false;
         }
 
@@ -118,12 +132,18 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         }
 
         // Filter by activity type
-        if (filters.activity !== 'all' && match.activityPreferences?.type !== filters.activity) {
+        if (
+          filters.activity !== 'all' &&
+          match.activityPreferences?.type !== filters.activity
+        ) {
           return false;
         }
 
         // Filter by time window
-        if (filters.timeWindow !== 'all' && match.activityPreferences?.timeWindow !== filters.timeWindow) {
+        if (
+          filters.timeWindow !== 'all' &&
+          match.activityPreferences?.timeWindow !== filters.timeWindow
+        ) {
           return false;
         }
 
@@ -148,9 +168,10 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         },
         title: match.name,
         icon: {
-          url: hoveredMatch === match 
-            ? '/images/match-marker-active.svg'
-            : '/images/match-marker.svg',
+          url:
+            hoveredMatch === match
+              ? '/images/match-marker-active.svg'
+              : '/images/match-marker.svg',
           scaledSize: new google.maps.Size(
             hoveredMatch === match ? 48 : 40,
             hoveredMatch === match ? 48 : 40
@@ -161,13 +182,16 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
           ),
         },
         data: match,
-        label: hoveredMatch === match ? {
-          text: match.name,
-          color: '#FF4B91',
-          fontSize: '14px',
-          fontWeight: 'bold',
-          className: 'map-marker-label',
-        } : undefined,
+        label:
+          hoveredMatch === match
+            ? {
+                text: match.name,
+                color: '#FF4B91',
+                fontSize: '14px',
+                fontWeight: 'bold',
+                className: 'map-marker-label',
+              }
+            : undefined,
       }));
   }, [matches, searchQuery, filters, mapBounds, hoveredMatch]);
 
@@ -193,41 +217,50 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     [mapStyle]
   );
 
-  const handleMarkerClick = useCallback((marker: MapMarker) => {
-    const extendedMarker = marker as ExtendedMapMarker;
-    if (extendedMarker.data) {
-      onMarkerClick(extendedMarker.data);
-    }
-  }, [onMarkerClick]);
+  const handleMarkerClick = useCallback(
+    (marker: MapMarker) => {
+      const extendedMarker = marker as ExtendedMapMarker;
+      if (extendedMarker.data) {
+        onMarkerClick(extendedMarker.data);
+      }
+    },
+    [onMarkerClick]
+  );
 
-  const handleMarkerMouseEnter = useCallback((marker: MapMarker & { data?: Match }) => {
-    if (marker.data) {
-      setHoveredMatch(marker.data);
-    }
-  }, []);
+  const handleMarkerMouseEnter = useCallback(
+    (marker: MapMarker & { data?: Match }) => {
+      if (marker.data) {
+        setHoveredMatch(marker.data);
+      }
+    },
+    []
+  );
 
   const handleMarkerMouseLeave = useCallback(() => {
     setHoveredMatch(null);
   }, []);
 
-  const handleFilterChange = useCallback((field: keyof FilterState, value: FilterState[keyof FilterState]) => {
-    setFilters(prev => ({ ...prev, [field]: value }));
-  }, []);
+  const handleFilterChange = useCallback(
+    (field: keyof FilterState, value: FilterState[keyof FilterState]) => {
+      setFilters(prev => ({ ...prev, [field]: value }));
+    },
+    []
+  );
 
   const handleFilterApply = () => {
     if (filters.minAge > filters.maxAge) {
       toast({
-        title: "Invalid Age Range",
-        description: "Minimum age cannot be greater than maximum age",
-        variant: "error"
+        title: 'Invalid Age Range',
+        description: 'Minimum age cannot be greater than maximum age',
+        variant: 'error',
       });
       return;
     }
     setShowFilters(false);
     toast({
-      title: "Filters Applied",
-      description: "Map view has been updated with your filters",
-      variant: "default"
+      title: 'Filters Applied',
+      description: 'Map view has been updated with your filters',
+      variant: 'default',
     });
   };
 
@@ -273,7 +306,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <Select 
+              <Select
                 value={mapStyle}
                 onValueChange={(value: string) => setMapStyle(value)}
                 options={mapStyleOptions}
@@ -298,7 +331,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   { value: 'coffee', label: 'Coffee' },
                   { value: 'lunch', label: 'Lunch' },
                   { value: 'dinner', label: 'Dinner' },
-                  { value: 'drinks', label: 'Drinks' }
+                  { value: 'drinks', label: 'Drinks' },
                 ]}
               />
             </div>
@@ -314,13 +347,15 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   { value: '15min', label: 'Next 15 Minutes' },
                   { value: '30min', label: 'Next 30 Minutes' },
                   { value: '1hour', label: 'Next Hour' },
-                  { value: 'today', label: 'Today' }
+                  { value: 'today', label: 'Today' },
                 ]}
               />
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium">Search Radius ({filters.radius}km)</label>
+              <label className="text-sm font-medium">
+                Search Radius ({filters.radius}km)
+              </label>
               <Slider
                 value={[filters.radius]}
                 onValueChange={handleRadiusChange}
@@ -353,7 +388,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                   )}
                   <div>
                     <h3 className="font-medium">{hoveredMatch.name}</h3>
-                    <p className="text-sm text-gray-500">{hoveredMatch.distance}km away</p>
+                    <p className="text-sm text-gray-500">
+                      {hoveredMatch.distance}km away
+                    </p>
                   </div>
                 </div>
               </CardContent>

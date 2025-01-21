@@ -27,93 +27,102 @@ export function MatchingContainer() {
   const [view, setView] = useState<'list' | 'map'>('list');
   const socketService = MatchSocketService.getInstance();
 
-  const fetchMatches = useCallback(async (preferences?: Partial<MatchPreferences>) => {
-    try {
-      setLoading(true);
-      const params = new URLSearchParams();
-      if (preferences) {
-        Object.entries(preferences).forEach(([key, value]) => {
-          if (value !== undefined) {
-            if (Array.isArray(value)) {
-              params.set(key, value.join(','));
-            } else {
-              params.set(key, String(value));
+  const fetchMatches = useCallback(
+    async (preferences?: Partial<MatchPreferences>) => {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (preferences) {
+          Object.entries(preferences).forEach(([key, value]) => {
+            if (value !== undefined) {
+              if (Array.isArray(value)) {
+                params.set(key, value.join(','));
+              } else {
+                params.set(key, String(value));
+              }
             }
-          }
+          });
+        }
+
+        const response = await fetch(`/api/matches?${params.toString()}`);
+        if (!response.ok) throw new Error('Failed to fetch matches');
+
+        const data = await response.json();
+        setMatches(data.matches);
+      } catch (error) {
+        console.error('Error fetching matches:', error);
+        createToast.error({
+          title: 'Error',
+          description: 'Failed to load matches. Please try again.',
+        });
+      } finally {
+        setLoading(false);
+      }
+    },
+    []
+  );
+
+  const handleMatchAction = useCallback(
+    async (matchId: string, action: string, reason?: string) => {
+      try {
+        const response = await fetch(`/api/matches/${matchId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, reason }),
+        });
+
+        if (!response.ok) throw new Error('Failed to perform action');
+
+        if (action === 'accept') {
+          createToast.success({
+            title: 'Match Accepted!',
+            description: 'You can now start chatting.',
+          });
+        }
+
+        // Remove match from list for decline/block actions
+        if (action === 'decline' || action === 'block') {
+          setMatches(prev => prev.filter(m => m.id !== matchId));
+        }
+      } catch (error) {
+        console.error('Error performing match action:', error);
+        createToast.error({
+          title: 'Error',
+          description: 'Failed to perform action. Please try again.',
         });
       }
+    },
+    []
+  );
 
-      const response = await fetch(`/api/matches?${params.toString()}`);
-      if (!response.ok) throw new Error('Failed to fetch matches');
-      
-      const data = await response.json();
-      setMatches(data.matches);
-    } catch (error) {
-      console.error('Error fetching matches:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to load matches. Please try again.',
-      });
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const handlePreferencesUpdate = useCallback(
+    async (preferences: MatchPreferences) => {
+      try {
+        const response = await fetch('/api/matches/preferences', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(preferences),
+        });
 
-  const handleMatchAction = useCallback(async (matchId: string, action: string, reason?: string) => {
-    try {
-      const response = await fetch(`/api/matches/${matchId}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, reason }),
-      });
+        if (!response.ok) throw new Error('Failed to update preferences');
 
-      if (!response.ok) throw new Error('Failed to perform action');
-
-      if (action === 'accept') {
         createToast.success({
-          title: 'Match Accepted!',
-          description: 'You can now start chatting.',
+          title: 'Preferences Updated',
+          description: 'Your matching preferences have been updated.',
+        });
+
+        // Refresh matches with new preferences
+        await fetchMatches(preferences);
+      } catch (error) {
+        console.error('Error updating preferences:', error);
+        createToast.error({
+          title: 'Error',
+          description: 'Failed to update preferences. Please try again.',
         });
       }
-
-      // Remove match from list for decline/block actions
-      if (action === 'decline' || action === 'block') {
-        setMatches(prev => prev.filter(m => m.id !== matchId));
-      }
-    } catch (error) {
-      console.error('Error performing match action:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to perform action. Please try again.',
-      });
-    }
-  }, []);
-
-  const handlePreferencesUpdate = useCallback(async (preferences: MatchPreferences) => {
-    try {
-      const response = await fetch('/api/matches/preferences', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(preferences),
-      });
-
-      if (!response.ok) throw new Error('Failed to update preferences');
-
-      createToast.success({
-        title: 'Preferences Updated',
-        description: 'Your matching preferences have been updated.',
-      });
-
-      // Refresh matches with new preferences
-      await fetchMatches(preferences);
-    } catch (error) {
-      console.error('Error updating preferences:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to update preferences. Please try again.',
-      });
-    }
-  }, [fetchMatches]);
+    },
+    [fetchMatches]
+  );
 
   const sortedMatches = useMemo(() => {
     return matches.sort((a, b) => {
@@ -135,7 +144,7 @@ export function MatchingContainer() {
 
     socketService.connect(session.accessToken ?? '');
 
-    const matchUpdateUnsub = socketService.subscribeToMatches((data) => {
+    const matchUpdateUnsub = socketService.subscribeToMatches(data => {
       if (data.type === 'new') {
         setMatches(prev => [data.match, ...prev]);
         createToast.success({
@@ -151,7 +160,7 @@ export function MatchingContainer() {
       }
     });
 
-    const matchActionUnsub = socketService.subscribeToActions((data) => {
+    const matchActionUnsub = socketService.subscribeToActions(data => {
       if (data.type === 'accepted') {
         createToast.success({
           title: 'Match Accepted!',
@@ -183,8 +192,12 @@ export function MatchingContainer() {
   return (
     <div className="container mx-auto px-4 py-6">
       <MatchPreferencesPanel onSubmit={handlePreferencesUpdate} />
-      
-      <Tabs value={view} onValueChange={(v: string) => setView(v as 'list' | 'map')} className="mt-6">
+
+      <Tabs
+        value={view}
+        onValueChange={(v: string) => setView(v as 'list' | 'map')}
+        className="mt-6"
+      >
         <TabsList>
           <TabsTrigger value="list">List View</TabsTrigger>
           <TabsTrigger value="map">Map View</TabsTrigger>
@@ -193,7 +206,9 @@ export function MatchingContainer() {
         <TabsContent value="list">
           <MatchList
             matches={sortedMatches}
-            onMatchClick={(matchId: string) => handleMatchAction(matchId, 'accept')}
+            onMatchClick={(matchId: string) =>
+              handleMatchAction(matchId, 'accept')
+            }
             loading={loading}
           />
         </TabsContent>
@@ -201,12 +216,13 @@ export function MatchingContainer() {
         <TabsContent value="map">
           <MatchMapView
             matches={sortedMatches}
-            onMarkerClick={(match) => {
+            onMarkerClick={match => {
               createToast.success({
                 title: match.name,
-                description: match.distance !== null 
-                  ? `${match.distance}km away`
-                  : 'Distance unknown',
+                description:
+                  match.distance !== null
+                    ? `${match.distance}km away`
+                    : 'Distance unknown',
               });
             }}
           />

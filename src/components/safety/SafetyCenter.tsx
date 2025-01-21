@@ -21,7 +21,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
     meetupCheckins: true,
     sosAlertEnabled: true,
     requireVerifiedMatch: false,
-    emergencyContacts: []
+    emergencyContacts: [],
   });
 
   const handleAlertTriggered = useCallback(
@@ -128,20 +128,20 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
                 matches: true,
                 messages: true,
                 events: true,
-                safety: true
+                safety: true,
               },
               privacy: {
                 showOnlineStatus: true,
                 showLastSeen: true,
                 showLocation: true,
-                showAge: true
+                showAge: true,
               },
               safety: {
                 requireVerifiedMatch: false,
                 meetupCheckins: true,
-                emergencyContactAlerts: true
-              }
-            }
+                emergencyContactAlerts: true,
+              },
+            },
           }}
           settings={settings}
           onSettingsChange={handleSettingsChange}

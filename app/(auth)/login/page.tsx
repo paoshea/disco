@@ -29,7 +29,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
   });
 
@@ -42,13 +46,13 @@ export default function LoginPage() {
 
       if (result.success) {
         toast({
-          variant: "default",
+          variant: 'default',
           children: (
             <>
               <ToastTitle>Success</ToastTitle>
               <ToastDescription>Login Successful</ToastDescription>
             </>
-          )
+          ),
         });
         router.push('/dashboard');
         return;
@@ -57,13 +61,13 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error);
         toast({
-          variant: "destructive",
+          variant: 'destructive',
           children: (
             <>
               <ToastTitle>Error</ToastTitle>
               <ToastDescription>{result.error}</ToastDescription>
             </>
-          )
+          ),
         });
         return;
       }
@@ -71,13 +75,13 @@ export default function LoginPage() {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
       toast({
-        variant: "destructive",
+        variant: 'destructive',
         children: (
           <>
             <ToastTitle>Error</ToastTitle>
             <ToastDescription>{errorMessage}</ToastDescription>
           </>
-        )
+        ),
       });
     } finally {
       setIsLoading(false);

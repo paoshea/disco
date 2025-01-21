@@ -2,7 +2,7 @@
 
 ### Spark Spontaneous Social Connections
 
-DISCO! is a revolutionary social discovery platform that brings back the magic of serendipitous encounters in our increasingly digital world. 
+DISCO! is a revolutionary social discovery platform that brings back the magic of serendipitous encounters in our increasingly digital world.
 By facilitating opt-in, proximity-based connections, DISCO! helps you meet like-minded people in your vicinity while maintaining complete control over your privacy and safety.
 
 ## 🌟 Key Features

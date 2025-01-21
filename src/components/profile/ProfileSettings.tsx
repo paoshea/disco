@@ -41,43 +41,48 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const { register, handleSubmit, setValue, watch } = useForm<UserPreferences>({
     defaultValues: {
       ...defaultPreferences,
-      ...user.preferences
-    }
+      ...user.preferences,
+    },
   });
   const { success, error: showError } = useToast();
 
-  const handlePreferenceChange = useCallback(async (
-    key: keyof UserPreferences['notifications'] | keyof UserPreferences['privacy'],
-    section: 'notifications' | 'privacy',
-    value: boolean
-  ) => {
-    if (isSubmitting) return;
+  const handlePreferenceChange = useCallback(
+    async (
+      key:
+        | keyof UserPreferences['notifications']
+        | keyof UserPreferences['privacy'],
+      section: 'notifications' | 'privacy',
+      value: boolean
+    ) => {
+      if (isSubmitting) return;
 
-    setIsSubmitting(true);
-    try {
-      const currentPreferences = user.preferences || defaultPreferences;
-      const updatedPreferences: UserPreferences = {
-        ...currentPreferences,
-        [section]: {
-          ...currentPreferences[section],
-          [key]: value
-        }
-      };
+      setIsSubmitting(true);
+      try {
+        const currentPreferences = user.preferences || defaultPreferences;
+        const updatedPreferences: UserPreferences = {
+          ...currentPreferences,
+          [section]: {
+            ...currentPreferences[section],
+            [key]: value,
+          },
+        };
 
-      await userService.updatePreferences(user.id, updatedPreferences);
-      success({
-        title: 'Settings updated',
-        description: 'Your preferences have been saved successfully.'
-      });
-    } catch (err) {
-      showError({
-        title: 'Error updating settings',
-        description: 'Failed to save your preferences. Please try again.'
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [isSubmitting, user, success, showError]);
+        await userService.updatePreferences(user.id, updatedPreferences);
+        success({
+          title: 'Settings updated',
+          description: 'Your preferences have been saved successfully.',
+        });
+      } catch (err) {
+        showError({
+          title: 'Error updating settings',
+          description: 'Failed to save your preferences. Please try again.',
+        });
+      } finally {
+        setIsSubmitting(false);
+      }
+    },
+    [isSubmitting, user, success, showError]
+  );
 
   const onSubmit = async (data: UserPreferences) => {
     try {
@@ -85,12 +90,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
       await userService.updatePreferences(user.id, data);
       success({
         title: 'Settings updated',
-        description: 'Your preferences have been saved successfully.'
+        description: 'Your preferences have been saved successfully.',
       });
     } catch (error) {
       showError({
         title: 'Error updating settings',
-        description: 'Failed to save your preferences. Please try again.'
+        description: 'Failed to save your preferences. Please try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -101,7 +106,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Profile Settings</h3>
-        
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">
@@ -122,19 +127,25 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <LabeledSwitch
                 checked={watch('notifications.matches')}
-                onChange={(checked) => handlePreferenceChange('matches', 'notifications', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('matches', 'notifications', checked)
+                }
                 label="Match Notifications"
                 description="Get notified when you have new matches"
               />
               <LabeledSwitch
                 checked={watch('notifications.messages')}
-                onChange={(checked) => handlePreferenceChange('messages', 'notifications', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('messages', 'notifications', checked)
+                }
                 label="Message Notifications"
                 description="Get notified when you receive new messages"
               />
               <LabeledSwitch
                 checked={watch('notifications.events')}
-                onChange={(checked) => handlePreferenceChange('events', 'notifications', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('events', 'notifications', checked)
+                }
                 label="Event Notifications"
                 description="Get notified about upcoming events and activities"
               />
@@ -149,19 +160,25 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <LabeledSwitch
                 checked={watch('privacy.showOnlineStatus')}
-                onChange={(checked) => handlePreferenceChange('showOnlineStatus', 'privacy', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('showOnlineStatus', 'privacy', checked)
+                }
                 label="Show Online Status"
                 description="Let others see when you're online"
               />
               <LabeledSwitch
                 checked={watch('privacy.showLastSeen')}
-                onChange={(checked) => handlePreferenceChange('showLastSeen', 'privacy', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('showLastSeen', 'privacy', checked)
+                }
                 label="Show Last Seen"
                 description="Let others see when you were last active"
               />
               <LabeledSwitch
                 checked={watch('privacy.showLocation')}
-                onChange={(checked) => handlePreferenceChange('showLocation', 'privacy', checked)}
+                onChange={checked =>
+                  handlePreferenceChange('showLocation', 'privacy', checked)
+                }
                 label="Show Location"
                 description="Let others see your approximate location"
               />
@@ -175,17 +192,21 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-2 space-y-2">
               <LabeledSwitch
                 checked={watch('safety.requireVerifiedMatch')}
-                onChange={(checked) => setValue('safety.requireVerifiedMatch', checked)}
+                onChange={checked =>
+                  setValue('safety.requireVerifiedMatch', checked)
+                }
                 label="Require Verified Match"
               />
               <LabeledSwitch
                 checked={watch('safety.meetupCheckins')}
-                onChange={(checked) => setValue('safety.meetupCheckins', checked)}
+                onChange={checked => setValue('safety.meetupCheckins', checked)}
                 label="Enable Meetup Check-ins"
               />
               <LabeledSwitch
                 checked={watch('safety.emergencyContactAlerts')}
-                onChange={(checked) => setValue('safety.emergencyContactAlerts', checked)}
+                onChange={checked =>
+                  setValue('safety.emergencyContactAlerts', checked)
+                }
                 label="Enable Emergency Contact Alerts"
               />
             </div>

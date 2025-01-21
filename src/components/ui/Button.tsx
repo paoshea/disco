@@ -25,14 +25,10 @@ export const Button: React.FC<ButtonProps> = ({
       'px-6 py-3 text-base': size === 'lg',
 
       // Variant variations
-      'bg-sky-600 text-white hover:bg-sky-700':
-        variant === 'primary',
-      'bg-gray-600 text-white hover:bg-gray-700':
-        variant === 'secondary',
-      'bg-red-600 text-white hover:bg-red-700':
-        variant === 'danger',
-      'bg-transparent text-gray-600 hover:text-gray-900':
-        variant === 'ghost',
+      'bg-sky-600 text-white hover:bg-sky-700': variant === 'primary',
+      'bg-gray-600 text-white hover:bg-gray-700': variant === 'secondary',
+      'bg-red-600 text-white hover:bg-red-700': variant === 'danger',
+      'bg-transparent text-gray-600 hover:text-gray-900': variant === 'ghost',
       'border border-gray-300 bg-white text-gray-600 hover:bg-gray-50':
         variant === 'outline',
 

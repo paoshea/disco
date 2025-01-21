@@ -32,9 +32,9 @@ export function EventCard({
   const handleJoinEvent = useCallback(async () => {
     if (!user?.id) {
       toast({
-        title: "Error joining event",
-        description: "Please sign in to join events",
-        variant: "destructive"
+        title: 'Error joining event',
+        description: 'Please sign in to join events',
+        variant: 'destructive',
       });
       return;
     }
@@ -46,24 +46,24 @@ export function EventCard({
       );
       if (success && data) {
         toast({
-          title: "Event Joined",
+          title: 'Event Joined',
           description: "You're now attending this event!",
-          variant: "default"
+          variant: 'default',
         });
         onEventJoined?.(data);
       } else {
         toast({
-          title: "Error joining event",
-          description: error || "Failed to join event",
-          variant: "destructive"
+          title: 'Error joining event',
+          description: error || 'Failed to join event',
+          variant: 'destructive',
         });
       }
     } catch (err) {
       console.error('Error joining event:', err);
       toast({
-        title: "Error joining event",
-        description: "Failed to join event",
-        variant: "destructive"
+        title: 'Error joining event',
+        description: 'Failed to join event',
+        variant: 'destructive',
       });
     }
   }, [event.id, user?.id, onEventJoined]);
@@ -71,9 +71,9 @@ export function EventCard({
   const handleLeaveEvent = useCallback(async () => {
     if (!user?.id) {
       toast({
-        title: "Error leaving event",
-        description: "Please sign in to leave events",
-        variant: "destructive"
+        title: 'Error leaving event',
+        description: 'Please sign in to leave events',
+        variant: 'destructive',
       });
       return;
     }
@@ -85,24 +85,24 @@ export function EventCard({
       );
       if (success && data) {
         toast({
-          title: "Event Left",
+          title: 'Event Left',
           description: "You've been removed from this event",
-          variant: "default"
+          variant: 'default',
         });
         onEventLeft?.(data);
       } else {
         toast({
-          title: "Error leaving event",
-          description: error || "Failed to leave event",
-          variant: "destructive"
+          title: 'Error leaving event',
+          description: error || 'Failed to leave event',
+          variant: 'destructive',
         });
       }
     } catch (err) {
       console.error('Error leaving event:', err);
       toast({
-        title: "Error leaving event",
-        description: "Failed to leave event",
-        variant: "destructive"
+        title: 'Error leaving event',
+        description: 'Failed to leave event',
+        variant: 'destructive',
       });
     }
   }, [event.id, user?.id, onEventLeft]);

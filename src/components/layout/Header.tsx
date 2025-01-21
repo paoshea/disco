@@ -51,26 +51,26 @@ export function Header() {
         matches: true,
         messages: true,
         events: true,
-        safety: true
+        safety: true,
       },
       privacy: {
         showOnlineStatus: true,
         showLastSeen: true,
         showLocation: true,
-        showAge: true
+        showAge: true,
       },
       safety: {
         requireVerifiedMatch: false,
         meetupCheckins: true,
-        emergencyContactAlerts: true
-      }
+        emergencyContactAlerts: true,
+      },
     },
     stats: {
       responseRate: 0,
       meetupSuccessRate: 0,
       matchRate: 0,
-      lastActive: new Date()
-    }
+      lastActive: new Date(),
+    },
   });
 
   return (

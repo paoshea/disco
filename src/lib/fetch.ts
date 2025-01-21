@@ -12,8 +12,9 @@ export async function fetchApi<T>(
   options: FetchOptions = {}
 ): Promise<T> {
   try {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    
+    const token =
+      typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
     const headers = {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -31,7 +32,7 @@ export async function fetchApi<T>(
         window.location.href = '/login';
         throw new Error('Please log in to continue');
       }
-      
+
       const error = (await response.json()) as ApiError;
       throw new Error(error.message || 'An error occurred');
     }

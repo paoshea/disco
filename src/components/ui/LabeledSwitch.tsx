@@ -8,7 +8,12 @@ interface LabeledSwitchProps {
   description?: string;
 }
 
-export function LabeledSwitch({ checked, onChange, label, description }: LabeledSwitchProps) {
+export function LabeledSwitch({
+  checked,
+  onChange,
+  label,
+  description,
+}: LabeledSwitchProps) {
   return (
     <div className="flex items-center justify-between space-x-4">
       <div className="space-y-0.5">

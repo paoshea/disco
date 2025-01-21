@@ -46,9 +46,9 @@ export default function LocationPrivacy({
       } catch (error) {
         console.error('Error fetching location state:', error);
         toast({
-          title: "Error fetching location settings",
-          description: "Please try again later",
-          variant: "destructive"
+          title: 'Error fetching location settings',
+          description: 'Please try again later',
+          variant: 'destructive',
         });
       }
     };
@@ -78,16 +78,16 @@ export default function LocationPrivacy({
       setLocationState(prev => ({ ...prev, privacyMode: mode }));
       onPrivacyChange(mode);
       toast({
-        title: "Privacy settings updated",
-        description: "Your location privacy settings have been updated",
-        variant: "default"
+        title: 'Privacy settings updated',
+        description: 'Your location privacy settings have been updated',
+        variant: 'default',
       });
     } catch (error) {
       console.error('Error updating privacy settings:', error);
       toast({
-        title: "Error updating privacy settings",
-        description: "Please try again later",
-        variant: "destructive"
+        title: 'Error updating privacy settings',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     }
   };
@@ -114,16 +114,18 @@ export default function LocationPrivacy({
       setLocationState(prev => ({ ...prev, sharingEnabled: enabled }));
       onSharingChange(enabled);
       toast({
-        title: "Sharing settings updated",
-        description: enabled ? "Location sharing is now enabled" : "Location sharing is now disabled",
-        variant: "default"
+        title: 'Sharing settings updated',
+        description: enabled
+          ? 'Location sharing is now enabled'
+          : 'Location sharing is now disabled',
+        variant: 'default',
       });
     } catch (error) {
       console.error('Error updating sharing settings:', error);
       toast({
-        title: "Error updating sharing settings",
-        description: "Please try again later",
-        variant: "destructive"
+        title: 'Error updating sharing settings',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     }
   };

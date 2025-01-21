@@ -1,6 +1,14 @@
 import { db } from '@/lib/prisma';
-import type { Location as PrismaLocation, User as PrismaUser, Prisma } from '@prisma/client';
-import type { Location, LocationPrivacyMode, GeolocationOptions } from '@/types/location';
+import type {
+  Location as PrismaLocation,
+  User as PrismaUser,
+  Prisma,
+} from '@prisma/client';
+import type {
+  Location,
+  LocationPrivacyMode,
+  GeolocationOptions,
+} from '@/types/location';
 import type { ServiceResponse } from '@/types/api';
 import type { User } from '@/types/user';
 
@@ -35,8 +43,10 @@ export class LocationService {
   private async initServiceWorker() {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
-        const registration = await navigator.serviceWorker.register('/sw.js') as ExtendedServiceWorkerRegistration;
-        
+        const registration = (await navigator.serviceWorker.register(
+          '/sw.js'
+        )) as ExtendedServiceWorkerRegistration;
+
         // Request periodic background sync permission
         if (registration.periodicSync) {
           const status = await navigator.permissions.query({
@@ -50,25 +60,30 @@ export class LocationService {
           }
         }
 
-        console.log('Service Worker registered for background location tracking');
+        console.log(
+          'Service Worker registered for background location tracking'
+        );
       } catch (error) {
         console.error('Service Worker registration failed:', error);
       }
     }
   }
 
-  private async queueLocationUpdate(userId: string, position: GeolocationPosition) {
+  private async queueLocationUpdate(
+    userId: string,
+    position: GeolocationPosition
+  ) {
     // Get or create queue for user
     let userQueue = this.locationQueue.get(userId) || [];
-    
+
     // Add new position
     userQueue.push(position);
-    
+
     // Limit queue size
     if (userQueue.length > this.QUEUE_SIZE_LIMIT) {
       userQueue = userQueue.slice(-this.QUEUE_SIZE_LIMIT);
     }
-    
+
     this.locationQueue.set(userId, userQueue);
 
     // Store in cache for service worker
@@ -91,7 +106,8 @@ export class LocationService {
         );
 
         // Request background sync
-        const registration = await navigator.serviceWorker.ready as ExtendedServiceWorkerRegistration;
+        const registration = (await navigator.serviceWorker
+          .ready) as ExtendedServiceWorkerRegistration;
         if (registration.sync) {
           await registration.sync.register('location-sync');
         }
@@ -110,17 +126,19 @@ export class LocationService {
 
   private async getUserWithProfile(userId: string): Promise<PrismaUser> {
     const user = await db.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
-    
+
     if (!user) {
       throw new Error('User not found');
     }
-    
+
     return user;
   }
 
-  private mapPrismaLocationToLocation(location: PrismaLocation & { user?: PrismaUser }): Location {
+  private mapPrismaLocationToLocation(
+    location: PrismaLocation & { user?: PrismaUser }
+  ): Location {
     return {
       id: location.id,
       userId: location.userId,
@@ -146,28 +164,28 @@ export class LocationService {
     try {
       const location = await db.location.upsert({
         where: {
-          id: `${userId}_${Date.now()}`
+          id: `${userId}_${Date.now()}`,
         },
         create: {
           id: `${userId}_${Date.now()}`,
           userId,
           ...data,
-          timestamp: new Date()
+          timestamp: new Date(),
         },
         update: {
           ...data,
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       });
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(location)
+        data: this.mapPrismaLocationToLocation(location),
       };
     } catch (error) {
       return {
         success: false,
-        error: 'Failed to update location'
+        error: 'Failed to update location',
       };
     }
   }
@@ -290,7 +308,7 @@ export class LocationService {
   }
 
   async startTracking(
-    userId: string, 
+    userId: string,
     options: GeolocationOptions = {},
     background: boolean = false
   ): Promise<void> {
@@ -307,7 +325,7 @@ export class LocationService {
 
     const updateLocation = async (position: GeolocationPosition) => {
       const { latitude, longitude, accuracy } = position.coords;
-      
+
       try {
         if (this.backgroundSync) {
           // Queue update for background sync
@@ -374,7 +392,8 @@ export class LocationService {
       // Sync any remaining queued locations
       if (this.locationQueue.has(userId)) {
         try {
-          const registration = await navigator.serviceWorker.ready as ExtendedServiceWorkerRegistration;
+          const registration = (await navigator.serviceWorker
+            .ready) as ExtendedServiceWorkerRegistration;
           if (registration.sync) {
             await registration.sync.register('location-sync');
           }
@@ -420,38 +439,50 @@ export class LocationService {
               lte: location.latitude + radius / 111000,
             },
             longitude: {
-              gte: location.longitude - radius / (111000 * Math.cos(location.latitude * Math.PI / 180)),
-              lte: location.longitude + radius / (111000 * Math.cos(location.latitude * Math.PI / 180)),
+              gte:
+                location.longitude -
+                radius /
+                  (111000 * Math.cos((location.latitude * Math.PI) / 180)),
+              lte:
+                location.longitude +
+                radius /
+                  (111000 * Math.cos((location.latitude * Math.PI) / 180)),
             },
             sharingEnabled: true,
             timestamp: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
-            }
-          }
-        }
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
+            },
+          },
+        },
       },
       include: {
         locations: {
           orderBy: { timestamp: 'desc' },
           take: 1,
-          where: { sharingEnabled: true }
-        }
-      }
+          where: { sharingEnabled: true },
+        },
+      },
     });
 
-    return nearbyUsers.map(user => ({
-      id: user.id,
-      name: `${user.firstName} ${user.lastName}`,
-      lastActive: user.updatedAt,
-      verificationStatus: user.emailVerified ? 'verified' : 'pending',
-      location: user.locations[0] ? {
-        latitude: user.locations[0].latitude,
-        longitude: user.locations[0].longitude,
-        accuracy: user.locations[0].accuracy ?? undefined,
-        timestamp: user.locations[0].timestamp,
-        privacyMode: user.locations[0].privacyMode as LocationPrivacyMode
-      } : undefined
-    } as User));
+    return nearbyUsers.map(
+      user =>
+        ({
+          id: user.id,
+          name: `${user.firstName} ${user.lastName}`,
+          lastActive: user.updatedAt,
+          verificationStatus: user.emailVerified ? 'verified' : 'pending',
+          location: user.locations[0]
+            ? {
+                latitude: user.locations[0].latitude,
+                longitude: user.locations[0].longitude,
+                accuracy: user.locations[0].accuracy ?? undefined,
+                timestamp: user.locations[0].timestamp,
+                privacyMode: user.locations[0]
+                  .privacyMode as LocationPrivacyMode,
+              }
+            : undefined,
+        }) as User
+    );
   }
 
   private calculateDistance(

@@ -1,18 +1,25 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { BaseMapView, type MapMarker, type BaseMapViewProps } from '@/components/map/BaseMapView';
+import {
+  BaseMapView,
+  type MapMarker,
+  type BaseMapViewProps,
+} from '@/components/map/BaseMapView';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { safetyService } from '@/services/api/safety.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
 import type { Location } from '@/types/location';
 import { createToast } from '@/hooks/use-toast';
 
-export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps) {
+export function EmergencyAlert({
+  userId,
+  onAlertTriggered,
+}: EmergencyAlertProps) {
   const [isTriggering, setIsTriggering] = useState(false);
   const { position, error: locationError } = useGeolocation({
     enableHighAccuracy: true,
-    watchPosition: true
+    watchPosition: true,
   });
 
   const handleTriggerAlert = useCallback(async () => {
@@ -28,7 +35,7 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
         accuracy: position.coords.accuracy,
         timestamp: new Date(position.timestamp),
         privacyMode: 'precise',
-        sharingEnabled: true
+        sharingEnabled: true,
       };
 
       const alert: SafetyAlertNew = {
@@ -42,7 +49,7 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
         contacts: [],
         evidence: [],
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
 
       const response = await safetyService.createAlert({
@@ -56,8 +63,8 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
           accuracy: location.accuracy,
           timestamp: location.timestamp,
           privacyMode: location.privacyMode,
-          sharingEnabled: location.sharingEnabled
-        }
+          sharingEnabled: location.sharingEnabled,
+        },
       });
 
       onAlertTriggered?.(alert);
@@ -70,26 +77,31 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
       console.error('Error triggering alert:', error);
       createToast.error({
         title: 'Alert Failed',
-        description: 'Failed to trigger emergency alert. Please try again or contact emergency services directly.',
+        description:
+          'Failed to trigger emergency alert. Please try again or contact emergency services directly.',
       });
     } finally {
       setIsTriggering(false);
     }
   }, [userId, position, isTriggering, onAlertTriggered]);
 
-  const markers: MapMarker[] = position?.coords ? [{
-    id: 'user-location',
-    position: {
-      lat: position.coords.latitude,
-      lng: position.coords.longitude
-    },
-    title: 'Your Location',
-    icon: {
-      url: '/images/markers/user-location.svg',
-      scaledSize: new google.maps.Size(40, 40),
-      anchor: new google.maps.Point(20, 20)
-    }
-  }] : [];
+  const markers: MapMarker[] = position?.coords
+    ? [
+        {
+          id: 'user-location',
+          position: {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          },
+          title: 'Your Location',
+          icon: {
+            url: '/images/markers/user-location.svg',
+            scaledSize: new google.maps.Size(40, 40),
+            anchor: new google.maps.Point(20, 20),
+          },
+        },
+      ]
+    : [];
 
   const handleMarkerClick = useCallback((marker: MapMarker) => {
     // Handle marker click if needed
@@ -107,10 +119,14 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
     <div className="space-y-4">
       <div className="h-64 relative">
         <BaseMapView
-          center={position?.coords ? {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          } : { lat: 0, lng: 0 }}
+          center={
+            position?.coords
+              ? {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                }
+              : { lat: 0, lng: 0 }
+          }
           zoom={15}
           markers={markers}
           onMarkerClick={handleMarkerClick}
@@ -120,7 +136,8 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
         {locationError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
             <p className="text-white text-center p-4">
-              Unable to access location. Please enable location services to use this feature.
+              Unable to access location. Please enable location services to use
+              this feature.
             </p>
           </div>
         )}
@@ -136,8 +153,8 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
       </Button>
 
       <p className="text-sm text-muted-foreground">
-        This will notify your emergency contacts and share your current location with them.
-        Only use this in case of a real emergency.
+        This will notify your emergency contacts and share your current location
+        with them. Only use this in case of a real emergency.
       </p>
     </div>
   );

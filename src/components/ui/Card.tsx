@@ -44,11 +44,7 @@ CardHeader.displayName = 'CardHeader';
 export const CardContent = React.forwardRef<HTMLDivElement, CardProps>(
   ({ children, className, ...props }, ref) => {
     return (
-      <div
-        ref={ref}
-        className={clsx('px-6 py-4', className)}
-        {...props}
-      >
+      <div ref={ref} className={clsx('px-6 py-4', className)} {...props}>
         {children}
       </div>
     );

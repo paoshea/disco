@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Select, SelectItem, SelectProps } from '@/components/ui/Select';
-import { Switch } from "@/components/ui/Switch";
+import { Switch } from '@/components/ui/Switch';
 import { Slider } from '@/components/ui/Slider';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -25,10 +25,12 @@ const schema = z.object({
   interests: z.array(z.string()),
   verifiedOnly: z.boolean(),
   withPhoto: z.boolean(),
-  timeWindow: z.enum(['anytime', 'now', '15min', '30min', '1hour', 'today']).optional(),
+  timeWindow: z
+    .enum(['anytime', 'now', '15min', '30min', '1hour', 'today'])
+    .optional(),
   activityType: z.string().optional(),
   privacyMode: z.enum(['standard', 'strict'] as const).optional(),
-  useBluetoothProximity: z.boolean().optional()
+  useBluetoothProximity: z.boolean().optional(),
 });
 
 const timeWindowOptions = [
@@ -37,16 +39,25 @@ const timeWindowOptions = [
   { value: '15min', label: 'Next 15 Minutes' },
   { value: '30min', label: 'Next 30 Minutes' },
   { value: '1hour', label: 'Next Hour' },
-  { value: 'today', label: 'Today' }
+  { value: 'today', label: 'Today' },
 ];
 
 const privacyModeOptions = [
   { value: 'standard', label: 'Standard Privacy' },
-  { value: 'strict', label: 'Strict Privacy' }
+  { value: 'strict', label: 'Strict Privacy' },
 ];
 
-export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferencesPanelProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<MatchPreferences>({
+export function MatchPreferencesPanel({
+  onSubmit,
+  initialValues,
+}: MatchPreferencesPanelProps) {
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    formState: { errors },
+  } = useForm<MatchPreferences>({
     resolver: zodResolver(schema),
     defaultValues: {
       maxDistance: 50,
@@ -58,27 +69,30 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
       timeWindow: 'anytime',
       privacyMode: 'standard',
       useBluetoothProximity: false,
-      ...initialValues
-    }
+      ...initialValues,
+    },
   });
 
   const { toast } = useToast();
   const [newInterest, setNewInterest] = useState('');
 
-  const handleSelectChange = (name: keyof MatchPreferences) => (value: string) => {
-    setValue(name, value);
-  };
+  const handleSelectChange =
+    (name: keyof MatchPreferences) => (value: string) => {
+      setValue(name, value);
+    };
 
-  const handleInterestAdd = (e: KeyboardEvent<HTMLInputElement> | ChangeEvent<HTMLInputElement>) => {
+  const handleInterestAdd = (
+    e: KeyboardEvent<HTMLInputElement> | ChangeEvent<HTMLInputElement>
+  ) => {
     e.preventDefault();
     const target = e.target as HTMLInputElement;
     const value = target.value.trim();
-    
+
     if (!value) {
       toast({
-        title: "Invalid Interest",
-        description: "Interest cannot be empty",
-        variant: "error"
+        title: 'Invalid Interest',
+        description: 'Interest cannot be empty',
+        variant: 'error',
       });
       return;
     }
@@ -86,9 +100,9 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
     const currentInterests = watch('interests') || [];
     if (currentInterests.includes(value)) {
       toast({
-        title: "Duplicate Interest",
-        description: "This interest has already been added",
-        variant: "error"
+        title: 'Duplicate Interest',
+        description: 'This interest has already been added',
+        variant: 'error',
       });
       return;
     }
@@ -99,7 +113,10 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
 
   const handleRemoveInterest = (interest: string) => {
     const currentInterests = watch('interests');
-    setValue('interests', currentInterests.filter(i => i !== interest));
+    setValue(
+      'interests',
+      currentInterests.filter(i => i !== interest)
+    );
   };
 
   return (
@@ -153,7 +170,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               />
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {watch('interests').map((interest) => (
+              {watch('interests').map(interest => (
                 <Badge
                   key={interest}
                   variant="secondary"
@@ -179,7 +196,9 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
             <Slider
               {...register('maxDistance')}
               value={[watch('maxDistance')]}
-              onValueChange={(value: number[]) => setValue('maxDistance', value[0])}
+              onValueChange={(value: number[]) =>
+                setValue('maxDistance', value[0])
+              }
               min={0}
               max={100}
               step={1}
@@ -211,7 +230,9 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               <div className="text-sm font-medium">Verified Users Only</div>
               <Switch
                 checked={watch('verifiedOnly') ?? false}
-                onChange={(checked: boolean) => setValue('verifiedOnly', checked)}
+                onChange={(checked: boolean) =>
+                  setValue('verifiedOnly', checked)
+                }
               />
             </div>
 
@@ -227,7 +248,9 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               <div className="text-sm font-medium">Use Bluetooth Proximity</div>
               <Switch
                 checked={watch('useBluetoothProximity') ?? false}
-                onChange={(checked: boolean) => setValue('useBluetoothProximity', checked)}
+                onChange={(checked: boolean) =>
+                  setValue('useBluetoothProximity', checked)
+                }
               />
             </div>
           </div>

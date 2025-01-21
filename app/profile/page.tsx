@@ -188,7 +188,23 @@ export default function ProfilePage() {
               )}
             </Tab.Panel>
             <Tab.Panel>
-              {authUser && <ProfileSettings user={authUser} />}
+              {authUser && (
+                <ProfileSettings
+                  user={{
+                    id: authUser.id,
+                    email: authUser.email,
+                    firstName: authUser.firstName,
+                    lastName: authUser.lastName,
+                    emailVerified: authUser.emailVerified,
+                    name: `${authUser.firstName} ${authUser.lastName}`,
+                    lastActive: authUser.updatedAt as Date,
+                    createdAt: authUser.createdAt as Date,
+                    updatedAt: authUser.updatedAt as Date,
+                    verificationStatus:
+                      authUser.emailVerified ? 'verified' : 'pending',
+                  }}
+                />
+              )}
             </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>

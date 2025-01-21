@@ -71,13 +71,24 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
     return {
       ...alert,
       type:
-        alert.type === 'check-in' || alert.type === 'location-share'
+        alert.type === 'location'
           ? 'location'
           : alert.type === 'sos'
             ? 'sos'
-            : 'custom',
+            : alert.type === 'meetup'
+              ? 'meetup'
+              : 'custom',
       status: alert.status === 'pending' ? 'active' : alert.status,
-      location: alert.location || defaultLocation,
+      location: alert.location ? {
+        id: crypto.randomUUID(),
+        userId: alert.userId,
+        latitude: alert.location.latitude,
+        longitude: alert.location.longitude,
+        accuracy: alert.location.accuracy ?? 0,
+        privacyMode: 'precise',
+        sharingEnabled: true,
+        timestamp: alert.location.timestamp || new Date()
+      } : defaultLocation,
       description: alert.message,
       evidence: [],
     };

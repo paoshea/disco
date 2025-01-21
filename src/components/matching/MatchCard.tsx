@@ -76,7 +76,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         variants={cardVariants}
         custom={exitDirection}
         transition={{
-          x: { type: "spring", stiffness: 300, damping: 30 },
+          x: { type: 'spring', stiffness: 300, damping: 30 },
           opacity: { duration: 0.2 },
         }}
         drag="x"
@@ -112,15 +112,22 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h3 className="text-xl font-semibold text-white mb-1">{match.name}</h3>
+            <h3 className="text-xl font-semibold text-white mb-1">
+              {match.name}
+            </h3>
             <div className="flex items-center space-x-2 text-sm text-gray-500">
               <MapPin className="h-4 w-4" />
               <span>
-                {match.distance !== null ? `${match.distance}km away` : 'Distance unknown'}
+                {match.distance !== null
+                  ? `${match.distance}km away`
+                  : 'Distance unknown'}
               </span>
             </div>
             <p className="text-white/80 text-sm">
-              Active {formatDistanceToNow(new Date(match.lastActive), { addSuffix: true })}
+              Active{' '}
+              {formatDistanceToNow(new Date(match.lastActive), {
+                addSuffix: true,
+              })}
             </p>
           </motion.div>
         </div>
@@ -132,7 +139,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           transition={{ delay: 0.3 }}
         >
           <div className="flex flex-wrap gap-2">
-            {match.commonInterests.map((interest) => (
+            {match.commonInterests.map(interest => (
               <Badge key={interest} variant="secondary">
                 {interest}
               </Badge>

@@ -1,5 +1,9 @@
 import { Location } from '@/types/location';
-import { EmergencyContact, EmergencyAlert, SafetyAlertNew } from '@/types/safety';
+import {
+  EmergencyContact,
+  EmergencyAlert,
+  SafetyAlertNew,
+} from '@/types/safety';
 import { apiClient } from './api.client';
 
 class EmergencyService {

@@ -2,7 +2,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const apiClient = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || '',  
+  baseURL: process.env.NEXT_PUBLIC_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
 
 // Add auth token to requests if available
 apiClient.interceptors.request.use(
-  (config) => {
+  config => {
     // Always check localStorage for latest token
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
@@ -28,15 +28,15 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
 // Handle refresh token
 apiClient.interceptors.response.use(
-  (response) => response,
-  async (error) => {
+  response => response,
+  async error => {
     const originalRequest = error.config;
 
     // If error is 401 and we haven't tried to refresh token yet
@@ -68,7 +68,10 @@ apiClient.interceptors.response.use(
           originalRequest.headers.Authorization = `Bearer ${response.data.token}`;
 
           // Verify token is set
-          console.log('New auth header:', apiClient.defaults.headers.common.Authorization);
+          console.log(
+            'New auth header:',
+            apiClient.defaults.headers.common.Authorization
+          );
 
           // Retry original request
           return apiClient(originalRequest);

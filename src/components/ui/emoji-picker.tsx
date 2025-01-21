@@ -16,11 +16,14 @@ export interface EmojiPickerProps {
   theme?: 'light' | 'dark';
 }
 
-export function EmojiPicker({ onEmojiSelect, theme = 'light' }: EmojiPickerProps) {
+export function EmojiPicker({
+  onEmojiSelect,
+  theme = 'light',
+}: EmojiPickerProps) {
   return (
     <div className="absolute bottom-full mb-2">
-      <Picker 
-        data={data} 
+      <Picker
+        data={data}
         onEmojiSelect={onEmojiSelect}
         theme={theme}
         previewPosition="none"

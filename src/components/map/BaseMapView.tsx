@@ -93,7 +93,7 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
       });
 
       const google = await loader.load();
-      
+
       if (!mapContainerRef.current) return;
 
       const map = new google.maps.Map(mapContainerRef.current, {
@@ -134,7 +134,14 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
       markersRef.current.forEach(marker => marker.setMap(null));
       markersRef.current = [];
     };
-  }, [center, zoom, options, enableClustering, clusterOptions, onBoundsChanged]);
+  }, [
+    center,
+    zoom,
+    options,
+    enableClustering,
+    clusterOptions,
+    onBoundsChanged,
+  ]);
 
   useEffect(() => {
     if (!mapRef.current) return;
@@ -154,13 +161,15 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
           scaledSize: markerData.icon.scaledSize,
           anchor: markerData.icon.anchor,
         },
-        label: markerData.label ? {
-          text: markerData.label.text,
-          color: markerData.label.color,
-          fontSize: markerData.label.fontSize,
-          fontWeight: markerData.label.fontWeight,
-          className: markerData.label.className,
-        } : undefined,
+        label: markerData.label
+          ? {
+              text: markerData.label.text,
+              color: markerData.label.color,
+              fontSize: markerData.label.fontSize,
+              fontWeight: markerData.label.fontWeight,
+              className: markerData.label.className,
+            }
+          : undefined,
       });
 
       marker.addListener('click', () => onMarkerClick(markerData));
@@ -180,8 +189,8 @@ export const BaseMapView: React.FC<BaseMapViewProps> = ({
   }, [markers, onMarkerClick, onMarkerMouseEnter, onMarkerMouseLeave]);
 
   return (
-    <div 
-      ref={mapContainerRef} 
+    <div
+      ref={mapContainerRef}
       className="w-full h-full rounded-lg"
       style={{ minHeight: '400px' }}
     />

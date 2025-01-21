@@ -18,7 +18,12 @@ export type VerificationStatus =
   | 'verified'
   | 'rejected';
 
-export type SafetyAlertType = 'sos' | 'meetup' | 'location' | 'custom' | 'emergency';
+export type SafetyAlertType =
+  | 'sos'
+  | 'meetup'
+  | 'location'
+  | 'custom'
+  | 'emergency';
 export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
 export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
 

@@ -27,7 +27,7 @@ export class RateLimiter {
 
     // Add the current request
     await redis.zadd(key, now, now.toString());
-    
+
     // Remove old requests outside the window
     await redis.zremrangebyscore(key, 0, windowStart);
 

@@ -62,14 +62,16 @@ export default function SignupPage() {
       console.log('Starting signup...');
       const result = await signUp(registerData);
       console.log('Signup result:', result);
-      
+
       if (result.success) {
         console.log('Signup successful, preparing to redirect...');
-        toast.success('Account created successfully! Check your email for verification instructions.');
-        
+        toast.success(
+          'Account created successfully! Check your email for verification instructions.'
+        );
+
         // Small delay to ensure state is updated
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Ensure we wait for the redirect
         try {
           console.log('Redirecting to dashboard...');
@@ -92,17 +94,20 @@ export default function SignupPage() {
     } catch (err) {
       console.error('Signup error:', err);
       let errorMessage = 'An error occurred during registration';
-      
+
       // Handle specific error cases
       if (err instanceof Error) {
-        if (err.message.includes('409') || err.message.includes('already exists')) {
+        if (
+          err.message.includes('409') ||
+          err.message.includes('already exists')
+        ) {
           errorMessage = 'An account with this email already exists';
           form.reset();
         } else {
           errorMessage = err.message;
         }
       }
-      
+
       toast.error(errorMessage);
     } finally {
       setIsLoading(false);

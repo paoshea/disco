@@ -6,7 +6,7 @@ import { RateLimiter } from '@/lib/rateLimit';
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
   windowMs: 60000, // 1 minute
-  maxRequests: 100
+  maxRequests: 100,
 });
 
 // GET /api/matches/[id] - Get specific match details
@@ -20,10 +20,7 @@ export async function GET(
     // Check authentication
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get match details
@@ -51,20 +48,14 @@ export async function POST(
     // Check authentication
     const session = await getServerSession();
     if (!session?.user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Rate limiting
     const identifier = session.user.id;
     const limited = await rateLimiter.isRateLimited(identifier);
     if (limited) {
-      return NextResponse.json(
-        { error: 'Too many requests' },
-        { status: 429 }
-      );
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
     // Parse request body
@@ -84,10 +75,7 @@ export async function POST(
         await matchingService.blockMatch(session.user.id, id);
         break;
       default:
-        return NextResponse.json(
-          { error: 'Invalid action' },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
     return NextResponse.json({ success: true });

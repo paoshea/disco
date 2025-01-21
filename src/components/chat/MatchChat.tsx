@@ -8,7 +8,11 @@ import { MessageReactions } from './MessageReactions';
 import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
 import { Button } from '@/components/ui/Button';
 import { LocationShareModal } from './LocationShareModal';
-import { WebSocketMessage, WebSocketEventType, WebSocketPayload } from '@/types/websocket';
+import {
+  WebSocketMessage,
+  WebSocketEventType,
+  WebSocketPayload,
+} from '@/types/websocket';
 
 interface ChatMessagePayload extends MessageWithSender {
   matchId: string;
@@ -76,7 +80,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
     void fetchMessages();
 
     // Subscribe to new messages
-    const messageUnsub = socketService.subscribeToMessages((event) => {
+    const messageUnsub = socketService.subscribeToMessages(event => {
       const message = event.message as ChatMessagePayload;
       if (message.matchId === matchId) {
         setMessages(prev => [...prev, message]);
@@ -85,9 +89,12 @@ export const MatchChat: React.FC<MatchChatProps> = ({
     });
 
     // Subscribe to typing indicators
-    const typingUnsub = socketService.subscribeToTyping((event) => {
+    const typingUnsub = socketService.subscribeToTyping(event => {
       const typingEvent = event as TypingPayload;
-      if (typingEvent.matchId === matchId && typingEvent.userId === otherUserId) {
+      if (
+        typingEvent.matchId === matchId &&
+        typingEvent.userId === otherUserId
+      ) {
         setIsTyping(typingEvent.isTyping);
       }
     });
@@ -131,18 +138,23 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
   const handleReaction = async (messageId: string, emoji: string) => {
     try {
-      const response = await fetch(`/api/chat/messages/${messageId}/reactions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emoji }),
-      });
+      const response = await fetch(
+        `/api/chat/messages/${messageId}/reactions`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ emoji }),
+        }
+      );
 
       if (!response.ok) throw new Error('Failed to add reaction');
 
       const updatedMessage = await response.json();
       setMessages(prev =>
         prev.map(msg =>
-          msg.id === messageId ? { ...msg, reactions: updatedMessage.reactions } : msg
+          msg.id === messageId
+            ? { ...msg, reactions: updatedMessage.reactions }
+            : msg
         )
       );
     } catch (error) {
@@ -197,15 +209,17 @@ export const MatchChat: React.FC<MatchChatProps> = ({
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
+        {messages.map(message => (
           <div
             key={message.id}
             className={`flex ${
-              message.senderId === session?.user?.id ? 'justify-end' : 'justify-start'
+              message.senderId === session?.user?.id
+                ? 'justify-end'
+                : 'justify-start'
             }`}
           >
             {message.senderId !== session?.user?.id && (
-              <Avatar 
+              <Avatar
                 userId={message.sender.id}
                 imageUrl={message.sender.avatar || undefined}
                 size="sm"
@@ -263,8 +277,8 @@ export const MatchChat: React.FC<MatchChatProps> = ({
           <input
             type="text"
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+            onChange={e => setMessage(e.target.value)}
+            onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
             placeholder="Type a message..."
             className="flex-1 bg-background rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />

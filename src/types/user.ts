@@ -1,4 +1,5 @@
-import type { EmergencyContact, LocationPrivacyMode } from './safety';
+import type { EmergencyContact } from './safety';
+import type { LocationPrivacyMode } from './location';
 
 // Core user fields that are always required
 export interface BaseUser {

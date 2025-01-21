@@ -43,11 +43,16 @@ export default function LandingPage() {
             >
               Features
             </Link>
-            <Link href="/pricing" className="text-gray-600 hover:text-gray-900 text-sm font-medium">
+            <Link
+              href="/pricing"
+              className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+            >
               Pricing
             </Link>
             <Link href="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
             </Link>
             <Link href="/signup">
               <Button size="sm">Get Started</Button>

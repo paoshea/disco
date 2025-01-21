@@ -43,17 +43,17 @@ export function NearbyEvents({
         setEvents(data);
       } else if (error) {
         toast({
-          title: "Error loading events",
-          description: "Failed to load nearby events",
-          variant: "destructive"
+          title: 'Error loading events',
+          description: 'Failed to load nearby events',
+          variant: 'destructive',
         });
       }
     } catch (error) {
       console.error('Error fetching nearby events:', error);
       toast({
-        title: "Error loading events",
-        description: "Failed to load nearby events",
-        variant: "destructive"
+        title: 'Error loading events',
+        description: 'Failed to load nearby events',
+        variant: 'destructive',
       });
     } finally {
       setLoading(false);

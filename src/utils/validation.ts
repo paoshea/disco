@@ -17,29 +17,30 @@ export function isValidPhoneNumber(phoneNumber: string): boolean {
 
 export function sanitizeInput(input: string): string {
   // Remove HTML tags and special characters
-  return input
-    .replace(/<[^>]*>?/gm, '')
-    .replace(/[&<>"']/g, (match) => {
-      const char: { [key: string]: string } = {
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      };
-      return char[match];
-    });
+  return input.replace(/<[^>]*>?/gm, '').replace(/[&<>"']/g, match => {
+    const char: { [key: string]: string } = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+    };
+    return char[match];
+  });
 }
 
 export function validateAge(birthDate: Date): boolean {
   const today = new Date();
   let age = today.getFullYear() - birthDate.getFullYear();
   const monthDiff = today.getMonth() - birthDate.getMonth();
-  
-  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+
+  if (
+    monthDiff < 0 ||
+    (monthDiff === 0 && today.getDate() < birthDate.getDate())
+  ) {
     age--;
   }
-  
+
   return age >= 18;
 }
 

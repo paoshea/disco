@@ -1,54 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Disco - Offline</title>
     <style>
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #FF4B91 0%, #FF9B82 100%);
-            color: white;
-            text-align: center;
-        }
-        .container {
-            max-width: 600px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 16px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        h1 {
-            font-size: 2em;
-            margin-bottom: 16px;
-        }
-        p {
-            font-size: 1.1em;
-            line-height: 1.5;
-            margin-bottom: 24px;
-        }
-        .status {
-            display: inline-block;
-            padding: 8px 16px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            font-size: 0.9em;
-        }
+      body {
+        font-family:
+          system-ui,
+          -apple-system,
+          sans-serif;
+        margin: 0;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #ff4b91 0%, #ff9b82 100%);
+        color: white;
+        text-align: center;
+      }
+      .container {
+        max-width: 600px;
+        padding: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 16px;
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      }
+      h1 {
+        font-size: 2em;
+        margin-bottom: 16px;
+      }
+      p {
+        font-size: 1.1em;
+        line-height: 1.5;
+        margin-bottom: 24px;
+      }
+      .status {
+        display: inline-block;
+        padding: 8px 16px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 20px;
+        font-size: 0.9em;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div class="container">
-        <h1>You're Offline</h1>
-        <p>Don't worry! Disco is still tracking your location in the background. Your location updates will be synced when you're back online.</p>
-        <div class="status">Background Tracking Active</div>
+      <h1>You're Offline</h1>
+      <p>
+        Don't worry! Disco is still tracking your location in the background.
+        Your location updates will be synced when you're back online.
+      </p>
+      <div class="status">Background Tracking Active</div>
     </div>
-</body>
+  </body>
 </html>

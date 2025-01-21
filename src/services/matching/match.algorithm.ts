@@ -42,18 +42,22 @@ export class MatchAlgorithm {
     let distance: number | null = null;
 
     // Distance score (inverse relationship - closer is better)
-    if (user.location?.latitude != null && 
-        user.location?.longitude != null && 
-        potentialMatch.location?.latitude != null && 
-        potentialMatch.location?.longitude != null) {
-      
+    if (
+      user.location?.latitude != null &&
+      user.location?.longitude != null &&
+      potentialMatch.location?.latitude != null &&
+      potentialMatch.location?.longitude != null
+    ) {
       distance = calculateDistance(
         user.location.latitude,
         user.location.longitude,
         potentialMatch.location.latitude,
         potentialMatch.location.longitude
       );
-      const maxDistance = Math.max(userPrefs.maxDistance, matchPrefs.maxDistance);
+      const maxDistance = Math.max(
+        userPrefs.maxDistance,
+        matchPrefs.maxDistance
+      );
       scores.distance = 1 - Math.min(distance / maxDistance, 1);
     } else {
       scores.distance = 0; // No location match if either user lacks location
@@ -62,8 +66,12 @@ export class MatchAlgorithm {
     // Interest overlap score
     const userInterests = new Set(user.interests || []);
     const matchInterests = new Set(potentialMatch.interests || []);
-    const commonInterests = Array.from(userInterests).filter(x => matchInterests.has(x));
-    scores.interests = commonInterests.length / Math.max(userInterests.size, matchInterests.size);
+    const commonInterests = Array.from(userInterests).filter(x =>
+      matchInterests.has(x)
+    );
+    scores.interests =
+      commonInterests.length /
+      Math.max(userInterests.size, matchInterests.size);
 
     // Activity preference match
     scores.activityPreference = this.calculateActivityScore(
@@ -113,17 +121,25 @@ export class MatchAlgorithm {
   ): number {
     if (!userActivity || !matchActivity) return 0.5;
     if (userActivity === matchActivity) return 1;
-    
+
     // Define activity compatibility groups
     const socialActivities = new Set(['coffee', 'lunch', 'dinner']);
-    const professionalActivities = new Set(['networking', 'coworking', 'mentoring']);
+    const professionalActivities = new Set([
+      'networking',
+      'coworking',
+      'mentoring',
+    ]);
     const leisureActivities = new Set(['sports', 'games', 'entertainment']);
 
-    const activityGroups = [socialActivities, professionalActivities, leisureActivities];
-    
+    const activityGroups = [
+      socialActivities,
+      professionalActivities,
+      leisureActivities,
+    ];
+
     // Check if activities are in the same group
-    const inSameGroup = activityGroups.some(group => 
-      group.has(userActivity) && group.has(matchActivity)
+    const inSameGroup = activityGroups.some(
+      group => group.has(userActivity) && group.has(matchActivity)
     );
 
     return inSameGroup ? 0.7 : 0.3;

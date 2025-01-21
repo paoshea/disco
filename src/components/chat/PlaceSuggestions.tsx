@@ -65,7 +65,10 @@ export function PlaceSuggestions({
       const results = await new Promise<google.maps.places.PlaceResult[]>(
         (resolve, reject) => {
           service.nearbySearch(request, (results, status) => {
-            if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+            if (
+              status === google.maps.places.PlacesServiceStatus.OK &&
+              results
+            ) {
               resolve(results);
             } else {
               reject(new Error('Failed to fetch places'));
@@ -74,7 +77,7 @@ export function PlaceSuggestions({
         }
       );
 
-      const placesData = results.map((place) => ({
+      const placesData = results.map(place => ({
         id: place.place_id!,
         name: place.name!,
         address: place.vicinity!,
@@ -129,7 +132,7 @@ export function PlaceSuggestions({
               exit={{ opacity: 0 }}
               className="space-y-2"
             >
-              {places.map((place) => (
+              {places.map(place => (
                 <motion.div
                   key={place.id}
                   initial={{ x: -20, opacity: 0 }}
@@ -143,9 +146,7 @@ export function PlaceSuggestions({
                       <h3 className="font-medium">{place.name}</h3>
                       <p className="text-sm text-gray-600">{place.address}</p>
                     </div>
-                    <Badge variant="secondary">
-                      {place.rating} ★
-                    </Badge>
+                    <Badge variant="secondary">{place.rating} ★</Badge>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <div className="text-xs text-gray-500">

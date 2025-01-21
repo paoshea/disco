@@ -29,7 +29,9 @@ class AuthService {
   private handleError(error: unknown): never {
     if (this.isAxiosError(error)) {
       if (error.code === 'ERR_NETWORK') {
-        throw new Error('Unable to connect to the server. Please check your internet connection.');
+        throw new Error(
+          'Unable to connect to the server. Please check your internet connection.'
+        );
       }
       if (error.response?.status === 401) {
         // Clear tokens on unauthorized
@@ -37,10 +39,14 @@ class AuthService {
         throw new Error('Invalid email or password');
       }
       if (error.response?.status === 404) {
-        throw new Error('Login service is not available. Please try again later.');
+        throw new Error(
+          'Login service is not available. Please try again later.'
+        );
       }
       const errorData = error.response?.data as ErrorResponse | undefined;
-      throw new Error(errorData?.message || errorData?.error || 'An unexpected error occurred');
+      throw new Error(
+        errorData?.message || errorData?.error || 'An unexpected error occurred'
+      );
     }
     throw error;
   }
@@ -95,7 +101,9 @@ class AuthService {
         throw new Error('No authentication token found');
       }
 
-      const response = await apiClient.get<{ user: User }>(`${this.baseUrl}/me`);
+      const response = await apiClient.get<{ user: User }>(
+        `${this.baseUrl}/me`
+      );
       return response.data.user;
     } catch (error) {
       if (this.isAxiosError(error) && error.response?.status === 401) {
@@ -143,7 +151,10 @@ class AuthService {
         throw new Error('No refresh token found');
       }
 
-      const response = await apiClient.post<{ token: string; refreshToken: string }>(
+      const response = await apiClient.post<{
+        token: string;
+        refreshToken: string;
+      }>(
         `${this.baseUrl}/refresh`,
         {},
         {

@@ -59,9 +59,9 @@ export default function SafetyPage() {
       } catch (error) {
         console.error('Error fetching safety settings:', error);
         toast({
-          title: "Error Fetching Safety Settings",
-          description: "Please try again later",
-          variant: "destructive"
+          title: 'Error Fetching Safety Settings',
+          description: 'Please try again later',
+          variant: 'destructive',
         });
       } finally {
         setLoading(false);
@@ -81,16 +81,18 @@ export default function SafetyPage() {
       });
       setSettings(prev => ({ ...prev, enabled }));
       toast({
-        title: enabled ? "Safety Features Enabled" : "Safety Features Disabled",
-        description: enabled ? "Safety features are now enabled" : "Safety features are now disabled",
-        variant: "default"
+        title: enabled ? 'Safety Features Enabled' : 'Safety Features Disabled',
+        description: enabled
+          ? 'Safety features are now enabled'
+          : 'Safety features are now disabled',
+        variant: 'default',
       });
     } catch (error) {
       console.error('Error updating safety settings:', error);
       toast({
-        title: "Error Updating Safety Settings",
-        description: "Please try again later",
-        variant: "destructive"
+        title: 'Error Updating Safety Settings',
+        description: 'Please try again later',
+        variant: 'destructive',
       });
     }
   };

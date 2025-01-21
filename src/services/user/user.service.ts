@@ -16,7 +16,7 @@ export async function getUserById(id: string): Promise<User | null> {
       messages: true,
       events: true,
       eventParticipants: true,
-      privacyZones: true
+      privacyZones: true,
     },
   });
 }
@@ -33,7 +33,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
       messages: true,
       events: true,
       eventParticipants: true,
-      privacyZones: true
+      privacyZones: true,
     },
   });
 }
@@ -49,7 +49,10 @@ export type UserUpdateData = Partial<{
   safetyEnabled: boolean;
 }>;
 
-export async function updateUserById(id: string, data: UserUpdateData): Promise<User> {
+export async function updateUserById(
+  id: string,
+  data: UserUpdateData
+): Promise<User> {
   return prisma.user.update({
     where: { id },
     data,
@@ -62,7 +65,7 @@ export async function updateUserById(id: string, data: UserUpdateData): Promise<
       messages: true,
       events: true,
       eventParticipants: true,
-      privacyZones: true
+      privacyZones: true,
     },
   });
 }
@@ -77,10 +80,12 @@ export async function deleteUserById(id: string): Promise<User> {
 }
 
 // Handle user preferences through Redis for better performance
-export async function getUserPreferences(userId: string): Promise<UserPreferences | null> {
+export async function getUserPreferences(
+  userId: string
+): Promise<UserPreferences | null> {
   const cacheKey = `user:${userId}:preferences`;
   const cachedPrefs = await redis.get(cacheKey);
-  
+
   if (cachedPrefs) {
     try {
       return JSON.parse(cachedPrefs);
@@ -89,13 +94,16 @@ export async function getUserPreferences(userId: string): Promise<UserPreference
       return null;
     }
   }
-  
+
   return null;
 }
 
-export async function updateUserPreferences(userId: string, preferences: UserPreferences): Promise<void> {
+export async function updateUserPreferences(
+  userId: string,
+  preferences: UserPreferences
+): Promise<void> {
   const cacheKey = `user:${userId}:preferences`;
-  
+
   try {
     await redis.set(cacheKey, JSON.stringify(preferences));
     // Set expiry to 24 hours to ensure preferences are periodically refreshed

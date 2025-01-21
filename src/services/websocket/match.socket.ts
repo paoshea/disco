@@ -41,10 +41,13 @@ export class MatchSocketService {
   public connect(token: string): void {
     if (this.socket?.connected) return;
 
-    this.socket = io(process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3001', {
-      auth: { token },
-      transports: ['websocket'],
-    });
+    this.socket = io(
+      process.env.NEXT_PUBLIC_WEBSOCKET_URL || 'ws://localhost:3001',
+      {
+        auth: { token },
+        transports: ['websocket'],
+      }
+    );
 
     this.setupEventListeners();
   }
@@ -88,15 +91,21 @@ export class MatchSocketService {
     });
   }
 
-  public subscribeToMatches(callback: (data: MatchUpdateEvent) => void): () => void {
+  public subscribeToMatches(
+    callback: (data: MatchUpdateEvent) => void
+  ): () => void {
     return this.subscribe('match_update', callback);
   }
 
-  public subscribeToActions(callback: (data: MatchActionEvent) => void): () => void {
+  public subscribeToActions(
+    callback: (data: MatchActionEvent) => void
+  ): () => void {
     return this.subscribe('match_action', callback);
   }
 
-  public subscribeToMessages(callback: (data: MessageEvent) => void): () => void {
+  public subscribeToMessages(
+    callback: (data: MessageEvent) => void
+  ): () => void {
     return this.subscribe('chat_message', callback);
   }
 
@@ -134,7 +143,10 @@ export class MatchSocketService {
     this.socket.emit('typing', { matchId, isTyping });
   }
 
-  public emitMatchAction(matchId: string, action: 'accept' | 'decline' | 'block'): void {
+  public emitMatchAction(
+    matchId: string,
+    action: 'accept' | 'decline' | 'block'
+  ): void {
     if (!this.socket?.connected) return;
     this.socket.emit('match_action', { matchId, action });
   }

@@ -1,6 +1,15 @@
-import { Match, MatchPreferences, MatchScore, MatchStatus } from '@/types/match';
+import {
+  Match,
+  MatchPreferences,
+  MatchScore,
+  MatchStatus,
+} from '@/types/match';
 import type { User as AppUser, UserPreferences } from '@/types/user';
-import { PrismaClient, User as PrismaUser, Location as PrismaLocation } from '@prisma/client';
+import {
+  PrismaClient,
+  User as PrismaUser,
+  Location as PrismaLocation,
+} from '@prisma/client';
 import { MatchAlgorithm } from './match.algorithm';
 import { db } from '@/lib/db/client';
 import { redis } from '@/lib/redis';
@@ -15,7 +24,9 @@ const prisma = new PrismaClient();
 const locationService = LocationService.getInstance(); // Use getInstance instead of new
 
 // Helper function to convert Prisma User to App User
-function convertToAppUser(prismaUser: PrismaUser & { locations?: PrismaLocation[] }): AppUser {
+function convertToAppUser(
+  prismaUser: PrismaUser & { locations?: PrismaLocation[] }
+): AppUser {
   const location = prismaUser.locations?.[0];
   return {
     id: prismaUser.id,
@@ -26,15 +37,17 @@ function convertToAppUser(prismaUser: PrismaUser & { locations?: PrismaLocation[
     name: `${prismaUser.firstName} ${prismaUser.lastName}`,
     verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
     lastActive: prismaUser.updatedAt,
-    location: location ? {
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy ?? undefined,
-      privacyMode: location.privacyMode as LocationPrivacyMode,
-      timestamp: location.timestamp
-    } : undefined,
+    location: location
+      ? {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy ?? undefined,
+          privacyMode: location.privacyMode as LocationPrivacyMode,
+          timestamp: location.timestamp,
+        }
+      : undefined,
     createdAt: prismaUser.createdAt,
-    updatedAt: prismaUser.updatedAt
+    updatedAt: prismaUser.updatedAt,
   };
 }
 
@@ -67,7 +80,7 @@ export class MatchingService {
       activityType: undefined,
       timeWindow: undefined,
       privacyMode: undefined,
-      useBluetoothProximity: false
+      useBluetoothProximity: false,
     };
   }
 
@@ -95,7 +108,10 @@ export class MatchingService {
     );
 
     if (!nearbyUsers) {
-      const nearbyPrismaUsers = await this.getNearbyUsers(userId, matchPreferences.maxDistance);
+      const nearbyPrismaUsers = await this.getNearbyUsers(
+        userId,
+        matchPreferences.maxDistance
+      );
       nearbyUsers = nearbyPrismaUsers.map(convertToAppUser);
       await redis.setex(
         cacheKey,
@@ -109,17 +125,21 @@ export class MatchingService {
       nearbyUsers
         .filter(potentialMatch => potentialMatch.id !== userId)
         .map(async potentialMatch => {
-          const potentialMatchUser = await userService.getUserById(potentialMatch.id);
+          const potentialMatchUser = await userService.getUserById(
+            potentialMatch.id
+          );
           if (!potentialMatchUser) {
             return null;
           }
 
-          const userPrefs = await userService.getUserPreferences(potentialMatch.id);
+          const userPrefs = await userService.getUserPreferences(
+            potentialMatch.id
+          );
           if (!userPrefs) {
             return null;
           }
           const matchPrefs = this.convertToMatchPreferences(userPrefs);
-          
+
           // Check if cached score exists
           const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
           let matchScore: MatchScore | null = null;
@@ -189,11 +209,13 @@ export class MatchingService {
    */
   async createMatchObject(user: PrismaUser, score: MatchScore): Promise<Match> {
     const appUser = convertToAppUser(user);
-    const matchLocation = appUser.location ? {
-      latitude: appUser.location.latitude,
-      longitude: appUser.location.longitude
-    } : await this.getMatchLocation(user.id);
-    
+    const matchLocation = appUser.location
+      ? {
+          latitude: appUser.location.latitude,
+          longitude: appUser.location.longitude,
+        }
+      : await this.getMatchLocation(user.id);
+
     return {
       id: crypto.randomUUID(),
       name: appUser.name,
@@ -206,16 +228,17 @@ export class MatchingService {
       location: matchLocation,
       interests: [],
       connectionStatus: 'pending',
-      verificationStatus: appUser.verificationStatus === 'verified' ? 'verified' : 'unverified',
+      verificationStatus:
+        appUser.verificationStatus === 'verified' ? 'verified' : 'unverified',
       activityPreferences: {
         type: 'any',
-        timeWindow: 'anytime'
+        timeWindow: 'anytime',
       },
       privacySettings: {
         mode: 'standard',
-        bluetoothEnabled: false
+        bluetoothEnabled: false,
       },
-      matchScore: score
+      matchScore: score,
     };
   }
 
@@ -276,7 +299,11 @@ export class MatchingService {
   /**
    * Report a match
    */
-  async reportMatch(userId: string, matchId: string, reason: string): Promise<void> {
+  async reportMatch(
+    userId: string,
+    matchId: string,
+    reason: string
+  ): Promise<void> {
     await db.$executeRaw`
       UPDATE "UserMatch"
       SET status = 'REPORTED',
@@ -286,9 +313,12 @@ export class MatchingService {
     `;
   }
 
-  private async getNearbyUsers(userId: string, maxDistance: number): Promise<PrismaUser[]> {
+  private async getNearbyUsers(
+    userId: string,
+    maxDistance: number
+  ): Promise<PrismaUser[]> {
     const user = await db.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
     });
 
     if (!user) throw new Error('User not found');
@@ -310,12 +340,18 @@ export class MatchingService {
               lte: userLocation.latitude + maxDistance / 111000,
             },
             longitude: {
-              gte: userLocation.longitude - maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
-              lte: userLocation.longitude + maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
+              gte:
+                userLocation.longitude -
+                maxDistance /
+                  (111000 * Math.cos((userLocation.latitude * Math.PI) / 180)),
+              lte:
+                userLocation.longitude +
+                maxDistance /
+                  (111000 * Math.cos((userLocation.latitude * Math.PI) / 180)),
             },
-            sharingEnabled: true
-          }
-        }
+            sharingEnabled: true,
+          },
+        },
       },
     });
 
@@ -325,18 +361,23 @@ export class MatchingService {
   /**
    * Set user preferences for matching
    */
-  async setPreferences(userId: string, preferences: UserPreferences): Promise<void> {
+  async setPreferences(
+    userId: string,
+    preferences: UserPreferences
+  ): Promise<void> {
     await userService.updateUserPreferences(userId, preferences);
-    
+
     // Clear any cached match scores for this user
     const cacheKey = `match_scores:${userId}`;
     await redis.del(cacheKey);
   }
 
-  private async getMatchLocation(userId: string): Promise<{ latitude: number; longitude: number }> {
+  private async getMatchLocation(
+    userId: string
+  ): Promise<{ latitude: number; longitude: number }> {
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      include: { locations: true }
+      include: { locations: true },
     });
 
     const location = user?.locations?.[0];
@@ -346,7 +387,7 @@ export class MatchingService {
 
     return {
       latitude: location.latitude,
-      longitude: location.longitude
+      longitude: location.longitude,
     };
   }
 
@@ -357,9 +398,9 @@ export class MatchingService {
         some: {
           latitude: location.latitude,
           longitude: location.longitude,
-          maxDistance
-        }
-      }
+          maxDistance,
+        },
+      },
     };
   }
 }

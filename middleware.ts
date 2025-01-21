@@ -64,17 +64,14 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Verify token
-    const payload = await getToken({ 
-      req: request, 
-      secret: process.env.NEXTAUTH_SECRET 
+    const payload = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
     });
 
     if (!payload) {
       if (request.nextUrl.pathname.startsWith('/api/')) {
-        return NextResponse.json(
-          { message: 'Invalid token' },
-          { status: 401 }
-        );
+        return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
       }
       return redirectToLogin(request);
     }
@@ -88,12 +85,18 @@ export async function middleware(request: NextRequest) {
     }
 
     // Public paths that don't require auth
-    const publicPaths = ['/', '/login', '/signup', '/verify-email', '/forgot-password'];
+    const publicPaths = [
+      '/',
+      '/login',
+      '/signup',
+      '/verify-email',
+      '/forgot-password',
+    ];
     const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
 
     // Protected paths that require auth
     const protectedPaths = ['/dashboard', '/profile', '/settings'];
-    const isProtectedPath = protectedPaths.some(path => 
+    const isProtectedPath = protectedPaths.some(path =>
       request.nextUrl.pathname.startsWith(path)
     );
 
@@ -105,7 +108,9 @@ export async function middleware(request: NextRequest) {
 
     // Redirect to dashboard if accessing auth pages while logged in
     if (isPublicPath && token) {
-      const response = NextResponse.redirect(new URL('/dashboard', request.url));
+      const response = NextResponse.redirect(
+        new URL('/dashboard', request.url)
+      );
       return response;
     }
 

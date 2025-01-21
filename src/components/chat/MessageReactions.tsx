@@ -2,7 +2,11 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Smile, Heart, ThumbsUp, Star, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from '@/components/ui/popover';
 
 interface Reaction {
   id: string;
@@ -40,7 +44,7 @@ export function MessageReactions({
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
 
   const handleReactionClick = (emoji: string) => {
-    const existingReaction = reactions.find((r) => r.emoji === emoji);
+    const existingReaction = reactions.find(r => r.emoji === emoji);
     if (existingReaction?.users.includes(currentUserId)) {
       onReactionRemove(messageId, emoji);
     } else {
@@ -51,7 +55,7 @@ export function MessageReactions({
   return (
     <div className="flex items-center gap-1">
       <AnimatePresence>
-        {reactions.map((reaction) => (
+        {reactions.map(reaction => (
           <motion.div
             key={reaction.id}
             initial={{ scale: 0 }}
@@ -60,7 +64,9 @@ export function MessageReactions({
             className="relative"
           >
             <Button
-              variant={reaction.users.includes(currentUserId) ? 'secondary' : 'ghost'}
+              variant={
+                reaction.users.includes(currentUserId) ? 'secondary' : 'ghost'
+              }
               size="sm"
               onClick={() => handleReactionClick(reaction.emoji)}
               className="flex items-center gap-1 px-2 py-1 text-sm"
@@ -78,17 +84,13 @@ export function MessageReactions({
 
       <Popover open={isEmojiPickerOpen} onOpenChange={setIsEmojiPickerOpen}>
         <PopoverTrigger asChild>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="px-2 py-1"
-          >
+          <Button variant="ghost" size="sm" className="px-2 py-1">
             <Plus className="h-4 w-4" />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-64 p-2">
           <div className="grid grid-cols-4 gap-2">
-            {commonEmojis.map((item) => (
+            {commonEmojis.map(item => (
               <Button
                 key={item.emoji}
                 variant="ghost"
