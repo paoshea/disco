@@ -6,7 +6,7 @@ import { MatchSocketService } from '@/services/websocket/match.socket';
 import { MatchList } from './MatchList';
 import { MatchPreferencesPanel } from '@/components/matching/MatchPreferencesPanel';
 import { MatchMapView } from './MatchMapView';
-import { toast } from '@/hooks/use-toast';
+import { createToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ExtendedSession extends Omit<Session, 'user'> {
@@ -50,10 +50,9 @@ export function MatchingContainer() {
       setMatches(data.matches);
     } catch (error) {
       console.error('Error fetching matches:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to load matches. Please try again.',
-        variant: 'destructive',
       });
     } finally {
       setLoading(false);
@@ -71,7 +70,7 @@ export function MatchingContainer() {
       if (!response.ok) throw new Error('Failed to perform action');
 
       if (action === 'accept') {
-        toast({
+        createToast.success({
           title: 'Match Accepted!',
           description: 'You can now start chatting.',
         });
@@ -83,10 +82,9 @@ export function MatchingContainer() {
       }
     } catch (error) {
       console.error('Error performing match action:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to perform action. Please try again.',
-        variant: 'destructive',
       });
     }
   }, []);
@@ -101,7 +99,7 @@ export function MatchingContainer() {
 
       if (!response.ok) throw new Error('Failed to update preferences');
 
-      toast({
+      createToast.success({
         title: 'Preferences Updated',
         description: 'Your matching preferences have been updated.',
       });
@@ -110,10 +108,9 @@ export function MatchingContainer() {
       await fetchMatches(preferences);
     } catch (error) {
       console.error('Error updating preferences:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to update preferences. Please try again.',
-        variant: 'destructive',
       });
     }
   }, [fetchMatches]);
@@ -141,7 +138,7 @@ export function MatchingContainer() {
     const matchUpdateUnsub = socketService.subscribeToMatches((data) => {
       if (data.type === 'new') {
         setMatches(prev => [data.match, ...prev]);
-        toast({
+        createToast.success({
           title: 'New Match!',
           description: `${data.match.name} might be a good match for you.`,
         });
@@ -156,7 +153,7 @@ export function MatchingContainer() {
 
     const matchActionUnsub = socketService.subscribeToActions((data) => {
       if (data.type === 'accepted') {
-        toast({
+        createToast.success({
           title: 'Match Accepted!',
           description: 'Someone accepted your match request.',
         });
@@ -175,10 +172,9 @@ export function MatchingContainer() {
 
   useEffect(() => {
     if (!session?.user) {
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'You must be logged in to view matches',
-        variant: 'destructive',
       });
       return;
     }
@@ -206,12 +202,11 @@ export function MatchingContainer() {
           <MatchMapView
             matches={sortedMatches}
             onMarkerClick={(match) => {
-              toast({
+              createToast.success({
                 title: match.name,
                 description: match.distance !== null 
                   ? `${match.distance}km away`
                   : 'Distance unknown',
-                variant: "default"
               });
             }}
           />

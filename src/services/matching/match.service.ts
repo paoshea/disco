@@ -3,12 +3,15 @@ import type { User as AppUser, UserPreferences } from '@/types/user';
 import { PrismaClient, User as PrismaUser } from '@prisma/client';
 import { MatchAlgorithm } from './match.algorithm';
 import { db } from '@/lib/db/client';
-import { redis } from '@/lib/redis/client';
-import { locationService } from '../location/location.service';
+import { redis } from '@/lib/redis';
+import { LocationService } from '@/services/location/location.service';
 import * as userService from '../user/user.service';
 
 const MATCH_SCORE_CACHE_TTL = 3600; // 1 hour
 const NEARBY_USERS_CACHE_TTL = 300; // 5 minutes
+
+const prisma = new PrismaClient();
+const locationService = new LocationService();
 
 // Helper function to convert Prisma User to App User
 function convertToAppUser(prismaUser: PrismaUser): AppUser {
@@ -19,15 +22,17 @@ function convertToAppUser(prismaUser: PrismaUser): AppUser {
     lastName: prismaUser.lastName,
     emailVerified: prismaUser.emailVerified,
     name: `${prismaUser.firstName} ${prismaUser.lastName}`,
-    verificationStatus: prismaUser.emailVerified ? 'verified' : 'unverified',
-    lastActive: prismaUser.updatedAt.toISOString(),
-    location: { 
-      latitude: 0, 
-      longitude: 0,
-      lastUpdated: new Date()
-    },
-    createdAt: prismaUser.createdAt.toISOString(),
-    updatedAt: prismaUser.updatedAt.toISOString()
+    verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
+    lastActive: prismaUser.updatedAt,
+    location: prismaUser.location ? {
+      latitude: prismaUser.location.latitude,
+      longitude: prismaUser.location.longitude,
+      accuracy: prismaUser.location.accuracy,
+      privacyMode: prismaUser.location.privacyMode,
+      timestamp: prismaUser.location.timestamp
+    } : undefined,
+    createdAt: prismaUser.createdAt,
+    updatedAt: prismaUser.updatedAt
   };
 }
 

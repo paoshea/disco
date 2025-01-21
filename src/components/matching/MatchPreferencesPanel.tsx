@@ -1,4 +1,4 @@
-import React, { ChangeEvent } from 'react';
+import React, { ChangeEvent, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
@@ -10,8 +10,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { MatchPreferences } from '@/types/match';
-import { toast } from '@/hooks/use-toast';
-import type { ToastProps } from '@/components/ui/Toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface MatchPreferencesPanelProps {
   onSubmit: (data: MatchPreferences) => void;
@@ -60,8 +59,8 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
     }
   });
 
-  const [newInterest, setNewInterest] = React.useState('');
-  const interests = watch('interests');
+  const { toast } = useToast();
+  const [newInterest, setNewInterest] = useState('');
 
   const handleAddInterest = (e: ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.trim();
@@ -70,7 +69,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
         title: "Invalid Interest",
         description: "Interest cannot be empty",
         variant: "destructive"
-      } satisfies ToastProps);
+      });
       return;
     }
     
@@ -80,7 +79,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
         title: "Duplicate Interest",
         description: "This interest has already been added",
         variant: "destructive"
-      } satisfies ToastProps);
+      });
       return;
     }
 
@@ -90,7 +89,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
       title: "Interest Added",
       description: `Added "${value}" to your interests`,
       variant: "default"
-    } satisfies ToastProps);
+    });
   };
 
   const handleRemoveInterest = (interest: string) => {
@@ -149,7 +148,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               <Button type="button" onClick={() => handleAddInterest({ target: { value: newInterest } } as any)}>Add</Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {interests.map((interest) => (
+              {watch('interests').map((interest) => (
                 <Badge
                   key={interest}
                   variant="secondary"

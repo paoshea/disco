@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Message, MessageWithSender } from '@/types/chat';
 import { MatchSocketService } from '@/services/websocket/match.socket';
-import { toast } from '@/hooks/use-toast';
+import { createToast } from '@/hooks/use-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import { MessageReactions } from './MessageReactions';
 import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
@@ -66,6 +66,10 @@ export const MatchChat: React.FC<MatchChatProps> = ({
         setMessages(data.messages);
       } catch (error) {
         console.error('Error fetching messages:', error);
+        createToast.error({
+          title: 'Error',
+          description: 'Failed to fetch messages. Please try again.',
+        });
       }
     };
 
@@ -118,10 +122,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       setShowEmojiPicker(false);
     } catch (error) {
       console.error('Error sending message:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to send message. Please try again.',
-        variant: 'destructive',
       });
     }
   };
@@ -144,10 +147,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       );
     } catch (error) {
       console.error('Error adding reaction:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to add reaction. Please try again.',
-        variant: 'destructive',
       });
     }
   };
@@ -185,10 +187,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       setShowLocationModal(false);
     } catch (error) {
       console.error('Error sharing location:', error);
-      toast({
+      createToast.error({
         title: 'Error',
         description: 'Failed to share location. Please try again.',
-        variant: 'destructive',
       });
     }
   };

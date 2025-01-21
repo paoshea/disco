@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Switch } from '@/components/ui/Switch';
+import { useToast } from '@/hooks/use-toast';
+import { LabeledSwitch } from '@/components/ui/LabeledSwitch';
+import { Button } from '@/components/ui/Button';
 import { userService } from '@/services/api/user.service';
 import type { User, UserPreferences } from '@/types/user';
-import { Button } from '@/components/ui/Button';
-import { toast } from '@/hooks/use-toast';
 
 interface ProfileSettingsProps {
   user: User;
@@ -39,17 +39,59 @@ const defaultPreferences: UserPreferences = {
 export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { register, handleSubmit, setValue, watch } = useForm<UserPreferences>({
-    defaultValues: user.preferences || defaultPreferences,
+    defaultValues: {
+      ...defaultPreferences,
+      ...user.preferences
+    }
   });
+  const { success, error: showError } = useToast();
+
+  const handlePreferenceChange = useCallback(async (
+    key: keyof UserPreferences['notifications'] | keyof UserPreferences['privacy'],
+    section: 'notifications' | 'privacy',
+    value: boolean
+  ) => {
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    try {
+      const currentPreferences = user.preferences || defaultPreferences;
+      const updatedPreferences: UserPreferences = {
+        ...currentPreferences,
+        [section]: {
+          ...currentPreferences[section],
+          [key]: value
+        }
+      };
+
+      await userService.updatePreferences(user.id, updatedPreferences);
+      success({
+        title: 'Settings updated',
+        description: 'Your preferences have been saved successfully.'
+      });
+    } catch (err) {
+      showError({
+        title: 'Error updating settings',
+        description: 'Failed to save your preferences. Please try again.'
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [isSubmitting, user, success, showError]);
 
   const onSubmit = async (data: UserPreferences) => {
     try {
       setIsSubmitting(true);
       await userService.updatePreferences(user.id, data);
-      toast.success('Settings updated successfully');
+      success({
+        title: 'Settings updated',
+        description: 'Your preferences have been saved successfully.'
+      });
     } catch (error) {
-      console.error('Error updating settings:', error);
-      toast.error('Failed to update settings');
+      showError({
+        title: 'Error updating settings',
+        description: 'Failed to save your preferences. Please try again.'
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -73,24 +115,55 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Privacy Settings
-            </label>
-            <div className="mt-2 space-y-2">
-              <Switch
+            <h3 className="text-lg font-medium">Notifications</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure how you receive notifications.
+            </p>
+            <div className="mt-4 space-y-4">
+              <LabeledSwitch
+                checked={watch('notifications.matches')}
+                onChange={(checked) => handlePreferenceChange('matches', 'notifications', checked)}
+                label="Match Notifications"
+                description="Get notified when you have new matches"
+              />
+              <LabeledSwitch
+                checked={watch('notifications.messages')}
+                onChange={(checked) => handlePreferenceChange('messages', 'notifications', checked)}
+                label="Message Notifications"
+                description="Get notified when you receive new messages"
+              />
+              <LabeledSwitch
+                checked={watch('notifications.events')}
+                onChange={(checked) => handlePreferenceChange('events', 'notifications', checked)}
+                label="Event Notifications"
+                description="Get notified about upcoming events and activities"
+              />
+            </div>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium">Privacy</h3>
+            <p className="text-sm text-muted-foreground">
+              Manage your privacy settings.
+            </p>
+            <div className="mt-4 space-y-4">
+              <LabeledSwitch
                 checked={watch('privacy.showOnlineStatus')}
-                onChange={(checked) => setValue('privacy.showOnlineStatus', checked)}
+                onChange={(checked) => handlePreferenceChange('showOnlineStatus', 'privacy', checked)}
                 label="Show Online Status"
+                description="Let others see when you're online"
               />
-              <Switch
+              <LabeledSwitch
                 checked={watch('privacy.showLastSeen')}
-                onChange={(checked) => setValue('privacy.showLastSeen', checked)}
+                onChange={(checked) => handlePreferenceChange('showLastSeen', 'privacy', checked)}
                 label="Show Last Seen"
+                description="Let others see when you were last active"
               />
-              <Switch
+              <LabeledSwitch
                 checked={watch('privacy.showLocation')}
-                onChange={(checked) => setValue('privacy.showLocation', checked)}
+                onChange={(checked) => handlePreferenceChange('showLocation', 'privacy', checked)}
                 label="Show Location"
+                description="Let others see your approximate location"
               />
             </div>
           </div>
@@ -100,17 +173,17 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               Safety Settings
             </label>
             <div className="mt-2 space-y-2">
-              <Switch
+              <LabeledSwitch
                 checked={watch('safety.requireVerifiedMatch')}
                 onChange={(checked) => setValue('safety.requireVerifiedMatch', checked)}
                 label="Require Verified Match"
               />
-              <Switch
+              <LabeledSwitch
                 checked={watch('safety.meetupCheckins')}
                 onChange={(checked) => setValue('safety.meetupCheckins', checked)}
                 label="Enable Meetup Check-ins"
               />
-              <Switch
+              <LabeledSwitch
                 checked={watch('safety.emergencyContactAlerts')}
                 onChange={(checked) => setValue('safety.emergencyContactAlerts', checked)}
                 label="Enable Emergency Contact Alerts"

@@ -1,19 +1,28 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import type { SafetyCenterProps } from '@/types/safety';
-import type { SafetyAlertNew } from '@/types/safety';
-import type { MinimalUser } from '@/types/user';
+import type { SafetyAlertNew, SafetySettingsNew } from '@/types/safety';
+import type { User } from '@/types/user';
 import { EmergencyAlert } from './EmergencyAlert';
 import { SafetyFeatures } from './SafetyFeatures';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
+import { Card } from '@/components/ui/Card';
 
 export const SafetyCenter: React.FC<SafetyCenterProps> = ({
   userId,
   onSettingsChange,
 }) => {
   const { alerts, isLoading, error, dismissAlert, addAlert } = useSafetyAlert();
+
+  const [settings, setSettings] = useState<SafetySettingsNew>({
+    autoShareLocation: false,
+    meetupCheckins: true,
+    sosAlertEnabled: true,
+    requireVerifiedMatch: false,
+    emergencyContacts: []
+  });
 
   const handleAlertTriggered = useCallback(
     async (alert: SafetyAlertNew) => {
@@ -33,8 +42,12 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
   );
 
   const handleSettingsChange = useCallback(
-    (settings: Parameters<NonNullable<typeof onSettingsChange>>[0]) => {
-      onSettingsChange?.(settings);
+    (newSettings: Partial<SafetySettingsNew>) => {
+      setSettings(prev => {
+        const updated = { ...prev, ...newSettings };
+        onSettingsChange?.(updated);
+        return updated;
+      });
     },
     [onSettingsChange]
   );
@@ -99,16 +112,38 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
             lastName: '',
             email: '',
             emailVerified: false,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-          } as MinimalUser}
-          settings={{
-            autoShareLocation: false,
-            meetupCheckins: false,
-            sosAlertEnabled: true,
-            requireVerifiedMatch: false,
-            emergencyContacts: [],
+            name: '',
+            lastActive: new Date(),
+            verificationStatus: 'pending',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            preferences: {
+              maxDistance: 50,
+              ageRange: { min: 18, max: 99 },
+              interests: [],
+              gender: [],
+              lookingFor: [],
+              relationshipType: [],
+              notifications: {
+                matches: true,
+                messages: true,
+                events: true,
+                safety: true
+              },
+              privacy: {
+                showOnlineStatus: true,
+                showLastSeen: true,
+                showLocation: true,
+                showAge: true
+              },
+              safety: {
+                requireVerifiedMatch: false,
+                meetupCheckins: true,
+                emergencyContactAlerts: true
+              }
+            }
           }}
+          settings={settings}
           onSettingsChange={handleSettingsChange}
         />
       </section>

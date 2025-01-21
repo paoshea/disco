@@ -1,110 +1,101 @@
-import React, { useState, useMemo } from 'react';
-import { useGeolocation } from '@/hooks/useGeolocation';
-import { emergencyService } from '@/services/api/emergency.service';
-import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
-import type { MapMarker } from '@/types/map';
-import { BaseMapView } from '@/components/map/BaseMapView';
+import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
-import { toast } from '@/hooks/use-toast';
+import { Card } from '@/components/ui/Card';
+import { BaseMapView } from '@/components/map/BaseMapView';
+import { useGeolocation } from '@/hooks/useGeolocation';
+import { safetyService } from '@/services/api/safety.service';
+import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
+import { createToast } from '@/hooks/use-toast';
+import type { MapMarker } from '@/types/map';
+import type { Location, LocationState } from '@/types/location';
 
-export function EmergencyAlert({
-  userId,
-  onAlertTriggered,
-}: EmergencyAlertProps) {
-  const [isLoading, setIsLoading] = useState(false);
-  const { position, error } = useGeolocation();
+export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps) {
+  const [isTriggering, setIsTriggering] = useState(false);
+  const { location, error: locationError } = useGeolocation() as LocationState;
 
-  const markers = useMemo<MapMarker[]>(() => {
-    if (!position) return [];
-    
-    return [{
-      id: 'current-location',
-      position: {
-        lat: position.coords.latitude,
-        lng: position.coords.longitude,
-      },
-      icon: {
-        url: '/images/current-location-marker.png',
-        scaledSize: new google.maps.Size(32, 32),
-        anchor: new google.maps.Point(16, 16),
-      },
-      title: 'Your Location',
-    }];
-  }, [position]);
+  const handleTriggerAlert = useCallback(async () => {
+    if (isTriggering || !location) return;
 
-  const handleEmergencyAlert = async () => {
-    if (!position) {
-      toast({
-        title: "Location Required",
-        description: "Please enable location services to use this feature",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    setIsLoading(true);
+    setIsTriggering(true);
     try {
-      const alert: SafetyAlertNew = {
+      const alert: Partial<SafetyAlertNew> = {
         userId,
-        location: {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: new Date().toISOString(),
-        },
-        type: 'emergency',
+        type: 'sos',
         status: 'active',
+        location: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          accuracy: location.accuracy,
+          timestamp: new Date()
+        },
+        message: 'Emergency SOS Alert',
+        contacts: [],
+        description: 'User triggered emergency alert',
+        evidence: []
       };
 
-      const response = await emergencyService.createAlert(alert);
-      
-      toast({
-        title: "Emergency Alert Sent",
-        description: "Emergency contacts have been notified of your location",
-        variant: "success"
-      });
+      const response = await safetyService.createAlert(alert);
+      onAlertTriggered?.(response);
 
-      if (onAlertTriggered) {
-        onAlertTriggered(response);
-      }
+      createToast.success({
+        title: 'Emergency Alert Triggered',
+        description: 'Emergency contacts have been notified.',
+      });
     } catch (error) {
-      console.error('Error sending emergency alert:', error);
-      toast({
-        title: "Error",
-        description: "Failed to send emergency alert. Please try again.",
-        variant: "destructive"
+      console.error('Error triggering alert:', error);
+      createToast.error({
+        title: 'Alert Failed',
+        description: 'Failed to trigger emergency alert. Please try again or contact emergency services directly.',
       });
     } finally {
-      setIsLoading(false);
+      setIsTriggering(false);
     }
-  };
+  }, [userId, location, isTriggering, onAlertTriggered]);
+
+  const markers: MapMarker[] = location ? [{
+    id: 'user-location',
+    position: {
+      lat: location.latitude,
+      lng: location.longitude
+    },
+    title: 'Your Location',
+    icon: {
+      url: '/images/markers/user-location.svg',
+      scaledSize: { width: 40, height: 40 },
+      anchor: { x: 20, y: 20 }
+    }
+  }] : [];
 
   return (
     <div className="space-y-4">
-      <div className="h-64 w-full rounded-lg overflow-hidden">
+      <div className="h-64 relative">
         <BaseMapView
-          center={position ? {
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          } : undefined}
+          center={location ? { lat: location.latitude, lng: location.longitude } : undefined}
           zoom={15}
           markers={markers}
         />
+        {locationError && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+            <p className="text-white text-center p-4">
+              Unable to access location. Please enable location services to use this feature.
+            </p>
+          </div>
+        )}
       </div>
 
       <Button
-        onClick={handleEmergencyAlert}
-        disabled={isLoading || !position}
-        className="w-full bg-red-600 hover:bg-red-700 text-white"
+        variant="danger"
+        className="w-full"
+        onClick={handleTriggerAlert}
+        disabled={isTriggering || !location}
       >
-        {isLoading ? 'Sending Alert...' : 'Send Emergency Alert'}
+        {isTriggering ? 'Triggering Alert...' : 'Trigger Emergency Alert'}
       </Button>
 
-      {error && (
-        <p className="text-sm text-red-600">
-          Error: {error.message}
-        </p>
-      )}
+      <p className="text-sm text-muted-foreground">
+        This will notify your emergency contacts and share your current location with them.
+        Only use this in case of a real emergency.
+      </p>
     </div>
   );
 }

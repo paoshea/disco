@@ -1,3 +1,13 @@
+export interface WeightedCriteria {
+  distance: number;
+  interests: number;
+  activityPreference: number;
+  timeWindow: number;
+  verificationStatus: number;
+  responseRate: number;
+  meetupSuccess: number;
+}
+
 export interface MatchPreview {
   id: string;
   name: string;

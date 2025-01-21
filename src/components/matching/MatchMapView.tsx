@@ -7,8 +7,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Card, CardContent } from '@/components/ui/Card';
 import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { toast } from '@/hooks/use-toast';
-import type { ToastProps } from '@/components/ui/Toast';
+import { useToast } from '@/hooks/use-toast';
 
 interface ExtendedMapMarker extends MapMarker {
   data: Match;
@@ -60,6 +59,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
   const [mapStyle, setMapStyle] = useState('roadmap');
   const [matchDistance, setMatchDistance] = useState('10km');
+
+  const { toast } = useToast();
 
   const mapStyleOptions = [
     { value: 'roadmap', label: 'Roadmap' },
@@ -198,11 +199,11 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         title: "Error",
         description: "Match data not found",
         variant: "destructive"
-      } satisfies ToastProps);
+      });
       return;
     }
     onMarkerClick(marker.data);
-  }, [onMarkerClick]);
+  }, [onMarkerClick, toast]);
 
   const handleMarkerMouseEnter = useCallback((marker: MapMarker & { data?: Match }) => {
     if (marker.data) {
@@ -224,7 +225,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         title: "Invalid Age Range",
         description: "Minimum age cannot be greater than maximum age",
         variant: "destructive"
-      } satisfies ToastProps);
+      });
       return;
     }
     setShowFilters(false);
@@ -232,7 +233,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       title: "Filters Applied",
       description: "Map view has been updated with your filters",
       variant: "default"
-    } satisfies ToastProps);
+    });
   };
 
   return (
