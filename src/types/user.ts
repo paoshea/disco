@@ -10,6 +10,9 @@ export interface BaseUser {
   createdAt: string | Date;
   updatedAt: string | Date;
   avatar?: string;
+  name: string;
+  lastActive: string;
+  verificationStatus: 'verified' | 'unverified';
 }
 
 // Full user type with all optional fields
@@ -25,12 +28,14 @@ export interface User extends BaseUser {
     safety: boolean;
   };
   preferences?: UserPreferences;
-  location: {
+  location?: {
     latitude: number;
     longitude: number;
     lastUpdated: Date;
+    accuracy?: number;
+    privacyMode?: string;
+    sharingEnabled?: boolean;
   };
-  verificationStatus: 'verified' | 'unverified';
   stats?: {
     responseRate: number;
     meetupSuccessRate: number;
@@ -38,8 +43,6 @@ export interface User extends BaseUser {
     lastActive: Date;
   };
   age?: number;
-  name: string;
-  lastActive: string;
   activityPreferences?: {
     type: string;
     timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
@@ -48,6 +51,17 @@ export interface User extends BaseUser {
     mode: 'standard' | 'strict';
     bluetoothEnabled: boolean;
   };
+}
+
+// Minimal user type for components that only need basic info
+export interface MinimalUser {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  emailVerified: boolean;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface UserSettings {

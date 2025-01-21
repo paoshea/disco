@@ -3,7 +3,7 @@ import { useGeolocation } from '@/hooks/useGeolocation';
 import { eventService } from '@/services/event/event.service';
 import type { EventWithParticipants } from '@/types/event';
 import { EventCard } from './EventCard';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 
 type DistanceUnit = 'km' | 'm';
 
@@ -42,11 +42,19 @@ export function NearbyEvents({
       if (success && data) {
         setEvents(data);
       } else if (error) {
-        toast.error(error);
+        toast({
+          title: "Error loading events",
+          description: "Failed to load nearby events",
+          variant: "destructive"
+        });
       }
-    } catch (err) {
-      console.error('Error fetching nearby events:', err);
-      toast.error('Failed to fetch nearby events');
+    } catch (error) {
+      console.error('Error fetching nearby events:', error);
+      toast({
+        title: "Error loading events",
+        description: "Failed to load nearby events",
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }

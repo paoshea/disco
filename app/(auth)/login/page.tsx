@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -43,20 +43,32 @@ export default function LoginPage() {
       const result = await login(data.email, data.password);
 
       if (result.success) {
-        toast.success('Login successful!');
+        toast({
+          title: "Login Successful",
+          description: 'You have been logged in successfully',
+          variant: "success"
+        });
         router.push('/dashboard');
         return;
       }
 
       if (result.error) {
         setError(result.error);
-        toast.error(result.error);
+        toast({
+          title: "Authentication Error",
+          description: result.error,
+          variant: "destructive"
+        });
         return;
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
-      toast.error(errorMessage);
+      toast({
+        title: "Authentication Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setIsLoading(false);
     }

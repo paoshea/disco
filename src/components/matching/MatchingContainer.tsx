@@ -3,9 +3,9 @@ import { useSession } from 'next-auth/react';
 import { Match, MatchPreferences } from '@/types/match';
 import { MatchSocketService } from '@/services/websocket/match.socket';
 import { MatchList } from './MatchList';
-import { MatchPreferencesPanel } from './MatchPreferencesPanel';
+import { MatchPreferencesPanel } from '@/components/matching/MatchPreferencesPanel';
 import { MatchMapView } from './MatchMapView';
-import { useToast } from '@/components/ui/toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 // Extend the Session type from next-auth
@@ -164,7 +164,7 @@ export function MatchingContainer() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <MatchPreferencesPanel onUpdate={handlePreferencesUpdate} />
+      <MatchPreferencesPanel onSubmit={handlePreferencesUpdate} />
       
       <Tabs value={view} onValueChange={(v: string) => setView(v as 'list' | 'map')} className="mt-6">
         <TabsList>

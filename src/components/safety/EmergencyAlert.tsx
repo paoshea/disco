@@ -1,135 +1,119 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { emergencyService } from '@/services/api/emergency.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
+import type { MapMarker } from '@/types/map';
 import { BaseMapView } from '@/components/map/BaseMapView';
 import { Button } from '@/components/ui/Button';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { ErrorMessage } from '@/components/ui/ErrorMessage';
+import { toast } from '@/hooks/use-toast';
 
-export const EmergencyAlert: React.FC<EmergencyAlertProps> = ({
+export function EmergencyAlert({
   userId,
   onAlertTriggered,
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { position, error: locationError } = useGeolocation();
+}: EmergencyAlertProps) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { position, error } = useGeolocation();
 
-  const handleTriggerAlert = async () => {
-    if (!position?.coords) {
-      setError('Location is required to send an emergency alert');
+  const markers = useMemo<MapMarker[]>(() => {
+    if (!position) return [];
+    
+    return [{
+      id: 'current-location',
+      position: {
+        lat: position.coords.latitude,
+        lng: position.coords.longitude,
+      },
+      icon: {
+        url: '/images/current-location-marker.png',
+        scaledSize: new google.maps.Size(32, 32),
+        anchor: new google.maps.Point(16, 16),
+      },
+      title: 'Your Location',
+    }];
+  }, [position]);
+
+  const handleEmergencyAlert = async () => {
+    if (!position) {
+      toast({
+        title: "Location Required",
+        description: "Please enable location services to use this feature",
+        variant: "destructive"
+      });
       return;
     }
 
+    setIsLoading(true);
     try {
-      setLoading(true);
-      setError(null);
-
-      const alert = await emergencyService.sendAlert({
+      const alert: SafetyAlertNew = {
+        userId,
         location: {
-          id: crypto.randomUUID(),
-          userId,
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
-          timestamp: new Date(),
-          privacyMode: 'precise',
-          sharingEnabled: true,
         },
-        timestamp: new Date().toISOString(),
-      });
-
-      // Convert EmergencyAlert to SafetyAlertNew
-      const safetyAlert: SafetyAlertNew = {
-        ...alert,
-        type: 'sos',
+        type: 'emergency',
         status: 'active',
-        location: {
-          id: crypto.randomUUID(),
-          userId,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-          accuracy: position.coords.accuracy,
-          timestamp: new Date(),
-          privacyMode: 'precise',
-          sharingEnabled: true,
-        },
-        updatedAt: new Date().toISOString(),
       };
 
-      if (onAlertTriggered) {
-        onAlertTriggered(safetyAlert);
+      const response = await emergencyService.createAlert(alert);
+      if (response.success) {
+        toast({
+          title: "Emergency Alert Sent",
+          description: "Help is on the way. Stay safe.",
+          variant: "default"
+        });
+        onAlertTriggered(response.data);
+      } else {
+        throw new Error(response.error || 'Failed to send emergency alert');
       }
-    } catch (err) {
-      console.error('Error triggering emergency alert:', err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'An error occurred while sending the emergency alert'
-      );
+    } catch (error) {
+      console.error('Error sending emergency alert:', error);
+      toast({
+        title: "Error",
+        description: "Failed to send emergency alert. Please try again or call emergency services directly.",
+        variant: "destructive"
+      });
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
-  if (locationError) {
+  if (error) {
     return (
-      <ErrorMessage
-        message="Unable to access location. Please enable location services to use emergency alerts."
-        className="mb-4"
-      />
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-700">
+          Error accessing location. Please enable location services to use this feature.
+        </p>
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {position?.coords && (
-        <div className="h-64 rounded-lg overflow-hidden">
+      <Button
+        onClick={handleEmergencyAlert}
+        disabled={isLoading || !position}
+        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg"
+      >
+        {isLoading ? 'Sending Alert...' : 'Send Emergency Alert'}
+      </Button>
+
+      {position && (
+        <div className="h-64 w-full rounded-lg overflow-hidden">
           <BaseMapView
             center={{
               lat: position.coords.latitude,
               lng: position.coords.longitude,
             }}
             zoom={15}
-            markers={[
-              {
-                id: 'current-location',
-                position: {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                },
-                icon: {
-                  url: '/images/current-location-marker.png',
-                  scaledSize: { width: 32, height: 32 },
-                },
-                title: 'Your Location',
-              },
-            ]}
+            markers={markers}
           />
         </div>
       )}
 
-      {error && <ErrorMessage message={error} className="mb-4" />}
-
-      <Button
-        onClick={() => {
-          void handleTriggerAlert();
-        }}
-        disabled={loading || !position?.coords}
-        variant="danger"
-        className="w-full py-3 text-lg font-semibold"
-      >
-        {loading ? (
-          <LoadingSpinner className="w-6 h-6" />
-        ) : (
-          'Send Emergency Alert'
-        )}
-      </Button>
-
-      <p className="text-sm text-gray-500 text-center">
-        This will alert your emergency contacts and share your current location
-        with them.
+      <p className="text-sm text-gray-500 mt-2">
+        Your current location will be shared with emergency responders when you send an alert.
       </p>
     </div>
   );
-};
+}

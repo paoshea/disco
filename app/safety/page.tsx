@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SafetyService } from '@/services/safety/safety.service';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 
 interface SafetySettings {
@@ -58,7 +58,11 @@ export default function SafetyPage() {
         }
       } catch (error) {
         console.error('Error fetching safety settings:', error);
-        toast.error('Failed to load safety settings');
+        toast({
+          title: "Error Fetching Safety Settings",
+          description: "Please try again later",
+          variant: "destructive"
+        });
       } finally {
         setLoading(false);
       }
@@ -76,12 +80,18 @@ export default function SafetyPage() {
         enabled,
       });
       setSettings(prev => ({ ...prev, enabled }));
-      toast.success(
-        enabled ? 'Safety features enabled' : 'Safety features disabled'
-      );
+      toast({
+        title: enabled ? "Safety Features Enabled" : "Safety Features Disabled",
+        description: enabled ? "Safety features are now enabled" : "Safety features are now disabled",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error updating safety settings:', error);
-      toast.error('Failed to update safety settings');
+      toast({
+        title: "Error Updating Safety Settings",
+        description: "Please try again later",
+        variant: "destructive"
+      });
     }
   };
 

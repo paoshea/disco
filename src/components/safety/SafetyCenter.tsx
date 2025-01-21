@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import type { SafetyCenterProps } from '@/types/safety';
 import type { SafetyAlertNew } from '@/types/safety';
+import type { MinimalUser } from '@/types/user';
 import { EmergencyAlert } from './EmergencyAlert';
 import { SafetyFeatures } from './SafetyFeatures';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
@@ -98,10 +99,9 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
             lastName: '',
             email: '',
             emailVerified: false,
-            emergencyContacts: [],
-            createdAt: '',
-            updatedAt: '',
-          }}
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          } as MinimalUser}
           settings={{
             autoShareLocation: false,
             meetupCheckins: false,

@@ -8,17 +8,17 @@ import { MessageReactions } from './MessageReactions';
 import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
 import { Button } from '@/components/ui/Button';
 import { LocationShareModal } from './LocationShareModal';
-import { WebSocketMessage, WebSocketEventType } from '@/types/websocket';
+import { WebSocketMessage, WebSocketEventType, WebSocketPayload } from '@/types/websocket';
 
-interface MessageEvent {
+interface ChatMessagePayload extends MessageWithSender {
   matchId: string;
-  message: MessageWithSender;
+  chatRoomId: string;
 }
 
-interface TypingEvent {
-  matchId: string;
+interface TypingPayload {
   userId: string;
   isTyping: boolean;
+  matchId: string;
 }
 
 interface Reaction {
@@ -26,7 +26,8 @@ interface Reaction {
   emoji: string;
   userId: string;
   messageId: string;
-  createdAt: Date;
+  count: number;
+  users: string[];
 }
 
 interface ExtendedMessageWithSender extends MessageWithSender {
@@ -71,29 +72,26 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
     void fetchMessages();
 
-    // Subscribe to WebSocket events
-    const handleWebSocketEvent = (event: WebSocketMessage) => {
-      switch (event.type) {
-        case WebSocketEventType.MESSAGE:
-          if (event.matchId === matchId) {
-            setMessages(prev => [...prev, event.message]);
-            scrollToBottom();
-          }
-          break;
-        case WebSocketEventType.TYPING:
-          if (event.matchId === matchId && event.userId === otherUserId) {
-            setIsTyping(event.isTyping);
-          }
-          break;
-        default:
-          console.error('Unknown WebSocket event type:', event.type);
+    // Subscribe to new messages
+    const messageUnsub = socketService.subscribeToMessages((event) => {
+      const message = event.message as ChatMessagePayload;
+      if (message.matchId === matchId) {
+        setMessages(prev => [...prev, message]);
+        scrollToBottom();
       }
-    };
+    });
 
-    socketService.subscribe(handleWebSocketEvent);
+    // Subscribe to typing indicators
+    const typingUnsub = socketService.subscribeToTyping((event) => {
+      const typingEvent = event as TypingPayload;
+      if (typingEvent.matchId === matchId && typingEvent.userId === otherUserId) {
+        setIsTyping(typingEvent.isTyping);
+      }
+    });
 
     return () => {
-      socketService.unsubscribe(handleWebSocketEvent);
+      messageUnsub();
+      typingUnsub();
     };
   }, [session?.user?.id, chatRoomId, otherUserId, matchId, socketService]);
 
@@ -159,17 +157,27 @@ export const MatchChat: React.FC<MatchChatProps> = ({
     setMessage(prev => prev + emoji.native);
   };
 
-  const handleLocationShare = async (latitude: number, longitude: number) => {
+  const handleLocationShare = async (location: {
+    latitude: number;
+    longitude: number;
+    name: string;
+    address: string;
+  }) => {
     try {
       const response = await fetch('/api/chat/messages', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          content: `📍 Location shared: https://maps.google.com/?q=${latitude},${longitude}`,
+          content: `📍 Location shared: ${location.name}\n${location.address}`,
           chatRoomId,
           matchId,
           type: 'location',
-          metadata: { latitude, longitude },
+          metadata: {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            name: location.name,
+            address: location.address,
+          },
         }),
       });
 
@@ -199,7 +207,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
             {message.senderId !== session?.user?.id && (
               <Avatar 
                 userId={message.sender.id}
-                imageUrl={message.sender.avatar}
+                imageUrl={message.sender.avatar || undefined}
                 size="sm"
               />
             )}
@@ -274,9 +282,8 @@ export const MatchChat: React.FC<MatchChatProps> = ({
         <LocationShareModal
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
-          onLocationSelect={({ latitude, longitude }) => 
-            handleLocationShare(latitude, longitude)
-          }
+          onLocationSelect={handleLocationShare}
+          transitionState={null}
         />
       )}
     </div>

@@ -1,28 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
-import { authConfig } from '@/lib/auth';
 
+// Rate limiter for match operations
 const rateLimiter = new RateLimiter({
-  interval: 60000, // 1 minute
+  windowMs: 60000, // 1 minute
   maxRequests: 100
 });
 
-// Validation schema for match actions
-const matchActionSchema = z.object({
-  action: z.enum(['accept', 'decline', 'block', 'report']),
-  reason: z.string().optional(), // Required for report action
-});
-
-// GET /api/matches/[id] - Get match details
+// GET /api/matches/[id] - Get specific match details
 export async function GET(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await getServerSession(authConfig);
+    const { id } = params;
+
+    // Check authentication
+    const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -30,13 +26,11 @@ export async function GET(
       );
     }
 
+    // Get match details
     const matchingService = MatchingService.getInstance();
-    const status = await matchingService.getMatchStatus(
-      session.user.id,
-      params.id
-    );
+    const match = await matchingService.getMatchStatus(session.user.id, id);
 
-    return NextResponse.json({ status });
+    return NextResponse.json({ match });
   } catch (error) {
     console.error('Error in GET /api/matches/[id]:', error);
     return NextResponse.json(
@@ -46,14 +40,16 @@ export async function GET(
   }
 }
 
-// POST /api/matches/[id] - Perform match action (accept/decline/block/report)
+// POST /api/matches/[id] - Update match status (accept/reject/block)
 export async function POST(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    const { id } = params;
+
     // Check authentication
-    const session = await getServerSession(authConfig);
+    const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -63,52 +59,40 @@ export async function POST(
 
     // Rate limiting
     const identifier = session.user.id;
-    const isLimited = await rateLimiter.isLimited(identifier, 'match_action');
-    if (isLimited) {
+    const limited = await rateLimiter.isRateLimited(identifier);
+    if (limited) {
       return NextResponse.json(
         { error: 'Too many requests' },
         { status: 429 }
       );
     }
 
-    // Parse and validate request body
+    // Parse request body
     const body = await req.json();
-    const { action, reason } = matchActionSchema.parse(body);
+    const { action } = body;
 
-    // Check if reason is provided for report action
-    if (action === 'report' && !reason) {
-      return NextResponse.json(
-        { error: 'Reason is required for report action' },
-        { status: 400 }
-      );
-    }
-
-    // Perform action
+    // Update match status
     const matchingService = MatchingService.getInstance();
     switch (action) {
       case 'accept':
-        await matchingService.acceptMatch(session.user.id, params.id);
+        await matchingService.acceptMatch(session.user.id, id);
         break;
-      case 'decline':
-        await matchingService.rejectMatch(session.user.id, params.id);
+      case 'reject':
+        await matchingService.rejectMatch(session.user.id, id);
         break;
       case 'block':
-        await matchingService.blockMatch(session.user.id, params.id);
+        await matchingService.blockMatch(session.user.id, id);
         break;
-      case 'report':
-        await matchingService.reportMatch(session.user.id, params.id, reason!);
-        break;
+      default:
+        return NextResponse.json(
+          { error: 'Invalid action' },
+          { status: 400 }
+        );
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in POST /api/matches/[id]:', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid request body', details: error.errors },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

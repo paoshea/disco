@@ -1,5 +1,5 @@
 import { format } from 'date-fns';
-import { toast } from 'react-hot-toast';
+import { toast } from '@/hooks/use-toast';
 import { eventService } from '@/services/event/event.service';
 import type { EventWithParticipants } from '@/types/event';
 import { useAuth } from '@/hooks/useAuth';
@@ -31,7 +31,11 @@ export function EventCard({
 
   const handleJoinEvent = useCallback(async () => {
     if (!user?.id) {
-      toast.error('Please sign in to join events');
+      toast({
+        title: "Error joining event",
+        description: "Please sign in to join events",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -41,20 +45,36 @@ export function EventCard({
         user.id
       );
       if (success && data) {
-        toast.success('Successfully joined event!');
+        toast({
+          title: "Event Joined",
+          description: "You're now attending this event!",
+          variant: "default"
+        });
         onEventJoined?.(data);
       } else {
-        toast.error(error || 'Failed to join event');
+        toast({
+          title: "Error joining event",
+          description: error || "Failed to join event",
+          variant: "destructive"
+        });
       }
     } catch (err) {
       console.error('Error joining event:', err);
-      toast.error('Failed to join event');
+      toast({
+        title: "Error joining event",
+        description: "Failed to join event",
+        variant: "destructive"
+      });
     }
   }, [event.id, user?.id, onEventJoined]);
 
   const handleLeaveEvent = useCallback(async () => {
     if (!user?.id) {
-      toast.error('Please sign in to leave events');
+      toast({
+        title: "Error leaving event",
+        description: "Please sign in to leave events",
+        variant: "destructive"
+      });
       return;
     }
 
@@ -64,14 +84,26 @@ export function EventCard({
         user.id
       );
       if (success && data) {
-        toast.success('Successfully left event');
+        toast({
+          title: "Event Left",
+          description: "You've been removed from this event",
+          variant: "default"
+        });
         onEventLeft?.(data);
       } else {
-        toast.error(error || 'Failed to leave event');
+        toast({
+          title: "Error leaving event",
+          description: error || "Failed to leave event",
+          variant: "destructive"
+        });
       }
     } catch (err) {
       console.error('Error leaving event:', err);
-      toast.error('Failed to leave event');
+      toast({
+        title: "Error leaving event",
+        description: "Failed to leave event",
+        variant: "destructive"
+      });
     }
   }, [event.id, user?.id, onEventLeft]);
 

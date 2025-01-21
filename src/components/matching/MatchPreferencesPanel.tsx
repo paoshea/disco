@@ -2,47 +2,57 @@ import React from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import { Card, CardContent, CardHeader, CardTitle, Label } from '@/components/ui/Card';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Slider } from '@/components/ui/slider';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Select, SelectProps } from '@/components/ui/Select';
+import { Switch } from '@/components/ui/Switch';
+import { Slider } from '@/components/ui/Slider';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
+import { MatchPreferences } from '@/types/match';
 
 interface MatchPreferencesPanelProps {
-  onSubmit: (data: MatchPreferencesFormData) => void;
-  initialValues?: Partial<MatchPreferencesFormData>;
-}
-
-interface MatchPreferencesFormData {
-  maxDistance: number;
-  minAge?: number;
-  maxAge?: number;
-  interests: string[];
-  timeWindow?: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
-  activityType?: string;
-  privacyMode?: 'standard' | 'strict';
-  useBluetoothProximity: boolean;
+  onSubmit: (data: MatchPreferences) => void;
+  initialValues?: Partial<MatchPreferences>;
 }
 
 const schema = z.object({
   maxDistance: z.number().min(0).max(100),
-  minAge: z.number().min(18).max(100).optional(),
-  maxAge: z.number().min(18).max(100).optional(),
+  minAge: z.number().min(18).max(100),
+  maxAge: z.number().min(18).max(100),
   interests: z.array(z.string()),
+  verifiedOnly: z.boolean(),
+  withPhoto: z.boolean(),
   timeWindow: z.enum(['anytime', 'now', '15min', '30min', '1hour', 'today']).optional(),
   activityType: z.string().optional(),
   privacyMode: z.enum(['standard', 'strict']).optional(),
-  useBluetoothProximity: z.boolean()
+  useBluetoothProximity: z.boolean().optional()
 });
 
+const timeWindowOptions = [
+  { value: 'anytime', label: 'Anytime' },
+  { value: 'now', label: 'Right Now' },
+  { value: '15min', label: 'Next 15 Minutes' },
+  { value: '30min', label: 'Next 30 Minutes' },
+  { value: '1hour', label: 'Next Hour' },
+  { value: 'today', label: 'Today' }
+];
+
+const privacyModeOptions = [
+  { value: 'standard', label: 'Standard' },
+  { value: 'strict', label: 'Strict' }
+];
+
 export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferencesPanelProps) {
-  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<MatchPreferencesFormData>({
+  const { register, handleSubmit, watch, setValue, formState: { errors } } = useForm<MatchPreferences>({
     resolver: zodResolver(schema),
     defaultValues: {
       maxDistance: 50,
+      minAge: 18,
+      maxAge: 100,
       interests: [],
+      verifiedOnly: false,
+      withPhoto: true,
       useBluetoothProximity: false,
       ...initialValues
     }
@@ -52,8 +62,8 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
   const interests = watch('interests');
 
   const handleAddInterest = () => {
-    if (newInterest && !interests.includes(newInterest)) {
-      setValue('interests', [...interests, newInterest]);
+    if (newInterest.trim() && !interests.includes(newInterest.trim())) {
+      setValue('interests', [...interests, newInterest.trim()]);
       setNewInterest('');
     }
   };
@@ -70,50 +80,35 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           <div className="space-y-2">
-            <Label>Time Window</Label>
-            <Select 
+            <div className="text-sm font-medium">Time Window</div>
+            <Select
               {...register('timeWindow')}
-              value={watch('timeWindow')}
-              onChange={(value: string) => setValue('timeWindow', value as MatchPreferencesFormData['timeWindow'])}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select time window" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="anytime">Anytime</SelectItem>
-                <SelectItem value="now">Now</SelectItem>
-                <SelectItem value="15min">15 minutes</SelectItem>
-                <SelectItem value="30min">30 minutes</SelectItem>
-                <SelectItem value="1hour">1 hour</SelectItem>
-                <SelectItem value="today">Today</SelectItem>
-              </SelectContent>
-            </Select>
+              options={timeWindowOptions}
+              value={watch('timeWindow') || ''}
+              onChange={(e) => setValue('timeWindow', e.target.value as MatchPreferences['timeWindow'])}
+              placeholder="Select time window"
+            />
           </div>
 
           <div className="space-y-2">
-            <Label>Privacy Mode</Label>
-            <Select 
+            <div className="text-sm font-medium">Privacy Mode</div>
+            <Select
               {...register('privacyMode')}
-              value={watch('privacyMode')}
-              onChange={(value: string) => setValue('privacyMode', value as MatchPreferencesFormData['privacyMode'])}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select privacy mode" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="standard">Standard</SelectItem>
-                <SelectItem value="strict">Strict</SelectItem>
-              </SelectContent>
-            </Select>
+              options={privacyModeOptions}
+              value={watch('privacyMode') || ''}
+              onChange={(e) => setValue('privacyMode', e.target.value as MatchPreferences['privacyMode'])}
+              placeholder="Select privacy mode"
+            />
           </div>
 
           <div className="space-y-2">
-            <Label>Interests</Label>
+            <div className="text-sm font-medium">Interests</div>
             <div className="flex gap-2">
               <Input
                 value={newInterest}
                 onChange={(e) => setNewInterest(e.target.value)}
                 placeholder="Add an interest"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
               />
               <Button type="button" onClick={handleAddInterest}>Add</Button>
             </div>
@@ -122,17 +117,25 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
                 <Badge
                   key={interest}
                   variant="secondary"
-                  className="cursor-pointer"
-                  onClick={() => handleRemoveInterest(interest)}
+                  className="cursor-pointer group"
                 >
-                  {interest} ×
+                  <span className="group-hover:text-destructive-foreground">
+                    {interest}{' '}
+                    <button
+                      type="button"
+                      className="hover:text-destructive"
+                      onClick={() => handleRemoveInterest(interest)}
+                    >
+                      ×
+                    </button>
+                  </span>
                 </Badge>
               ))}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Maximum Distance (km)</Label>
+            <div className="text-sm font-medium">Maximum Distance (km)</div>
             <Slider
               {...register('maxDistance')}
               value={[watch('maxDistance')]}
@@ -144,16 +147,54 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
           </div>
 
           <div className="space-y-2">
+            <div className="text-sm font-medium">Age Range</div>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Input
+                  type="number"
+                  {...register('minAge', { valueAsNumber: true })}
+                  placeholder="Min Age"
+                />
+              </div>
+              <div className="flex-1">
+                <Input
+                  type="number"
+                  {...register('maxAge', { valueAsNumber: true })}
+                  placeholder="Max Age"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <Label>Use Bluetooth Proximity</Label>
+              <div className="text-sm font-medium">Verified Users Only</div>
               <Switch
-                checked={watch('useBluetoothProximity')}
+                checked={watch('verifiedOnly') ?? false}
+                onChange={(checked: boolean) => setValue('verifiedOnly', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Users with Photos Only</div>
+              <Switch
+                checked={watch('withPhoto') ?? false}
+                onChange={(checked: boolean) => setValue('withPhoto', checked)}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="text-sm font-medium">Use Bluetooth Proximity</div>
+              <Switch
+                checked={watch('useBluetoothProximity') ?? false}
                 onChange={(checked: boolean) => setValue('useBluetoothProximity', checked)}
               />
             </div>
           </div>
 
-          <Button type="submit">Save Preferences</Button>
+          <Button type="submit" className="w-full">
+            Save Preferences
+          </Button>
         </form>
       </CardContent>
     </Card>

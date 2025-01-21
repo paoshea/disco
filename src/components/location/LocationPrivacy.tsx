@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { showToast } from '@/utils/toast';
+import { locationService } from '@/services/location/location.service';
+import { toast } from '@/hooks/use-toast';
 import type { Location, LocationPrivacyMode } from '@/types/location';
 import type { Session } from '@/types/auth';
 import React from 'react';
@@ -44,7 +45,11 @@ export default function LocationPrivacy({
         }
       } catch (error) {
         console.error('Error fetching location state:', error);
-        showToast.error('Failed to fetch location settings');
+        toast({
+          title: "Error fetching location settings",
+          description: "Please try again later",
+          variant: "destructive"
+        });
       }
     };
 
@@ -72,10 +77,18 @@ export default function LocationPrivacy({
 
       setLocationState(prev => ({ ...prev, privacyMode: mode }));
       onPrivacyChange(mode);
-      showToast.success('Privacy settings updated');
+      toast({
+        title: "Privacy settings updated",
+        description: "Your location privacy settings have been updated",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error updating privacy settings:', error);
-      showToast.error('Failed to update privacy settings');
+      toast({
+        title: "Error updating privacy settings",
+        description: "Please try again later",
+        variant: "destructive"
+      });
     }
   };
 
@@ -100,10 +113,18 @@ export default function LocationPrivacy({
 
       setLocationState(prev => ({ ...prev, sharingEnabled: enabled }));
       onSharingChange(enabled);
-      showToast.success('Sharing settings updated');
+      toast({
+        title: "Sharing settings updated",
+        description: enabled ? "Location sharing is now enabled" : "Location sharing is now disabled",
+        variant: "default"
+      });
     } catch (error) {
       console.error('Error updating sharing settings:', error);
-      showToast.error('Failed to update sharing settings');
+      toast({
+        title: "Error updating sharing settings",
+        description: "Please try again later",
+        variant: "destructive"
+      });
     }
   };
 

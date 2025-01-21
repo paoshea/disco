@@ -47,7 +47,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
 }) => {
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [hoveredMarkerId, setHoveredMarkerId] = useState<string | null>(null);
+  const [hoveredMatch, setHoveredMatch] = useState<Match | null>(null);
   const [filters, setFilters] = useState<FilterState>({
     radius: 10,
     activity: 'all',
@@ -105,20 +105,20 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
         },
         title: match.name,
         icon: {
-          url: hoveredMarkerId === match.id 
+          url: hoveredMatch === match 
             ? '/images/match-marker-active.svg'
             : '/images/match-marker.svg',
           scaledSize: new google.maps.Size(
-            hoveredMarkerId === match.id ? 48 : 40,
-            hoveredMarkerId === match.id ? 48 : 40
+            hoveredMatch === match ? 48 : 40,
+            hoveredMatch === match ? 48 : 40
           ),
           anchor: new google.maps.Point(
-            hoveredMarkerId === match.id ? 24 : 20,
-            hoveredMarkerId === match.id ? 48 : 40
+            hoveredMatch === match ? 24 : 20,
+            hoveredMatch === match ? 48 : 40
           ),
         },
         data: match,
-        label: hoveredMarkerId === match.id ? {
+        label: hoveredMatch === match ? {
           text: match.name,
           color: '#FF4B91',
           fontSize: '14px',
@@ -126,7 +126,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
           className: 'map-marker-label',
         } : undefined,
       }));
-  }, [matches, searchQuery, filters, mapBounds, hoveredMarkerId]);
+  }, [matches, searchQuery, filters, mapBounds, hoveredMatch]);
 
   const mapOptions = useMemo(
     () => ({
@@ -150,164 +150,141 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     []
   );
 
-  const handleMarkerClick = useCallback((marker: ExtendedMapMarker) => {
-    onMarkerClick(marker.data);
+  const handleMarkerClick = useCallback((marker: MapMarker & { data?: Match }) => {
+    if (marker.data) {
+      onMarkerClick(marker.data);
+    }
   }, [onMarkerClick]);
 
-  const handleMarkerMouseEnter = useCallback((marker: ExtendedMapMarker) => {
-    setHoveredMarkerId(marker.id);
+  const handleMarkerMouseEnter = useCallback((marker: MapMarker & { data?: Match }) => {
+    if (marker.data) {
+      setHoveredMatch(marker.data);
+    }
   }, []);
 
   const handleMarkerMouseLeave = useCallback(() => {
-    setHoveredMarkerId(null);
+    setHoveredMatch(null);
+  }, []);
+
+  const handleFilterChange = useCallback((field: keyof FilterState, value: FilterState[keyof FilterState]) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
   }, []);
 
   return (
     <div className="relative h-full">
-      <BaseMapView
-        markers={filteredMarkers}
-        onMarkerClick={handleMarkerClick}
-        onMarkerMouseEnter={handleMarkerMouseEnter}
-        onMarkerMouseLeave={handleMarkerMouseLeave}
-        center={center}
-        zoom={zoom}
-        options={mapOptions}
-        onBoundsChanged={handleBoundsChanged}
-        enableClustering
-        clusterOptions={{
-          styles: [
-            {
-              textColor: 'white',
-              textSize: 14,
-              width: 40,
-              height: 40,
-              url: '/images/match-cluster.svg',
-            },
-          ],
-        }}
-      />
-
-      {/* Search and Filter Controls */}
-      <div className="absolute top-4 left-4 right-4 flex gap-2">
-        <div className="flex-1 max-w-md">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search matches..."
-              className="w-full pl-10 pr-4 py-2 bg-white rounded-lg shadow-lg"
-            />
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          </div>
-        </div>
-
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={() => setShowFilters(!showFilters)}
-          className="bg-white shadow-lg"
-        >
-          <Filter className={showFilters ? 'text-primary' : 'text-gray-600'} />
-        </Button>
+      <div className="absolute inset-0">
+        <BaseMapView
+          center={center}
+          zoom={zoom}
+          markers={filteredMarkers}
+          onMarkerClick={(marker: MapMarker & { data?: Match }) => {
+            if (marker.data) {
+              onMarkerClick(marker.data);
+            }
+          }}
+          onMarkerMouseEnter={(marker: MapMarker & { data?: Match }) => {
+            if (marker.data) {
+              setHoveredMatch(marker.data);
+            }
+          }}
+          onMarkerMouseLeave={() => setHoveredMatch(null)}
+          options={mapOptions}
+          onBoundsChanged={handleBoundsChanged}
+          enableClustering
+          clusterOptions={{
+            styles: [
+              {
+                textColor: 'white',
+                textSize: 14,
+                width: 40,
+                height: 40,
+                url: '/images/match-cluster.svg',
+              },
+            ],
+          }}
+        />
       </div>
 
-      {/* Filter Panel */}
+      <div className="absolute top-4 left-4 z-10 space-y-4">
+        <Card className="w-80">
+          <CardContent className="p-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search matches..."
+                className="w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Activity Type</label>
+              <Select
+                value={filters.activity}
+                onChange={(e) => handleFilterChange('activity', e.target.value)}
+                options={[
+                  { value: 'all', label: 'All Activities' },
+                  { value: 'coffee', label: 'Coffee' },
+                  { value: 'lunch', label: 'Lunch' },
+                  { value: 'dinner', label: 'Dinner' },
+                  { value: 'drinks', label: 'Drinks' }
+                ]}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Time Window</label>
+              <Select
+                value={filters.timeWindow}
+                onChange={(e) => handleFilterChange('timeWindow', e.target.value)}
+                options={[
+                  { value: 'all', label: 'Any Time' },
+                  { value: 'now', label: 'Right Now' },
+                  { value: '15min', label: 'Next 15 Minutes' },
+                  { value: '30min', label: 'Next 30 Minutes' },
+                  { value: '1hour', label: 'Next Hour' },
+                  { value: 'today', label: 'Today' }
+                ]}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Search Radius ({filters.radius}km)</label>
+              <Slider
+                value={[filters.radius]}
+                onValueChange={(value: number[]) => handleFilterChange('radius', value[0])}
+                min={1}
+                max={100}
+                step={1}
+              />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       <AnimatePresence>
-        {showFilters && (
+        {hoveredMatch && (
           <motion.div
-            initial={{ opacity: 0, x: -300 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -300 }}
-            className="absolute left-4 top-16 w-80 bg-white rounded-lg shadow-lg"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            className="absolute bottom-4 left-4 z-10"
           >
-            <Card>
-              <CardContent className="p-4 space-y-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Distance ({filters.radius}km)</label>
-                  <Slider
-                    value={[filters.radius]}
-                    onValueChange={(value: number[]) =>
-                      setFilters(prev => ({ ...prev, radius: value[0] }))
-                    }
-                    min={1}
-                    max={100}
-                    step={1}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Activity Type</label>
-                  <Select
-                    value={filters.activity}
-                    onValueChange={(value: string) =>
-                      setFilters(prev => ({ ...prev, activity: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select activity" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Activities</SelectItem>
-                      <SelectItem value="coffee">Coffee</SelectItem>
-                      <SelectItem value="lunch">Lunch</SelectItem>
-                      <SelectItem value="dinner">Dinner</SelectItem>
-                      <SelectItem value="networking">Networking</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Time Window</label>
-                  <Select
-                    value={filters.timeWindow}
-                    onValueChange={(value: string) =>
-                      setFilters(prev => ({ ...prev, timeWindow: value }))
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select time" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any Time</SelectItem>
-                      <SelectItem value="now">Right Now</SelectItem>
-                      <SelectItem value="15min">Next 15 Minutes</SelectItem>
-                      <SelectItem value="30min">Next 30 Minutes</SelectItem>
-                      <SelectItem value="1hour">Next Hour</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Age Range</label>
-                  <div className="flex gap-4">
-                    <input
-                      type="number"
-                      min={18}
-                      max={filters.maxAge}
-                      value={filters.minAge}
-                      onChange={(e) =>
-                        setFilters(prev => ({
-                          ...prev,
-                          minAge: parseInt(e.target.value) || 18,
-                        }))
-                      }
-                      className="w-20 px-2 py-1 border rounded"
+            <Card className="w-80">
+              <CardContent className="p-4">
+                <div className="flex items-center space-x-4">
+                  {hoveredMatch.profileImage && (
+                    <img
+                      src={hoveredMatch.profileImage}
+                      alt={hoveredMatch.name}
+                      className="w-12 h-12 rounded-full object-cover"
                     />
-                    <span className="text-gray-500">to</span>
-                    <input
-                      type="number"
-                      min={filters.minAge}
-                      max={100}
-                      value={filters.maxAge}
-                      onChange={(e) =>
-                        setFilters(prev => ({
-                          ...prev,
-                          maxAge: parseInt(e.target.value) || 100,
-                        }))
-                      }
-                      className="w-20 px-2 py-1 border rounded"
-                    />
+                  )}
+                  <div>
+                    <h3 className="font-medium">{hoveredMatch.name}</h3>
+                    <p className="text-sm text-gray-500">{hoveredMatch.distance}km away</p>
                   </div>
                 </div>
               </CardContent>
@@ -315,25 +292,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Match Count */}
-      <div className="absolute bottom-4 left-4 bg-white px-4 py-2 rounded-lg shadow-lg">
-        <p className="text-sm font-medium">
-          {filteredMarkers.length} matches in view
-        </p>
-      </div>
-
-      <style jsx global>{`
-        .map-marker-label {
-          background: white;
-          padding: 4px 8px;
-          border-radius: 12px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          white-space: nowrap;
-          transform: translateY(-48px);
-          transition: all 0.2s ease-in-out;
-        }
-      `}</style>
     </div>
   );
 };

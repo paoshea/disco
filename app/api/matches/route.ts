@@ -3,32 +3,48 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
-import { authConfig } from '@/lib/auth';
+import type { UserPreferences } from '@/types/user';
 
 const rateLimiter = new RateLimiter({
-  interval: 60000, // 1 minute
+  windowMs: 60000, // 1 minute
   maxRequests: 100
 });
 
-// Validation schema for match preferences
+// Base preferences schema matching UserPreferences type
 const matchPreferencesSchema = z.object({
+  ageRange: z.object({
+    min: z.number(),
+    max: z.number()
+  }),
   maxDistance: z.number().min(0).max(100),
-  minAge: z.number().min(18).max(100).optional(),
-  maxAge: z.number().min(18).max(100).optional(),
-  interests: z.array(z.string()).optional(),
-  verifiedOnly: z.boolean().optional(),
-  withPhoto: z.boolean().optional(),
-  activityType: z.string().optional(),
-  timeWindow: z.enum(['anytime', 'now', '15min', '30min', '1hour', 'today']).optional(),
-  privacyMode: z.enum(['standard', 'strict']).optional(),
-  useBluetoothProximity: z.boolean().optional(),
+  interests: z.array(z.string()),
+  gender: z.array(z.string()),
+  lookingFor: z.array(z.string()),
+  relationshipType: z.array(z.string()),
+  notifications: z.object({
+    matches: z.boolean(),
+    messages: z.boolean(),
+    events: z.boolean(),
+    safety: z.boolean()
+  }),
+  privacy: z.object({
+    showOnlineStatus: z.boolean(),
+    showLastSeen: z.boolean(),
+    showLocation: z.boolean(),
+    showAge: z.boolean()
+  }),
+  safety: z.object({
+    requireVerifiedMatch: z.boolean(),
+    meetupCheckins: z.boolean(),
+    emergencyContactAlerts: z.boolean()
+  })
 });
 
 // GET /api/matches - Get potential matches
 export async function GET(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authConfig);
+    const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -38,7 +54,7 @@ export async function GET(req: NextRequest) {
 
     // Rate limiting
     const identifier = session.user.id;
-    const isLimited = await rateLimiter.isLimited(identifier, 'get_matches');
+    const isLimited = await rateLimiter.isRateLimited(identifier);
     if (isLimited) {
       return NextResponse.json(
         { error: 'Too many requests' },
@@ -48,17 +64,33 @@ export async function GET(req: NextRequest) {
 
     // Parse query parameters
     const searchParams = req.nextUrl.searchParams;
-    const preferences = {
+    const preferences: UserPreferences = {
       maxDistance: Number(searchParams.get('maxDistance')) || 10,
-      minAge: Number(searchParams.get('minAge')) || undefined,
-      maxAge: Number(searchParams.get('maxAge')) || undefined,
-      interests: searchParams.get('interests')?.split(',') || undefined,
-      verifiedOnly: searchParams.get('verifiedOnly') === 'true',
-      withPhoto: searchParams.get('withPhoto') === 'true',
-      activityType: searchParams.get('activityType') || undefined,
-      timeWindow: searchParams.get('timeWindow') || undefined,
-      privacyMode: searchParams.get('privacyMode') || undefined,
-      useBluetoothProximity: searchParams.get('useBluetoothProximity') === 'true',
+      ageRange: {
+        min: Number(searchParams.get('minAge')) || 18,
+        max: Number(searchParams.get('maxAge')) || 100
+      },
+      interests: searchParams.get('interests')?.split(',').filter(Boolean) || [],
+      gender: searchParams.get('gender')?.split(',').filter(Boolean) || ['any'],
+      lookingFor: searchParams.get('lookingFor')?.split(',').filter(Boolean) || ['any'],
+      relationshipType: searchParams.get('relationshipType')?.split(',').filter(Boolean) || ['any'],
+      notifications: {
+        matches: true,
+        messages: true,
+        events: true,
+        safety: true
+      },
+      privacy: {
+        showOnlineStatus: true,
+        showLastSeen: true,
+        showLocation: true,
+        showAge: true
+      },
+      safety: {
+        requireVerifiedMatch: false,
+        meetupCheckins: true,
+        emergencyContactAlerts: true
+      }
     };
 
     // Validate preferences
@@ -91,7 +123,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authConfig);
+    const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
