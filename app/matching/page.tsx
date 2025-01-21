@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { MatchingContainer } from '@/components/matching/MatchingContainer';
 import { locationService } from '@/services/location/location.service';
 import { Switch } from '@/components/ui/Switch';
@@ -11,28 +11,24 @@ import { createToast } from '@/hooks/use-toast';
 
 export default function MatchingPage() {
   const router = useRouter();
-  const { status, data: session } = useSession();
+  const { isLoading, user } = useAuth();
   const [backgroundTracking, setBackgroundTracking] = useState(false);
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (isLoading) return;
 
-    if (!session?.user?.id) {
-      void router.push('/login');
+    if (!user) {
+      void router.push('/signin?callbackUrl=/matching');
       return;
     }
-  }, [session?.user?.id, router, status]);
+  }, [user, router, isLoading]);
 
   useEffect(() => {
-    if (!session?.user?.id) return;
+    if (!user) return;
 
     const startLocationTracking = async () => {
       try {
-        await locationService.startTracking(
-          session.user.id,
-          {},
-          backgroundTracking
-        );
+        await locationService.startTracking(user.id, {}, backgroundTracking);
         createToast.success({
           title: 'Location tracking started',
           description: backgroundTracking
@@ -51,13 +47,13 @@ export default function MatchingPage() {
     void startLocationTracking();
 
     return () => {
-      if (session?.user?.id) {
-        void locationService.stopTracking(session.user.id);
+      if (user) {
+        void locationService.stopTracking(user.id);
       }
     };
-  }, [session?.user?.id, backgroundTracking]);
+  }, [user, backgroundTracking]);
 
-  if (status === 'loading') {
+  if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="animate-pulse">
@@ -68,7 +64,7 @@ export default function MatchingPage() {
     );
   }
 
-  if (!session?.user?.id) {
+  if (!user) {
     return null;
   }
 
@@ -87,7 +83,7 @@ export default function MatchingPage() {
         </div>
       </div>
 
-      <MatchingContainer userId={session.user.id} />
+      <MatchingContainer userId={user.id} />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import {
@@ -42,8 +42,7 @@ function FeatureSection({ title, description, features, icon }: FeatureProps) {
 }
 
 export default function FeaturesPage() {
-  const { status } = useSession();
-  const isLoading = status === 'loading';
+  const { isLoading, user } = useAuth();
 
   if (isLoading) {
     return (
@@ -60,6 +59,10 @@ export default function FeaturesPage() {
         </div>
       </PublicLayout>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (

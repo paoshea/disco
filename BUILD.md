@@ -131,6 +131,58 @@ session({ session, token }) {
 
 ### 1. Authentication Errors
 
+**Issue:**
+Redis connection may show `NOAUTH Authentication required` errors when:
+- Redis is running without authentication but code expects a password
+- Password is set but empty in environment variables
+- Redis is configured with authentication but no password is provided
+
+**Solution:**
+
+1. Environment Configuration:
+```bash
+# Redis Configuration
+LOCATION_REDIS_URL=localhost:6379
+LOCATION_REDIS_PASSWORD=  # Empty for non-auth mode
+```
+
+2. Redis Client Configuration:
+```typescript
+const redisConfig = {
+  host: env.REDIS_HOST || 'localhost',
+  port: parseInt(env.REDIS_PORT || '6379'),
+  ...(env.REDIS_PASSWORD && env.REDIS_PASSWORD.trim() !== ''
+    ? { password: env.REDIS_PASSWORD }
+    : {}),
+};
+```
+
+3. Error Handling:
+```typescript
+redis.on('error', (error: Error) => {
+  if (error.message.includes('NOAUTH')) {
+    console.debug('Redis running in non-auth mode - this is normal if no password is set');
+  } else {
+    console.error('Redis connection error:', error);
+  }
+});
+```
+
+### 2. Development vs Production Configuration
+
+**Development:**
+- Can run without authentication
+- Set `LOCATION_REDIS_PASSWORD=` (empty) in `.env`
+- Errors will be logged as debug messages
+
+**Production:**
+- Should always use authentication
+- Set strong password in environment variables
+- Configure Redis server with authentication
+- Use SSL/TLS if Redis is on a different host
+
+### 3. Authentication Errors
+
 **Error:**
 
 ```
@@ -156,7 +208,7 @@ const redisConfig = {
 };
 ```
 
-### 2. Redis Client Handling
+### 4. Redis Client Handling
 
 **Error:**
 
@@ -299,6 +351,55 @@ export default function Page() {
 }
 ```
 
+### 3. Authentication Hook Migration
+
+**Issue:**
+Pages using `useSession` from `next-auth/react` may encounter undefined errors during static generation or server-side rendering.
+
+**Solution:**
+- Replace `useSession` with custom `useAuth` hook
+- Update component structure to handle loading and authentication states
+- Ensure proper redirection for unauthenticated users
+
+Example:
+
+```typescript
+// Before
+const { status } = useSession();
+const isLoading = status === 'loading';
+
+// After
+const { isLoading, user } = useAuth();
+const router = useRouter();
+
+React.useEffect(() => {
+  if (!isLoading && !user) {
+    router.push('/signin?callbackUrl=/current-page');
+  }
+}, [isLoading, user, router]);
+```
+
+**Affected Pages:**
+- `/about`
+- `/blog`
+- `/careers`
+- `/features`
+- `/matching`
+- `/privacy`
+- `/security`
+- `/terms`
+
+### 4. Static Generation with Authentication
+
+**Issue:**
+Pages with authentication may fail during static generation due to missing session context.
+
+**Solution:**
+- Add proper loading states
+- Handle null/undefined user states
+- Use dynamic imports for authenticated content when necessary
+- Implement proper client-side navigation
+
 ## Environment Setup
 
 ### Required Environment Variables
@@ -343,3 +444,23 @@ Remember to always:
 3. Add proper error handling
 4. Use TypeScript strict mode
 5. Test both development and production builds
+
+## Best Practices
+
+1. **Authentication:**
+   - Use `useAuth` hook consistently across all authenticated pages
+   - Always handle loading states
+   - Implement proper redirection
+   - Add appropriate error boundaries
+
+2. **Redis:**
+   - Never commit Redis passwords to version control
+   - Use different configurations for development and production
+   - Implement proper error handling
+   - Monitor Redis connection status
+
+3. **Build Process:**
+   - Clear `.next` directory if encountering stale build issues
+   - Ensure all required environment variables are set
+   - Monitor build logs for authentication and connection errors
+   - Use appropriate development/production configurations

@@ -1,12 +1,19 @@
 'use client';
 
 import React from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function CareersPage() {
-  const { status } = useSession();
-  const isLoading = status === 'loading';
+  const { isLoading, user } = useAuth();
+  const router = useRouter();
+
+  React.useEffect(() => {
+    if (!isLoading && !user) {
+      router.push('/signin?callbackUrl=/careers');
+    }
+  }, [isLoading, user, router]);
 
   const openPositions = [
     {
@@ -42,6 +49,10 @@ export default function CareersPage() {
         </div>
       </PublicLayout>
     );
+  }
+
+  if (!user) {
+    return null; // Will redirect in useEffect
   }
 
   return (

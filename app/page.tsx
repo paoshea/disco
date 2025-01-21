@@ -2,15 +2,13 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link'; // Add missing Link import from next/link
+import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { Logo } from '@/components/ui/Logo';
-import { Button } from '@/components/ui/Button';
 import { Footer } from '@/components/layout/Footer';
 import {
   ShieldCheckIcon,
   UserGroupIcon,
-  ChatBubbleLeftRightIcon,
   HeartIcon,
 } from '@heroicons/react/24/outline';
 

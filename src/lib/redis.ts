@@ -1,87 +1,48 @@
-import Redis, { RedisOptions } from 'ioredis';
+import Redis from 'ioredis';
+import { env } from '@/env.mjs';
 
-const REDIS_URL = process.env.LOCATION_REDIS_URL || 'redis://localhost:6379';
-
-// Configure Redis client
-const redisConfig: RedisOptions = {
-  lazyConnect: true,
-  showFriendlyErrorStack: true,
-  enableReadyCheck: true,
-  maxRetriesPerRequest: 1,
-  retryStrategy: (times: number) => {
-    if (times > 3) {
-      console.warn(`Redis retry attempt ${times} failed, giving up`);
-      return null;
-    }
-    const delay = Math.min(times * 200, 1000);
-    return delay;
-  },
-  reconnectOnError: (err: Error) => {
-    const targetError = 'READONLY';
-    if (err.message.includes(targetError)) {
-      return true;
-    }
-    return false;
-  },
+// Prevent multiple instances of Redis client
+const globalForRedis = globalThis as unknown as {
+  redis: Redis | undefined;
 };
 
-// Parse Redis URL and merge with config
-try {
-  const parsedUrl = new URL(REDIS_URL);
-  redisConfig.host = parsedUrl.hostname;
-  redisConfig.port = parseInt(parsedUrl.port) || 6379;
+// Only include password if it's explicitly set and not empty
+const redisConfig = {
+  host: env.REDIS_HOST || 'localhost',
+  port: parseInt(env.REDIS_PORT || '6379'),
+  retryStrategy: (times: number) => {
+    // Maximum retry delay is 3 seconds
+    return Math.min(times * 50, 3000);
+  },
+  maxRetriesPerRequest: 3,
+  enableReadyCheck: false,
+  lazyConnect: true,
+  ...(env.REDIS_PASSWORD && env.REDIS_PASSWORD.trim() !== ''
+    ? { password: env.REDIS_PASSWORD }
+    : {}),
+};
 
-  // Extract username and password from URL if present
-  if (parsedUrl.username) {
-    redisConfig.username = decodeURIComponent(parsedUrl.username);
+export const redis = globalForRedis.redis ?? new Redis(redisConfig);
+
+redis.on('error', (error: Error) => {
+  // Don't crash on auth errors, just log them
+  if (error.message.includes('NOAUTH')) {
+    console.debug(
+      'Redis running in non-auth mode - this is normal if no password is set'
+    );
+  } else {
+    console.error('Redis connection error:', error);
   }
-  if (parsedUrl.password) {
-    redisConfig.password = decodeURIComponent(parsedUrl.password);
-  }
-} catch (error) {
-  console.error('Invalid Redis URL:', error);
+});
+
+redis.on('connect', () => {
+  console.log(
+    `Redis connected successfully to ${env.REDIS_HOST}:${env.REDIS_PORT}`
+  );
+});
+
+if (env.NODE_ENV !== 'production') {
+  globalForRedis.redis = redis;
 }
 
-let redisClient: Redis | null = null;
-
-// Create Redis client with error handling
-export function createRedisClient() {
-  if (redisClient) {
-    return redisClient;
-  }
-
-  try {
-    // First try without auth
-    const client = new Redis({
-      ...redisConfig,
-      connectTimeout: 10000,
-      disconnectTimeout: 5000,
-      enableOfflineQueue: true,
-    });
-
-    // Handle connection events
-    client.on('connect', () => {
-      console.info('Redis client connected successfully');
-    });
-
-    client.on('error', (err: Error) => {
-      console.error('Redis client error:', err);
-      if (err.message.includes('NOAUTH')) {
-        console.warn('Redis authentication not required');
-      }
-    });
-
-    client.on('close', () => {
-      console.warn('Redis connection closed');
-    });
-
-    redisClient = client;
-    return client;
-  } catch (error) {
-    console.error('Failed to create Redis client:', error);
-    throw error;
-  }
-}
-
-// Export a singleton instance
-export const redis = createRedisClient();
+export default redis;
