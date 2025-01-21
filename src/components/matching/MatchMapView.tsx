@@ -56,6 +56,22 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     maxAge: 100,
   });
   const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(null);
+  const [mapStyle, setMapStyle] = useState('roadmap');
+  const [matchDistance, setMatchDistance] = useState('10km');
+
+  const mapStyleOptions = [
+    { value: 'roadmap', label: 'Roadmap' },
+    { value: 'satellite', label: 'Satellite' },
+    { value: 'hybrid', label: 'Hybrid' },
+    { value: 'terrain', label: 'Terrain' },
+  ];
+
+  const distanceOptions = [
+    { value: '5km', label: '5km' },
+    { value: '10km', label: '10km' },
+    { value: '20km', label: '20km' },
+    { value: '50km', label: '50km' },
+  ];
 
   const handleBoundsChanged = useCallback((bounds: google.maps.LatLngBounds) => {
     setMapBounds(bounds);
@@ -145,9 +161,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       clickableIcons: false,
       maxZoom: 18,
       minZoom: 3,
-      mapTypeId: 'roadmap',
+      mapTypeId: mapStyle,
     }),
-    []
+    [mapStyle]
   );
 
   const handleMarkerClick = useCallback((marker: MapMarker & { data?: Match }) => {
@@ -217,6 +233,42 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Select
+                value={mapStyle}
+                onValueChange={(value: string) => setMapStyle(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select map style" />
+                </SelectTrigger>
+                <SelectContent>
+                  {mapStyleOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Select
+                value={matchDistance}
+                onValueChange={(value: string) => setMatchDistance(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select match distance" />
+                </SelectTrigger>
+                <SelectContent>
+                  {distanceOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-2">

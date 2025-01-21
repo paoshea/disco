@@ -5,11 +5,41 @@ import * as SelectPrimitive from "@radix-ui/react-select";
 import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/utils/cn";
 
-const Root = SelectPrimitive.Root;
-const Group = SelectPrimitive.Group;
-const Value = SelectPrimitive.Value;
+interface SelectProps extends Omit<React.ComponentPropsWithoutRef<typeof SelectPrimitive.Root>, 'onValueChange'> {
+  options?: Array<{ value: string; label: string }>;
+  onChange?: (value: string) => void;
+  placeholder?: string;
+  value?: string;
+}
 
-const Trigger = React.forwardRef<
+const Select = React.forwardRef<
+  React.ElementRef<typeof SelectPrimitive.Root>,
+  SelectProps
+>(({ options, onChange, children, placeholder, value, ...props }, ref) => (
+  <SelectPrimitive.Root 
+    onValueChange={onChange} 
+    value={value}
+    {...props}
+  >
+    {children || (
+      <>
+        <SelectTrigger>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options?.map((option) => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </>
+    )}
+  </SelectPrimitive.Root>
+));
+Select.displayName = SelectPrimitive.Root.displayName;
+
+const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 >(({ className, children, ...props }, ref) => (
@@ -22,12 +52,14 @@ const Trigger = React.forwardRef<
     {...props}
   >
     {children}
-    <ChevronDown className="h-4 w-4 opacity-50" />
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-4 w-4 opacity-50" />
+    </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
-Trigger.displayName = SelectPrimitive.Trigger.displayName;
+SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
-const Content = React.forwardRef<
+const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
@@ -55,21 +87,9 @@ const Content = React.forwardRef<
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
-Content.displayName = SelectPrimitive.Content.displayName;
+SelectContent.displayName = SelectPrimitive.Content.displayName;
 
-const Label = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label
-    ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
-    {...props}
-  />
-));
-Label.displayName = SelectPrimitive.Label.displayName;
-
-const Item = React.forwardRef<
+const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => (
@@ -86,75 +106,19 @@ const Item = React.forwardRef<
         <Check className="h-4 w-4" />
       </SelectPrimitive.ItemIndicator>
     </span>
+
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
-Item.displayName = SelectPrimitive.Item.displayName;
+SelectItem.displayName = SelectPrimitive.Item.displayName;
 
-const Separator = React.forwardRef<
-  React.ElementRef<typeof SelectPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator
-    ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
-    {...props}
-  />
-));
-Separator.displayName = SelectPrimitive.Separator.displayName;
-
-export interface SelectOption {
-  value: string;
-  label: string;
-}
-
-export interface SelectProps extends React.ComponentPropsWithoutRef<typeof Root> {
-  label?: string;
-  error?: string;
-  helperText?: string;
-  fullWidth?: boolean;
-  options: SelectOption[];
-  placeholder?: string;
-}
-
-const Select = React.forwardRef<
-  React.ElementRef<typeof Root>,
-  SelectProps
->(({ className, label, error, helperText, fullWidth = false, options, placeholder, ...props }, ref) => {
-  return (
-    <div className={cn("flex flex-col gap-1.5", fullWidth && "w-full")}>
-      {label && (
-        <Label>{label}</Label>
-      )}
-      <Root ref={ref} {...props}>
-        <Trigger className={cn(className)}>
-          <Value placeholder={placeholder} />
-        </Trigger>
-        <Content>
-          {options.map((option) => (
-            <Item key={option.value} value={option.value}>
-              {option.label}
-            </Item>
-          ))}
-        </Content>
-      </Root>
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      {helperText && !error && (
-        <p className="text-sm text-muted-foreground">{helperText}</p>
-      )}
-    </div>
-  );
-});
-Select.displayName = "Select";
+const SelectValue = SelectPrimitive.Value;
 
 export {
   Select,
-  Root,
-  Group,
-  Value,
-  Trigger,
-  Content,
-  Label,
-  Item,
-  Separator,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  type SelectProps,
 };

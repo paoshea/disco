@@ -1,17 +1,19 @@
+// Inspired by shadcn-ui toast implementation
 import * as React from "react";
+
+import type {
+  ToastActionElement,
+  ToastProps,
+} from "@/components/ui/toast";
 
 const TOAST_LIMIT = 1;
 const TOAST_REMOVE_DELAY = 1000000;
 
-type ToasterToast = {
+type ToasterToast = ToastProps & {
   id: string;
   title?: string;
   description?: string;
-  action?: React.ReactNode;
-  variant?: "default" | "destructive";
-  duration?: number;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
+  action?: ToastActionElement;
 };
 
 const actionTypes = {
@@ -20,6 +22,13 @@ const actionTypes = {
   DISMISS_TOAST: "DISMISS_TOAST",
   REMOVE_TOAST: "REMOVE_TOAST",
 } as const;
+
+let count = 0;
+
+function genId() {
+  count = (count + 1) % Number.MAX_VALUE;
+  return count.toString();
+}
 
 type ActionType = typeof actionTypes;
 
@@ -31,15 +40,14 @@ type Action =
   | {
       type: ActionType["UPDATE_TOAST"];
       toast: Partial<ToasterToast>;
-      id: string;
     }
   | {
       type: ActionType["DISMISS_TOAST"];
-      toastId?: string;
+      toastId?: ToasterToast["id"];
     }
   | {
       type: ActionType["REMOVE_TOAST"];
-      toastId?: string;
+      toastId?: ToasterToast["id"];
     };
 
 interface State {
@@ -76,13 +84,15 @@ export const reducer = (state: State, action: Action): State => {
       return {
         ...state,
         toasts: state.toasts.map((t) =>
-          t.id === action.id ? { ...t, ...action.toast } : t
+          t.id === action.toast.id ? { ...t, ...action.toast } : t
         ),
       };
 
     case "DISMISS_TOAST": {
       const { toastId } = action;
 
+      // ! Side effects ! - This could be extracted into a dismissToast() action,
+      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -103,7 +113,6 @@ export const reducer = (state: State, action: Action): State => {
         ),
       };
     }
-
     case "REMOVE_TOAST":
       if (action.toastId === undefined) {
         return {
@@ -132,15 +141,13 @@ function dispatch(action: Action) {
 type Toast = Omit<ToasterToast, "id">;
 
 function toast({ ...props }: Toast) {
-  const id = crypto.randomUUID();
+  const id = genId();
 
   const update = (props: ToasterToast) =>
     dispatch({
       type: "UPDATE_TOAST",
-      id,
-      toast: props,
+      toast: { ...props, id },
     });
-
   const dismiss = () => dispatch({ type: "DISMISS_TOAST", toastId: id });
 
   dispatch({
@@ -149,14 +156,14 @@ function toast({ ...props }: Toast) {
       ...props,
       id,
       open: true,
-      onOpenChange: (open: boolean) => {
+      onOpenChange: (open) => {
         if (!open) dismiss();
       },
     },
   });
 
   return {
-    id,
+    id: id,
     dismiss,
     update,
   };

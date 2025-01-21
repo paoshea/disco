@@ -5,9 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { MatchingContainer } from '@/components/matching/MatchingContainer';
 import { locationService } from '@/services/location/location.service';
-import { Switch } from '@/components/ui/switch';
+import { Switch } from '@/components/ui/Switch';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 
 export default function MatchingPage() {
   const router = useRouter();
@@ -20,80 +20,74 @@ export default function MatchingPage() {
       return;
     }
 
-    // Check if background sync is supported
-    const checkBackgroundSupport = async () => {
-      if ('serviceWorker' in navigator && 'SyncManager' in window) {
-        try {
-          const registration = await navigator.serviceWorker.ready;
-          if ('periodicSync' in registration) {
-            const status = await navigator.permissions.query({
-              name: 'periodic-background-sync' as PermissionName,
-            });
-            setBackgroundTracking(status.state === 'granted');
-          }
-        } catch (error) {
-          console.error('Error checking background sync support:', error);
-        }
-      }
-    };
-
-    checkBackgroundSupport();
-
-    // Initialize location service with background mode
+    // Start location tracking
     locationService.startTracking(user.id, {}, backgroundTracking).catch((error) => {
-      console.error('Error starting location tracking:', error);
+      console.error('Failed to start location tracking:', error);
       toast({
-        title: 'Location Tracking Error',
-        description: 'Failed to start location tracking. Please check your permissions.',
+        title: 'Error',
+        description: 'Failed to start location tracking',
         variant: 'destructive',
       });
     });
 
     return () => {
-      locationService.stopTracking(user.id);
+      if (user?.id) {
+        locationService.stopTracking(user.id);
+      }
     };
   }, [user?.id, router, backgroundTracking]);
 
-  const handleBackgroundTrackingChange = async (enabled: boolean) => {
+  const handleBackgroundTrackingChange = async (checked: boolean) => {
+    if (!user?.id) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to change tracking settings',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
       // Stop current tracking
-      await locationService.stopTracking(user.id!);
+      await locationService.stopTracking(user.id);
       
       // Start tracking with new background mode
-      await locationService.startTracking(user.id!, {}, enabled);
+      await locationService.startTracking(user.id, {}, checked);
       
-      setBackgroundTracking(enabled);
+      setBackgroundTracking(checked);
       
       toast({
         title: 'Background Tracking',
-        description: enabled 
+        description: checked 
           ? 'Background location tracking enabled'
           : 'Background location tracking disabled',
+        variant: 'default'
       });
     } catch (error) {
-      console.error('Error toggling background tracking:', error);
+      console.error('Error updating tracking settings:', error);
       toast({
         title: 'Error',
-        description: 'Failed to toggle background tracking',
+        description: 'Failed to update tracking settings',
         variant: 'destructive',
       });
     }
   };
 
-  if (!user) return null;
-
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between p-4 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-        <div className="flex items-center space-x-4">
-          <Switch
-            id="background-tracking"
-            checked={backgroundTracking}
-            onCheckedChange={handleBackgroundTrackingChange}
-          />
-          <Label htmlFor="background-tracking">
-            Background Location Tracking
-          </Label>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-6 flex items-center space-x-4">
+        <div className="flex flex-col space-y-2">
+          <Label htmlFor="background-tracking">Background Location</Label>
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="background-tracking"
+              checked={backgroundTracking}
+              onChange={handleBackgroundTrackingChange}
+            />
+            <span className="text-sm text-muted-foreground">
+              Allow location updates when the app is in the background
+            </span>
+          </div>
         </div>
       </div>
       <MatchingContainer />

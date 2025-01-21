@@ -88,7 +88,7 @@ export class MatchingService {
     );
 
     if (!nearbyUsers) {
-      const nearbyPrismaUsers = await this.getNearbyUsers(userId);
+      const nearbyPrismaUsers = await this.getNearbyUsers(userId, matchPreferences.maxDistance);
       nearbyUsers = nearbyPrismaUsers.map(convertToAppUser);
       await redis.setex(
         cacheKey,
@@ -274,28 +274,40 @@ export class MatchingService {
     `;
   }
 
-  private async getNearbyUsers(userId: string): Promise<PrismaUser[]> {
-    const users = await db.user.findMany({
+  private async getNearbyUsers(userId: string, maxDistance: number): Promise<PrismaUser[]> {
+    const user = await userService.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    const userLocation = await locationService.getLocation(userId);
+    if (!userLocation?.latitude || !userLocation?.longitude) {
+      return [];
+    }
+
+    const nearbyUsers = await db.user.findMany({
       where: {
-        id: { not: userId },
+        NOT: {
+          id: userId,
+        },
         locations: {
           some: {
+            latitude: {
+              gte: userLocation.latitude - maxDistance / 111000, // rough conversion to degrees
+              lte: userLocation.latitude + maxDistance / 111000,
+            },
+            longitude: {
+              gte: userLocation.longitude - maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
+              lte: userLocation.longitude + maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
+            },
             sharingEnabled: true,
-            timestamp: {
+            lastUpdated: {
               gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
             }
           }
         }
       },
-      include: {
-        locations: {
-          orderBy: { timestamp: 'desc' },
-          take: 1
-        }
-      }
     });
 
-    return users;
+    return nearbyUsers;
   }
 
   /**

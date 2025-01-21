@@ -1,56 +1,47 @@
-import React from 'react';
-import { Switch as HeadlessSwitch } from '@headlessui/react';
-import clsx from 'clsx';
+"use client";
 
-interface SwitchProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  label?: string;
-  description?: string;
-  disabled?: boolean;
-  className?: string;
-}
+import * as React from "react";
+import * as SwitchPrimitives from "@radix-ui/react-switch";
+import { cn } from "@/utils/cn";
 
-export const Switch: React.FC<SwitchProps> = ({
-  checked,
-  onChange,
-  label,
-  description,
-  disabled = false,
-  className = '',
-}) => {
-  return (
-    <HeadlessSwitch.Group
-      as="div"
-      className={clsx('flex items-center', className)}
-    >
-      <HeadlessSwitch
-        checked={checked}
-        onChange={onChange}
-        disabled={disabled}
-        className={clsx(
-          checked ? 'bg-primary-600' : 'bg-gray-200',
-          disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer',
-          'relative inline-flex h-6 w-11 flex-shrink-0 rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2'
-        )}
-      >
-        <span className="sr-only">{label}</span>
-        <span
-          aria-hidden="true"
-          className={clsx(
-            checked ? 'translate-x-5' : 'translate-x-0',
-            'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out'
-          )}
-        />
-      </HeadlessSwitch>
-      {(label || description) && (
-        <HeadlessSwitch.Label as="span" className="ml-3" passive>
-          <span className="text-sm font-medium text-gray-900">{label}</span>
-          {description && (
-            <span className="text-sm text-gray-500">{description}</span>
-          )}
-        </HeadlessSwitch.Label>
-      )}
-    </HeadlessSwitch.Group>
-  );
+type SwitchProps = Omit<
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>,
+  "onCheckedChange" | "onChange"
+> & {
+  onChange?: (checked: boolean) => void | Promise<void>;
 };
+
+const Switch = React.forwardRef<
+  React.ElementRef<typeof SwitchPrimitives.Root>,
+  SwitchProps
+>(({ className, onChange, ...props }, ref) => {
+  const handleChange = React.useCallback(
+    async (checked: boolean) => {
+      if (onChange) {
+        await onChange(checked);
+      }
+    },
+    [onChange]
+  );
+
+  return (
+    <SwitchPrimitives.Root
+      className={cn(
+        "peer inline-flex h-[24px] w-[44px] shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
+        className
+      )}
+      onCheckedChange={handleChange}
+      {...props}
+      ref={ref}
+    >
+      <SwitchPrimitives.Thumb
+        className={cn(
+          "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
+        )}
+      />
+    </SwitchPrimitives.Root>
+  );
+});
+Switch.displayName = SwitchPrimitives.Root.displayName;
+
+export { Switch, type SwitchProps };

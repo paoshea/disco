@@ -46,7 +46,7 @@ export default function LoginPage() {
         toast({
           title: "Login Successful",
           description: 'You have been logged in successfully',
-          variant: "success"
+          variant: "default"
         });
         router.push('/dashboard');
         return;

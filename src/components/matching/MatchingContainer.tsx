@@ -1,33 +1,30 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
+import type { Session } from 'next-auth';
 import { Match, MatchPreferences } from '@/types/match';
 import { MatchSocketService } from '@/services/websocket/match.socket';
 import { MatchList } from './MatchList';
 import { MatchPreferencesPanel } from '@/components/matching/MatchPreferencesPanel';
 import { MatchMapView } from './MatchMapView';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
-// Extend the Session type from next-auth
-declare module "next-auth" {
-  interface Session {
-    accessToken?: string;
-    user: {
-      id: string;
-      email: string;
-      role: string;
-      firstName: string;
-      lastName: string;
-    }
-  }
+interface ExtendedSession extends Omit<Session, 'user'> {
+  user: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    role: string;
+  };
+  accessToken?: string;
 }
 
 export function MatchingContainer() {
-  const { data: session } = useSession();
+  const { data: session } = useSession() as { data: ExtendedSession | null };
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'map'>('list');
-  const { toast } = useToast();
   const socketService = MatchSocketService.getInstance();
 
   const fetchMatches = useCallback(async (preferences?: Partial<MatchPreferences>) => {
@@ -61,7 +58,7 @@ export function MatchingContainer() {
     } finally {
       setLoading(false);
     }
-  }, [toast]);
+  }, []);
 
   const handleMatchAction = useCallback(async (matchId: string, action: string, reason?: string) => {
     try {
@@ -92,7 +89,7 @@ export function MatchingContainer() {
         variant: 'destructive',
       });
     }
-  }, [toast]);
+  }, []);
 
   const handlePreferencesUpdate = useCallback(async (preferences: MatchPreferences) => {
     try {
@@ -119,7 +116,7 @@ export function MatchingContainer() {
         variant: 'destructive',
       });
     }
-  }, [fetchMatches, toast]);
+  }, [fetchMatches]);
 
   // Setup WebSocket connection and listeners
   useEffect(() => {
@@ -160,7 +157,18 @@ export function MatchingContainer() {
       matchActionUnsub();
       socketService.disconnect();
     };
-  }, [session?.user?.id, session?.accessToken, socketService, fetchMatches, toast]);
+  }, [session?.user?.id, session?.accessToken, socketService, fetchMatches]);
+
+  useEffect(() => {
+    if (!session?.user) {
+      toast({
+        title: 'Error',
+        description: 'You must be logged in to view matches',
+        variant: 'destructive',
+      });
+      return;
+    }
+  }, [session]);
 
   return (
     <div className="container mx-auto px-4 py-6">

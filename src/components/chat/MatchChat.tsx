@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { Message, MessageWithSender } from '@/types/chat';
 import { MatchSocketService } from '@/services/websocket/match.socket';
-import { useToast } from '@/components/ui/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import { MessageReactions } from './MessageReactions';
 import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
@@ -52,7 +52,6 @@ export const MatchChat: React.FC<MatchChatProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showLocationModal, setShowLocationModal] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const { toast } = useToast();
   const socketService = MatchSocketService.getInstance();
 
   useEffect(() => {

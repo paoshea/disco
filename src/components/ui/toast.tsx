@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import * as ToastPrimitives from "@radix-ui/react-toast";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -26,7 +28,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background text-foreground",
+        default: "border bg-background",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
@@ -109,46 +111,7 @@ const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-interface ToastProps {
-  id: string;
-  title?: string;
-  description?: string;
-  variant?: 'default' | 'destructive';
-  onDismiss: (id: string) => void;
-}
-
-export const Toast: React.FC<ToastProps> = ({
-  id,
-  title,
-  description,
-  variant = 'default',
-  onDismiss,
-}) => {
-  return (
-    <Toast>
-      <ToastTitle>{title}</ToastTitle>
-      <ToastDescription>{description}</ToastDescription>
-      <ToastAction asChild>
-        <button onClick={() => onDismiss(id)}>
-          <ToastClose />
-        </button>
-      </ToastAction>
-    </Toast>
-  );
-};
-
-interface ToastProviderProps {
-  children: React.ReactNode;
-}
-
-export const ToastProvider: React.FC<ToastProviderProps> = ({ children }) => {
-  return (
-    <>
-      {children}
-      <ToastViewport />
-    </>
-  );
-};
+type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
 
 type ToastActionElement = React.ReactElement<typeof ToastAction>;
 

@@ -39,16 +39,21 @@ export class MatchAlgorithm {
     matchPrefs: MatchPreferences
   ): MatchScore {
     const scores: Partial<Record<keyof WeightedCriteria, number>> = {};
+    let distance: number | null = null;
 
     // Distance score (inverse relationship - closer is better)
-    const distance = calculateDistance(
-      user.location.latitude,
-      user.location.longitude,
-      potentialMatch.location.latitude,
-      potentialMatch.location.longitude
-    );
-    const maxDistance = Math.max(userPrefs.maxDistance, matchPrefs.maxDistance);
-    scores.distance = 1 - Math.min(distance / maxDistance, 1);
+    if (user.location && potentialMatch.location) {
+      distance = calculateDistance(
+        user.location.latitude,
+        user.location.longitude,
+        potentialMatch.location.latitude,
+        potentialMatch.location.longitude
+      );
+      const maxDistance = Math.max(userPrefs.maxDistance, matchPrefs.maxDistance);
+      scores.distance = 1 - Math.min(distance / maxDistance, 1);
+    } else {
+      scores.distance = 0.5;
+    }
 
     // Interest overlap score
     const userInterests = new Set(user.interests || []);
