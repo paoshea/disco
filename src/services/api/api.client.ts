@@ -3,10 +3,17 @@ import axios, {
   type InternalAxiosRequestConfig,
   type AxiosResponse,
 } from 'axios';
+import type { User } from '@/types/user';
 
 interface AuthResponse {
   token: string;
   refreshToken?: string;
+  user: User;
+  success?: boolean;
+  error?: string;
+  message?: string;
+  needsVerification?: boolean;
+  expiresIn?: number;
 }
 
 // Create axios instance with default config
@@ -37,12 +44,13 @@ apiClient.interceptors.request.use(
     }
     return config;
   },
-  (error) => {
+  error => {
     return Promise.reject(error);
   }
 );
 
-interface ExtendedInternalAxiosRequestConfig extends InternalAxiosRequestConfig {
+interface ExtendedInternalAxiosRequestConfig
+  extends InternalAxiosRequestConfig {
   _retry?: boolean;
 }
 
@@ -62,12 +70,9 @@ apiClient.interceptors.response.use(
         }
 
         // Call refresh token endpoint
-        const response = await axios.post<AuthResponse>(
-          '/api/auth/refresh',
-          {
-            refreshToken,
-          }
-        );
+        const response = await axios.post<AuthResponse>('/api/auth/refresh', {
+          refreshToken,
+        });
 
         const { token } = response.data;
         localStorage.setItem('token', token);

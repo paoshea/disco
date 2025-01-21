@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
 import { z } from 'zod';
+import type { MatchStatus } from '@/types/match';
 
 // Configuration
 export const dynamic = 'force-dynamic'; // Disable static optimization
@@ -12,14 +13,6 @@ export const runtime = 'nodejs'; // Use Node.js runtime
 type RouteContext = {
   params: Promise<Record<string, string>>;
 };
-
-interface MatchStatus {
-  id: string;
-  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
-  userId: string;
-  matchId: string;
-  updatedAt: Date;
-}
 
 // Validation schema
 const matchActionSchema = z.object({
@@ -49,9 +42,12 @@ export async function GET(
 
     // Get match details
     const matchingService = MatchingService.getInstance();
-    const match = await matchingService.getMatchStatus(session.user.id, id);
+    const status: MatchStatus = await matchingService.getMatchStatus(
+      session.user.id,
+      id
+    );
 
-    return NextResponse.json({ status: match });
+    return NextResponse.json({ status });
   } catch (error) {
     console.error('Error getting match:', error);
     return NextResponse.json({ error: 'Failed to get match' }, { status: 500 });
@@ -105,7 +101,10 @@ export async function POST(
     }
 
     // Get updated match status
-    const status = await matchingService.getMatchStatus(session.user.id, id);
+    const status: MatchStatus = await matchingService.getMatchStatus(
+      session.user.id,
+      id
+    );
     return NextResponse.json({ status });
   } catch (error) {
     console.error('Error updating match:', error);

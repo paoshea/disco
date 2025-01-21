@@ -5,6 +5,7 @@ import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
 import type { UserPreferences } from '@/types/user';
 
+// Rate limiter for match operations
 const rateLimiter = new RateLimiter({
   windowMs: 60000, // 1 minute
   maxRequests: 100,
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Parse query parameters
     const searchParams = req.nextUrl.searchParams;
-    const preferences: UserPreferences = {
+    const preferences = userPreferencesSchema.parse({
       maxDistance: Number(searchParams.get('maxDistance')) || 10,
       ageRange: {
         min: Number(searchParams.get('minAge')) || 18,
@@ -91,17 +92,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
         meetupCheckins: true,
         emergencyContactAlerts: true,
       },
-    };
-
-    // Validate preferences
-    const result = userPreferencesSchema.safeParse(preferences);
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid preferences' },
-        { status: 400 }
-      );
-    }
+    });
 
     // Get matches
     const matchingService = MatchingService.getInstance();
@@ -142,7 +133,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const preferences: UserPreferences = result.data;
+    const preferences = result.data;
 
     // Update preferences
     const matchingService = MatchingService.getInstance();

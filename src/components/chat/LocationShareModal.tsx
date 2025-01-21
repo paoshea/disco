@@ -7,7 +7,7 @@ import { PlacesAutocomplete } from '../map/PlacesAutocomplete';
 import { PlaceSuggestions } from './PlaceSuggestions';
 import { RoutePlanner } from './RoutePlanner';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import type { MapMarker, RouteInfo } from '@/types/map';
+import type { MapMarker } from '@/types/map';
 
 interface LocationShareModalProps {
   isOpen: boolean;
@@ -26,6 +26,12 @@ interface Location {
 interface LocationMapMarker extends MapMarker {
   location: Location;
   scale?: number;
+}
+
+interface Place {
+  position: google.maps.LatLngLiteral;
+  name: string;
+  address: string;
 }
 
 const defaultCenter = new google.maps.LatLng(0, 0);
@@ -61,9 +67,6 @@ const createMarkerIcon = (url: string) => ({
   anchor: new google.maps.Point(16, 32), // Center bottom anchor point
 });
 
-const selectedMarkerIcon = createMarkerIcon(
-  '/images/markers/selected-marker.png'
-);
 const matchMarkerIcon = createMarkerIcon('/images/markers/match-marker.png');
 
 export function LocationShareModal({
@@ -156,6 +159,17 @@ export function LocationShareModal({
     setMarkers(prevMarkers => prevMarkers.map(m => ({ ...m, scale: 1 })));
   };
 
+  const handlePlaceSuggestionsSelect = (place: Place) => {
+    const location: Location = {
+      latitude: place.position.lat,
+      longitude: place.position.lng,
+      name: place.name,
+      address: place.address,
+    };
+    setSelectedLocation(location);
+    onLocationSelect(location);
+  };
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -201,58 +215,39 @@ export function LocationShareModal({
 
               <TabsContent value="map" className="mt-4">
                 <div className="mb-4">
-                  <PlacesAutocomplete
-                    onPlaceSelect={handlePlaceSelect}
-                    placeholder="Search for a location"
-                    className="w-full"
-                  />
+                  <PlacesAutocomplete onPlaceSelect={handlePlaceSelect} />
                 </div>
 
-                <div className="h-[400px] overflow-hidden rounded-lg border">
+                <div className="h-96 w-full overflow-hidden rounded-lg">
                   <BaseMapView
                     center={getMapCenter()}
-                    zoom={14}
+                    zoom={13}
                     markers={markers}
-                    onMarkerClick={marker => {
-                      const locationMarker = marker as LocationMapMarker;
-                      if (locationMarker.location) {
-                        setSelectedLocation(locationMarker.location);
-                      }
-                    }}
-                    onMarkerMouseEnter={marker => {
-                      const locationMarker = marker as LocationMapMarker;
-                      setMarkers(prevMarkers =>
-                        prevMarkers.map(m =>
-                          m.id === locationMarker.id ? { ...m, scale: 1.2 } : m
-                        )
-                      );
-                    }}
                     onMarkerMouseLeave={handleMarkerMouseLeave}
                   />
                 </div>
               </TabsContent>
 
-              <TabsContent value="suggestions">
-                <PlaceSuggestions
-                  onPlaceSelect={handlePlaceSelect}
-                  matchLocation={matchLocation || defaultCenter}
-                  userLocation={userLocation || defaultCenter}
-                />
+              <TabsContent value="suggestions" className="mt-4">
+                {userLocation && matchLocation ? (
+                  <PlaceSuggestions
+                    userLocation={userLocation}
+                    matchLocation={matchLocation}
+                    onPlaceSelect={handlePlaceSuggestionsSelect}
+                  />
+                ) : (
+                  <div className="text-center text-gray-500">
+                    Loading locations...
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
 
-            {selectedLocation && matchLocation && (
+            {selectedLocation && userLocation && (
               <div className="mt-4">
                 <RoutePlanner
-                  origin={matchLocation}
+                  origin={userLocation}
                   destination={locationToLatLng(selectedLocation)}
-                  onRoutePathUpdate={path => {
-                    // Route path updates are handled by the RoutePlanner component
-                  }}
-                  onRouteSelect={() => {
-                    onLocationSelect(selectedLocation);
-                    onClose();
-                  }}
                 />
               </div>
             )}

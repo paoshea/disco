@@ -86,6 +86,63 @@
    - Represents a user's participation in an event
    - Links users to events with status information
 
+
+### Location and Places Types
+
+1. **Place** (`src/components/chat/PlaceSuggestions.tsx`)
+
+   ```typescript
+   interface Place {
+     id: string;
+     name: string;
+     address: string;
+     category: string;
+     rating: number;
+     priceLevel: number;
+     position: {
+       lat: number;
+       lng: number;
+     };
+   }
+   ```
+
+2. **GooglePlaceType** (`src/components/chat/PlaceSuggestions.tsx`)
+
+   ```typescript
+   type GooglePlaceType = 'cafe' | 'restaurant' | 'bar' | 'establishment';
+   ```
+
+3. **PlaceCategory** (`src/components/chat/PlaceSuggestions.tsx`)
+   ```typescript
+   type PlaceCategory = {
+     id: GooglePlaceType;
+     label: string;
+     icon: React.ElementType;
+   };
+   ```
+
+### Component Types
+
+1. **Component Props** (`src/components/types/props.ts`)
+
+   ```typescript
+   interface ComponentProps {
+     children: React.ReactNode;
+     className?: string;
+     style?: React.CSSProperties;
+   }
+   ```
+
+2. **Component States** (`src/components/types/states.ts`)
+
+   ```typescript
+   interface ComponentState {
+     loading: boolean;
+     error?: string;
+     data?: any;
+   }
+   ``` 
+
 ### Next.js App Router Route Handler Types
 
 1. **Route Handler Context** (`app/api/**/route.ts`)
@@ -189,6 +246,18 @@
    - Example:
      ```typescript
      onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
+     ```
+ 
+6. **External API Integration**
+   - When working with external APIs (e.g., Google Places), prefer using string literal types
+   - Map external API types to internal types for better type safety
+   - Example:
+     ```typescript
+     // Instead of using the API's type directly
+     type: google.maps.places.PlaceType
+     
+     // Define our own type that matches the API
+     type GooglePlaceType = 'cafe' | 'restaurant' | 'bar' | 'establishment';
      ```
 
 ## File Organization

@@ -64,8 +64,10 @@ class AuthService {
           password,
         }
       );
-      const { token, refreshToken } = response.data;
+
+      const { token, refreshToken, user } = response.data;
       this.setTokens(token, refreshToken);
+
       return response.data;
     } catch (error) {
       throw this.handleError(error);

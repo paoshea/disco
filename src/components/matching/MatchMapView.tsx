@@ -4,18 +4,10 @@ import {
   BaseMapView,
   type MapMarker as BaseMapMarker,
 } from '../map/BaseMapView';
-import type { MapMarker } from '@/types/map';
-import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from '@/components/ui/Select';
+import { Select } from '@/components/ui/Select';
 import { Card, CardContent } from '@/components/ui/Card';
-import { Search, MapPin, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
@@ -52,7 +44,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   center = { lat: 0, lng: 0 },
   zoom = 12,
 }) => {
-  const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [hoveredMatch, setHoveredMatch] = useState<Match | null>(null);
   const [filters, setFilters] = useState<FilterState>({
@@ -109,94 +100,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     setFilters(prev => ({ ...prev, timeWindow: value }));
   };
 
-  const handleAgeRangeChange = (values: number[]) => {
-    setFilters(prev => ({
-      ...prev,
-      minAge: values[0],
-      maxAge: values[1],
-    }));
-  };
-
-  const filteredMarkers = useMemo<ExtendedMapMarker[]>(() => {
-    return filteredMatches
-      .filter(match => {
-        // Filter by search query
-        if (
-          searchQuery &&
-          !match.name.toLowerCase().includes(searchQuery.toLowerCase())
-        ) {
-          return false;
-        }
-
-        // Filter by age range
-        if (match.age < filters.minAge || match.age > filters.maxAge) {
-          return false;
-        }
-
-        // Filter by activity type
-        if (
-          filters.activity !== 'all' &&
-          match.activityPreferences?.type !== filters.activity
-        ) {
-          return false;
-        }
-
-        // Filter by time window
-        if (
-          filters.timeWindow !== 'all' &&
-          match.activityPreferences?.timeWindow !== filters.timeWindow
-        ) {
-          return false;
-        }
-
-        // Filter by map bounds
-        if (mapBounds) {
-          const matchLatLng = new google.maps.LatLng(
-            match.location.latitude,
-            match.location.longitude
-          );
-          if (!mapBounds.contains(matchLatLng)) {
-            return false;
-          }
-        }
-
-        return true;
-      })
-      .map(match => ({
-        id: match.id,
-        position: {
-          lat: match.location.latitude,
-          lng: match.location.longitude,
-        },
-        title: match.name,
-        icon: {
-          url:
-            hoveredMatch === match
-              ? '/images/match-marker-active.svg'
-              : '/images/match-marker.svg',
-          scaledSize: new google.maps.Size(
-            hoveredMatch === match ? 48 : 40,
-            hoveredMatch === match ? 48 : 40
-          ),
-          anchor: new google.maps.Point(
-            hoveredMatch === match ? 24 : 20,
-            hoveredMatch === match ? 48 : 40
-          ),
-        },
-        label:
-          hoveredMatch === match
-            ? {
-                text: match.name,
-                color: '#FF4B91',
-                fontSize: '14px',
-                fontWeight: 'bold',
-                className: 'map-marker-label',
-              }
-            : undefined,
-      }));
-  }, [filteredMatches, searchQuery, filters, mapBounds, hoveredMatch]);
-
-  const createMarker = useCallback((match: Match): BaseMapMarker => {
+  const createMarker = useCallback((match: Match) => {
     matchDataMap.set(match.id, match);
 
     const icon = {
@@ -279,7 +183,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       });
       return;
     }
-    setShowFilters(false);
     toast({
       title: 'Filters Applied',
       description: 'Map view has been updated with your filters',

@@ -20,18 +20,12 @@ interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
   };
 }
 
-interface NavigatorWakeLock extends Navigator {
-  readonly wakeLock: WakeLock;
-}
-
-interface WakeLock {
-  request(type: WakeLockType): Promise<WakeLockSentinel>;
-}
-
-interface WakeLockSentinel extends EventTarget {
+// Define custom WakeLock types since they're not in lib.dom.d.ts
+interface WakeLockSentinel {
   readonly released: boolean;
   readonly type: WakeLockType;
   release(): Promise<void>;
+  onrelease: ((this: WakeLockSentinel, ev: Event) => any) | null;
   addEventListener(
     type: 'release',
     listener: EventListenerOrEventListenerObject,
@@ -42,6 +36,14 @@ interface WakeLockSentinel extends EventTarget {
     listener: EventListenerOrEventListenerObject,
     options?: boolean | EventListenerOptions
   ): void;
+}
+
+interface WakeLock {
+  request(type: WakeLockType): Promise<WakeLockSentinel>;
+}
+
+interface NavigatorWithWakeLock {
+  wakeLock?: WakeLock;
 }
 
 type WakeLockType = 'screen';
@@ -59,6 +61,7 @@ export class LocationService {
     timeout: 10000,
     maximumAge: 0,
   };
+  private wakeLock: WakeLockSentinel | null = null;
 
   private constructor() {
     this.prisma = db.location;
@@ -374,15 +377,7 @@ export class LocationService {
 
     // Request wake lock for background tracking
     if (background && 'wakeLock' in navigator) {
-      try {
-        const nav = navigator as NavigatorWakeLock;
-        const wakeLock = await nav.wakeLock.request('screen');
-        wakeLock.addEventListener('release', () => {
-          console.log('Wake Lock released');
-        });
-      } catch (err) {
-        console.error('Wake Lock error:', err);
-      }
+      await this.requestWakeLock();
     }
   }
 
@@ -406,6 +401,9 @@ export class LocationService {
         }
         this.locationQueue.delete(userId);
       }
+
+      // Release wake lock
+      await this.releaseWakeLock();
     }
   }
 
@@ -507,6 +505,30 @@ export class LocationService {
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c; // Distance in meters
+  }
+
+  private async requestWakeLock(): Promise<void> {
+    try {
+      const nav = navigator as NavigatorWithWakeLock;
+      if ('wakeLock' in nav && nav.wakeLock) {
+        this.wakeLock = await nav.wakeLock.request('screen');
+        console.log('Wake Lock is active');
+      }
+    } catch (err) {
+      console.error('Error requesting wake lock:', err);
+    }
+  }
+
+  private async releaseWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      try {
+        await this.wakeLock.release();
+        this.wakeLock = null;
+        console.log('Wake Lock released');
+      } catch (err) {
+        console.error('Error releasing wake lock:', err);
+      }
+    }
   }
 }
 
