@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Coffee, Utensils, Briefcase, Beer, Star, MapPin } from 'lucide-react';
+import { Coffee, Utensils, Briefcase, Beer, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ScrollArea } from '@/components/ui/ScrollArea';
@@ -77,18 +77,34 @@ export function PlaceSuggestions({
         }
       );
 
-      const placesData = results.map(place => ({
-        id: place.place_id!,
-        name: place.name!,
-        address: place.vicinity!,
-        category,
-        rating: place.rating || 0,
-        priceLevel: place.price_level || 0,
-        position: {
-          lat: place.geometry!.location!.lat(),
-          lng: place.geometry!.location!.lng(),
-        },
-      }));
+      const placesData = results
+        .filter((place): place is google.maps.places.PlaceResult & {
+          place_id: string;
+          name: string;
+          vicinity: string;
+          geometry: {
+            location: google.maps.LatLng;
+          };
+        } => {
+          return !!(
+            place.place_id &&
+            place.name &&
+            place.vicinity &&
+            place.geometry?.location
+          );
+        })
+        .map(place => ({
+          id: place.place_id,
+          name: place.name,
+          address: place.vicinity,
+          category,
+          rating: place.rating || 0,
+          priceLevel: place.price_level || 0,
+          position: {
+            lat: place.geometry.location.lat(),
+            lng: place.geometry.location.lng(),
+          },
+        })) satisfies Place[];
 
       setPlaces(placesData);
     } catch (error) {

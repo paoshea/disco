@@ -1,6 +1,7 @@
 import React, { useMemo, useState, useCallback, ChangeEvent } from 'react';
 import { Match } from '@/types/match';
-import { BaseMapView, MapMarker } from '../map/BaseMapView';
+import { BaseMapView } from '../map/BaseMapView';
+import type { MapMarker } from '@/types/map';
 import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
 import {
@@ -15,7 +16,7 @@ import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
-interface ExtendedMapMarker extends MapMarker {
+interface ExtendedMapMarker extends Omit<MapMarker, 'data'> {
   data: Match;
   icon: {
     url: string;
@@ -68,6 +69,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   const [mapStyle, setMapStyle] = useState('roadmap');
   const [matchDistance, setMatchDistance] = useState('10km');
 
+  const [filteredMatches, setFilteredMatches] = useState<Match[]>(matches);
+
   const { toast } = useToast();
 
   const mapStyleOptions = [
@@ -116,7 +119,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   };
 
   const filteredMarkers = useMemo<ExtendedMapMarker[]>(() => {
-    return matches
+    return filteredMatches
       .filter(match => {
         // Filter by search query
         if (
@@ -193,7 +196,30 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
               }
             : undefined,
       }));
-  }, [matches, searchQuery, filters, mapBounds, hoveredMatch]);
+  }, [filteredMatches, searchQuery, filters, mapBounds, hoveredMatch]);
+
+  const createMarker = useCallback((match: Match): MapMarker => {
+    const icon = {
+      url: match.profileImage || '/images/markers/default-marker.png',
+      scaledSize: new google.maps.Size(40, 40),
+      anchor: new google.maps.Point(20, 20),
+    };
+
+    return {
+      id: match.id,
+      position: {
+        lat: match.location.latitude,
+        lng: match.location.longitude,
+      },
+      title: match.name,
+      icon,
+      data: match as unknown as Record<string, unknown>,
+    };
+  }, []);
+
+  const markers = useMemo(() => {
+    return filteredMatches.map(createMarker);
+  }, [filteredMatches, createMarker]);
 
   const mapOptions = useMemo(
     () => ({
@@ -217,24 +243,23 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     [mapStyle]
   );
 
-  const handleMarkerClick = useCallback(
-    (marker: MapMarker) => {
-      const extendedMarker = marker as ExtendedMapMarker;
-      if (extendedMarker.data) {
-        onMarkerClick(extendedMarker.data);
-      }
-    },
-    [onMarkerClick]
-  );
+  const handleMarkerClick = useCallback((marker: MapMarker) => {
+    const data = marker.data as Match | undefined;
+    if (!data) return;
+    
+    if ('bio' in data && 'age' in data && 'location' in data && 'interests' in data) {
+      onMarkerClick(data);
+    }
+  }, [onMarkerClick]);
 
-  const handleMarkerMouseEnter = useCallback(
-    (marker: MapMarker & { data?: Match }) => {
-      if (marker.data) {
-        setHoveredMatch(marker.data);
-      }
-    },
-    []
-  );
+  const handleMarkerMouseEnter = useCallback((marker: MapMarker) => {
+    const data = marker.data as Match | undefined;
+    if (!data) return;
+    
+    if ('bio' in data && 'age' in data && 'location' in data && 'interests' in data) {
+      setHoveredMatch(data);
+    }
+  }, []);
 
   const handleMarkerMouseLeave = useCallback(() => {
     setHoveredMatch(null);
@@ -265,12 +290,12 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   };
 
   return (
-    <div className="relative h-full">
+    <div className="relative h-full w-full">
       <div className="absolute inset-0">
         <BaseMapView
-          center={center}
-          zoom={zoom}
-          markers={filteredMarkers}
+          center={center || { lat: 0, lng: 0 }}
+          zoom={zoom || 12}
+          markers={markers}
           onMarkerClick={handleMarkerClick}
           onMarkerMouseEnter={handleMarkerMouseEnter}
           onMarkerMouseLeave={handleMarkerMouseLeave}

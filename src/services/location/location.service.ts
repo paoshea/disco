@@ -25,7 +25,7 @@ export class LocationService {
   private static instance: LocationService;
   private prisma: typeof db.location;
   private trackingIntervals: Map<string, number> = new Map();
-  private backgroundSync: boolean = false;
+  private backgroundSync = false;
   private locationQueue: Map<string, GeolocationPosition[]> = new Map();
   private readonly SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
   private readonly QUEUE_SIZE_LIMIT = 100;
@@ -310,7 +310,7 @@ export class LocationService {
   async startTracking(
     userId: string,
     options: GeolocationOptions = {},
-    background: boolean = false
+    background = false
   ): Promise<void> {
     if (this.trackingIntervals.has(userId)) {
       console.warn('Location tracking already active for user:', userId);

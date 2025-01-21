@@ -6,13 +6,28 @@ export interface LatLngLiteral {
 
 export interface MapMarker {
   id: string;
-  position: LatLngLiteral;
+  position: google.maps.LatLngLiteral;
   title: string;
-  icon?: {
+  icon: {
     url: string;
-    scaledSize?: { width: number; height: number };
+    scaledSize: google.maps.Size;
+    anchor: google.maps.Point;
   };
-  onClick?: () => void;
+  label?: {
+    text: string;
+    color: string;
+    fontSize: string;
+    fontWeight: string;
+    className: string;
+  };
+  data?: Record<string, unknown>;
+  location?: {
+    latitude: number;
+    longitude: number;
+    name: string;
+    address: string;
+  };
+  scale?: number;
 }
 
 export interface MapBounds {
@@ -29,3 +44,22 @@ export interface MapViewport {
 }
 
 export type MapStyle = 'roadmap' | 'satellite' | 'hybrid' | 'terrain';
+
+export interface RouteInfo {
+  mode: google.maps.TravelMode;
+  duration: string;
+  distance: string;
+  steps: {
+    instruction: string;
+    distance: string;
+    duration: string;
+    mode: google.maps.TravelMode;
+  }[];
+  bounds?: google.maps.LatLngBounds;
+  copyrights?: string;
+  legs?: google.maps.DirectionsLeg[];
+  overview_path?: google.maps.LatLng[];
+  overview_polyline?: string;
+  warnings?: string[];
+  waypoint_order?: number[];
+}

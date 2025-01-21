@@ -87,7 +87,7 @@ export function Header() {
           ) : user ? (
             <UserMenu
               user={transformAuthUser(user as AuthUser)}
-              onLogout={handleLogout}
+              onLogout={() => void handleLogout()}
             />
           ) : (
             <div className="space-x-4">

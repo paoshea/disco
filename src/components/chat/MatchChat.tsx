@@ -1,18 +1,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSession } from 'next-auth/react';
-import { Message, MessageWithSender } from '@/types/chat';
+import type { MessageWithSender } from '@/types/chat';
 import { MatchSocketService } from '@/services/websocket/match.socket';
-import { createToast } from '@/hooks/use-toast';
+import { toast } from '@/hooks/use-toast';
 import { Avatar } from '@/components/ui/Avatar';
 import { MessageReactions } from './MessageReactions';
-import { EmojiPicker, Emoji } from '@/components/ui/emoji-picker';
+import { EmojiPicker, type Emoji } from '@/components/ui/emoji-picker';
 import { Button } from '@/components/ui/Button';
 import { LocationShareModal } from './LocationShareModal';
-import {
-  WebSocketMessage,
-  WebSocketEventType,
-  WebSocketPayload,
-} from '@/types/websocket';
 
 interface ChatMessagePayload extends MessageWithSender {
   matchId: string;
@@ -67,13 +62,10 @@ export const MatchChat: React.FC<MatchChatProps> = ({
         const response = await fetch(`/api/chat/messages/${chatRoomId}`);
         if (!response.ok) throw new Error('Failed to fetch messages');
         const data = await response.json();
-        setMessages(data.messages);
+        setMessages(data.messages as ExtendedMessageWithSender[]);
       } catch (error) {
         console.error('Error fetching messages:', error);
-        createToast.error({
-          title: 'Error',
-          description: 'Failed to fetch messages. Please try again.',
-        });
+        toast.error('Failed to fetch messages. Please try again.');
       }
     };
 
@@ -129,10 +121,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       setShowEmojiPicker(false);
     } catch (error) {
       console.error('Error sending message:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to send message. Please try again.',
-      });
+      toast.error('Failed to send message. Please try again.');
     }
   };
 
@@ -159,15 +148,13 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       );
     } catch (error) {
       console.error('Error adding reaction:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to add reaction. Please try again.',
-      });
+      toast.error('Failed to add reaction. Please try again.');
     }
   };
 
   const handleEmojiSelect = (emoji: Emoji) => {
     setMessage(prev => prev + emoji.native);
+    setShowEmojiPicker(false);
   };
 
   const handleLocationShare = async (location: {
@@ -199,10 +186,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       setShowLocationModal(false);
     } catch (error) {
       console.error('Error sharing location:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to share location. Please try again.',
-      });
+      toast.error('Failed to share location. Please try again.');
     }
   };
 

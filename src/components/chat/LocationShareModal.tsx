@@ -1,23 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MapPin, Search, X, Map, ListFilter } from 'lucide-react';
+import { X, Map, ListFilter } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { BaseMapView, LatLng, MapMarker } from '../map/BaseMapView';
+import { BaseMapView } from '../map/BaseMapView';
 import { PlacesAutocomplete } from '../map/PlacesAutocomplete';
 import { PlaceSuggestions } from './PlaceSuggestions';
 import { RoutePlanner } from './RoutePlanner';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import type { MapMarker, RouteInfo } from '@/types/map';
 
 interface LocationShareModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onLocationSelect: (location: {
-    latitude: number;
-    longitude: number;
-    name: string;
-    address: string;
-  }) => void;
+  onLocationSelect: (location: Location) => void;
   transitionState: 'enter' | 'exit' | null;
   matchLocation?: google.maps.LatLng;
 }
@@ -32,6 +27,11 @@ interface Location {
 interface RoutePolyline {
   path: google.maps.LatLng[];
   options: google.maps.PolylineOptions;
+}
+
+interface LocationMapMarker extends MapMarker {
+  location: Location;
+  scale?: number;
 }
 
 const defaultCenter = new google.maps.LatLng(0, 0);
@@ -67,7 +67,6 @@ const createMarkerIcon = (url: string) => ({
   anchor: new google.maps.Point(16, 32), // Center bottom anchor point
 });
 
-const searchMarkerIcon = createMarkerIcon('/images/markers/search-marker.png');
 const selectedMarkerIcon = createMarkerIcon(
   '/images/markers/selected-marker.png'
 );
@@ -87,7 +86,7 @@ export function LocationShareModal({
   const [userLocation, setUserLocation] = useState<google.maps.LatLng | null>(
     null
   );
-  const [markers, setMarkers] = useState<MapMarker[]>([]);
+  const [markers, setMarkers] = useState<LocationMapMarker[]>([]);
   const [polylines, setPolylines] = useState<RoutePolyline[]>([]);
 
   useEffect(() => {
@@ -119,6 +118,12 @@ export function LocationShareModal({
           },
           title: 'Match Location',
           icon: matchMarkerIcon,
+          location: {
+            latitude: matchLocation.lat(),
+            longitude: matchLocation.lng(),
+            name: 'Match Location',
+            address: '',
+          },
         },
       ]);
     }
@@ -161,7 +166,7 @@ export function LocationShareModal({
   };
 
   const updateMarkers = (location: google.maps.LatLng) => {
-    const newMarkers: MapMarker[] = [
+    const newMarkers: LocationMapMarker[] = [
       ...(matchLocation
         ? [
             {
@@ -172,6 +177,12 @@ export function LocationShareModal({
               },
               title: 'Match Location',
               icon: matchMarkerIcon,
+              location: {
+                latitude: matchLocation.lat(),
+                longitude: matchLocation.lng(),
+                name: 'Match Location',
+                address: '',
+              },
             },
           ]
         : []),
@@ -183,6 +194,12 @@ export function LocationShareModal({
         },
         title: 'Selected Location',
         icon: selectedMarkerIcon,
+        location: {
+          latitude: location.lat(),
+          longitude: location.lng(),
+          name: 'Selected Location',
+          address: '',
+        },
       },
     ];
     setMarkers(newMarkers);
@@ -209,6 +226,22 @@ export function LocationShareModal({
       return { lat: matchLocation.lat(), lng: matchLocation.lng() };
     }
     return { lat: defaultCenter.lat(), lng: defaultCenter.lng() };
+  };
+
+  const handleMarkerMouseLeave = () => {
+    // No-op for this component
+  };
+
+  const handleRouteSelect = (route: RouteInfo) => {
+    if (selectedLocation) {
+      onLocationSelect({
+        latitude: selectedLocation.latitude,
+        longitude: selectedLocation.longitude,
+        name: selectedLocation.name,
+        address: selectedLocation.address,
+      });
+    }
+    onClose();
   };
 
   return (
@@ -268,9 +301,23 @@ export function LocationShareModal({
                     center={getMapCenter()}
                     zoom={14}
                     markers={markers}
-                    onMarkerClick={() => {}}
-                    onMarkerMouseEnter={() => {}}
-                    onMarkerMouseLeave={() => {}}
+                    onMarkerClick={marker => {
+                      const locationMarker = marker as LocationMapMarker;
+                      if (locationMarker.location) {
+                        setSelectedLocation(locationMarker.location);
+                      }
+                    }}
+                    onMarkerMouseEnter={marker => {
+                      const locationMarker = marker as LocationMapMarker;
+                      setMarkers(prevMarkers =>
+                        prevMarkers.map(m =>
+                          m.id === locationMarker.id
+                            ? { ...m, scale: 1.2 }
+                            : m
+                        )
+                      );
+                    }}
+                    onMarkerMouseLeave={handleMarkerMouseLeave}
                   />
                 </div>
               </TabsContent>
@@ -301,7 +348,7 @@ export function LocationShareModal({
                       },
                     ]);
                   }}
-                  onRouteSelect={() => {}}
+                  onRouteSelect={handleRouteSelect}
                 />
               </div>
             )}

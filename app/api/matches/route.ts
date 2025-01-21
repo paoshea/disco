@@ -95,7 +95,13 @@ export async function GET(req: NextRequest) {
     };
 
     // Validate preferences
-    const validatedPrefs = matchPreferencesSchema.parse(preferences);
+    const result = matchPreferencesSchema.safeParse(preferences);
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Invalid preferences' }, { status: 400 });
+    }
+
+    const validatedPrefs = result.data;
 
     // Get matches
     const matchingService = MatchingService.getInstance();
@@ -107,12 +113,6 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ matches });
   } catch (error) {
     console.error('Error in GET /api/matches:', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid preferences', details: error.errors },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -129,23 +129,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limiting
+    const isLimited = await rateLimiter.isRateLimited(session.user.id);
+    if (isLimited) {
+      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
+    }
+
     // Parse and validate request body
     const body = await req.json();
-    const validatedPrefs = matchPreferencesSchema.parse(body);
+    const result = matchPreferencesSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Invalid preferences' }, { status: 400 });
+    }
+
+    const preferences = result.data;
 
     // Update preferences
     const matchingService = MatchingService.getInstance();
-    await matchingService.setPreferences(session.user.id, validatedPrefs);
+    await matchingService.setPreferences(session.user.id, preferences);
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in POST /api/matches/preferences:', error);
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: 'Invalid preferences', details: error.errors },
-        { status: 400 }
-      );
-    }
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

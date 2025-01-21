@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Clock, Car, Train, PersonStanding } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
@@ -93,7 +93,7 @@ export function RoutePlanner({
     };
 
     if (origin && destination) {
-      fetchRoutes();
+      void fetchRoutes();
     }
   }, [origin, destination, selectedMode, onRouteSelect, onRoutePathUpdate]);
 

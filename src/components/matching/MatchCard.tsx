@@ -86,9 +86,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           const swipe = swipePower(offset.x, velocity.x);
 
           if (swipe < -swipeConfidenceThreshold) {
-            handleDecline();
+            void handleDecline();
           } else if (swipe > swipeConfidenceThreshold) {
-            handleAccept();
+            void handleAccept();
           }
         }}
       >

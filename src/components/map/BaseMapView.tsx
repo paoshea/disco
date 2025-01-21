@@ -22,7 +22,7 @@ export interface MapMarker {
     fontWeight: string;
     className: string;
   };
-  data?: any;
+  data?: Record<string, unknown>;
 }
 
 interface BaseMapViewProps {

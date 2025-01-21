@@ -18,17 +18,6 @@ interface SafetySettings {
   }[];
 }
 
-interface SafetySettingsResponse {
-  enabled: boolean;
-  emergencyContacts: {
-    id: string;
-    name: string;
-    phone: string;
-    email: string;
-    priority: 'primary' | 'secondary';
-  }[];
-}
-
 export default function SafetyPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -205,21 +194,40 @@ export default function SafetyPage() {
                       <p className="text-sm text-gray-600">{contact.email}</p>
                       <p className="text-sm text-gray-600">{contact.phone}</p>
                     </div>
-                    <span
-                      className={`px-3 py-1 rounded-full text-sm ${
-                        contact.priority === 'primary'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
-                    >
-                      {contact.priority}
-                    </span>
+                    <div className="flex items-center space-x-4">
+                      <span
+                        className={`px-3 py-1 rounded-full text-sm ${
+                          contact.priority === 'primary'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {contact.priority}
+                      </span>
+                      <button
+                        onClick={() => void handleRemoveContact(contact.id)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </li>
                 ))}
               </ul>
             ) : (
               <p className="text-gray-600">No emergency contacts added yet.</p>
             )}
+            <button
+              onClick={() => void handleAddContact({
+                name: 'New Contact',
+                phone: '',
+                email: '',
+                priority: 'primary'
+              })}
+              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Add Contact
+            </button>
           </div>
         )}
       </div>

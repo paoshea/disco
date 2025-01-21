@@ -1,10 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
-import { locationService } from '@/services/location/location.service';
 import { toast } from '@/hooks/use-toast';
 import type { Location, LocationPrivacyMode } from '@/types/location';
 import type { Session } from '@/types/auth';
-import React from 'react';
 
 interface LocationState {
   privacyMode: LocationPrivacyMode;

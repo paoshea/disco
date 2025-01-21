@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
+import { z } from 'zod';
 
 // Configuration
 export const dynamic = 'force-dynamic'; // Disable static optimization
@@ -11,6 +12,11 @@ export const runtime = 'nodejs'; // Use Node.js runtime
 type RouteContext = {
   params: Promise<Record<string, string>>;
 };
+
+// Validation schema
+const matchActionSchema = z.object({
+  action: z.enum(['accept', 'reject', 'block'])
+});
 
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
@@ -65,13 +71,15 @@ export async function POST(
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
-    // Parse request body
+    // Parse and validate request body
     const body = await req.json();
-    const { action } = body;
-
-    if (!action || !['accept', 'reject', 'block'].includes(action)) {
+    const result = matchActionSchema.safeParse(body);
+    
+    if (!result.success) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
+
+    const { action } = result.data;
 
     // Update match status
     const matchingService = MatchingService.getInstance();

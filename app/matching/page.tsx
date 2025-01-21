@@ -21,16 +21,18 @@ export default function MatchingPage() {
     }
 
     // Start location tracking
-    locationService
-      .startTracking(user.id, {}, backgroundTracking)
-      .catch(error => {
+    void (async () => {
+      try {
+        await locationService.startTracking(user.id, {}, backgroundTracking);
+      } catch (error) {
         console.error('Failed to start location tracking:', error);
         toast.error('Failed to start location tracking');
-      });
+      }
+    })();
 
     return () => {
       if (user?.id) {
-        locationService.stopTracking(user.id);
+        void locationService.stopTracking(user.id);
       }
     };
   }, [user?.id, router, backgroundTracking]);
