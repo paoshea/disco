@@ -274,6 +274,87 @@ npm run build
   - [x] Match actions
   - [x] Chat integration
 
+## Safety Features Implementation
+
+### Core Safety Features
+
+- [ ] Safety Settings System
+  - [ ] Define proper settings type in safety.service.ts
+  - [ ] Implement settings update functionality
+  - [ ] Add settings validation and error handling
+  - [ ] Create settings management UI
+  - [ ] Add settings sync across devices
+  - [ ] Get enabled status from settings (currently hardcoded in safety/page.tsx)
+  - [ ] Add settings migration strategy for existing users
+
+### Contact System
+
+- [ ] Contact Form Implementation
+  - [ ] Implement contact form submission in contact/page.tsx
+  - [ ] Add form validation
+  - [ ] Create success/error notifications
+  - [ ] Add rate limiting for submissions
+
+### Emergency Response System
+
+- [ ] Emergency Contact Management
+  - [ ] Define EmergencyContact type
+  - [ ] Create database schema for emergency contacts
+  - [ ] Implement getEmergencyContacts in safety.service.ts
+  - [ ] Add API endpoints for contact management
+  - [ ] Implement contact verification
+  - [ ] Add notification preferences
+  - [ ] Create contact management UI
+  - [ ] Implement notification triggers for:
+    - [ ] SOS alerts
+    - [ ] Meetup start/end
+    - [ ] Low battery
+    - [ ] Privacy zone entry/exit
+
+### Location Privacy
+
+- [ ] Privacy Zones
+  - [ ] Define privacy zone types
+  - [ ] Implement zone creation/editing
+  - [ ] Add zone entry/exit detection
+  - [ ] Create privacy mode transitions
+  - [ ] Implement location fuzzing for approximate mode
+
+### Evidence Collection
+
+- [ ] Evidence System
+  - [ ] Define evidence types (photo, audio, video)
+  - [ ] Implement secure upload
+  - [ ] Add metadata handling
+  - [ ] Create evidence review system
+
+### Safety Check System
+
+- [ ] Check Implementation
+  - [ ] Implement recurring checks
+  - [ ] Add check templates
+  - [ ] Create notification system
+  - [ ] Add escalation procedures
+  - [ ] Implement check verification
+
+### Testing & Documentation
+
+- [ ] Unit Tests
+  - [ ] Location conversion functions
+  - [ ] Alert status transitions
+  - [ ] Safety check scheduling
+  - [ ] Privacy mode transitions
+- [ ] Integration Tests
+  - [ ] Emergency alert flow
+  - [ ] Safety check completion
+  - [ ] Contact notification
+  - [ ] Location tracking
+- [ ] Documentation
+  - [ ] API endpoints
+  - [ ] Type system
+  - [ ] Security considerations
+  - [ ] Privacy policies
+
 ## Spontaneous Social Engagement Implementation Order
 
 ### Phase 1: Core Location & Privacy Foundation

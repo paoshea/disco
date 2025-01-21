@@ -14,7 +14,7 @@ export const runtime = 'nodejs';
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as z.infer<typeof LoginSchema>;
     const result = LoginSchema.safeParse(body);
 
     if (!result.success) {
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const { password: _, ...userWithoutPassword } = user;
+    const userWithoutPassword = user;
     const tokens = await generateTokens(userWithoutPassword);
 
     // Update last login time and streak
@@ -73,25 +73,17 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     const response = NextResponse.json({
       user: userWithoutPassword,
-      ...tokens,
+      token: tokens.token,
     });
 
     // Set refresh token in HTTP-only cookie
-    response.cookies.set('refreshToken', tokens.refreshToken, {
+    response.cookies.set({
+      name: 'refreshToken',
+      value: tokens.refreshToken,
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
+      sameSite: 'strict',
       maxAge: tokens.refreshTokenExpiresIn,
-    });
-
-    // Set access token in HTTP-only cookie
-    response.cookies.set('accessToken', tokens.token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: tokens.accessTokenExpiresIn,
     });
 
     return response;

@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
 import { SafetyCheckSchema } from '@/schemas/safety.schema';
-import { ZodError } from 'zod';
 
 async function validateRequest() {
   const session = await getServerSession(authOptions);
@@ -13,58 +12,50 @@ async function validateRequest() {
   return session.user.id;
 }
 
-export async function GET() {
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+export async function GET(): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
     const checks = await safetyService.getSafetyChecks(userId);
-    return NextResponse.json(checks);
+
+    return NextResponse.json({ checks });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    console.error('Failed to fetch safety checks:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch safety checks' },
       { status: 500 }
     );
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
-    const requestData = await request.json();
+    const body = (await request.json()) as Record<string, unknown>;
 
-    try {
-      const validatedData = SafetyCheckSchema.safeParse(requestData);
-      if (!validatedData.success) {
-        return NextResponse.json(
-          { error: 'Invalid safety check data', details: validatedData.error },
-          { status: 400 }
-        );
-      }
-
-      const check = await safetyService.createSafetyCheck(userId, {
-        type: validatedData.data.type,
-        description: validatedData.data.description,
-        scheduledFor: validatedData.data.scheduledFor || new Date().toISOString(),
-        location: validatedData.data.location,
-      });
-      return NextResponse.json(check);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return NextResponse.json(
-          { error: 'Invalid safety check data', details: error.errors },
-          { status: 400 }
-        );
-      }
-      throw error;
+    const result = SafetyCheckSchema.safeParse(body);
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid safety check data', details: result.error },
+        { status: 400 }
+      );
     }
+
+    const { type, description, location, scheduledFor } = result.data;
+    const check = await safetyService.createSafetyCheck(userId, {
+      type,
+      description,
+      location,
+      scheduledFor: scheduledFor || new Date().toISOString(),
+    });
+
+    return NextResponse.json({ check });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    console.error('Failed to create safety check:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create safety check' },
       { status: 500 }
     );
   }

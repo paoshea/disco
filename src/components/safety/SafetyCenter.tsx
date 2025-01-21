@@ -6,13 +6,14 @@ import { SafetyFeatures } from './SafetyFeatures';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
-import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
+import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
 
 export const SafetyCenter: React.FC<SafetyCenterProps> = ({
   userId,
   onSettingsChange,
 }) => {
-  const { alerts, isLoading, error, dismissAlert, addAlert } = useSafetyAlert();
+  const { alerts, isLoading, error, dismissAlert, addAlert } =
+    useSafetyAlerts();
 
   const [settings, setSettings] = useState<SafetySettingsNew>({
     autoShareLocation: false,

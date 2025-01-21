@@ -53,7 +53,7 @@ export function EmergencyAlert({
         updatedAt: new Date().toISOString(),
       };
 
-      const createdAlert = await safetyService.createSafetyAlert(userId, {
+      await safetyService.createSafetyAlert(userId, {
         type: 'emergency_sos',
         description: 'User triggered emergency alert',
         severity: 'high',
@@ -81,7 +81,7 @@ export function EmergencyAlert({
     } finally {
       setIsTriggering(false);
     }
-  }, [userId, position, onAlertTriggered]);
+  }, [userId, position, onAlertTriggered, isTriggering]);
 
   const markers: MapMarker[] = position?.coords
     ? [
@@ -103,49 +103,36 @@ export function EmergencyAlert({
 
   return (
     <div className="space-y-4">
-      <div className="h-64 relative">
-        <BaseMapView
-          center={{
-            lat: position?.coords.latitude ?? 0,
-            lng: position?.coords.longitude ?? 0,
-          }}
-          zoom={15}
-          markers={markers}
-          onMarkerClick={marker => {
-            console.log('Marker clicked:', marker);
-          }}
-          onMarkerMouseEnter={marker => {
-            console.log('Marker mouse enter:', marker);
-          }}
-          onMarkerMouseLeave={() => {
-            console.log('Marker mouse leave');
-          }}
-        />
-        {locationError && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black/50">
-            <p className="text-white text-center p-4">
-              Unable to access location. Please enable location services to use
-              this feature.
-            </p>
-          </div>
-        )}
-      </div>
-
       <Button
         variant="danger"
+        size="lg"
         className="w-full"
-        onClick={() => {
-          void handleTriggerAlert();
-        }}
+        onClick={() => void handleTriggerAlert()}
         disabled={isTriggering || !position?.coords}
       >
         {isTriggering ? 'Triggering Alert...' : 'Trigger Emergency Alert'}
       </Button>
 
-      <p className="text-sm text-muted-foreground">
-        This will notify your emergency contacts and share your current location
-        with them. Only use this in case of a real emergency.
-      </p>
+      {locationError && (
+        <div className="text-red-500 text-sm">
+          Error getting location: {locationError.message}
+        </div>
+      )}
+
+      <div className="h-[300px] rounded-lg overflow-hidden">
+        <BaseMapView
+          markers={markers}
+          center={
+            position?.coords
+              ? {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude,
+                }
+              : undefined
+          }
+          zoom={15}
+        />
+      </div>
     </div>
   );
 }

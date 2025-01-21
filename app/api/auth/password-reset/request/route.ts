@@ -14,7 +14,7 @@ const RequestSchema = z.object({
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = await request.json();
+    const body = (await request.json()) as z.infer<typeof RequestSchema>;
     const result = RequestSchema.safeParse(body);
 
     if (!result.success) {
@@ -39,7 +39,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (!user) {
       // Return success even if user not found to prevent email enumeration
       return NextResponse.json({
-        message: 'If an account exists with that email, a password reset link has been sent.',
+        message:
+          'If an account exists with that email, a password reset link has been sent.',
       });
     }
 
@@ -50,8 +51,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await prisma.passwordReset.create({
       data: {
         token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
         userId: user.id,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
       },
     });
 
@@ -59,7 +60,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     await sendPasswordResetEmail(user.email, token);
 
     return NextResponse.json({
-      message: 'If an account exists with that email, a password reset link has been sent.',
+      message:
+        'If an account exists with that email, a password reset link has been sent.',
     });
   } catch (error) {
     console.error('Password reset request error:', error);

@@ -62,8 +62,17 @@ export async function PUT(
 ): Promise<NextResponse> {
   try {
     const params = await context.params;
-    const body = await request.json();
-    const { action } = ActionSchema.parse(body);
+    const body = (await request.json()) as z.infer<typeof ActionSchema>;
+    const result = ActionSchema.safeParse(body);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid input', details: result.error },
+        { status: 400 }
+      );
+    }
+
+    const { action } = result.data;
 
     if (action === 'dismiss') {
       const userId = await validateRequest();

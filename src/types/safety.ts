@@ -30,6 +30,25 @@ export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
 export interface EmergencyContact {
   id: string;
   userId: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EmergencyContactInput {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+}
+
+// Old emergency contact type kept for reference
+export interface EmergencyContactLegacy {
+  id: string;
+  userId: string;
   name: string;
   relationship: string;
   phoneNumber: string;
@@ -57,6 +76,13 @@ export interface SafetyAlert {
   notifiedContacts: string[];
   createdAt: string;
   updatedAt: string;
+}
+
+export interface SafetyCheckInput {
+  type: 'meetup' | 'location' | 'custom';
+  description: string;
+  scheduledFor: string;
+  location?: Location;
 }
 
 export interface SafetyCheck {
@@ -202,7 +228,7 @@ export interface EmergencyAlert {
 }
 
 export interface SafetySettingsOld {
-  emergencyContacts: EmergencyContact[];
+  emergencyContacts: EmergencyContactLegacy[];
   autoShareLocation: boolean;
   meetupCheckins: boolean;
   sosAlertEnabled: boolean;

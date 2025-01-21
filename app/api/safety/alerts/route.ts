@@ -1,9 +1,8 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
 import { SafetyAlertSchema } from '@/schemas/safety.schema';
-import { ZodError } from 'zod';
 
 async function validateRequest() {
   const session = await getServerSession(authOptions);
@@ -13,58 +12,46 @@ async function validateRequest() {
   return session.user.id;
 }
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // GET /api/safety/alerts
-export async function GET() {
+export async function GET(): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
     const alerts = await safetyService.getActiveAlerts(userId);
-    return NextResponse.json(alerts);
+
+    return NextResponse.json({ alerts });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    console.error('Failed to fetch alerts:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch alerts' },
       { status: 500 }
     );
   }
 }
 
 // POST /api/safety/alerts
-export async function POST(request: Request) {
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
-    const requestData = await request.json();
+    const body = (await request.json()) as unknown;
+    const result = SafetyAlertSchema.safeParse(body);
 
-    try {
-      const validatedData = SafetyAlertSchema.safeParse(requestData);
-      if (!validatedData.success) {
-        return NextResponse.json(
-          { error: 'Invalid safety alert data', details: validatedData.error },
-          { status: 400 }
-        );
-      }
-
-      const alert = await safetyService.createSafetyAlert(
-        userId,
-        validatedData.data
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid alert data', details: result.error },
+        { status: 400 }
       );
-      return NextResponse.json(alert);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return NextResponse.json(
-          { error: 'Invalid safety alert data', details: error.errors },
-          { status: 400 }
-        );
-      }
-      throw error;
     }
+
+    const alert = await safetyService.createSafetyAlert(userId, result.data);
+
+    return NextResponse.json(alert);
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
+    console.error('Failed to create alert:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create alert' },
       { status: 500 }
     );
   }

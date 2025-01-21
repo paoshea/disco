@@ -50,6 +50,8 @@ model User {
   eventParticipants    EventParticipant[]
   matches              UserMatch[]      @relation("UserMatches")
   matchedBy            UserMatch[]      @relation("MatchedUsers")
+  reportedBy           Report[]         @relation("ReportedBy")
+  reportedUsers        Report[]         @relation("ReportedUsers")
 }
 
 model Account {
@@ -258,4 +260,38 @@ model SafetyAlert {
   resolvedAt  DateTime?
 
   @@index([userId])
+}
+
+enum ReportType {
+  harassment
+  inappropriate
+  spam
+  scam
+  other
+}
+
+enum ReportStatus {
+  pending
+  reviewing
+  resolved
+  dismissed
+}
+
+model Report {
+  id             String       @id @default(cuid())
+  reporterId     String
+  reporter       User         @relation("ReportedBy", fields: [reporterId], references: [id])
+  reportedUserId String
+  reportedUser   User         @relation("ReportedUsers", fields: [reportedUserId], references: [id])
+  type           ReportType
+  description    String
+  evidence       Json?        // Array of { type: string, url: string }
+  status         ReportStatus @default(pending)
+  adminNotes     String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  resolvedAt     DateTime?
+
+  @@index([reporterId])
+  @@index([reportedUserId])
 }

@@ -1,9 +1,9 @@
 import React from 'react';
-import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
+import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 
 export const SafetyAlerts: React.FC = () => {
-  const { alerts, dismissAlert } = useSafetyAlert();
+  const { alerts, dismissAlert } = useSafetyAlerts();
 
   if (!alerts.length) {
     return null;

@@ -15,7 +15,10 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Verify refresh token
-    const decoded = await verifyRefreshToken(refreshToken, process.env.JWT_SECRET || 'default-secret');
+    const decoded = await verifyRefreshToken(
+      refreshToken,
+      process.env.JWT_SECRET || 'default-secret'
+    );
     if (!decoded) {
       return NextResponse.json(
         { message: 'Invalid refresh token', code: 'REFRESH_TOKEN_INVALID' },

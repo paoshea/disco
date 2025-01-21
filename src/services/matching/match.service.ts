@@ -5,11 +5,7 @@ import {
   MatchStatus,
 } from '@/types/match';
 import type { User as AppUser, UserPreferences } from '@/types/user';
-import {
-  PrismaClient,
-  User as PrismaUser,
-  Location as PrismaLocation,
-} from '@prisma/client';
+import { User as PrismaUser, Location as PrismaLocation } from '@prisma/client';
 import { MatchAlgorithm } from './match.algorithm';
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
