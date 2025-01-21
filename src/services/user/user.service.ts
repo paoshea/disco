@@ -54,59 +54,76 @@ export class UserService {
   async deleteUserById(id: string): Promise<User> {
     // Invalidate cache
     const cacheKey = `user:${id}`;
-    await redis.del(cacheKey);
+    if (redis) {
+      try {
+        await redis.del(cacheKey);
+      } catch (error) {
+        console.error('Error deleting user cache:', error);
+      }
+    }
     return prisma.user.delete({
       where: { id },
     });
   }
 
   async getUserPreferences(userId: string): Promise<UserPreferences | null> {
-    const cachedPrefs = await redis.get(`user:${userId}:preferences`);
-    if (cachedPrefs) {
+    let preferences: UserPreferences | null = null;
+
+    if (redis) {
       try {
-        return JSON.parse(cachedPrefs) as UserPreferences;
+        const cachedPrefs = await redis.get(`user:${userId}:preferences`);
+        if (cachedPrefs) {
+          preferences = JSON.parse(cachedPrefs) as UserPreferences;
+        }
       } catch (error) {
-        // Handle JSON parsing error
-        console.error('Error parsing cached preferences:', error);
-        return null;
+        console.error('Error getting cached preferences:', error);
       }
     }
 
-    const user = await this.getUserById(userId);
-    if (!user) return null;
+    if (!preferences) {
+      const user = await this.getUserById(userId);
+      if (!user) return null;
 
-    const preferences: UserPreferences = {
-      maxDistance: 10,
-      ageRange: { min: 18, max: 99 },
-      interests: [],
-      gender: ['any'],
-      lookingFor: ['any'],
-      relationshipType: ['friendship'],
-      notifications: {
-        matches: true,
-        messages: true,
-        events: true,
-        safety: true,
-      },
-      privacy: {
-        showOnlineStatus: true,
-        showLastSeen: true,
-        showLocation: true,
-        showAge: true,
-      },
-      safety: {
-        requireVerifiedMatch: true,
-        meetupCheckins: true,
-        emergencyContactAlerts: true,
-      },
-    };
+      preferences = {
+        maxDistance: 10,
+        ageRange: { min: 18, max: 99 },
+        interests: [],
+        gender: ['any'],
+        lookingFor: ['any'],
+        relationshipType: ['friendship'],
+        notifications: {
+          matches: true,
+          messages: true,
+          events: true,
+          safety: true,
+        },
+        privacy: {
+          showOnlineStatus: true,
+          showLastSeen: true,
+          showLocation: true,
+          showAge: true,
+        },
+        safety: {
+          requireVerifiedMatch: true,
+          meetupCheckins: true,
+          emergencyContactAlerts: true,
+        },
+      };
 
-    // Cache the preferences
-    await redis.setex(
-      `user:${userId}:preferences`,
-      3600,
-      JSON.stringify(preferences)
-    );
+      // Cache the preferences if Redis is available
+      if (redis) {
+        try {
+          await redis.setex(
+            `user:${userId}:preferences`,
+            3600, // 1 hour
+            JSON.stringify(preferences)
+          );
+        } catch (error) {
+          console.error('Error caching preferences:', error);
+        }
+      }
+    }
+
     return preferences;
   }
 
@@ -118,41 +135,44 @@ export class UserService {
     const user = await this.getUserById(userId);
     if (!user) throw new Error('User not found');
 
-    // Update cache
-    await redis.setex(
-      `user:${userId}:preferences`,
-      3600,
-      JSON.stringify(preferences)
-    );
+    // Update cache if Redis is available
+    if (redis) {
+      try {
+        await redis.setex(
+          `user:${userId}:preferences`,
+          3600,
+          JSON.stringify(preferences)
+        );
+      } catch (error) {
+        console.error('Error updating preferences cache:', error);
+      }
+    }
   }
 
-  async updateUserById(
-    id: string,
+  async updateUser(
+    userId: string,
     data: Partial<{
       firstName: string;
       lastName: string;
       email: string;
-      emailVerified: boolean;
+      emailVerified: Date | null;
       role: string;
       streakCount: number;
       lastLogin: Date;
       safetyEnabled: boolean;
     }>
   ): Promise<User> {
+    const updateData = {
+      ...data,
+      emailVerified:
+        data.emailVerified === undefined ? undefined : data.emailVerified,
+      lastLogin:
+        data.lastLogin === undefined ? undefined : new Date(data.lastLogin),
+    };
+
     return prisma.user.update({
-      where: { id },
-      data,
-      include: {
-        locations: true,
-        emergencyContacts: true,
-        safetyChecks: true,
-        achievements: true,
-        participatingRooms: true,
-        messages: true,
-        events: true,
-        eventParticipants: true,
-        privacyZones: true,
-      },
+      where: { id: userId },
+      data: updateData,
     });
   }
 }

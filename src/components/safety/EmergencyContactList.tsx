@@ -1,11 +1,10 @@
 import React from 'react';
-import type { EmergencyContact } from '@/types/safety';
-import { Button } from '@/components/ui/Button';
+import { EmergencyContact } from '@/types/safety';
 
 interface EmergencyContactListProps {
   contacts: EmergencyContact[];
   onEdit: (contact: EmergencyContact) => void;
-  onDelete: (id: string) => void;
+  onDelete: (contactId: string) => void;
 }
 
 export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
@@ -13,19 +12,6 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
   onEdit,
   onDelete,
 }) => {
-  const getNotificationText = (
-    notifyOn: EmergencyContact['notifyOn']
-  ): string => {
-    const notifications = [];
-    if (notifyOn.sosAlert) notifications.push('SOS Alerts');
-    if (notifyOn.meetupStart) notifications.push('Meetup Start');
-    if (notifyOn.meetupEnd) notifications.push('Meetup End');
-    if (notifyOn.lowBattery) notifications.push('Low Battery');
-    if (notifyOn.enterPrivacyZone) notifications.push('Enter Privacy Zone');
-    if (notifyOn.exitPrivacyZone) notifications.push('Exit Privacy Zone');
-    return notifications.join(', ');
-  };
-
   return (
     <div className="space-y-4">
       {contacts.map(contact => (
@@ -33,26 +19,32 @@ export const EmergencyContactList: React.FC<EmergencyContactListProps> = ({
           key={contact.id}
           className="bg-white shadow rounded-lg p-4 flex justify-between items-start"
         >
-          <div>
+          <div className="space-y-1">
             <h3 className="text-lg font-medium text-gray-900">
-              {contact.name}
+              {contact.firstName} {contact.lastName}
             </h3>
-            <div className="mt-1 text-sm text-gray-500">
-              <p>{contact.phoneNumber}</p>
-              <p>{contact.email}</p>
-              <p>{contact.relationship}</p>
-              <p className="mt-1">
-                Notified on: {getNotificationText(contact.notifyOn)}
-              </p>
-            </div>
+            <p className="text-sm text-gray-500">
+              {contact.phoneNumber && (
+                <span className="block">📱 {contact.phoneNumber}</span>
+              )}
+              {contact.email && (
+                <span className="block">✉️ {contact.email}</span>
+              )}
+            </p>
           </div>
           <div className="flex space-x-2">
-            <Button variant="secondary" onClick={() => onEdit(contact)}>
+            <button
+              onClick={() => onEdit(contact)}
+              className="text-primary-600 hover:text-primary-800"
+            >
               Edit
-            </Button>
-            <Button variant="danger" onClick={() => onDelete(contact.id)}>
+            </button>
+            <button
+              onClick={() => onDelete(contact.id)}
+              className="text-red-600 hover:text-red-800"
+            >
               Delete
-            </Button>
+            </button>
           </div>
         </div>
       ))}

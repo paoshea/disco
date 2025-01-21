@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useSession } from 'next-auth/react';
-import type { Session } from 'next-auth';
-import { Match, MatchPreferences } from '@/types/match';
+import { useAuth } from '@/hooks/useAuth';
+import type { Match, MatchPreferences } from '@/types/match';
 import { MatchSocketService } from '@/services/websocket/match.socket';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
@@ -9,22 +8,17 @@ import { MatchList } from './MatchList';
 import { MatchMapView } from './MatchMapView';
 import { MatchPreferencesPanel } from './MatchPreferencesPanel';
 
-interface ExtendedSession extends Session {
-  accessToken?: string;
-}
-
 interface MatchUpdate {
   type: 'new' | 'update' | 'remove';
   match: Match;
 }
 
-interface MatchActionEvent {
-  type: 'accepted' | 'declined' | 'blocked';
-  matchId: string;
+interface MatchingContainerProps {
+  userId: string;
 }
 
-export function MatchingContainer() {
-  const { data: session } = useSession() as { data: ExtendedSession | null };
+export function MatchingContainer({ userId }: MatchingContainerProps) {
+  const { user } = useAuth();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'map'>('list');
@@ -35,7 +29,7 @@ export function MatchingContainer() {
     async (preferences?: MatchPreferences) => {
       setLoading(true);
       try {
-        const params = new URLSearchParams();
+        const params = new URLSearchParams({ userId });
         if (preferences) {
           Object.entries(preferences).forEach(([key, value]) => {
             if (value !== undefined) {
@@ -50,17 +44,17 @@ export function MatchingContainer() {
         const data = (await response.json()) as { matches: Match[] };
         setMatches(data.matches);
       } catch (error) {
-        console.error('Error fetching matches:', error);
+        console.error('Failed to fetch matches:', error);
         createToast({
           title: 'Error',
-          description: 'Failed to load matches. Please try again.',
+          description: 'Failed to fetch matches. Please try again.',
           variant: 'error',
         });
       } finally {
         setLoading(false);
       }
     },
-    [createToast]
+    [userId, createToast]
   );
 
   const handleMatchAction = useCallback(
@@ -108,7 +102,10 @@ export function MatchingContainer() {
         const response = await fetch('/api/matches/preferences', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(preferences),
+          body: JSON.stringify({
+            userId,
+            preferences,
+          }),
         });
 
         if (!response.ok) throw new Error('Failed to update preferences');
@@ -130,7 +127,7 @@ export function MatchingContainer() {
         });
       }
     },
-    [fetchMatches, createToast]
+    [userId, fetchMatches, createToast]
   );
 
   const sortedMatches = useMemo(() => {
@@ -147,61 +144,41 @@ export function MatchingContainer() {
     });
   }, [matches]);
 
-  // Setup WebSocket connection and listeners
   useEffect(() => {
-    if (!session?.user?.id) return;
-
-    socketService.connect(session.accessToken ?? '');
-
-    const matchUpdateUnsub = socketService.subscribeToMatches(
-      (data: MatchUpdate) => {
-        if (data.type === 'new') {
-          setMatches(prev => [data.match, ...prev]);
-          createToast({
-            title: 'New Match!',
-            description: `${data.match.name} might be a good match for you.`,
-            variant: 'success',
-          });
-        } else if (data.type === 'update') {
-          setMatches(prev =>
-            prev.map(m => (m.id === data.match.id ? data.match : m))
-          );
-        } else if (data.type === 'remove') {
-          setMatches(prev => prev.filter(m => m.id !== data.match.id));
-        }
-      }
-    );
-
-    const matchActionUnsub = socketService.subscribeToActions(
-      (data: MatchActionEvent) => {
-        if (data.type === 'accepted') {
-          createToast({
-            title: 'Match Accepted!',
-            description: 'Someone accepted your match request.',
-            variant: 'success',
-          });
-        }
-      }
-    );
-
-    // Initial fetch
     void fetchMatches();
+  }, [fetchMatches]);
+
+  useEffect(() => {
+    if (!userId) return;
+
+    const handleMatchUpdate = (update: MatchUpdate) => {
+      setMatches(prevMatches => {
+        switch (update.type) {
+          case 'new':
+            return [...prevMatches, update.match];
+          case 'update':
+            return prevMatches.map(m =>
+              m.id === update.match.id ? update.match : m
+            );
+          case 'remove':
+            return prevMatches.filter(m => m.id !== update.match.id);
+          default:
+            return prevMatches;
+        }
+      });
+    };
+
+    socketService.connect(userId);
+    const unsubscribe = socketService.subscribeToMatches(handleMatchUpdate);
 
     return () => {
-      matchUpdateUnsub();
-      matchActionUnsub();
+      unsubscribe();
       socketService.disconnect();
     };
-  }, [
-    session?.user?.id,
-    session?.accessToken,
-    socketService,
-    fetchMatches,
-    createToast,
-  ]);
+  }, [userId, socketService]);
 
   useEffect(() => {
-    if (!session?.user) {
+    if (!user) {
       createToast({
         title: 'Error',
         description: 'You must be logged in to view matches',
@@ -209,7 +186,7 @@ export function MatchingContainer() {
       });
       return;
     }
-  }, [session, createToast]);
+  }, [user, createToast]);
 
   return (
     <div className="container mx-auto px-4 py-6">

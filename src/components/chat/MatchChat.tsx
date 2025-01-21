@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import type { MessageWithSender } from '@/types/chat';
 import { MatchSocketService } from '@/services/websocket/match.socket';
 import { toast } from '@/hooks/use-toast';
@@ -33,7 +33,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
   chatRoomId,
   otherUserId,
 }) => {
-  const { data: session } = useSession();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<ExtendedMessageWithSender[]>([]);
   const [isTyping, setIsTyping] = useState(false);
   const [message, setMessage] = useState('');
@@ -43,7 +43,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
   const socketService = MatchSocketService.getInstance();
 
   useEffect(() => {
-    if (!session?.user?.id || !chatRoomId) return;
+    if (!user?.id || !chatRoomId) return;
 
     const fetchMessages = async () => {
       try {
@@ -86,14 +86,14 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       messageUnsub();
       typingUnsub();
     };
-  }, [session?.user?.id, chatRoomId, otherUserId, matchId, socketService]);
+  }, [user?.id, chatRoomId, otherUserId, matchId, socketService]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || !session?.user?.id) return;
+    if (!message.trim() || !user?.id) return;
 
     try {
       const response = await fetch('/api/chat/messages', {
@@ -190,9 +190,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
           <div
             key={message.id}
             className={`flex ${
-              message.senderId === session?.user?.id
-                ? 'justify-end'
-                : 'justify-start'
+              message.senderId === user?.id ? 'justify-end' : 'justify-start'
             }`}
             onClick={() => {
               void (async () => {
@@ -200,7 +198,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
               })();
             }}
           >
-            {message.senderId !== session?.user?.id && (
+            {message.senderId !== user?.id && (
               <Avatar
                 userId={message.sender.id}
                 imageUrl={message.sender.avatar || undefined}
@@ -211,7 +209,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
             <div className="max-w-[70%] mx-2">
               <div
                 className={`rounded-lg px-4 py-2 ${
-                  message.senderId === session?.user?.id
+                  message.senderId === user?.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
@@ -221,7 +219,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
               <MessageReactions
                 messageId={message.id}
                 reactions={message.reactions}
-                currentUserId={session?.user?.id || ''}
+                currentUserId={user?.id || ''}
                 onReactionAdd={emoji => {
                   void handleReaction(message.id, emoji);
                 }}

@@ -365,14 +365,14 @@ export default function DashboardPage() {
             />
             <EmergencyContactList
               contacts={stats.emergencyContacts.map(contact => ({
-                ...contact,
-                email: contact.email || '', // Ensure email is always a string
-                sosAlert: contact.notifyOn.sosAlert,
-                meetupStart: contact.notifyOn.meetupStart,
-                meetupEnd: contact.notifyOn.meetupEnd,
-                lowBattery: contact.notifyOn.lowBattery,
-                enterPrivacyZone: contact.notifyOn.enterPrivacyZone,
-                exitPrivacyZone: contact.notifyOn.exitPrivacyZone,
+                id: contact.id,
+                userId: contact.userId,
+                firstName: contact.name.split(' ')[0],
+                lastName: contact.name.split(' ')[1] || '',
+                email: contact.email || '',
+                phoneNumber: contact.phoneNumber || '',
+                createdAt: contact.createdAt,
+                updatedAt: contact.updatedAt,
               }))}
               onEdit={handleEditContact}
               onDelete={handleDeleteContact}

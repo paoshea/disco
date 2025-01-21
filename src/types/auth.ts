@@ -1,21 +1,19 @@
 import { User } from './user';
-import type { DefaultSession, DefaultUser } from 'next-auth';
 import type { Session as NextAuthSession } from 'next-auth';
-import type { DefaultJWT } from 'next-auth/jwt';
+import type { JWT as DefaultJWT } from 'next-auth/jwt';
 
 // Extend next-auth types
 declare module 'next-auth' {
-  interface Session extends DefaultSession {
+  interface Session {
     user: {
       id: string;
       email: string;
+      name: string | null;
       role: string;
-      firstName: string;
-      lastName: string;
     };
   }
 
-  interface User extends DefaultUser {
+  interface User {
     id: string;
     email: string;
     role: string;
@@ -25,26 +23,34 @@ declare module 'next-auth' {
 }
 
 declare module 'next-auth/jwt' {
-  /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-  interface JWT extends DefaultJWT {
+  interface JWT {
     id: string;
     email: string;
     role: string;
     firstName: string;
     lastName: string;
-    sub: string; // Add sub as it's used in the me route
   }
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  role: string;
+  firstName: string;
+  lastName: string;
+}
+
+export interface CustomJWT extends DefaultJWT {
+  user: AuthUser;
+}
+
 export interface Session extends NextAuthSession {
-  user: {
-    id: string;
-    email: string;
-    role: string;
-    firstName: string;
-    lastName: string;
+  user: AuthUser & {
+    name: string | null; // Required by NextAuth
   };
 }
+
+export type AuthStatus = 'authenticated' | 'loading' | 'unauthenticated';
 
 export interface JWTPayload {
   id: string;

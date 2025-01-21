@@ -4,12 +4,15 @@ import React from 'react';
 import { Logo } from '@/components/ui/Logo';
 import Link from 'next/link';
 import { Footer } from './Footer';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
 }
 
 export const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
+  const { user, isLoading } = useAuth();
+
   return (
     <div className="min-h-screen bg-gray-50">
       <nav className="bg-white shadow-sm">
@@ -33,24 +36,37 @@ export const PublicLayout: React.FC<PublicLayoutProps> = ({ children }) => {
               >
                 Pricing
               </Link>
-              <Link
-                href="/login"
-                className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
-              >
-                Login
-              </Link>
-              <Link
-                href="/signup"
-                className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-              >
-                Sign Up
-              </Link>
+              {isLoading ? (
+                <div className="animate-pulse h-8 w-16 bg-gray-200 rounded" />
+              ) : user ? (
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <>
+                  <Link
+                    href="/login"
+                    className="px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100"
+                  >
+                    Login
+                  </Link>
+                  <Link
+                    href="/signup"
+                    className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
             </div>
           </div>
         </div>
       </nav>
 
-      <main className="flex-1">{children}</main>
+      <main>{children}</main>
 
       <Footer />
     </div>

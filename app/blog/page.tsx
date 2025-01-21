@@ -1,9 +1,13 @@
 'use client';
 
 import React from 'react';
+import { useSession } from 'next-auth/react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function BlogPage() {
+  const { status } = useSession();
+  const isLoading = status === 'loading';
+
   const blogPosts = [
     {
       title: 'Introducing Disco: The Future of Team Chat',
@@ -28,6 +32,21 @@ export default function BlogPage() {
     },
   ];
 
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-12 bg-gray-200 rounded mb-6"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -51,8 +70,8 @@ export default function BlogPage() {
               <h2 className="mt-4 text-2xl font-semibold text-gray-900">
                 {post.title}
               </h2>
-              <p className="mt-4 text-gray-600">{post.excerpt}</p>
-              <div className="mt-6">
+              <p className="mt-2 text-gray-600">{post.excerpt}</p>
+              <div className="mt-4">
                 <button className="text-blue-600 hover:text-blue-800 font-medium">
                   Read more →
                 </button>

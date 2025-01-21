@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function ContactPage() {
+  const { isLoading, user } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,6 +26,21 @@ export default function ContactPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-12 bg-gray-200 rounded mb-6"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -32,7 +49,7 @@ export default function ContactPage() {
             Contact Us
           </h1>
           <p className="mt-4 text-xl text-gray-600">
-            Get in touch with our team
+            Have a question or need help? We are here for you.
           </p>
         </div>
 
@@ -41,8 +58,8 @@ export default function ContactPage() {
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Get in Touch</h2>
             <p className="mt-4 text-lg text-gray-600">
-              Have questions? We&apos;d love to hear from you. Send us a message
-              and we&apos;ll respond as soon as possible.
+              Have questions? We would love to hear from you. Send us a message
+              and we will then respond as soon as possible.
             </p>
 
             <div className="mt-8 space-y-6">
@@ -52,29 +69,23 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-gray-900">Office</h3>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Office Location
+                </h3>
                 <p className="mt-2 text-gray-600">
-                  123 Market Street
+                  123 Innovation Drive
                   <br />
                   San Francisco, CA 94105
-                  <br />
-                  United States
                 </p>
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-gray-900">Follow Us</h3>
-                <div className="mt-2 flex space-x-6">
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    Twitter
-                  </a>
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    LinkedIn
-                  </a>
-                  <a href="#" className="text-gray-600 hover:text-gray-900">
-                    GitHub
-                  </a>
-                </div>
+                <h3 className="text-lg font-medium text-gray-900">
+                  Business Hours
+                </h3>
+                <p className="mt-2 text-gray-600">
+                  Monday - Friday: 9:00 AM - 6:00 PM PST
+                </p>
               </div>
             </div>
           </div>
@@ -91,8 +102,8 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="text"
-                  name="name"
                   id="name"
+                  name="name"
                   value={formData.name}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -109,9 +120,9 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="email"
-                  name="email"
                   id="email"
-                  value={formData.email}
+                  name="email"
+                  value={formData.email || (user?.email ?? '')}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
@@ -127,8 +138,8 @@ export default function ContactPage() {
                 </label>
                 <input
                   type="text"
-                  name="subject"
                   id="subject"
+                  name="subject"
                   value={formData.subject}
                   onChange={handleChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
@@ -144,11 +155,11 @@ export default function ContactPage() {
                   Message
                 </label>
                 <textarea
-                  name="message"
                   id="message"
-                  rows={4}
+                  name="message"
                   value={formData.message}
                   onChange={handleChange}
+                  rows={4}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   required
                 />

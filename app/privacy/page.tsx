@@ -1,9 +1,28 @@
 'use client';
 
 import React from 'react';
+import { useSession } from 'next-auth/react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function PrivacyPage() {
+  const { status } = useSession();
+  const isLoading = status === 'loading';
+
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-12 bg-gray-200 rounded mb-6"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
@@ -30,59 +49,42 @@ export default function PrivacyPage() {
             <li>Account information (name, email, password)</li>
             <li>Profile information</li>
             <li>Communication content</li>
-            <li>Files and attachments you share</li>
           </ul>
 
-          <h3>Information automatically collected:</h3>
+          <h3>Information we automatically collect:</h3>
           <ul>
             <li>Device information</li>
-            <li>Log data</li>
-            <li>Usage information</li>
-            <li>Cookies and similar technologies</li>
+            <li>Usage data</li>
+            <li>Location data (when enabled)</li>
           </ul>
 
           <h2>How We Use Your Information</h2>
           <p>We use the information we collect to:</p>
           <ul>
-            <li>Provide and maintain our service</li>
-            <li>Improve and personalize your experience</li>
-            <li>Communicate with you</li>
-            <li>Ensure security and prevent fraud</li>
-          </ul>
-
-          <h2>Information Sharing and Disclosure</h2>
-          <p>
-            We do not sell your personal information. We may share your
-            information in the following situations:
-          </p>
-          <ul>
-            <li>With your consent</li>
-            <li>To comply with legal obligations</li>
-            <li>To protect our rights and prevent abuse</li>
-            <li>With service providers who assist in providing the service</li>
+            <li>Provide and maintain our services</li>
+            <li>Improve user experience</li>
+            <li>Send important updates and notifications</li>
+            <li>Analyze usage patterns</li>
           </ul>
 
           <h2>Data Security</h2>
           <p>
-            We implement appropriate technical and organizational measures to
-            protect your personal information against unauthorized access,
-            alteration, disclosure, or destruction.
+            We implement appropriate security measures to protect your data.
+            However, no method of transmission over the internet is 100% secure.
           </p>
 
           <h2>Your Rights</h2>
           <p>You have the right to:</p>
           <ul>
-            <li>Access your personal information</li>
-            <li>Correct inaccurate information</li>
-            <li>Request deletion of your information</li>
-            <li>Object to processing of your information</li>
-            <li>Data portability</li>
+            <li>Access your data</li>
+            <li>Correct inaccurate data</li>
+            <li>Request deletion of your data</li>
+            <li>Opt out of certain data collection</li>
           </ul>
 
           <h2>Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact
-            us at <a href="mailto:privacy@disco.com">privacy@disco.com</a>
+            If you have questions about this Privacy Policy, please contact us.
           </p>
         </div>
       </div>

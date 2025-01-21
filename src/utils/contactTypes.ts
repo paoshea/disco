@@ -1,4 +1,8 @@
-import type { EmergencyContact, EmergencyContactNew } from '@/types/safety';
+import type {
+  EmergencyContact,
+  EmergencyContactNew,
+  EmergencyContactFormData,
+} from '@/types/safety';
 
 /**
  * Safety Emergency Contact (from safety system)
@@ -25,51 +29,49 @@ import type { EmergencyContact, EmergencyContactNew } from '@/types/safety';
 /**
  * Converts a user emergency contact to a safety emergency contact
  * @param contact - The user emergency contact to convert
- * @param userId - The ID of the user associated with this contact
  * @returns A safety emergency contact with the same information
  */
-export const toSafetyContact = (
-  contact: Omit<EmergencyContact, 'userId'>,
-  userId: string
-): EmergencyContactNew => {
+export function toEmergencyContactNew(
+  contact: Omit<EmergencyContact, 'userId'>
+): EmergencyContactNew {
   return {
     id: contact.id,
-    name: contact.name,
-    phone: contact.phoneNumber,
-    email: contact.email,
-    relationship: contact.relationship,
-    isVerified: true,
-    userId,
-    createdAt: contact.createdAt || new Date().toISOString(),
-    updatedAt: contact.updatedAt || new Date().toISOString(),
+    name: `${contact.firstName} ${contact.lastName}`,
+    phone: contact.phoneNumber || '',
+    email: contact.email || '',
+    relationship: 'Contact',
+    isVerified: false,
+    userId: '',
+    createdAt: contact.createdAt,
+    updatedAt: contact.updatedAt,
   };
-};
+}
 
 /**
  * Converts a safety emergency contact to a user emergency contact
  * @param contact - The safety emergency contact to convert
+ * @param userId - The ID of the user associated with this contact
+ * @param id - The ID of the contact
+ * @param timestamp - The timestamp for creation and update
  * @returns A user emergency contact with the same information
  */
-export const toUserContact = (contact: EmergencyContact): EmergencyContact => {
+export function toEmergencyContact(
+  contact: EmergencyContactFormData,
+  userId: string,
+  id = '',
+  timestamp = new Date().toISOString()
+): EmergencyContact {
   return {
-    id: contact.id,
-    userId: contact.userId,
-    name: contact.name,
-    relationship: contact.relationship,
+    id,
+    userId,
+    firstName: contact.firstName,
+    lastName: contact.lastName,
     phoneNumber: contact.phoneNumber,
     email: contact.email,
-    notifyOn: {
-      sosAlert: contact.notifyOn.sosAlert,
-      meetupStart: contact.notifyOn.meetupStart,
-      meetupEnd: contact.notifyOn.meetupEnd,
-      lowBattery: contact.notifyOn.lowBattery,
-      enterPrivacyZone: contact.notifyOn.enterPrivacyZone,
-      exitPrivacyZone: contact.notifyOn.exitPrivacyZone,
-    },
-    createdAt: contact.createdAt,
-    updatedAt: contact.updatedAt,
+    createdAt: timestamp,
+    updatedAt: timestamp,
   };
-};
+}
 
 export type ContactStatus = 'pending' | 'verified' | 'rejected';
 

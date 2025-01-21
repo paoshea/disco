@@ -2,43 +2,48 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import { useSession } from 'next-auth/react';
 import { MatchingContainer } from '@/components/matching/MatchingContainer';
 import { locationService } from '@/services/location/location.service';
 import { Switch } from '@/components/ui/Switch';
 import { Label } from '@/components/ui/label';
-import { toast } from '@/hooks/use-toast';
-import { ToastAction } from '@/components/ui/toast';
+import { createToast } from '@/hooks/use-toast';
 
 export default function MatchingPage() {
   const router = useRouter();
-  const { user, isLoading } = useAuth();
+  const { status, data: session } = useSession();
   const [backgroundTracking, setBackgroundTracking] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && !user?.id) {
+    if (status === 'loading') return;
+
+    if (!session?.user?.id) {
       void router.push('/login');
       return;
     }
-  }, [user?.id, router, isLoading]);
+  }, [session?.user?.id, router, status]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!session?.user?.id) return;
 
     const startLocationTracking = async () => {
       try {
-        await locationService.startTracking(user.id, {}, backgroundTracking);
-        toast.success('Location tracking started', {
+        await locationService.startTracking(
+          session.user.id,
+          {},
+          backgroundTracking
+        );
+        createToast.success({
+          title: 'Location tracking started',
           description: backgroundTracking
             ? 'Your location will be tracked in the background'
             : 'Your location will be tracked while you use the app',
-          action: <ToastAction altText="Dismiss">Dismiss</ToastAction>,
         });
       } catch (error) {
         console.error('Failed to start location tracking:', error);
-        toast.error('Location tracking failed', {
+        createToast.error({
+          title: 'Location tracking failed',
           description: 'Please check your location permissions and try again',
-          action: <ToastAction altText="Retry">Retry</ToastAction>,
         });
       }
     };
@@ -46,54 +51,43 @@ export default function MatchingPage() {
     void startLocationTracking();
 
     return () => {
-      if (user?.id) {
-        void locationService.stopTracking(user.id);
+      if (session?.user?.id) {
+        void locationService.stopTracking(session.user.id);
       }
     };
-  }, [user?.id, backgroundTracking]);
+  }, [session?.user?.id, backgroundTracking]);
 
-  const handleBackgroundTrackingChange = async (enabled: boolean) => {
-    setBackgroundTracking(enabled);
-    if (!user?.id) return;
+  if (status === 'loading') {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="animate-pulse">
+          <div className="h-12 w-48 bg-gray-200 rounded mb-4"></div>
+          <div className="h-6 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
-    try {
-      if (enabled) {
-        await locationService.startTracking(user.id, {}, true);
-        toast.success('Background tracking enabled', {
-          description: 'Your location will be tracked in the background',
-          action: <ToastAction altText="Dismiss">Dismiss</ToastAction>,
-        });
-      } else {
-        await locationService.stopTracking(user.id);
-        toast.success('Background tracking disabled', {
-          description: 'Your location will only be tracked while using the app',
-          action: <ToastAction altText="Dismiss">Dismiss</ToastAction>,
-        });
-      }
-    } catch (error) {
-      console.error('Failed to toggle background tracking:', error);
-      toast.error('Failed to update tracking settings', {
-        description: 'Please try again',
-        action: <ToastAction altText="Retry">Retry</ToastAction>,
-      });
-    }
-  };
-
-  if (isLoading || !user?.id) {
+  if (!session?.user?.id) {
     return null;
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <div className="mb-4 flex items-center space-x-2">
-        <Switch
-          id="background-tracking"
-          checked={backgroundTracking}
-          onChange={handleBackgroundTrackingChange}
-        />
-        <Label htmlFor="background-tracking">Enable background tracking</Label>
+    <div className="container mx-auto px-4 py-8">
+      <div className="mb-8">
+        <div className="flex items-center space-x-4">
+          <Switch
+            id="background-tracking"
+            checked={backgroundTracking}
+            onChange={setBackgroundTracking}
+          />
+          <Label htmlFor="background-tracking">
+            Enable background location tracking
+          </Label>
+        </div>
       </div>
-      <MatchingContainer />
+
+      <MatchingContainer userId={session.user.id} />
     </div>
   );
 }

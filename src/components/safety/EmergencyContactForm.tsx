@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { TextField } from '@/components/forms/TextField';
 import { emergencyService } from '@/services/api/emergency.service';
-import type { EmergencyContact } from '@/types/safety';
+import type { EmergencyContactFormData } from '@/types/safety';
 
 interface EmergencyContactFormProps {
-  onSubmit: (data: Partial<EmergencyContact>) => void;
+  onSubmit: (data: EmergencyContactFormData) => void;
   onCancel: () => void;
-  initialData?: Partial<EmergencyContact>;
+  initialData?: Partial<EmergencyContactFormData>;
 }
 
 export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
@@ -20,21 +20,24 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<EmergencyContact>({
+  } = useForm<EmergencyContactFormData>({
     defaultValues: {
-      name: initialData?.name || '',
-      relationship: initialData?.relationship || '',
+      firstName: initialData?.firstName || '',
+      lastName: initialData?.lastName || '',
       phoneNumber: initialData?.phoneNumber || '',
       email: initialData?.email || '',
       notifyOn: initialData?.notifyOn || {
         sosAlert: true,
         meetupStart: true,
         meetupEnd: true,
+        lowBattery: true,
+        enterPrivacyZone: true,
+        exitPrivacyZone: true,
       },
     },
   });
 
-  const handleFormSubmit = async (data: EmergencyContact) => {
+  const handleFormSubmit = async (data: EmergencyContactFormData) => {
     try {
       setIsSubmitting(true);
       await emergencyService.addEmergencyContact(data);
@@ -53,15 +56,23 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
 
   return (
     <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
-      <TextField<EmergencyContact>
-        label="Name"
-        name="name"
+      <TextField<EmergencyContactFormData>
+        label="First Name"
+        name="firstName"
         register={register}
-        rules={{ required: 'Name is required' }}
-        error={errors.name?.message}
+        rules={{ required: 'First name is required' }}
+        error={errors.firstName?.message}
       />
 
-      <TextField<EmergencyContact>
+      <TextField<EmergencyContactFormData>
+        label="Last Name"
+        name="lastName"
+        register={register}
+        rules={{ required: 'Last name is required' }}
+        error={errors.lastName?.message}
+      />
+
+      <TextField<EmergencyContactFormData>
         label="Phone Number"
         name="phoneNumber"
         type="tel"
@@ -76,15 +87,7 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
         error={errors.phoneNumber?.message}
       />
 
-      <TextField<EmergencyContact>
-        label="Relationship"
-        name="relationship"
-        register={register}
-        rules={{ required: 'Relationship is required' }}
-        error={errors.relationship?.message}
-      />
-
-      <TextField<EmergencyContact>
+      <TextField<EmergencyContactFormData>
         label="Email"
         name="email"
         type="email"
@@ -135,6 +138,45 @@ export const EmergencyContactForm: React.FC<EmergencyContactFormProps> = ({
             />
             <label htmlFor="meetupEnd" className="ml-2 text-sm text-gray-700">
               Meetup End
+            </label>
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              {...register('notifyOn.lowBattery')}
+              id="lowBattery"
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label htmlFor="lowBattery" className="ml-2 text-sm text-gray-700">
+              Low Battery
+            </label>
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              {...register('notifyOn.enterPrivacyZone')}
+              id="enterPrivacyZone"
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label
+              htmlFor="enterPrivacyZone"
+              className="ml-2 text-sm text-gray-700"
+            >
+              Enter Privacy Zone
+            </label>
+          </div>
+          <div>
+            <input
+              type="checkbox"
+              {...register('notifyOn.exitPrivacyZone')}
+              id="exitPrivacyZone"
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <label
+              htmlFor="exitPrivacyZone"
+              className="ml-2 text-sm text-gray-700"
+            >
+              Exit Privacy Zone
             </label>
           </div>
         </div>

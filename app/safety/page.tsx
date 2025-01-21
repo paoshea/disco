@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { SafetyService } from '@/services/safety/safety.service';
-import { toast } from '@/hooks/use-toast';
+import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 
 interface SafetySettings {
@@ -19,8 +19,8 @@ interface SafetySettings {
 }
 
 export default function SafetyPage() {
+  const { isLoading, user } = useAuth();
   const router = useRouter();
-  const { user } = useAuth();
   const [settings, setSettings] = useState<SafetySettings>({
     enabled: false,
     emergencyContacts: [],
@@ -28,12 +28,14 @@ export default function SafetyPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchSettings = async () => {
-      if (!user?.id) {
-        router.push('/auth/signin');
-        return;
-      }
+    if (isLoading) return;
 
+    if (!user) {
+      void router.push('/auth/signin');
+      return;
+    }
+
+    const fetchSettings = async () => {
       try {
         const safetyService = SafetyService.getInstance();
         const contacts = await safetyService.getEmergencyContacts(user.id);
@@ -49,155 +51,94 @@ export default function SafetyPage() {
           })),
         });
       } catch (error) {
-        console.error('Error fetching safety settings:', error);
-        toast.error('Failed to fetch safety settings. Please try again later');
+        console.error('Failed to fetch safety settings:', error);
+        createToast.error({
+          title: 'Error',
+          description: 'Failed to load safety settings. Please try again.',
+        });
       } finally {
         setLoading(false);
       }
     };
 
     void fetchSettings();
-  }, [user?.id, router]);
+  }, [isLoading, user, router]);
 
-  const handleToggleSafety = async (enabled: boolean) => {
-    if (!user?.id) return;
-
-    try {
-      const safetyService = SafetyService.getInstance();
-      await safetyService.updateSafetySettings(user.id, {
-        enabled,
-      });
-      setSettings(prev => ({ ...prev, enabled }));
-      toast.success(
-        enabled ? 'Safety features enabled' : 'Safety features disabled'
-      );
-    } catch (error) {
-      console.error('Error updating safety settings:', error);
-      toast.error('Failed to update safety settings. Please try again later');
-    }
-  };
-
-  const handleToggleSafetySync = (enabled: boolean) => {
-    void handleToggleSafety(enabled);
-  };
-
-  const handleAddContact = async (contact: {
-    name: string;
-    phone: string;
-    email: string;
-    priority: 'primary' | 'secondary';
-  }) => {
-    if (!user?.id) return;
-
-    try {
-      const safetyService = SafetyService.getInstance();
-      const [firstName, ...lastNameParts] = contact.name.split(' ');
-      const lastName = lastNameParts.join(' ');
-
-      const newContact = await safetyService.addEmergencyContact(user.id, {
-        firstName,
-        lastName: lastName || firstName, // Fallback if no last name
-        email: contact.email,
-        phoneNumber: contact.phone,
-      });
-
-      setSettings(prev => ({
-        ...prev,
-        emergencyContacts: [
-          ...prev.emergencyContacts,
-          {
-            id: newContact.id,
-            name: `${newContact.firstName} ${newContact.lastName}`,
-            phone: newContact.phoneNumber || '',
-            email: newContact.email || '',
-            priority: 'primary' as const,
-          },
-        ],
-      }));
-
-      toast.success('Emergency contact added successfully');
-    } catch (error) {
-      console.error('Error adding emergency contact:', error);
-      toast.error('Failed to add emergency contact. Please try again later');
-    }
-  };
-
-  const handleRemoveContact = async (contactId: string) => {
-    if (!user?.id) return;
-
-    try {
-      const safetyService = SafetyService.getInstance();
-      await safetyService.deleteEmergencyContact(user.id, contactId);
-
-      // Refresh emergency contacts
-      const contacts = await safetyService.getEmergencyContacts(user.id);
-      setSettings(prev => ({
-        ...prev,
-        emergencyContacts: contacts.map(c => ({
-          id: c.id,
-          name: `${c.firstName} ${c.lastName}`,
-          phone: c.phoneNumber || '',
-          email: c.email || '',
-          priority: 'primary' as const,
-        })),
-      }));
-
-      toast.success('Emergency contact removed successfully');
-    } catch (error) {
-      console.error('Error removing emergency contact:', error);
-      toast.error('Failed to remove emergency contact. Please try again later');
-    }
-  };
-
-  if (loading) {
-    return <div>Loading...</div>;
+  if (isLoading || loading) {
+    return (
+      <div className="min-h-screen bg-gray-100">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
+            <div className="space-y-4">
+              <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Safety Settings</h1>
+    <div className="min-h-screen bg-gray-100">
+      <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+        <div className="bg-white shadow rounded-lg">
+          <div className="px-4 py-5 sm:p-6">
+            <h3 className="text-lg leading-6 font-medium text-gray-900">
+              Safety Settings
+            </h3>
+            <div className="mt-2 max-w-xl text-sm text-gray-500">
+              <p>
+                Configure your safety preferences and emergency contacts. These
+                settings help ensure your safety while using our service.
+              </p>
+            </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <div>
-            <h2 className="text-lg font-semibold">Enable Safety Features</h2>
-            <p className="text-gray-600">
-              Activate safety monitoring and emergency contact features
-            </p>
-          </div>
-          <Switch
-            checked={settings.enabled}
-            onChange={handleToggleSafetySync}
-            className={`${
-              settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
-            } relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2`}
-          >
-            <span
-              className={`${
-                settings.enabled ? 'translate-x-6' : 'translate-x-1'
-              } inline-block h-4 w-4 transform rounded-full bg-white transition-transform`}
-            />
-          </Switch>
-        </div>
+            <div className="mt-5">
+              <div className="flex items-center">
+                <Switch
+                  checked={settings.enabled}
+                  onChange={enabled => setSettings({ ...settings, enabled })}
+                  className={`${
+                    settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  } relative inline-flex h-6 w-11 items-center rounded-full`}
+                >
+                  <span className="sr-only">Enable safety features</span>
+                  <span
+                    className={`${
+                      settings.enabled ? 'translate-x-6' : 'translate-x-1'
+                    } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+                  />
+                </Switch>
+                <span className="ml-3">
+                  <span className="text-sm font-medium text-gray-900">
+                    Enable Safety Features
+                  </span>
+                </span>
+              </div>
+            </div>
 
-        {settings.enabled && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-4">Emergency Contacts</h3>
-            {settings.emergencyContacts.length > 0 ? (
-              <ul className="space-y-4">
+            <div className="mt-6">
+              <h4 className="text-base font-medium text-gray-900">
+                Emergency Contacts
+              </h4>
+              <div className="mt-4 space-y-4">
                 {settings.emergencyContacts.map(contact => (
-                  <li
+                  <div
                     key={contact.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
                   >
                     <div>
-                      <p className="font-medium">{contact.name}</p>
-                      <p className="text-sm text-gray-600">{contact.email}</p>
-                      <p className="text-sm text-gray-600">{contact.phone}</p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {contact.name}
+                      </p>
+                      <p className="text-sm text-gray-500">{contact.email}</p>
+                      <p className="text-sm text-gray-500">{contact.phone}</p>
                     </div>
-                    <div className="flex items-center space-x-4">
+                    <div>
                       <span
-                        className={`px-3 py-1 rounded-full text-sm ${
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           contact.priority === 'primary'
                             ? 'bg-blue-100 text-blue-800'
                             : 'bg-gray-100 text-gray-800'
@@ -205,34 +146,34 @@ export default function SafetyPage() {
                       >
                         {contact.priority}
                       </span>
-                      <button
-                        onClick={() => void handleRemoveContact(contact.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        Remove
-                      </button>
                     </div>
-                  </li>
+                  </div>
                 ))}
-              </ul>
-            ) : (
-              <p className="text-gray-600">No emergency contacts added yet.</p>
-            )}
-            <button
-              onClick={() =>
-                void handleAddContact({
-                  name: 'New Contact',
-                  phone: '',
-                  email: '',
-                  priority: 'primary',
-                })
-              }
-              className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              Add Contact
-            </button>
+
+                {settings.emergencyContacts.length === 0 && (
+                  <p className="text-sm text-gray-500">
+                    No emergency contacts added yet.
+                  </p>
+                )}
+
+                <button
+                  type="button"
+                  className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  onClick={() => {
+                    // TODO: Implement add contact
+                    createToast.info({
+                      title: 'Coming Soon',
+                      description:
+                        'Adding emergency contacts will be available soon.',
+                    });
+                  }}
+                >
+                  Add Contact
+                </button>
+              </div>
+            </div>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

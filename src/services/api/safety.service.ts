@@ -6,9 +6,8 @@ import type {
   SafetyReport,
   EmergencyContact,
   EmergencyContactInput,
-  SafetyCheck,
 } from '@/types/safety';
-import type { Location, LocationPrivacyMode } from '@/types/location';
+import type { LocationPrivacyMode } from '@/types/location';
 import { Prisma, ReportType, ReportStatus } from '@prisma/client';
 
 interface LocationData {
@@ -293,11 +292,22 @@ export const safetyService = {
     };
   },
 
-  async getEmergencyContacts(userId: string): Promise<any[]> {
-    // TODO: Implement emergency contacts when database schema is ready
-    // For now, return an empty array to prevent errors
-    console.log('Emergency contacts not yet implemented for user:', userId);
-    return [];
+  async getEmergencyContacts(userId: string): Promise<EmergencyContact[]> {
+    const contacts = await prisma.emergencyContact.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return contacts.map(contact => ({
+      id: contact.id,
+      userId: contact.userId,
+      firstName: contact.firstName,
+      lastName: contact.lastName,
+      phoneNumber: contact.phoneNumber || undefined,
+      email: contact.email || undefined,
+      createdAt: contact.createdAt.toISOString(),
+      updatedAt: contact.updatedAt.toISOString(),
+    }));
   },
 
   async addEmergencyContact(

@@ -27,6 +27,23 @@ export type SafetyAlertType =
 export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
 export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
 
+export interface EmergencyContactNotifyOn {
+  sosAlert: boolean;
+  meetupStart: boolean;
+  meetupEnd: boolean;
+  lowBattery: boolean;
+  enterPrivacyZone: boolean;
+  exitPrivacyZone: boolean;
+}
+
+export interface EmergencyContactFormData {
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+  notifyOn: EmergencyContactNotifyOn;
+}
+
 export interface EmergencyContact {
   id: string;
   userId: string;

@@ -97,10 +97,18 @@ export class MatchingService {
 
     // Get cached nearby users or fetch new ones
     const cacheKey = `nearby:${userId}:${matchPreferences.maxDistance}`;
-    const cachedUsers = await redis.get(cacheKey);
-    let nearbyUsers: AppUser[] | null = cachedUsers
-      ? (JSON.parse(cachedUsers) as AppUser[])
-      : null;
+    let nearbyUsers: AppUser[] | null = null;
+
+    if (redis) {
+      const cachedUsers = await redis.get(cacheKey);
+      if (cachedUsers) {
+        try {
+          nearbyUsers = JSON.parse(cachedUsers) as AppUser[];
+        } catch (error) {
+          console.error('Error parsing cached users:', error);
+        }
+      }
+    }
 
     if (!nearbyUsers) {
       const nearbyPrismaUsers = await this.getNearbyUsers(
@@ -116,12 +124,18 @@ export class MatchingService {
         })
       );
 
-      // Cache nearby users
-      await redis.setex(
-        cacheKey,
-        NEARBY_USERS_CACHE_TTL,
-        JSON.stringify(nearbyUsers)
-      );
+      // Cache nearby users if Redis is available
+      if (redis) {
+        try {
+          await redis.setex(
+            cacheKey,
+            NEARBY_USERS_CACHE_TTL,
+            JSON.stringify(nearbyUsers)
+          );
+        } catch (error) {
+          console.error('Error caching nearby users:', error);
+        }
+      }
     }
 
     // Calculate scores for each potential match
@@ -145,15 +159,17 @@ export class MatchingService {
           const matchPrefs = this.convertToMatchPreferences(userPrefs);
 
           // Check if cached score exists
-          const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
           let matchScore: MatchScore | null = null;
-          const cachedScore = await redis.get(scoreCacheKey);
 
-          if (cachedScore) {
+          if (redis) {
+            const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
             try {
-              matchScore = JSON.parse(cachedScore) as MatchScore;
+              const cachedScore = await redis.get(scoreCacheKey);
+              if (cachedScore) {
+                matchScore = JSON.parse(cachedScore) as MatchScore;
+              }
             } catch (error) {
-              console.error('Error parsing cached score:', error);
+              console.error('Error getting cached score:', error);
             }
           }
 
@@ -166,12 +182,19 @@ export class MatchingService {
               matchPreferences,
               matchPrefs
             );
-            await redis.set(
-              scoreCacheKey,
-              JSON.stringify(matchScore),
-              'EX',
-              MATCH_SCORE_CACHE_TTL
-            );
+
+            if (redis) {
+              try {
+                const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
+                await redis.setex(
+                  scoreCacheKey,
+                  MATCH_SCORE_CACHE_TTL,
+                  JSON.stringify(matchScore)
+                );
+              } catch (error) {
+                console.error('Error caching match score:', error);
+              }
+            }
           }
 
           return this.createMatchObject(potentialMatchUser, matchScore);
@@ -250,18 +273,44 @@ export class MatchingService {
    * Get the status of a match
    */
   async getMatchStatus(userId: string, matchId: string): Promise<MatchStatus> {
-    const match = await prisma.$queryRaw<{ status: MatchStatus }[]>`
-      SELECT status FROM "UserMatch"
-      WHERE id = ${matchId}
-      AND (user_id = ${userId} OR matched_user_id = ${userId})
-      LIMIT 1
-    `;
+    const cacheKey = `match_status:${userId}:${matchId}`;
+    let status: MatchStatus | null = null;
 
-    if (!match || match.length === 0) {
-      throw new Error('Match not found');
+    if (redis) {
+      try {
+        const cachedStatus = await redis.get(cacheKey);
+        if (cachedStatus) {
+          status = JSON.parse(cachedStatus) as MatchStatus;
+        }
+      } catch (error) {
+        console.error('Error getting cached match status:', error);
+      }
     }
 
-    return match[0].status;
+    if (!status) {
+      // Fetch status from database
+      const match = await prisma.userMatch.findFirst({
+        where: {
+          OR: [
+            { userId: userId, matchedUserId: matchId },
+            { userId: matchId, matchedUserId: userId },
+          ],
+        },
+      });
+
+      status = (match?.status as MatchStatus) || 'pending';
+
+      // Cache the status if Redis is available
+      if (redis) {
+        try {
+          await redis.setex(cacheKey, 3600, JSON.stringify(status));
+        } catch (error) {
+          console.error('Error caching match status:', error);
+        }
+      }
+    }
+
+    return status;
   }
 
   /**
@@ -373,7 +422,9 @@ export class MatchingService {
 
     // Clear any cached match scores for this user
     const cacheKey = `match_scores:${userId}`;
-    await redis.del(cacheKey);
+    if (redis) {
+      await redis.del(cacheKey);
+    }
   }
 
   private async getMatchLocation(

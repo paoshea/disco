@@ -5,7 +5,7 @@ import React, {
   useEffect,
   useCallback,
 } from 'react';
-import { useSession } from 'next-auth/react';
+import { useAuth } from '@/hooks/useAuth';
 import { safetyService } from '@/services/api/safety.service';
 import { JsonValue } from '@prisma/client/runtime/library';
 import {
@@ -51,8 +51,7 @@ export const useSafetyAlerts = () => {
 export const SafetyAlertProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { data: session } = useSession();
-  const user = session?.user;
+  const { user } = useAuth();
   const [alerts, setAlerts] = useState<SafetyAlertNew[]>([]);
   const [safetyChecks, setSafetyChecks] = useState<SafetyCheckNew[]>([]);
   const [isLoading, setIsLoading] = useState(true);

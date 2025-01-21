@@ -1,136 +1,93 @@
-import { useState, useCallback } from 'react';
+import { useState } from 'react';
 import { safetyService } from '@/services/api/safety.service';
-import type {
-  EmergencyContact,
-  EmergencyContactInput,
-  SafetyCheck,
-  SafetyCheckNew,
-  SafetyCheckStatus,
-  SafetyCheckInput,
-} from '@/types/safety';
-import { useAuth } from '@/hooks/useAuth';
+import type { EmergencyContactFormData } from '@/types/safety';
+import type { User } from '@/types/user';
 
-export function useSafetyService() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
+interface UseSafetyServiceProps {
+  user: User;
+}
 
-  const getEmergencyContacts = useCallback(async () => {
-    if (!user?.id) throw new Error('User ID is required');
-    setIsLoading(true);
-    setError(null);
+interface SafetyServiceState {
+  loading: boolean;
+  error: string | null;
+}
+
+export function useSafetyService({ user }: UseSafetyServiceProps) {
+  const [state, setState] = useState<SafetyServiceState>({
+    loading: false,
+    error: null,
+  });
+
+  const setLoading = (loading: boolean) => {
+    setState(prev => ({ ...prev, loading }));
+  };
+
+  const setError = (error: string | null) => {
+    setState(prev => ({ ...prev, error }));
+  };
+
+  const addEmergencyContact = async (contact: EmergencyContactFormData) => {
     try {
-      const contacts = await safetyService.getEmergencyContacts(user.id);
-      return contacts;
+      setLoading(true);
+      const newContact = await safetyService.addEmergencyContact(
+        user.id,
+        contact
+      );
+      return newContact;
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Failed to add emergency contact'
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateEmergencyContact = async (
+    contactId: string,
+    contact: EmergencyContactFormData
+  ) => {
+    try {
+      setLoading(true);
+      const updatedContact = await safetyService.updateEmergencyContact(
+        user.id,
+        contactId,
+        contact
+      );
+      return updatedContact;
     } catch (err) {
       setError(
         err instanceof Error
           ? err.message
-          : 'Failed to fetch emergency contacts'
+          : 'Failed to update emergency contact'
       );
-      return [];
+      throw err;
     } finally {
-      setIsLoading(false);
+      setLoading(false);
     }
-  }, [user?.id]);
+  };
 
-  const addEmergencyContact = useCallback(
-    async (contact: EmergencyContactInput) => {
-      if (!user?.id) throw new Error('User ID is required');
-      setIsLoading(true);
-      setError(null);
-      try {
-        const newContact = await safetyService.addEmergencyContact(
-          user.id,
-          contact
-        );
-        return newContact;
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to add emergency contact'
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user?.id]
-  );
-
-  const updateEmergencyContact = useCallback(
-    async (contactId: string, updates: Partial<EmergencyContactInput>) => {
-      if (!user?.id) throw new Error('User ID is required');
-      setIsLoading(true);
-      setError(null);
-      try {
-        const updatedContact = await safetyService.updateEmergencyContact(
-          user.id,
-          contactId,
-          updates
-        );
-        return updatedContact;
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to update emergency contact'
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user?.id]
-  );
-
-  const deleteEmergencyContact = useCallback(
-    async (contactId: string) => {
-      if (!user?.id) throw new Error('User ID is required');
-      setIsLoading(true);
-      setError(null);
-      try {
-        await safetyService.deleteEmergencyContact(user.id, contactId);
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Failed to delete emergency contact'
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user?.id]
-  );
-
-  const scheduleSafetyCheck = useCallback(
-    async (check: SafetyCheckInput) => {
-      if (!user?.id) throw new Error('User ID is required');
-      setIsLoading(true);
-      setError(null);
-      try {
-        const newCheck = await safetyService.createSafetyCheck(user.id, check);
-        return newCheck;
-      } catch (err) {
-        setError(
-          err instanceof Error ? err.message : 'Failed to schedule safety check'
-        );
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
-    },
-    [user?.id]
-  );
+  const deleteEmergencyContact = async (contactId: string) => {
+    try {
+      setLoading(true);
+      await safetyService.deleteEmergencyContact(user.id, contactId);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Failed to delete emergency contact'
+      );
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return {
-    isLoading,
-    error,
-    getEmergencyContacts,
+    ...state,
     addEmergencyContact,
     updateEmergencyContact,
     deleteEmergencyContact,
-    scheduleSafetyCheck,
   };
 }

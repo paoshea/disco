@@ -1,9 +1,28 @@
 'use client';
 
 import React from 'react';
+import { useSession } from 'next-auth/react';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function TermsPage() {
+  const { status } = useSession();
+  const isLoading = status === 'loading';
+
+  if (isLoading) {
+    return (
+      <PublicLayout>
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="animate-pulse">
+              <div className="h-12 bg-gray-200 rounded mb-6"></div>
+              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
+            </div>
+          </div>
+        </div>
+      </PublicLayout>
+    );
+  }
+
   return (
     <PublicLayout>
       <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">

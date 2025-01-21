@@ -277,12 +277,12 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
-      if (token && session.user) {
+    session({ session, token }) {
+      if (session?.user) {
         session.user.id = token.id;
         session.user.email = token.email;
+        session.user.name = token.name;
         session.user.role = token.role;
-        await prisma.user.findUnique({ where: { id: token.id } });
       }
       return session;
     },
