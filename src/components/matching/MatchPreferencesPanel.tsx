@@ -1,9 +1,9 @@
-import React, { ChangeEvent, useState } from 'react';
+import React, { ChangeEvent, useState, KeyboardEvent } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select, SelectProps } from '@/components/ui/Select';
+import { Select, SelectItem, SelectProps } from '@/components/ui/Select';
 import { Switch } from "@/components/ui/Switch";
 import { Slider } from '@/components/ui/Slider';
 import { Button } from '@/components/ui/Button';
@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { MatchPreferences } from '@/types/match';
 import { useToast } from '@/hooks/use-toast';
+import type { LocationPrivacyMode } from '@/types/location';
 
 interface MatchPreferencesPanelProps {
   onSubmit: (data: MatchPreferences) => void;
@@ -26,7 +27,7 @@ const schema = z.object({
   withPhoto: z.boolean(),
   timeWindow: z.enum(['anytime', 'now', '15min', '30min', '1hour', 'today']).optional(),
   activityType: z.string().optional(),
-  privacyMode: z.enum(['standard', 'strict']).optional(),
+  privacyMode: z.enum(['standard', 'strict'] as const).optional(),
   useBluetoothProximity: z.boolean().optional()
 });
 
@@ -40,8 +41,8 @@ const timeWindowOptions = [
 ];
 
 const privacyModeOptions = [
-  { value: 'standard', label: 'Standard' },
-  { value: 'strict', label: 'Strict' }
+  { value: 'standard', label: 'Standard Privacy' },
+  { value: 'strict', label: 'Strict Privacy' }
 ];
 
 export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferencesPanelProps) {
@@ -54,6 +55,8 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
       interests: [],
       verifiedOnly: false,
       withPhoto: true,
+      timeWindow: 'anytime',
+      privacyMode: 'standard',
       useBluetoothProximity: false,
       ...initialValues
     }
@@ -62,49 +65,41 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
   const { toast } = useToast();
   const [newInterest, setNewInterest] = useState('');
 
-  const handleAddInterest = (e: ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.trim();
+  const handleSelectChange = (name: keyof MatchPreferences) => (value: string) => {
+    setValue(name, value);
+  };
+
+  const handleInterestAdd = (e: KeyboardEvent<HTMLInputElement> | ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const target = e.target as HTMLInputElement;
+    const value = target.value.trim();
+    
     if (!value) {
       toast({
         title: "Invalid Interest",
         description: "Interest cannot be empty",
-        variant: "destructive"
+        variant: "error"
       });
       return;
     }
-    
-    const currentInterests = watch('interests');
+
+    const currentInterests = watch('interests') || [];
     if (currentInterests.includes(value)) {
       toast({
         title: "Duplicate Interest",
         description: "This interest has already been added",
-        variant: "destructive"
+        variant: "error"
       });
       return;
     }
 
     setValue('interests', [...currentInterests, value]);
-    setNewInterest('');
-    toast({
-      title: "Interest Added",
-      description: `Added "${value}" to your interests`,
-      variant: "default"
-    });
+    target.value = '';
   };
 
   const handleRemoveInterest = (interest: string) => {
     const currentInterests = watch('interests');
     setValue('interests', currentInterests.filter(i => i !== interest));
-  };
-
-  const handleTimeWindowChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setValue('timeWindow', value as MatchPreferences['timeWindow']);
-  };
-
-  const handlePrivacyModeChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value;
-    setValue('privacyMode', value as MatchPreferences['privacyMode']);
   };
 
   return (
@@ -117,35 +112,45 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
           <div className="space-y-2">
             <div className="text-sm font-medium">Time Window</div>
             <Select
-              {...register('timeWindow')}
-              options={timeWindowOptions}
-              value={watch('timeWindow') || ''}
-              onChange={handleTimeWindowChange}
+              value={watch('timeWindow')}
+              onValueChange={handleSelectChange('timeWindow')}
               placeholder="Select time window"
-            />
+            >
+              {timeWindowOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </Select>
           </div>
 
           <div className="space-y-2">
             <div className="text-sm font-medium">Privacy Mode</div>
             <Select
-              {...register('privacyMode')}
-              options={privacyModeOptions}
-              value={watch('privacyMode') || ''}
-              onChange={handlePrivacyModeChange}
+              value={watch('privacyMode')}
+              onValueChange={handleSelectChange('privacyMode')}
               placeholder="Select privacy mode"
-            />
+            >
+              {privacyModeOptions.map(option => (
+                <SelectItem key={option.value} value={option.value}>
+                  {option.label}
+                </SelectItem>
+              ))}
+            </Select>
           </div>
 
           <div className="space-y-2">
             <div className="text-sm font-medium">Interests</div>
             <div className="flex gap-2">
               <Input
-                value={newInterest}
-                onChange={(e) => setNewInterest(e.target.value)}
-                placeholder="Add an interest"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest(e))}
+                {...register('interests')}
+                placeholder="Add interests (comma separated)"
+                onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
+                  if (e.key === 'Enter') {
+                    handleInterestAdd(e);
+                  }
+                }}
               />
-              <Button type="button" onClick={() => handleAddInterest({ target: { value: newInterest } } as any)}>Add</Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {watch('interests').map((interest) => (

@@ -1,41 +1,66 @@
 import React, { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { BaseMapView } from '@/components/map/BaseMapView';
+import { BaseMapView, type MapMarker, type BaseMapViewProps } from '@/components/map/BaseMapView';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { safetyService } from '@/services/api/safety.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
+import type { Location } from '@/types/location';
 import { createToast } from '@/hooks/use-toast';
-import type { MapMarker } from '@/types/map';
-import type { Location, LocationState } from '@/types/location';
 
 export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps) {
   const [isTriggering, setIsTriggering] = useState(false);
-  const { location, error: locationError } = useGeolocation() as LocationState;
+  const { position, error: locationError } = useGeolocation({
+    enableHighAccuracy: true,
+    watchPosition: true
+  });
 
   const handleTriggerAlert = useCallback(async () => {
-    if (isTriggering || !location) return;
+    if (isTriggering || !position?.coords) return;
 
     setIsTriggering(true);
     try {
-      const alert: Partial<SafetyAlertNew> = {
+      const location: Location = {
+        id: crypto.randomUUID(),
+        userId,
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+        accuracy: position.coords.accuracy,
+        timestamp: new Date(position.timestamp),
+        privacyMode: 'precise',
+        sharingEnabled: true
+      };
+
+      const alert: SafetyAlertNew = {
+        id: crypto.randomUUID(),
         userId,
         type: 'sos',
         status: 'active',
+        location,
+        message: 'Emergency SOS Alert',
+        description: 'User triggered emergency alert',
+        contacts: [],
+        evidence: [],
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+
+      const response = await safetyService.createAlert({
+        type: alert.type,
+        description: alert.description,
         location: {
+          id: location.id,
+          userId: location.userId,
           latitude: location.latitude,
           longitude: location.longitude,
           accuracy: location.accuracy,
-          timestamp: new Date()
-        },
-        message: 'Emergency SOS Alert',
-        contacts: [],
-        description: 'User triggered emergency alert',
-        evidence: []
-      };
+          timestamp: location.timestamp,
+          privacyMode: location.privacyMode,
+          sharingEnabled: location.sharingEnabled
+        }
+      });
 
-      const response = await safetyService.createAlert(alert);
-      onAlertTriggered?.(response);
+      onAlertTriggered?.(alert);
 
       createToast.success({
         title: 'Emergency Alert Triggered',
@@ -50,29 +75,47 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
     } finally {
       setIsTriggering(false);
     }
-  }, [userId, location, isTriggering, onAlertTriggered]);
+  }, [userId, position, isTriggering, onAlertTriggered]);
 
-  const markers: MapMarker[] = location ? [{
+  const markers: MapMarker[] = position?.coords ? [{
     id: 'user-location',
     position: {
-      lat: location.latitude,
-      lng: location.longitude
+      lat: position.coords.latitude,
+      lng: position.coords.longitude
     },
     title: 'Your Location',
     icon: {
       url: '/images/markers/user-location.svg',
-      scaledSize: { width: 40, height: 40 },
-      anchor: { x: 20, y: 20 }
+      scaledSize: new google.maps.Size(40, 40),
+      anchor: new google.maps.Point(20, 20)
     }
   }] : [];
+
+  const handleMarkerClick = useCallback((marker: MapMarker) => {
+    // Handle marker click if needed
+  }, []);
+
+  const handleMarkerMouseEnter = useCallback((marker: MapMarker) => {
+    // Handle marker mouse enter if needed
+  }, []);
+
+  const handleMarkerMouseLeave = useCallback(() => {
+    // Handle marker mouse leave if needed
+  }, []);
 
   return (
     <div className="space-y-4">
       <div className="h-64 relative">
         <BaseMapView
-          center={location ? { lat: location.latitude, lng: location.longitude } : undefined}
+          center={position?.coords ? {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          } : { lat: 0, lng: 0 }}
           zoom={15}
           markers={markers}
+          onMarkerClick={handleMarkerClick}
+          onMarkerMouseEnter={handleMarkerMouseEnter}
+          onMarkerMouseLeave={handleMarkerMouseLeave}
         />
         {locationError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">
@@ -87,7 +130,7 @@ export function EmergencyAlert({ userId, onAlertTriggered }: EmergencyAlertProps
         variant="danger"
         className="w-full"
         onClick={handleTriggerAlert}
-        disabled={isTriggering || !location}
+        disabled={isTriggering || !position?.coords}
       >
         {isTriggering ? 'Triggering Alert...' : 'Trigger Emergency Alert'}
       </Button>

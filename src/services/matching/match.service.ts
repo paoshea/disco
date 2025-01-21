@@ -1,20 +1,22 @@
 import { Match, MatchPreferences, MatchScore, MatchStatus } from '@/types/match';
 import type { User as AppUser, UserPreferences } from '@/types/user';
-import { PrismaClient, User as PrismaUser } from '@prisma/client';
+import { PrismaClient, User as PrismaUser, Location as PrismaLocation } from '@prisma/client';
 import { MatchAlgorithm } from './match.algorithm';
 import { db } from '@/lib/db/client';
 import { redis } from '@/lib/redis';
 import { LocationService } from '@/services/location/location.service';
 import * as userService from '../user/user.service';
+import type { LocationPrivacyMode } from '@/types/location';
 
 const MATCH_SCORE_CACHE_TTL = 3600; // 1 hour
 const NEARBY_USERS_CACHE_TTL = 300; // 5 minutes
 
 const prisma = new PrismaClient();
-const locationService = new LocationService();
+const locationService = LocationService.getInstance(); // Use getInstance instead of new
 
 // Helper function to convert Prisma User to App User
-function convertToAppUser(prismaUser: PrismaUser): AppUser {
+function convertToAppUser(prismaUser: PrismaUser & { locations?: PrismaLocation[] }): AppUser {
+  const location = prismaUser.locations?.[0];
   return {
     id: prismaUser.id,
     email: prismaUser.email,
@@ -24,12 +26,12 @@ function convertToAppUser(prismaUser: PrismaUser): AppUser {
     name: `${prismaUser.firstName} ${prismaUser.lastName}`,
     verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
     lastActive: prismaUser.updatedAt,
-    location: prismaUser.location ? {
-      latitude: prismaUser.location.latitude,
-      longitude: prismaUser.location.longitude,
-      accuracy: prismaUser.location.accuracy,
-      privacyMode: prismaUser.location.privacyMode,
-      timestamp: prismaUser.location.timestamp
+    location: location ? {
+      latitude: location.latitude,
+      longitude: location.longitude,
+      accuracy: location.accuracy ?? undefined,
+      privacyMode: location.privacyMode as LocationPrivacyMode,
+      timestamp: location.timestamp
     } : undefined,
     createdAt: prismaUser.createdAt,
     updatedAt: prismaUser.updatedAt
@@ -185,8 +187,13 @@ export class MatchingService {
   /**
    * Create a Match object from a user and score
    */
-  private async createMatchObject(user: PrismaUser, score: MatchScore): Promise<Match> {
+  async createMatchObject(user: PrismaUser, score: MatchScore): Promise<Match> {
     const appUser = convertToAppUser(user);
+    const matchLocation = appUser.location ? {
+      latitude: appUser.location.latitude,
+      longitude: appUser.location.longitude
+    } : await this.getMatchLocation(user.id);
+    
     return {
       id: crypto.randomUUID(),
       name: appUser.name,
@@ -195,11 +202,11 @@ export class MatchingService {
       profileImage: undefined,
       distance: score.distance,
       commonInterests: score.commonInterests,
-      lastActive: appUser.lastActive,
-      location: appUser.location,
+      lastActive: appUser.lastActive.toISOString(),
+      location: matchLocation,
       interests: [],
       connectionStatus: 'pending',
-      verificationStatus: appUser.verificationStatus,
+      verificationStatus: appUser.verificationStatus === 'verified' ? 'verified' : 'unverified',
       activityPreferences: {
         type: 'any',
         timeWindow: 'anytime'
@@ -280,7 +287,10 @@ export class MatchingService {
   }
 
   private async getNearbyUsers(userId: string, maxDistance: number): Promise<PrismaUser[]> {
-    const user = await userService.getUserById(userId);
+    const user = await db.user.findUnique({
+      where: { id: userId }
+    });
+
     if (!user) throw new Error('User not found');
 
     const userLocation = await locationService.getLocation(userId);
@@ -296,17 +306,14 @@ export class MatchingService {
         locations: {
           some: {
             latitude: {
-              gte: userLocation.latitude - maxDistance / 111000, // rough conversion to degrees
+              gte: userLocation.latitude - maxDistance / 111000,
               lte: userLocation.latitude + maxDistance / 111000,
             },
             longitude: {
               gte: userLocation.longitude - maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
               lte: userLocation.longitude + maxDistance / (111000 * Math.cos(userLocation.latitude * Math.PI / 180)),
             },
-            sharingEnabled: true,
-            lastUpdated: {
-              gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Last 24 hours
-            }
+            sharingEnabled: true
           }
         }
       },
@@ -326,6 +333,35 @@ export class MatchingService {
     await redis.del(cacheKey);
   }
 
+  private async getMatchLocation(userId: string): Promise<{ latitude: number; longitude: number }> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { locations: true }
+    });
+
+    const location = user?.locations?.[0];
+    if (!location) {
+      throw new Error('User location not found');
+    }
+
+    return {
+      latitude: location.latitude,
+      longitude: location.longitude
+    };
+  }
+
+  private async buildLocationWhereInput(userId: string, maxDistance: number) {
+    const location = await this.getMatchLocation(userId);
+    return {
+      locations: {
+        some: {
+          latitude: location.latitude,
+          longitude: location.longitude,
+          maxDistance
+        }
+      }
+    };
+  }
 }
 
 export const matchingService = MatchingService.getInstance();

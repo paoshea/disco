@@ -193,17 +193,12 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     [mapStyle]
   );
 
-  const handleMarkerClick = useCallback((marker: ExtendedMapMarker) => {
-    if (!marker.data) {
-      toast({
-        title: "Error",
-        description: "Match data not found",
-        variant: "destructive"
-      });
-      return;
+  const handleMarkerClick = useCallback((marker: MapMarker) => {
+    const extendedMarker = marker as ExtendedMapMarker;
+    if (extendedMarker.data) {
+      onMarkerClick(extendedMarker.data);
     }
-    onMarkerClick(marker.data);
-  }, [onMarkerClick, toast]);
+  }, [onMarkerClick]);
 
   const handleMarkerMouseEnter = useCallback((marker: MapMarker & { data?: Match }) => {
     if (marker.data) {
@@ -224,7 +219,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       toast({
         title: "Invalid Age Range",
         description: "Minimum age cannot be greater than maximum age",
-        variant: "destructive"
+        variant: "error"
       });
       return;
     }
@@ -278,9 +273,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             </div>
 
             <div className="flex items-center space-x-2">
-              <Select
+              <Select 
                 value={mapStyle}
-                onChange={(value: string) => setMapStyle(value)}
+                onValueChange={(value: string) => setMapStyle(value)}
                 options={mapStyleOptions}
               />
             </div>
@@ -288,7 +283,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             <div className="flex items-center space-x-2">
               <Select
                 value={matchDistance}
-                onChange={(value: string) => setMatchDistance(value)}
+                onValueChange={(value: string) => setMatchDistance(value)}
                 options={distanceOptions}
               />
             </div>
@@ -297,7 +292,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
               <label className="text-sm font-medium">Activity Type</label>
               <Select
                 value={filters.activity}
-                onChange={handleActivityChange}
+                onValueChange={handleActivityChange}
                 options={[
                   { value: 'all', label: 'All Activities' },
                   { value: 'coffee', label: 'Coffee' },
@@ -312,7 +307,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
               <label className="text-sm font-medium">Time Window</label>
               <Select
                 value={filters.timeWindow}
-                onChange={handleTimeWindowChange}
+                onValueChange={handleTimeWindowChange}
                 options={[
                   { value: 'all', label: 'Any Time' },
                   { value: 'now', label: 'Right Now' },
