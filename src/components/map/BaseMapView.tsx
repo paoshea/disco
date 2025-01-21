@@ -1,50 +1,48 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Loader } from '@googlemaps/js-api-loader';
+import { MarkerClusterer as GoogleMarkerClusterer } from '@googlemaps/markerclusterer';
 
-export interface LatLng {
-  lat: number;
-  lng: number;
-}
-
+// Export MapMarker interface for use in other components
 export interface MapMarker {
   id: string;
-  position: google.maps.LatLngLiteral;
-  title: string;
-  icon: {
-    url: string;
-    scaledSize: google.maps.Size;
-    anchor: google.maps.Point;
+  position: {
+    lat: number;
+    lng: number;
   };
-  label?: {
-    text: string;
-    color: string;
-    fontSize: string;
-    fontWeight: string;
-    className: string;
-  };
-  data?: Record<string, unknown>;
+  title?: string;
+  icon?: string | google.maps.Icon | google.maps.Symbol;
+  onClick?: () => void;
 }
 
-interface BaseMapViewProps {
+interface MarkerClusterer {
+  clearMarkers: () => void;
+  addMarkers: (markers: google.maps.Marker[]) => void;
+}
+
+export interface BaseMapViewProps {
   markers: MapMarker[];
-  onMarkerClick: (marker: MapMarker) => void;
-  onMarkerMouseEnter: (marker: MapMarker) => void;
-  onMarkerMouseLeave: () => void;
-  center: google.maps.LatLngLiteral;
-  zoom: number;
+  onMarkerClick?: (marker: MapMarker) => void;
+  onMarkerMouseEnter?: (marker: MapMarker) => void;
+  onMarkerMouseLeave?: () => void;
+  center?: google.maps.LatLngLiteral;
+  zoom?: number;
   options?: google.maps.MapOptions;
   onBoundsChanged?: (bounds: google.maps.LatLngBounds) => void;
   enableClustering?: boolean;
   clusterOptions?: {
+    gridSize?: number;
+    maxZoom?: number;
     styles?: Array<{
       url: string;
       height: number;
       width: number;
       textColor?: string;
       textSize?: number;
+      backgroundPosition?: string;
     }>;
     imagePath?: string;
   };
+  className?: string;
 }
 
 const defaultMapOptions: google.maps.MapOptions = {
@@ -62,139 +60,128 @@ const defaultMapOptions: google.maps.MapOptions = {
   ],
 };
 
-const containerStyle = {
-  width: '100%',
-  height: '100%',
-};
-
-export const BaseMapView: React.FC<BaseMapViewProps> = ({
+export function BaseMapView({
   markers,
   onMarkerClick,
   onMarkerMouseEnter,
   onMarkerMouseLeave,
-  center,
-  zoom,
+  center = { lat: 37.7749, lng: -122.4194 }, // Default to San Francisco
+  zoom = 12,
   options = {},
   onBoundsChanged,
-  enableClustering = false,
+  enableClustering = true,
   clusterOptions = {},
-}) => {
-  const mapRef = useRef<google.maps.Map | null>(null);
-  const markersRef = useRef<google.maps.Marker[]>([]);
-  const markerClustererRef = useRef<any>(null);
-  const mapContainerRef = useRef<HTMLDivElement>(null);
+  className = '',
+}: BaseMapViewProps) {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const [map, setMap] = useState<google.maps.Map | null>(null);
+  const [markerClusterer, setMarkerClusterer] =
+    useState<MarkerClusterer | null>(null);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const googleMarkersRef = useRef<google.maps.Marker[]>([]);
 
+  // Initialize Google Maps
   useEffect(() => {
-    const initMap = async () => {
-      const loader = new Loader({
-        apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-        version: 'weekly',
-        libraries: ['places', 'geometry'],
-      });
+    if (!mapRef.current || isLoaded) return;
 
-      const google = await loader.load();
+    const loader = new Loader({
+      apiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY ?? '',
+      version: 'weekly',
+      libraries: ['places', 'visualization'],
+    });
 
-      if (!mapContainerRef.current) return;
+    void loader.load().then(() => {
+      if (!mapRef.current) return;
 
-      const map = new google.maps.Map(mapContainerRef.current, {
+      const mapInstance = new google.maps.Map(mapRef.current, {
         center,
         zoom,
         ...defaultMapOptions,
         ...options,
       });
 
-      mapRef.current = map;
+      setMap(mapInstance);
+      setIsLoaded(true);
+
+      // Initialize MarkerClusterer if enabled
+      if (enableClustering) {
+        const markerCluster = new GoogleMarkerClusterer({
+          map: mapInstance,
+          ...clusterOptions,
+        });
+        setMarkerClusterer(markerCluster);
+      }
 
       if (onBoundsChanged) {
-        map.addListener('bounds_changed', () => {
-          const bounds = map.getBounds();
+        mapInstance.addListener('bounds_changed', () => {
+          const bounds = mapInstance.getBounds();
           if (bounds) {
             onBoundsChanged(bounds);
           }
         });
       }
-
-      // Initialize MarkerClusterer if enabled
-      if (enableClustering) {
-        const { MarkerClusterer } = await import('@googlemaps/markerclusterer');
-        markerClustererRef.current = new MarkerClusterer({
-          map,
-          markers: [],
-          ...clusterOptions,
-        });
-      }
-    };
-
-    void initMap();
-
-    return () => {
-      if (markerClustererRef.current) {
-        markerClustererRef.current.clearMarkers();
-      }
-      markersRef.current.forEach(marker => marker.setMap(null));
-      markersRef.current = [];
-    };
+    });
   }, [
     center,
     zoom,
-    options,
+    isLoaded,
     enableClustering,
-    clusterOptions,
+    options,
     onBoundsChanged,
+    clusterOptions,
   ]);
 
+  // Update markers when they change
   useEffect(() => {
-    if (!mapRef.current) return;
+    if (!map || !isLoaded) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
-    markersRef.current = [];
+    googleMarkersRef.current.forEach(marker => marker.setMap(null));
+    googleMarkersRef.current = [];
 
     // Create new markers
-    const newMarkers = markers.map(markerData => {
+    const newGoogleMarkers = markers.map(markerData => {
       const marker = new google.maps.Marker({
         position: markerData.position,
-        map: mapRef.current,
+        map: enableClustering ? null : map,
         title: markerData.title,
-        icon: {
-          url: markerData.icon.url,
-          scaledSize: markerData.icon.scaledSize,
-          anchor: markerData.icon.anchor,
-        },
-        label: markerData.label
-          ? {
-              text: markerData.label.text,
-              color: markerData.label.color,
-              fontSize: markerData.label.fontSize,
-              fontWeight: markerData.label.fontWeight,
-              className: markerData.label.className,
-            }
-          : undefined,
+        icon: markerData.icon,
       });
 
-      marker.addListener('click', () => onMarkerClick(markerData));
-      marker.addListener('mouseover', () => onMarkerMouseEnter(markerData));
-      marker.addListener('mouseout', onMarkerMouseLeave);
+      if (onMarkerClick) {
+        marker.addListener('click', () => onMarkerClick(markerData));
+      }
+
+      if (onMarkerMouseEnter) {
+        marker.addListener('mouseover', () => onMarkerMouseEnter(markerData));
+      }
+
+      if (onMarkerMouseLeave) {
+        marker.addListener('mouseout', onMarkerMouseLeave);
+      }
 
       return marker;
     });
 
-    markersRef.current = newMarkers;
+    googleMarkersRef.current = newGoogleMarkers;
 
-    // Update MarkerClusterer if enabled
-    if (enableClustering && markerClustererRef.current) {
-      markerClustererRef.current.clearMarkers();
-      markerClustererRef.current.addMarkers(newMarkers);
+    // Update marker clusterer if enabled
+    if (markerClusterer && enableClustering) {
+      markerClusterer.clearMarkers();
+      markerClusterer.addMarkers(newGoogleMarkers);
     }
-  }, [markers, onMarkerClick, onMarkerMouseEnter, onMarkerMouseLeave]);
+  }, [
+    markers,
+    map,
+    isLoaded,
+    onMarkerClick,
+    onMarkerMouseEnter,
+    onMarkerMouseLeave,
+    enableClustering,
+    markerClusterer,
+  ]);
 
   return (
-    <div
-      ref={mapContainerRef}
-      className="w-full h-full rounded-lg"
-      style={{ minHeight: '400px' }}
-    />
+    <div ref={mapRef} className={`w-full h-full min-h-[400px] ${className}`} />
   );
-};
-
-export type { BaseMapViewProps };
+}

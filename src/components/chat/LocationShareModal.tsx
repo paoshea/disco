@@ -6,14 +6,13 @@ import { BaseMapView } from '../map/BaseMapView';
 import { PlacesAutocomplete } from '../map/PlacesAutocomplete';
 import { PlaceSuggestions } from './PlaceSuggestions';
 import { RoutePlanner } from './RoutePlanner';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import type { MapMarker, RouteInfo } from '@/types/map';
 
 interface LocationShareModalProps {
   isOpen: boolean;
   onClose: () => void;
   onLocationSelect: (location: Location) => void;
-  transitionState: 'enter' | 'exit' | null;
   matchLocation?: google.maps.LatLng;
 }
 
@@ -22,11 +21,6 @@ interface Location {
   longitude: number;
   name: string;
   address: string;
-}
-
-interface RoutePolyline {
-  path: google.maps.LatLng[];
-  options: google.maps.PolylineOptions;
 }
 
 interface LocationMapMarker extends MapMarker {
@@ -76,10 +70,8 @@ export function LocationShareModal({
   isOpen,
   onClose,
   onLocationSelect,
-  transitionState,
   matchLocation,
 }: LocationShareModalProps) {
-  const [searchQuery, setSearchQuery] = useState('');
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(
     null
   );
@@ -87,7 +79,6 @@ export function LocationShareModal({
     null
   );
   const [markers, setMarkers] = useState<LocationMapMarker[]>([]);
-  const [polylines, setPolylines] = useState<RoutePolyline[]>([]);
 
   useEffect(() => {
     // Get user's location
@@ -129,29 +120,6 @@ export function LocationShareModal({
     }
   }, [matchLocation]);
 
-  const handleMapClick = async (event: google.maps.MapMouseEvent) => {
-    if (!event.latLng) return;
-
-    const geocoder = new google.maps.Geocoder();
-    const latlng = event.latLng.toJSON();
-
-    try {
-      const response = await geocoder.geocode({ location: latlng });
-      if (response.results[0]) {
-        const place = response.results[0];
-        const location = {
-          latitude: latlng.lat,
-          longitude: latlng.lng,
-          name: place.formatted_address,
-          address: place.formatted_address,
-        };
-        setSelectedLocation(location);
-      }
-    } catch (error) {
-      console.error('Geocoding error:', error);
-    }
-  };
-
   const handlePlaceSelect = (place: google.maps.places.PlaceResult) => {
     if (place.geometry?.location) {
       const location = {
@@ -163,50 +131,6 @@ export function LocationShareModal({
       setSelectedLocation(location);
       onLocationSelect(location);
     }
-  };
-
-  const updateMarkers = (location: google.maps.LatLng) => {
-    const newMarkers: LocationMapMarker[] = [
-      ...(matchLocation
-        ? [
-            {
-              id: 'match',
-              position: {
-                lat: Number(matchLocation.lat()),
-                lng: Number(matchLocation.lng()),
-              },
-              title: 'Match Location',
-              icon: matchMarkerIcon,
-              location: {
-                latitude: matchLocation.lat(),
-                longitude: matchLocation.lng(),
-                name: 'Match Location',
-                address: '',
-              },
-            },
-          ]
-        : []),
-      {
-        id: 'selected',
-        position: {
-          lat: Number(location.lat()),
-          lng: Number(location.lng()),
-        },
-        title: 'Selected Location',
-        icon: selectedMarkerIcon,
-        location: {
-          latitude: location.lat(),
-          longitude: location.lng(),
-          name: 'Selected Location',
-          address: '',
-        },
-      },
-    ];
-    setMarkers(newMarkers);
-  };
-
-  const handleSearchChange = (value: string) => {
-    setSearchQuery(value);
   };
 
   // Helper function to convert Location to LatLng
@@ -229,19 +153,7 @@ export function LocationShareModal({
   };
 
   const handleMarkerMouseLeave = () => {
-    // No-op for this component
-  };
-
-  const handleRouteSelect = (route: RouteInfo) => {
-    if (selectedLocation) {
-      onLocationSelect({
-        latitude: selectedLocation.latitude,
-        longitude: selectedLocation.longitude,
-        name: selectedLocation.name,
-        address: selectedLocation.address,
-      });
-    }
-    onClose();
+    setMarkers(prevMarkers => prevMarkers.map(m => ({ ...m, scale: 1 })));
   };
 
   return (
@@ -311,9 +223,7 @@ export function LocationShareModal({
                       const locationMarker = marker as LocationMapMarker;
                       setMarkers(prevMarkers =>
                         prevMarkers.map(m =>
-                          m.id === locationMarker.id
-                            ? { ...m, scale: 1.2 }
-                            : m
+                          m.id === locationMarker.id ? { ...m, scale: 1.2 } : m
                         )
                       );
                     }}
@@ -336,19 +246,13 @@ export function LocationShareModal({
                 <RoutePlanner
                   origin={matchLocation}
                   destination={locationToLatLng(selectedLocation)}
-                  onRoutePathUpdate={(path: google.maps.LatLng[]) => {
-                    setPolylines([
-                      {
-                        path,
-                        options: {
-                          strokeColor: '#4A90E2',
-                          strokeOpacity: 0.8,
-                          strokeWeight: 3,
-                        },
-                      },
-                    ]);
+                  onRoutePathUpdate={path => {
+                    // Route path updates are handled by the RoutePlanner component
                   }}
-                  onRouteSelect={handleRouteSelect}
+                  onRouteSelect={() => {
+                    onLocationSelect(selectedLocation);
+                    onClose();
+                  }}
                 />
               </div>
             )}

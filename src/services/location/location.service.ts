@@ -2,7 +2,6 @@ import { db } from '@/lib/prisma';
 import type {
   Location as PrismaLocation,
   User as PrismaUser,
-  Prisma,
 } from '@prisma/client';
 import type {
   Location,
@@ -20,6 +19,32 @@ interface ExtendedServiceWorkerRegistration extends ServiceWorkerRegistration {
     register(tag: string, options: { minInterval: number }): Promise<void>;
   };
 }
+
+interface NavigatorWakeLock extends Navigator {
+  readonly wakeLock: WakeLock;
+}
+
+interface WakeLock {
+  request(type: WakeLockType): Promise<WakeLockSentinel>;
+}
+
+interface WakeLockSentinel extends EventTarget {
+  readonly released: boolean;
+  readonly type: WakeLockType;
+  release(): Promise<void>;
+  addEventListener(
+    type: 'release',
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | AddEventListenerOptions
+  ): void;
+  removeEventListener(
+    type: 'release',
+    listener: EventListenerOrEventListenerObject,
+    options?: boolean | EventListenerOptions
+  ): void;
+}
+
+type WakeLockType = 'screen';
 
 export class LocationService {
   private static instance: LocationService;
@@ -40,7 +65,7 @@ export class LocationService {
     this.initServiceWorker().catch(console.error);
   }
 
-  private async initServiceWorker() {
+  private async initServiceWorker(): Promise<void> {
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       try {
         const registration = (await navigator.serviceWorker.register(
@@ -49,20 +74,16 @@ export class LocationService {
 
         // Request periodic background sync permission
         if (registration.periodicSync) {
-          const status = await navigator.permissions.query({
-            name: 'periodic-background-sync' as PermissionName,
+          await registration.periodicSync.register('location-sync', {
+            minInterval: this.SYNC_INTERVAL,
           });
-
-          if (status.state === 'granted') {
-            await registration.periodicSync.register('location-sync', {
-              minInterval: this.SYNC_INTERVAL,
-            });
-          }
         }
 
-        console.log(
-          'Service Worker registered for background location tracking'
-        );
+        // Enable background sync
+        if (registration.sync) {
+          void registration.sync.register('location-sync');
+          this.backgroundSync = true;
+        }
       } catch (error) {
         console.error('Service Worker registration failed:', error);
       }
@@ -72,7 +93,7 @@ export class LocationService {
   private async queueLocationUpdate(
     userId: string,
     position: GeolocationPosition
-  ) {
+  ): Promise<void> {
     // Get or create queue for user
     let userQueue = this.locationQueue.get(userId) || [];
 
@@ -323,34 +344,16 @@ export class LocationService {
 
     this.backgroundSync = background;
 
-    const updateLocation = async (position: GeolocationPosition) => {
-      const { latitude, longitude, accuracy } = position.coords;
-
-      try {
-        if (this.backgroundSync) {
-          // Queue update for background sync
-          await this.queueLocationUpdate(userId, position);
-        } else {
-          // Update immediately
-          const currentState = await this.getLocationState(userId);
-          await this.updateLocation(userId, {
-            latitude,
-            longitude,
-            accuracy,
-            privacyMode: currentState.data?.privacyMode ?? 'precise',
-            sharingEnabled: currentState.data?.sharingEnabled ?? true,
-          });
-        }
-      } catch (error) {
-        console.error('Error updating location during tracking:', error);
-      }
+    const updateLocation = (position: GeolocationPosition): void => {
+      void this.queueLocationUpdate(userId, position);
     };
 
-    const handleError = (error: GeolocationPositionError) => {
+    const handleError = (error: GeolocationPositionError): void => {
       console.error('Error getting location:', error);
+
       // Stop tracking on persistent errors
       if (error.code === error.PERMISSION_DENIED) {
-        this.stopTracking(userId);
+        void this.stopTracking(userId);
       }
     };
 
@@ -372,7 +375,8 @@ export class LocationService {
     // Request wake lock for background tracking
     if (background && 'wakeLock' in navigator) {
       try {
-        const wakeLock = await (navigator as any).wakeLock.request('screen');
+        const nav = navigator as NavigatorWakeLock;
+        const wakeLock = await nav.wakeLock.request('screen');
         wakeLock.addEventListener('release', () => {
           console.log('Wake Lock released');
         });

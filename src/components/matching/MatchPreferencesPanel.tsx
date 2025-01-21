@@ -3,7 +3,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
-import { Select, SelectItem, SelectProps } from '@/components/ui/Select';
+import { Select } from '@/components/ui/Select';
 import { Switch } from '@/components/ui/Switch';
 import { Slider } from '@/components/ui/Slider';
 import { Button } from '@/components/ui/Button';
@@ -11,7 +11,6 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { MatchPreferences } from '@/types/match';
 import { useToast } from '@/hooks/use-toast';
-import type { LocationPrivacyMode } from '@/types/location';
 
 interface MatchPreferencesPanelProps {
   onSubmit: (data: MatchPreferences) => void;
@@ -51,30 +50,25 @@ export function MatchPreferencesPanel({
   onSubmit,
   initialValues,
 }: MatchPreferencesPanelProps) {
-  const {
-    register,
-    handleSubmit,
-    watch,
-    setValue,
-    formState: { errors },
-  } = useForm<MatchPreferences>({
-    resolver: zodResolver(schema),
-    defaultValues: {
-      maxDistance: 50,
-      minAge: 18,
-      maxAge: 99,
-      interests: [],
-      verifiedOnly: false,
-      withPhoto: true,
-      timeWindow: 'anytime',
-      privacyMode: 'standard',
-      useBluetoothProximity: false,
-      ...initialValues,
-    },
-  });
+  const { register, handleSubmit, watch, setValue } = useForm<MatchPreferences>(
+    {
+      resolver: zodResolver(schema),
+      defaultValues: {
+        maxDistance: 50,
+        minAge: 18,
+        maxAge: 99,
+        interests: [],
+        verifiedOnly: false,
+        withPhoto: true,
+        timeWindow: 'anytime',
+        privacyMode: 'standard',
+        useBluetoothProximity: false,
+        ...initialValues,
+      },
+    }
+  );
 
   const { toast } = useToast();
-  const [newInterest, setNewInterest] = useState('');
 
   const handleSelectChange =
     (name: keyof MatchPreferences) => (value: string) => {
@@ -125,20 +119,19 @@ export function MatchPreferencesPanel({
         <CardTitle>Match Preferences</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <form
+          onSubmit={e => {
+            void handleSubmit(onSubmit)(e);
+          }}
+          className="space-y-6"
+        >
           <div className="space-y-2">
             <div className="text-sm font-medium">Time Window</div>
             <Select
               value={watch('timeWindow')}
               onValueChange={handleSelectChange('timeWindow')}
-              placeholder="Select time window"
-            >
-              {timeWindowOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </Select>
+              options={timeWindowOptions}
+            />
           </div>
 
           <div className="space-y-2">
@@ -146,47 +139,43 @@ export function MatchPreferencesPanel({
             <Select
               value={watch('privacyMode')}
               onValueChange={handleSelectChange('privacyMode')}
-              placeholder="Select privacy mode"
-            >
-              {privacyModeOptions.map(option => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
-              ))}
-            </Select>
+              options={privacyModeOptions}
+            />
           </div>
 
           <div className="space-y-2">
-            <div className="text-sm font-medium">Interests</div>
+            <label className="text-sm font-medium">Interests</label>
             <div className="flex gap-2">
               <Input
-                {...register('interests')}
+                type="text"
                 placeholder="Add interests (comma separated)"
                 onKeyDown={(e: KeyboardEvent<HTMLInputElement>) => {
                   if (e.key === 'Enter') {
-                    handleInterestAdd(e);
+                    void handleInterestAdd(e);
+                  }
+                }}
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.value.includes(',')) {
+                    void handleInterestAdd(e);
                   }
                 }}
               />
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
-              {watch('interests').map(interest => (
-                <Badge
-                  key={interest}
-                  variant="secondary"
-                  className="cursor-pointer group"
-                >
-                  <span className="group-hover:text-destructive-foreground">
-                    {interest}{' '}
-                    <button
-                      type="button"
-                      className="hover:text-destructive"
-                      onClick={() => handleRemoveInterest(interest)}
-                    >
-                      ×
-                    </button>
-                  </span>
-                </Badge>
+              {watch('interests')?.map((interest: string) => (
+                <div key={interest} className="relative group">
+                  <Badge variant="secondary" className="pr-6">
+                    {interest}
+                  </Badge>
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveInterest(interest)}
+                    className="absolute right-1 top-1/2 -translate-y-1/2 text-gray-500 hover:text-destructive"
+                    aria-label={`Remove ${interest}`}
+                  >
+                    ×
+                  </button>
+                </div>
               ))}
             </div>
           </div>

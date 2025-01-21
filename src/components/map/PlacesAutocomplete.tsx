@@ -13,7 +13,6 @@ export function PlacesAutocomplete({
   placeholder = 'Search for a location',
   className,
 }: PlacesAutocompleteProps) {
-  const [loading, setLoading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
@@ -51,13 +50,7 @@ export function PlacesAutocomplete({
         type="text"
         placeholder={placeholder}
         className={className}
-        disabled={loading}
       />
-      {loading && (
-        <div className="absolute right-2 top-1/2 -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin" />
-        </div>
-      )}
     </div>
   );
 }

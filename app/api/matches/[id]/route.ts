@@ -13,9 +13,17 @@ type RouteContext = {
   params: Promise<Record<string, string>>;
 };
 
+interface MatchStatus {
+  id: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  userId: string;
+  matchId: string;
+  updatedAt: Date;
+}
+
 // Validation schema
 const matchActionSchema = z.object({
-  action: z.enum(['accept', 'reject', 'block'])
+  action: z.enum(['accept', 'reject', 'block']),
 });
 
 // Rate limiter for match operations
@@ -43,7 +51,7 @@ export async function GET(
     const matchingService = MatchingService.getInstance();
     const match = await matchingService.getMatchStatus(session.user.id, id);
 
-    return NextResponse.json({ match });
+    return NextResponse.json({ status: match });
   } catch (error) {
     console.error('Error getting match:', error);
     return NextResponse.json({ error: 'Failed to get match' }, { status: 500 });
@@ -74,7 +82,7 @@ export async function POST(
     // Parse and validate request body
     const body = await req.json();
     const result = matchActionSchema.safeParse(body);
-    
+
     if (!result.success) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }

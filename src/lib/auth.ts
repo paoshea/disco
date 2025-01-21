@@ -5,7 +5,6 @@ import { db } from './prisma';
 import type { Session } from 'next-auth';
 import type { NextRequest } from 'next/server';
 import type { JWTPayload, JoseJWTPayload } from '@/types/auth';
-import type { SessionStrategy } from 'next-auth';
 
 // Extend the built-in types
 export interface User {

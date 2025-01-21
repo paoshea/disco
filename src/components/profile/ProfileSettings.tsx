@@ -103,7 +103,12 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+    <form
+      onSubmit={e => {
+        void handleSubmit(onSubmit)(e);
+      }}
+      className="space-y-6"
+    >
       <div className="space-y-4">
         <h3 className="text-lg font-medium">Profile Settings</h3>
 
@@ -127,25 +132,37 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <LabeledSwitch
                 checked={watch('notifications.matches')}
-                onChange={checked =>
-                  handlePreferenceChange('matches', 'notifications', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'matches',
+                    'notifications',
+                    checked
+                  );
+                }}
                 label="Match Notifications"
                 description="Get notified when you have new matches"
               />
               <LabeledSwitch
                 checked={watch('notifications.messages')}
-                onChange={checked =>
-                  handlePreferenceChange('messages', 'notifications', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'messages',
+                    'notifications',
+                    checked
+                  );
+                }}
                 label="Message Notifications"
                 description="Get notified when you receive new messages"
               />
               <LabeledSwitch
                 checked={watch('notifications.events')}
-                onChange={checked =>
-                  handlePreferenceChange('events', 'notifications', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'events',
+                    'notifications',
+                    checked
+                  );
+                }}
                 label="Event Notifications"
                 description="Get notified about upcoming events and activities"
               />
@@ -160,25 +177,37 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <LabeledSwitch
                 checked={watch('privacy.showOnlineStatus')}
-                onChange={checked =>
-                  handlePreferenceChange('showOnlineStatus', 'privacy', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'showOnlineStatus',
+                    'privacy',
+                    checked
+                  );
+                }}
                 label="Show Online Status"
                 description="Let others see when you're online"
               />
               <LabeledSwitch
                 checked={watch('privacy.showLastSeen')}
-                onChange={checked =>
-                  handlePreferenceChange('showLastSeen', 'privacy', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'showLastSeen',
+                    'privacy',
+                    checked
+                  );
+                }}
                 label="Show Last Seen"
                 description="Let others see when you were last active"
               />
               <LabeledSwitch
                 checked={watch('privacy.showLocation')}
-                onChange={checked =>
-                  handlePreferenceChange('showLocation', 'privacy', checked)
-                }
+                onChange={checked => {
+                  void handlePreferenceChange(
+                    'showLocation',
+                    'privacy',
+                    checked
+                  );
+                }}
                 label="Show Location"
                 description="Let others see your approximate location"
               />

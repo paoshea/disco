@@ -197,9 +197,9 @@ export default function ProfilePage() {
                     lastName: authUser.lastName,
                     emailVerified: authUser.emailVerified,
                     name: `${authUser.firstName} ${authUser.lastName}`,
-                    lastActive: authUser.updatedAt as Date,
-                    createdAt: authUser.createdAt as Date,
-                    updatedAt: authUser.updatedAt as Date,
+                    lastActive: authUser.updatedAt,
+                    createdAt: authUser.createdAt,
+                    updatedAt: authUser.updatedAt,
                     verificationStatus: authUser.emailVerified
                       ? 'verified'
                       : 'pending',

@@ -53,13 +53,13 @@ export function formatNumber(value: number, unit?: string): string {
  * @param delay - Delay in milliseconds
  * @returns Debounced function
  */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
+export function debounce<Args extends unknown[], R>(
+  fn: (...args: Args) => R,
   delay: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let timeoutId: NodeJS.Timeout;
 
-  return function (...args: Parameters<T>) {
+  return function (...args: Args) {
     clearTimeout(timeoutId);
     timeoutId = setTimeout(() => fn(...args), delay);
   };
@@ -71,12 +71,12 @@ export function debounce<T extends (...args: any[]) => any>(
  * @param wait - Wait period in milliseconds
  * @returns Throttled function
  */
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
+export function throttle<Args extends unknown[], R>(
+  fn: (...args: Args) => R,
   wait: number
-): (...args: Parameters<T>) => void {
+): (...args: Args) => void {
   let lastCall = 0;
-  return function (...args: Parameters<T>) {
+  return function (...args: Args) {
     const now = Date.now();
     if (now - lastCall >= wait) {
       fn(...args);
@@ -106,7 +106,10 @@ export function generateRandomString(length: number): string {
  * @returns Cloned object
  */
 export function deepClone<T>(obj: T): T {
-  return JSON.parse(JSON.stringify(obj));
+  if (obj === null || typeof obj !== 'object') {
+    return obj;
+  }
+  return JSON.parse(JSON.stringify(obj)) as T;
 }
 
 /**
@@ -114,7 +117,7 @@ export function deepClone<T>(obj: T): T {
  * @param value - Value to check
  * @returns True if empty, false otherwise
  */
-export function isEmpty(value: any): boolean {
+export function isEmpty(value: unknown): boolean {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim().length === 0;
   if (Array.isArray(value)) return value.length === 0;

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import {
@@ -22,7 +22,13 @@ export function EmergencyAlert({
     watchPosition: true,
   });
 
-  const handleTriggerAlert = useCallback(async () => {
+  useEffect(() => {
+    return () => {
+      setIsTriggering(false);
+    };
+  }, []);
+
+  const handleTriggerAlert = async () => {
     if (isTriggering || !position?.coords) return;
 
     setIsTriggering(true);
@@ -83,7 +89,7 @@ export function EmergencyAlert({
     } finally {
       setIsTriggering(false);
     }
-  }, [userId, position, isTriggering, onAlertTriggered]);
+  };
 
   const markers: MapMarker[] = position?.coords
     ? [
@@ -103,35 +109,25 @@ export function EmergencyAlert({
       ]
     : [];
 
-  const handleMarkerClick = useCallback((marker: MapMarker) => {
-    // Handle marker click if needed
-  }, []);
-
-  const handleMarkerMouseEnter = useCallback((marker: MapMarker) => {
-    // Handle marker mouse enter if needed
-  }, []);
-
-  const handleMarkerMouseLeave = useCallback(() => {
-    // Handle marker mouse leave if needed
-  }, []);
-
   return (
     <div className="space-y-4">
       <div className="h-64 relative">
         <BaseMapView
-          center={
-            position?.coords
-              ? {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude,
-                }
-              : { lat: 0, lng: 0 }
-          }
+          center={{
+            lat: position?.coords.latitude ?? 0,
+            lng: position?.coords.longitude ?? 0,
+          }}
           zoom={15}
           markers={markers}
-          onMarkerClick={handleMarkerClick}
-          onMarkerMouseEnter={handleMarkerMouseEnter}
-          onMarkerMouseLeave={handleMarkerMouseLeave}
+          onMarkerClick={marker => {
+            console.log('Marker clicked:', marker);
+          }}
+          onMarkerMouseEnter={marker => {
+            console.log('Marker mouse enter:', marker);
+          }}
+          onMarkerMouseLeave={() => {
+            console.log('Marker mouse leave');
+          }}
         />
         {locationError && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/50">

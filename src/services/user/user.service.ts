@@ -1,115 +1,151 @@
-import { PrismaClient, User } from '@prisma/client';
-import { Redis } from 'ioredis';
+import type { User } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
 import type { UserPreferences } from '@/types/user';
 
-export async function getUserById(id: string): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: { id },
-    include: {
-      locations: true,
-      emergencyContacts: true,
-      safetyChecks: true,
-      achievements: true,
-      participatingRooms: true,
-      messages: true,
-      events: true,
-      eventParticipants: true,
-      privacyZones: true,
-    },
-  });
-}
+export class UserService {
+  private static instance: UserService;
 
-export async function getUserByEmail(email: string): Promise<User | null> {
-  return prisma.user.findUnique({
-    where: { email },
-    include: {
-      locations: true,
-      emergencyContacts: true,
-      safetyChecks: true,
-      achievements: true,
-      participatingRooms: true,
-      messages: true,
-      events: true,
-      eventParticipants: true,
-      privacyZones: true,
-    },
-  });
-}
+  private constructor() {}
 
-export type UserUpdateData = Partial<{
-  firstName: string;
-  lastName: string;
-  email: string;
-  emailVerified: boolean;
-  role: string;
-  streakCount: number;
-  lastLogin: Date;
-  safetyEnabled: boolean;
-}>;
-
-export async function updateUserById(
-  id: string,
-  data: UserUpdateData
-): Promise<User> {
-  return prisma.user.update({
-    where: { id },
-    data,
-    include: {
-      locations: true,
-      emergencyContacts: true,
-      safetyChecks: true,
-      achievements: true,
-      participatingRooms: true,
-      messages: true,
-      events: true,
-      eventParticipants: true,
-      privacyZones: true,
-    },
-  });
-}
-
-export async function deleteUserById(id: string): Promise<User> {
-  // Invalidate cache
-  const cacheKey = `user:${id}`;
-  await redis.del(cacheKey);
-  return prisma.user.delete({
-    where: { id },
-  });
-}
-
-// Handle user preferences through Redis for better performance
-export async function getUserPreferences(
-  userId: string
-): Promise<UserPreferences | null> {
-  const cacheKey = `user:${userId}:preferences`;
-  const cachedPrefs = await redis.get(cacheKey);
-
-  if (cachedPrefs) {
-    try {
-      return JSON.parse(cachedPrefs);
-    } catch (error) {
-      console.error('Error parsing cached preferences:', error);
-      return null;
+  public static getInstance(): UserService {
+    if (!UserService.instance) {
+      UserService.instance = new UserService();
     }
+    return UserService.instance;
   }
 
-  return null;
-}
+  async getUserById(id: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { id },
+      include: {
+        locations: true,
+        emergencyContacts: true,
+        safetyChecks: true,
+        achievements: true,
+        participatingRooms: true,
+        messages: true,
+        events: true,
+        eventParticipants: true,
+        privacyZones: true,
+      },
+    });
+  }
 
-export async function updateUserPreferences(
-  userId: string,
-  preferences: UserPreferences
-): Promise<void> {
-  const cacheKey = `user:${userId}:preferences`;
+  async getUserByEmail(email: string): Promise<User | null> {
+    return prisma.user.findUnique({
+      where: { email },
+      include: {
+        locations: true,
+        emergencyContacts: true,
+        safetyChecks: true,
+        achievements: true,
+        participatingRooms: true,
+        messages: true,
+        events: true,
+        eventParticipants: true,
+        privacyZones: true,
+      },
+    });
+  }
 
-  try {
-    await redis.set(cacheKey, JSON.stringify(preferences));
-    // Set expiry to 24 hours to ensure preferences are periodically refreshed
-    await redis.expire(cacheKey, 24 * 60 * 60);
-  } catch (error) {
-    console.error('Error updating preferences:', error);
-    throw new Error('Failed to update user preferences');
+  async deleteUserById(id: string): Promise<User> {
+    // Invalidate cache
+    const cacheKey = `user:${id}`;
+    await redis.del(cacheKey);
+    return prisma.user.delete({
+      where: { id },
+    });
+  }
+
+  async getUserPreferences(userId: string): Promise<UserPreferences | null> {
+    const cachedPrefs = await redis.get(`user:${userId}:preferences`);
+    if (cachedPrefs) {
+      const parsedPrefs = JSON.parse(cachedPrefs);
+      return parsedPrefs as UserPreferences;
+    }
+
+    const user = await this.getUserById(userId);
+    if (!user) return null;
+
+    const preferences: UserPreferences = {
+      maxDistance: 10,
+      ageRange: { min: 18, max: 99 },
+      interests: [],
+      gender: ['any'],
+      lookingFor: ['any'],
+      relationshipType: ['friendship'],
+      notifications: {
+        matches: true,
+        messages: true,
+        events: true,
+        safety: true,
+      },
+      privacy: {
+        showOnlineStatus: true,
+        showLastSeen: true,
+        showLocation: true,
+        showAge: true,
+      },
+      safety: {
+        requireVerifiedMatch: true,
+        meetupCheckins: true,
+        emergencyContactAlerts: true,
+      },
+    };
+
+    // Cache the preferences
+    await redis.setex(
+      `user:${userId}:preferences`,
+      3600,
+      JSON.stringify(preferences)
+    );
+    return preferences;
+  }
+
+  async updateUserPreferences(
+    userId: string,
+    preferences: UserPreferences
+  ): Promise<void> {
+    // Validate user exists
+    const user = await this.getUserById(userId);
+    if (!user) throw new Error('User not found');
+
+    // Update cache
+    await redis.setex(
+      `user:${userId}:preferences`,
+      3600,
+      JSON.stringify(preferences)
+    );
+  }
+
+  async updateUserById(
+    id: string,
+    data: Partial<{
+      firstName: string;
+      lastName: string;
+      email: string;
+      emailVerified: boolean;
+      role: string;
+      streakCount: number;
+      lastLogin: Date;
+      safetyEnabled: boolean;
+    }>
+  ): Promise<User> {
+    return prisma.user.update({
+      where: { id },
+      data,
+      include: {
+        locations: true,
+        emergencyContacts: true,
+        safetyChecks: true,
+        achievements: true,
+        participatingRooms: true,
+        messages: true,
+        events: true,
+        eventParticipants: true,
+        privacyZones: true,
+      },
+    });
   }
 }

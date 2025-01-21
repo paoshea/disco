@@ -1,5 +1,4 @@
 // Inspired by shadcn-ui toast implementation
-import * as React from 'react';
 import { toast } from 'sonner';
 
 export { toast } from 'sonner';

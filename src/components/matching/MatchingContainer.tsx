@@ -3,21 +3,24 @@ import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { Match, MatchPreferences } from '@/types/match';
 import { MatchSocketService } from '@/services/websocket/match.socket';
+import { useToast } from '@/hooks/use-toast';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { MatchList } from './MatchList';
-import { MatchPreferencesPanel } from '@/components/matching/MatchPreferencesPanel';
 import { MatchMapView } from './MatchMapView';
-import { createToast } from '@/hooks/use-toast';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { MatchPreferencesPanel } from './MatchPreferencesPanel';
 
-interface ExtendedSession extends Omit<Session, 'user'> {
-  user: {
-    id: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    role: string;
-  };
+interface ExtendedSession extends Session {
   accessToken?: string;
+}
+
+interface MatchUpdate {
+  type: 'new' | 'update' | 'remove';
+  match: Match;
+}
+
+interface MatchActionEvent {
+  type: 'accepted' | 'declined' | 'blocked';
+  matchId: string;
 }
 
 export function MatchingContainer() {
@@ -25,21 +28,18 @@ export function MatchingContainer() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState<'list' | 'map'>('list');
+  const { toast: createToast } = useToast();
   const socketService = MatchSocketService.getInstance();
 
   const fetchMatches = useCallback(
-    async (preferences?: Partial<MatchPreferences>) => {
+    async (preferences?: MatchPreferences) => {
+      setLoading(true);
       try {
-        setLoading(true);
         const params = new URLSearchParams();
         if (preferences) {
           Object.entries(preferences).forEach(([key, value]) => {
             if (value !== undefined) {
-              if (Array.isArray(value)) {
-                params.set(key, value.join(','));
-              } else {
-                params.set(key, String(value));
-              }
+              params.append(key, String(value));
             }
           });
         }
@@ -47,23 +47,28 @@ export function MatchingContainer() {
         const response = await fetch(`/api/matches?${params.toString()}`);
         if (!response.ok) throw new Error('Failed to fetch matches');
 
-        const data = await response.json();
+        const data = (await response.json()) as { matches: Match[] };
         setMatches(data.matches);
       } catch (error) {
         console.error('Error fetching matches:', error);
-        createToast.error({
+        createToast({
           title: 'Error',
           description: 'Failed to load matches. Please try again.',
+          variant: 'error',
         });
       } finally {
         setLoading(false);
       }
     },
-    []
+    [createToast]
   );
 
   const handleMatchAction = useCallback(
-    async (matchId: string, action: string, reason?: string) => {
+    async (
+      matchId: string,
+      action: 'accept' | 'decline' | 'block',
+      reason?: string
+    ) => {
       try {
         const response = await fetch(`/api/matches/${matchId}`, {
           method: 'POST',
@@ -74,9 +79,10 @@ export function MatchingContainer() {
         if (!response.ok) throw new Error('Failed to perform action');
 
         if (action === 'accept') {
-          createToast.success({
+          createToast({
             title: 'Match Accepted!',
             description: 'You can now start chatting.',
+            variant: 'success',
           });
         }
 
@@ -86,13 +92,14 @@ export function MatchingContainer() {
         }
       } catch (error) {
         console.error('Error performing match action:', error);
-        createToast.error({
+        createToast({
           title: 'Error',
           description: 'Failed to perform action. Please try again.',
+          variant: 'error',
         });
       }
     },
-    []
+    [createToast]
   );
 
   const handlePreferencesUpdate = useCallback(
@@ -106,26 +113,28 @@ export function MatchingContainer() {
 
         if (!response.ok) throw new Error('Failed to update preferences');
 
-        createToast.success({
+        createToast({
           title: 'Preferences Updated',
           description: 'Your matching preferences have been updated.',
+          variant: 'success',
         });
 
         // Refresh matches with new preferences
         await fetchMatches(preferences);
       } catch (error) {
         console.error('Error updating preferences:', error);
-        createToast.error({
+        createToast({
           title: 'Error',
           description: 'Failed to update preferences. Please try again.',
+          variant: 'error',
         });
       }
     },
-    [fetchMatches]
+    [fetchMatches, createToast]
   );
 
   const sortedMatches = useMemo(() => {
-    return matches.sort((a, b) => {
+    return [...matches].sort((a, b) => {
       // Sort by distance if available
       if (a.distance !== null && b.distance !== null) {
         return a.distance - b.distance;
@@ -144,54 +153,71 @@ export function MatchingContainer() {
 
     socketService.connect(session.accessToken ?? '');
 
-    const matchUpdateUnsub = socketService.subscribeToMatches(data => {
-      if (data.type === 'new') {
-        setMatches(prev => [data.match, ...prev]);
-        createToast.success({
-          title: 'New Match!',
-          description: `${data.match.name} might be a good match for you.`,
-        });
-      } else if (data.type === 'update') {
-        setMatches(prev =>
-          prev.map(m => (m.id === data.match.id ? data.match : m))
-        );
-      } else if (data.type === 'remove') {
-        setMatches(prev => prev.filter(m => m.id !== data.match.id));
+    const matchUpdateUnsub = socketService.subscribeToMatches(
+      (data: MatchUpdate) => {
+        if (data.type === 'new') {
+          setMatches(prev => [data.match, ...prev]);
+          createToast({
+            title: 'New Match!',
+            description: `${data.match.name} might be a good match for you.`,
+            variant: 'success',
+          });
+        } else if (data.type === 'update') {
+          setMatches(prev =>
+            prev.map(m => (m.id === data.match.id ? data.match : m))
+          );
+        } else if (data.type === 'remove') {
+          setMatches(prev => prev.filter(m => m.id !== data.match.id));
+        }
       }
-    });
+    );
 
-    const matchActionUnsub = socketService.subscribeToActions(data => {
-      if (data.type === 'accepted') {
-        createToast.success({
-          title: 'Match Accepted!',
-          description: 'Someone accepted your match request.',
-        });
+    const matchActionUnsub = socketService.subscribeToActions(
+      (data: MatchActionEvent) => {
+        if (data.type === 'accepted') {
+          createToast({
+            title: 'Match Accepted!',
+            description: 'Someone accepted your match request.',
+            variant: 'success',
+          });
+        }
       }
-    });
+    );
 
     // Initial fetch
-    fetchMatches();
+    void fetchMatches();
 
     return () => {
       matchUpdateUnsub();
       matchActionUnsub();
       socketService.disconnect();
     };
-  }, [session?.user?.id, session?.accessToken, socketService, fetchMatches]);
+  }, [
+    session?.user?.id,
+    session?.accessToken,
+    socketService,
+    fetchMatches,
+    createToast,
+  ]);
 
   useEffect(() => {
     if (!session?.user) {
-      createToast.error({
+      createToast({
         title: 'Error',
         description: 'You must be logged in to view matches',
+        variant: 'error',
       });
       return;
     }
-  }, [session]);
+  }, [session, createToast]);
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <MatchPreferencesPanel onSubmit={handlePreferencesUpdate} />
+      <MatchPreferencesPanel
+        onSubmit={prefs => {
+          void handlePreferencesUpdate(prefs);
+        }}
+      />
 
       <Tabs
         value={view}
@@ -206,9 +232,9 @@ export function MatchingContainer() {
         <TabsContent value="list">
           <MatchList
             matches={sortedMatches}
-            onMatchClick={(matchId: string) =>
-              handleMatchAction(matchId, 'accept')
-            }
+            onMatchClick={(matchId: string) => {
+              void handleMatchAction(matchId, 'accept');
+            }}
             loading={loading}
           />
         </TabsContent>
@@ -217,13 +243,7 @@ export function MatchingContainer() {
           <MatchMapView
             matches={sortedMatches}
             onMarkerClick={match => {
-              createToast.success({
-                title: match.name,
-                description:
-                  match.distance !== null
-                    ? `${match.distance}km away`
-                    : 'Distance unknown',
-              });
+              void handleMatchAction(match.id, 'accept');
             }}
           />
         </TabsContent>

@@ -10,17 +10,17 @@ const rateLimiter = new RateLimiter({
   maxRequests: 100,
 });
 
-// Base preferences schema matching UserPreferences type
-const matchPreferencesSchema = z.object({
-  ageRange: z.object({
-    min: z.number(),
-    max: z.number(),
-  }),
+// Validation schema for user preferences
+const userPreferencesSchema = z.object({
   maxDistance: z.number().min(0).max(100),
-  interests: z.array(z.string()),
+  ageRange: z.object({
+    min: z.number().min(18).max(100),
+    max: z.number().min(18).max(100),
+  }),
   gender: z.array(z.string()),
   lookingFor: z.array(z.string()),
   relationshipType: z.array(z.string()),
+  interests: z.array(z.string()),
   notifications: z.object({
     matches: z.boolean(),
     messages: z.boolean(),
@@ -41,9 +41,8 @@ const matchPreferencesSchema = z.object({
 });
 
 // GET /api/matches - Get potential matches
-export async function GET(req: NextRequest) {
+export async function GET(req: NextRequest): Promise<NextResponse> {
   try {
-    // Check authentication
     const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -95,20 +94,18 @@ export async function GET(req: NextRequest) {
     };
 
     // Validate preferences
-    const result = matchPreferencesSchema.safeParse(preferences);
+    const result = userPreferencesSchema.safeParse(preferences);
 
     if (!result.success) {
-      return NextResponse.json({ error: 'Invalid preferences' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid preferences' },
+        { status: 400 }
+      );
     }
-
-    const validatedPrefs = result.data;
 
     // Get matches
     const matchingService = MatchingService.getInstance();
-    const matches = await matchingService.findMatches(
-      session.user.id,
-      validatedPrefs
-    );
+    const matches = await matchingService.findMatches(session.user.id);
 
     return NextResponse.json({ matches });
   } catch (error) {
@@ -121,9 +118,8 @@ export async function GET(req: NextRequest) {
 }
 
 // POST /api/matches/preferences - Update match preferences
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    // Check authentication
     const session = await getServerSession();
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -137,13 +133,16 @@ export async function POST(req: NextRequest) {
 
     // Parse and validate request body
     const body = await req.json();
-    const result = matchPreferencesSchema.safeParse(body);
+    const result = userPreferencesSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: 'Invalid preferences' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid preferences' },
+        { status: 400 }
+      );
     }
 
-    const preferences = result.data;
+    const preferences: UserPreferences = result.data;
 
     // Update preferences
     const matchingService = MatchingService.getInstance();

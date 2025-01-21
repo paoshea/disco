@@ -1,4 +1,4 @@
-import { Match, MatchPreferences, MatchScore } from '@/types/match';
+import { MatchPreferences, MatchScore } from '@/types/match';
 import { User } from '@/types/user';
 import { calculateDistance } from '@/utils/location';
 

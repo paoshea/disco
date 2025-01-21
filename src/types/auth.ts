@@ -94,3 +94,41 @@ export interface VerifyEmailInput {
   email: string;
   token: string;
 }
+
+export interface AuthResponse {
+  success?: boolean;
+  error?: string;
+  message?: string;
+  needsVerification?: boolean;
+  token: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  user: User;
+}
+
+export interface LoginResponse {
+  user?: User;
+  error?: string;
+  needsVerification?: boolean;
+  token?: string;
+}
+
+export type RegisterResponse = AuthResponse;
+
+export interface UpdateProfileResponse {
+  success: boolean;
+  error?: string;
+  user?: User;
+}
+
+export interface PasswordResetResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+}
+
+export interface VerificationResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+}

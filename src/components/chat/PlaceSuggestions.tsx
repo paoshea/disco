@@ -78,21 +78,25 @@ export function PlaceSuggestions({
       );
 
       const placesData = results
-        .filter((place): place is google.maps.places.PlaceResult & {
-          place_id: string;
-          name: string;
-          vicinity: string;
-          geometry: {
-            location: google.maps.LatLng;
-          };
-        } => {
-          return !!(
-            place.place_id &&
-            place.name &&
-            place.vicinity &&
-            place.geometry?.location
-          );
-        })
+        .filter(
+          (
+            place
+          ): place is google.maps.places.PlaceResult & {
+            place_id: string;
+            name: string;
+            vicinity: string;
+            geometry: {
+              location: google.maps.LatLng;
+            };
+          } => {
+            return !!(
+              place.place_id &&
+              place.name &&
+              place.vicinity &&
+              place.geometry?.location
+            );
+          }
+        )
         .map(place => ({
           id: place.place_id,
           name: place.name,
@@ -112,6 +116,10 @@ export function PlaceSuggestions({
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePlaceSelect = (place: Place) => {
+    onPlaceSelect(place);
   };
 
   return (
@@ -149,13 +157,12 @@ export function PlaceSuggestions({
               className="space-y-2"
             >
               {places.map(place => (
-                <motion.div
+                <div
                   key={place.id}
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  whileHover={{ scale: 1.02 }}
-                  className="p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100"
-                  onClick={() => onPlaceSelect(place)}
+                  className="flex items-center gap-4 p-4 hover:bg-gray-50 cursor-pointer"
+                  onClick={() => {
+                    void handlePlaceSelect(place);
+                  }}
                 >
                   <div className="flex justify-between items-start">
                     <div>
@@ -184,7 +191,7 @@ export function PlaceSuggestions({
                       </div>
                     )}
                   </div>
-                </motion.div>
+                </div>
               ))}
             </motion.div>
           )}

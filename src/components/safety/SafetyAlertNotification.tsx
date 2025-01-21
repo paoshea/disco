@@ -118,13 +118,13 @@ export const SafetyAlertNotification: React.FC<
                           url: '/images/alert-marker.svg',
                           scaledSize: new google.maps.Size(32, 32),
                           anchor: new google.maps.Point(16, 32),
-                        },
+                        } as google.maps.Icon,
                         title: getAlertTitle(),
                       },
                     ]}
-                    onMarkerClick={() => {}}
-                    onMarkerMouseEnter={() => {}}
-                    onMarkerMouseLeave={() => {}}
+                    onMarkerClick={() => console.log('Marker clicked')}
+                    onMarkerMouseEnter={() => console.log('Marker mouse enter')}
+                    onMarkerMouseLeave={() => console.log('Marker mouse leave')}
                   />
                 </div>
               )}

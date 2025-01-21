@@ -1,14 +1,6 @@
 import { User } from '@/types/user';
-import { apiClient } from './api.client';
+import { apiClient, type AuthResponse } from './api.client';
 import axios, { AxiosError } from 'axios';
-
-interface AuthResponse {
-  user: User;
-  token: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  message?: string;
-}
 
 interface RegisterData {
   email: string;

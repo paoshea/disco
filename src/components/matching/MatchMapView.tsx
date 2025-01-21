@@ -1,6 +1,9 @@
-import React, { useMemo, useState, useCallback, ChangeEvent } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { Match } from '@/types/match';
-import { BaseMapView } from '../map/BaseMapView';
+import {
+  BaseMapView,
+  type MapMarker as BaseMapMarker,
+} from '../map/BaseMapView';
 import type { MapMarker } from '@/types/map';
 import { Button } from '@/components/ui/Button';
 import { Slider } from '@/components/ui/Slider';
@@ -16,13 +19,9 @@ import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
 
-interface ExtendedMapMarker extends Omit<MapMarker, 'data'> {
-  data: Match;
-  icon: {
-    url: string;
-    scaledSize: google.maps.Size;
-    anchor: google.maps.Point;
-  };
+const matchDataMap = new Map<string, Match>();
+
+interface ExtendedMapMarker extends BaseMapMarker {
   label?: {
     text: string;
     color: string;
@@ -94,7 +93,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     []
   );
 
-  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
 
@@ -184,7 +183,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             hoveredMatch === match ? 48 : 40
           ),
         },
-        data: match,
         label:
           hoveredMatch === match
             ? {
@@ -198,7 +196,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       }));
   }, [filteredMatches, searchQuery, filters, mapBounds, hoveredMatch]);
 
-  const createMarker = useCallback((match: Match): MapMarker => {
+  const createMarker = useCallback((match: Match): BaseMapMarker => {
+    matchDataMap.set(match.id, match);
+
     const icon = {
       url: match.profileImage || '/images/markers/default-marker.png',
       scaledSize: new google.maps.Size(40, 40),
@@ -213,7 +213,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
       },
       title: match.name,
       icon,
-      data: match as unknown as Record<string, unknown>,
     };
   }, []);
 
@@ -243,21 +242,20 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     [mapStyle]
   );
 
-  const handleMarkerClick = useCallback((marker: MapMarker) => {
-    const data = marker.data as Match | undefined;
-    if (!data) return;
-    
-    if ('bio' in data && 'age' in data && 'location' in data && 'interests' in data) {
-      onMarkerClick(data);
-    }
-  }, [onMarkerClick]);
+  const handleMarkerClick = useCallback(
+    (marker: BaseMapMarker) => {
+      const match = matchDataMap.get(marker.id);
+      if (match) {
+        onMarkerClick(match);
+      }
+    },
+    [onMarkerClick]
+  );
 
-  const handleMarkerMouseEnter = useCallback((marker: MapMarker) => {
-    const data = marker.data as Match | undefined;
-    if (!data) return;
-    
-    if ('bio' in data && 'age' in data && 'location' in data && 'interests' in data) {
-      setHoveredMatch(data);
+  const handleMarkerMouseEnter = useCallback((marker: BaseMapMarker) => {
+    const match = matchDataMap.get(marker.id);
+    if (match) {
+      setHoveredMatch(match);
     }
   }, []);
 

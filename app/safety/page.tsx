@@ -101,17 +101,18 @@ export default function SafetyPage() {
         phoneNumber: contact.phone,
       });
 
-      // Refresh emergency contacts
-      const contacts = await safetyService.getEmergencyContacts(user.id);
       setSettings(prev => ({
         ...prev,
-        emergencyContacts: contacts.map(c => ({
-          id: c.id,
-          name: `${c.firstName} ${c.lastName}`,
-          phone: c.phoneNumber || '',
-          email: c.email || '',
-          priority: 'primary' as const,
-        })),
+        emergencyContacts: [
+          ...prev.emergencyContacts,
+          {
+            id: newContact.id,
+            name: `${newContact.firstName} ${newContact.lastName}`,
+            phone: newContact.phoneNumber || '',
+            email: newContact.email || '',
+            priority: 'primary' as const,
+          },
+        ],
       }));
 
       toast.success('Emergency contact added successfully');
@@ -218,12 +219,14 @@ export default function SafetyPage() {
               <p className="text-gray-600">No emergency contacts added yet.</p>
             )}
             <button
-              onClick={() => void handleAddContact({
-                name: 'New Contact',
-                phone: '',
-                email: '',
-                priority: 'primary'
-              })}
+              onClick={() =>
+                void handleAddContact({
+                  name: 'New Contact',
+                  phone: '',
+                  email: '',
+                  priority: 'primary',
+                })
+              }
               className="mt-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
             >
               Add Contact

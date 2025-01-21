@@ -12,6 +12,7 @@ import { LocationShareModal } from './LocationShareModal';
 interface ChatMessagePayload extends MessageWithSender {
   matchId: string;
   chatRoomId: string;
+  reactions: Reaction[];
 }
 
 interface TypingPayload {
@@ -30,7 +31,7 @@ interface Reaction {
 }
 
 interface ExtendedMessageWithSender extends MessageWithSender {
-  reactions?: Reaction[];
+  reactions: Reaction[];
 }
 
 interface MatchChatProps {
@@ -56,13 +57,13 @@ export const MatchChat: React.FC<MatchChatProps> = ({
   useEffect(() => {
     if (!session?.user?.id || !chatRoomId) return;
 
-    // Load initial messages
     const fetchMessages = async () => {
       try {
         const response = await fetch(`/api/chat/messages/${chatRoomId}`);
         if (!response.ok) throw new Error('Failed to fetch messages');
-        const data = await response.json();
-        setMessages(data.messages as ExtendedMessageWithSender[]);
+        const data: { messages: ExtendedMessageWithSender[] } =
+          await response.json();
+        setMessages(data.messages);
       } catch (error) {
         console.error('Error fetching messages:', error);
         toast.error('Failed to fetch messages. Please try again.');
@@ -71,23 +72,20 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
     void fetchMessages();
 
-    // Subscribe to new messages
-    const messageUnsub = socketService.subscribeToMessages(event => {
-      const message = event.message as ChatMessagePayload;
-      if (message.matchId === matchId) {
-        setMessages(prev => [...prev, message]);
+    const messageUnsub = socketService.subscribeToMessages(data => {
+      if (data.matchId === matchId) {
+        const messageWithReactions: ExtendedMessageWithSender = {
+          ...data.message,
+          reactions: [],
+        };
+        setMessages(prev => [...prev, messageWithReactions]);
         scrollToBottom();
       }
     });
 
-    // Subscribe to typing indicators
     const typingUnsub = socketService.subscribeToTyping(event => {
-      const typingEvent = event as TypingPayload;
-      if (
-        typingEvent.matchId === matchId &&
-        typingEvent.userId === otherUserId
-      ) {
-        setIsTyping(typingEvent.isTyping);
+      if (event.matchId === matchId && event.userId === otherUserId) {
+        setIsTyping(event.isTyping);
       }
     });
 
@@ -138,7 +136,7 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
       if (!response.ok) throw new Error('Failed to add reaction');
 
-      const updatedMessage = await response.json();
+      const updatedMessage: { reactions: Reaction[] } = await response.json();
       setMessages(prev =>
         prev.map(msg =>
           msg.id === messageId
@@ -222,10 +220,12 @@ export const MatchChat: React.FC<MatchChatProps> = ({
               </div>
               <MessageReactions
                 messageId={message.id}
-                reactions={message.reactions || []}
+                reactions={message.reactions}
                 currentUserId={session?.user?.id || ''}
-                onReactionAdd={handleReaction}
-                onReactionRemove={handleReaction}
+                onReactionAdd={emoji => void handleReaction(message.id, emoji)}
+                onReactionRemove={emoji =>
+                  void handleReaction(message.id, emoji)
+                }
               />
               <div className="text-xs text-muted-foreground mt-1">
                 {new Date(message.timestamp).toLocaleTimeString()}
@@ -262,11 +262,13 @@ export const MatchChat: React.FC<MatchChatProps> = ({
             type="text"
             value={message}
             onChange={e => setMessage(e.target.value)}
-            onKeyPress={e => e.key === 'Enter' && handleSendMessage()}
+            onKeyPress={e => {
+              if (e.key === 'Enter') void handleSendMessage();
+            }}
             placeholder="Type a message..."
             className="flex-1 bg-background rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <Button onClick={handleSendMessage}>Send</Button>
+          <Button onClick={() => void handleSendMessage()}>Send</Button>
         </div>
 
         {showEmojiPicker && (
@@ -281,7 +283,6 @@ export const MatchChat: React.FC<MatchChatProps> = ({
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
           onLocationSelect={handleLocationShare}
-          transitionState={null}
         />
       )}
     </div>

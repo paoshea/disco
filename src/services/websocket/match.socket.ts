@@ -1,6 +1,25 @@
 import { io, Socket } from 'socket.io-client';
-import { Match, MatchScore } from '@/types/match';
+import { Match } from '@/types/match';
 import { MessageWithSender } from '@/types/chat';
+
+interface ServerToClientEvents {
+  match_update: (data: MatchUpdateEvent) => void;
+  match_action: (data: MatchActionEvent) => void;
+  chat_message: (data: MessageEvent) => void;
+  typing: (data: TypingEvent) => void;
+  error: (error: Error) => void;
+  connect: () => void;
+  disconnect: () => void;
+}
+
+interface ClientToServerEvents {
+  chat_message: (data: { matchId: string; message: string }) => void;
+  typing: (data: { matchId: string; isTyping: boolean }) => void;
+  match_action: (data: {
+    matchId: string;
+    action: 'accept' | 'decline' | 'block';
+  }) => void;
+}
 
 interface MatchUpdateEvent {
   type: 'new' | 'update' | 'remove';
@@ -24,12 +43,24 @@ interface TypingEvent {
   isTyping: boolean;
 }
 
+type EventCallback<T> = (data: T) => void;
+
+type EventMap = {
+  match_update: MatchUpdateEvent;
+  match_action: MatchActionEvent;
+  chat_message: MessageEvent;
+  typing: TypingEvent;
+};
+
 export class MatchSocketService {
   private static instance: MatchSocketService;
-  private socket: Socket | null = null;
-  private listeners: Map<string, Set<Function>> = new Map();
+  private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
+    null;
+  private listeners: Map<keyof EventMap, Set<EventCallback<any>>> = new Map();
 
-  private constructor() {}
+  private constructor() {
+    // Private constructor for singleton pattern
+  }
 
   public static getInstance(): MatchSocketService {
     if (!MatchSocketService.instance) {
@@ -47,7 +78,7 @@ export class MatchSocketService {
         auth: { token },
         transports: ['websocket'],
       }
-    );
+    ) as Socket<ServerToClientEvents, ClientToServerEvents>;
 
     this.setupEventListeners();
   }
@@ -92,43 +123,56 @@ export class MatchSocketService {
   }
 
   public subscribeToMatches(
-    callback: (data: MatchUpdateEvent) => void
+    callback: EventCallback<MatchUpdateEvent>
   ): () => void {
     return this.subscribe('match_update', callback);
   }
 
   public subscribeToActions(
-    callback: (data: MatchActionEvent) => void
+    callback: EventCallback<MatchActionEvent>
   ): () => void {
     return this.subscribe('match_action', callback);
   }
 
   public subscribeToMessages(
-    callback: (data: MessageEvent) => void
+    callback: EventCallback<MessageEvent>
   ): () => void {
     return this.subscribe('chat_message', callback);
   }
 
-  public subscribeToTyping(callback: (data: TypingEvent) => void): () => void {
+  public subscribeToTyping(callback: EventCallback<TypingEvent>): () => void {
     return this.subscribe('typing', callback);
   }
 
-  private subscribe(event: string, callback: Function): () => void {
+  private subscribe<K extends keyof EventMap>(
+    event: K,
+    callback: EventCallback<EventMap[K]>
+  ): () => void {
     if (!this.listeners.has(event)) {
       this.listeners.set(event, new Set());
     }
 
-    const eventListeners = this.listeners.get(event)!;
+    const eventListeners = this.listeners.get(event);
+    if (!eventListeners) return () => {};
+
     eventListeners.add(callback);
 
     if (this.socket) {
-      this.socket.on(event, callback as any);
+      const typedCallback = ((data: EventMap[K]) => callback(data)) as (
+        ...args: any[]
+      ) => void;
+
+      this.socket.on(event as any, typedCallback);
+
+      return () => {
+        if (this.socket) {
+          this.socket.off(event as any, typedCallback);
+        }
+        eventListeners.delete(callback);
+      };
     }
 
     return () => {
-      if (this.socket) {
-        this.socket.off(event, callback as any);
-      }
       eventListeners.delete(callback);
     };
   }
@@ -151,7 +195,15 @@ export class MatchSocketService {
     this.socket.emit('match_action', { matchId, action });
   }
 
-  private notifyListeners(event: string, data: any): void {
-    this.listeners.get(event)?.forEach(callback => callback(data));
+  private notifyListeners<K extends keyof EventMap>(
+    event: K,
+    data: EventMap[K]
+  ): void {
+    const listeners = this.listeners.get(event);
+    if (!listeners) return;
+
+    listeners.forEach(callback => {
+      callback(data);
+    });
   }
 }

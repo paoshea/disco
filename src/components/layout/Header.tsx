@@ -3,20 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
-import type { User as AppUser } from '@/types/user';
-
-// Define the auth user type to match useAuth's type
-interface AuthUser {
-  id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: string;
-  streakCount: number;
-  emailVerified: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import type { User } from '@/types/user';
 
 export function Header() {
   const { user, isLoading, logout } = useAuth();
@@ -28,50 +15,6 @@ export function Header() {
       console.error('Error signing out:', error);
     }
   };
-
-  const transformAuthUser = (authUser: AuthUser): AppUser => ({
-    id: authUser.id,
-    email: authUser.email,
-    firstName: authUser.firstName,
-    lastName: authUser.lastName,
-    emailVerified: authUser.emailVerified,
-    createdAt: authUser.createdAt || new Date(),
-    updatedAt: authUser.updatedAt || new Date(),
-    name: `${authUser.firstName} ${authUser.lastName}`,
-    lastActive: new Date(),
-    verificationStatus: 'pending',
-    preferences: {
-      maxDistance: 50,
-      ageRange: { min: 18, max: 99 },
-      interests: [],
-      gender: [],
-      lookingFor: [],
-      relationshipType: [],
-      notifications: {
-        matches: true,
-        messages: true,
-        events: true,
-        safety: true,
-      },
-      privacy: {
-        showOnlineStatus: true,
-        showLastSeen: true,
-        showLocation: true,
-        showAge: true,
-      },
-      safety: {
-        requireVerifiedMatch: false,
-        meetupCheckins: true,
-        emergencyContactAlerts: true,
-      },
-    },
-    stats: {
-      responseRate: 0,
-      meetupSuccessRate: 0,
-      matchRate: 0,
-      lastActive: new Date(),
-    },
-  });
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -85,10 +28,7 @@ export function Header() {
           {isLoading ? (
             <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-500 border-t-transparent" />
           ) : user ? (
-            <UserMenu
-              user={transformAuthUser(user as AuthUser)}
-              onLogout={() => void handleLogout()}
-            />
+            <UserMenu user={user} onLogout={() => void handleLogout()} />
           ) : (
             <div className="space-x-4">
               <Link

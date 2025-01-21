@@ -29,19 +29,15 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   isProcessing = false,
   exitDirection,
 }) => {
-  const handleAccept = async () => {
+  const handleMatchAction = async (action: 'accept' | 'decline') => {
     try {
-      await onAccept(match.id);
+      if (action === 'accept') {
+        await onAccept(match.id);
+      } else if (action === 'decline') {
+        await onDecline(match.id);
+      }
     } catch (error) {
-      console.error('Error accepting match:', error);
-    }
-  };
-
-  const handleDecline = async () => {
-    try {
-      await onDecline(match.id);
-    } catch (error) {
-      console.error('Error declining match:', error);
+      console.error('Error handling match action:', error);
     }
   };
 
@@ -86,9 +82,9 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           const swipe = swipePower(offset.x, velocity.x);
 
           if (swipe < -swipeConfidenceThreshold) {
-            void handleDecline();
+            void handleMatchAction('decline');
           } else if (swipe > swipeConfidenceThreshold) {
-            void handleAccept();
+            void handleMatchAction('accept');
           }
         }}
       >
@@ -148,16 +144,20 @@ export const MatchCard: React.FC<MatchCardProps> = ({
 
           <div className="flex justify-between gap-4">
             <Button
-              onClick={handleDecline}
+              variant="outline"
+              onClick={() => {
+                void handleMatchAction('decline');
+              }}
               disabled={isProcessing}
-              className="flex-1 bg-red-500 hover:bg-red-600 text-white"
             >
               Decline
             </Button>
             <Button
-              onClick={handleAccept}
+              variant="secondary"
+              onClick={() => {
+                void handleMatchAction('accept');
+              }}
               disabled={isProcessing}
-              className="flex-1 bg-green-500 hover:bg-green-600 text-white"
             >
               Accept
             </Button>

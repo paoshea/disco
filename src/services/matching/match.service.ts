@@ -14,11 +14,11 @@ import { MatchAlgorithm } from './match.algorithm';
 import { db } from '@/lib/db/client';
 import { redis } from '@/lib/redis';
 import { LocationService } from '@/services/location/location.service';
-import * as userService from '../user/user.service';
+import { UserService } from '@/services/user/user.service';
 import type { LocationPrivacyMode } from '@/types/location';
 
 const MATCH_SCORE_CACHE_TTL = 3600; // 1 hour
-const NEARBY_USERS_CACHE_TTL = 300; // 5 minutes
+const NEARBY_USERS_CACHE_TTL = 1800; // 30 minutes
 
 const prisma = new PrismaClient();
 const locationService = LocationService.getInstance(); // Use getInstance instead of new
@@ -54,9 +54,11 @@ function convertToAppUser(
 export class MatchingService {
   private static instance: MatchingService;
   private algorithm: MatchAlgorithm;
+  private userService: UserService;
 
   private constructor() {
     this.algorithm = new MatchAlgorithm();
+    this.userService = UserService.getInstance();
   }
 
   public static getInstance(): MatchingService {
@@ -87,14 +89,11 @@ export class MatchingService {
   /**
    * Find potential matches for a user based on location and preferences
    */
-  async findMatches(
-    userId: string,
-    preferences: UserPreferences
-  ): Promise<Match[]> {
-    const user = await userService.getUserById(userId);
+  async findMatches(userId: string): Promise<Match[]> {
+    const user = await this.userService.getUserById(userId);
     if (!user) throw new Error('User not found');
 
-    const userPreferences = await userService.getUserPreferences(userId);
+    const userPreferences = await this.userService.getUserPreferences(userId);
     if (!userPreferences) {
       throw new Error('User preferences not found');
     }
@@ -103,16 +102,26 @@ export class MatchingService {
 
     // Get cached nearby users or fetch new ones
     const cacheKey = `nearby:${userId}:${matchPreferences.maxDistance}`;
-    let nearbyUsers: AppUser[] = JSON.parse(
-      (await redis.get(cacheKey)) || 'null'
-    );
+    const cachedUsers = await redis.get(cacheKey);
+    let nearbyUsers: AppUser[] | null = cachedUsers
+      ? JSON.parse(cachedUsers)
+      : null;
 
     if (!nearbyUsers) {
       const nearbyPrismaUsers = await this.getNearbyUsers(
         userId,
         matchPreferences.maxDistance
       );
-      nearbyUsers = nearbyPrismaUsers.map(convertToAppUser);
+
+      nearbyUsers = await Promise.all(
+        nearbyPrismaUsers.map(async user => {
+          const appUser = convertToAppUser(user);
+          const prefs = await this.userService.getUserPreferences(user.id);
+          return { ...appUser, preferences: prefs || undefined };
+        })
+      );
+
+      // Cache nearby users
       await redis.setex(
         cacheKey,
         NEARBY_USERS_CACHE_TTL,
@@ -125,14 +134,14 @@ export class MatchingService {
       nearbyUsers
         .filter(potentialMatch => potentialMatch.id !== userId)
         .map(async potentialMatch => {
-          const potentialMatchUser = await userService.getUserById(
+          const potentialMatchUser = await this.userService.getUserById(
             potentialMatch.id
           );
           if (!potentialMatchUser) {
             return null;
           }
 
-          const userPrefs = await userService.getUserPreferences(
+          const userPrefs = await this.userService.getUserPreferences(
             potentialMatch.id
           );
           if (!userPrefs) {
@@ -365,7 +374,7 @@ export class MatchingService {
     userId: string,
     preferences: UserPreferences
   ): Promise<void> {
-    await userService.updateUserPreferences(userId, preferences);
+    await this.userService.updateUserPreferences(userId, preferences);
 
     // Clear any cached match scores for this user
     const cacheKey = `match_scores:${userId}`;
