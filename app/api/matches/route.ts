@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
-import type { UserPreferences } from '@/types/user';
 
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
@@ -58,7 +57,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Parse query parameters
     const searchParams = req.nextUrl.searchParams;
-    const preferences = userPreferencesSchema.parse({
+    const searchPreferences = userPreferencesSchema.parse({
       maxDistance: Number(searchParams.get('maxDistance')) || 10,
       ageRange: {
         min: Number(searchParams.get('minAge')) || 18,

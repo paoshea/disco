@@ -6,9 +6,6 @@ import type {
   LoginResponse,
   RegisterResponse,
   UpdateProfileResponse,
-  PasswordResetResponse,
-  VerificationResponse,
-  AuthResponse,
 } from '@/types/auth';
 import type { User } from '@/types/user';
 
@@ -84,7 +81,6 @@ const userSchema = z.object({
 const authResponseSchema = z.object({
   user: userSchema,
   token: z.string(),
-  refreshToken: z.string().optional(),
   needsVerification: z.boolean().optional(),
   expiresIn: z.number().optional(),
 });
@@ -114,7 +110,7 @@ export const useAuth = create<AuthState>()(
             return { error: 'Invalid response from server' };
           }
 
-          const { token, user, refreshToken, needsVerification } = result.data;
+          const { token, user, needsVerification } = result.data;
 
           if (needsVerification) {
             return { needsVerification: true };
@@ -158,15 +154,12 @@ export const useAuth = create<AuthState>()(
             return { success: false, error: 'Invalid response from server' };
           }
 
-          const { token, user, refreshToken, needsVerification } = result.data;
+          const { token, user, needsVerification } = result.data;
 
           set({ user, token });
 
           // Set cookies for middleware
           document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
-          if (refreshToken) {
-            document.cookie = `refreshToken=${refreshToken}; path=/; max-age=86400; SameSite=Lax`;
-          }
 
           return {
             success: true,

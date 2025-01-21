@@ -10,18 +10,9 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useToast } from '@/hooks/use-toast';
+import Image from 'next/image';
 
 const matchDataMap = new Map<string, Match>();
-
-interface ExtendedMapMarker extends BaseMapMarker {
-  label?: {
-    text: string;
-    color: string;
-    fontSize: string;
-    fontWeight: string;
-    className: string;
-  };
-}
 
 interface MatchMapViewProps {
   matches: Match[];
@@ -53,13 +44,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     minAge: 18,
     maxAge: 100,
   });
-  const [mapBounds, setMapBounds] = useState<google.maps.LatLngBounds | null>(
-    null
-  );
   const [mapStyle, setMapStyle] = useState('roadmap');
   const [matchDistance, setMatchDistance] = useState('10km');
-
-  const [filteredMatches, setFilteredMatches] = useState<Match[]>(matches);
 
   const { toast } = useToast();
 
@@ -76,13 +62,6 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     { value: '20km', label: '20km' },
     { value: '50km', label: '50km' },
   ];
-
-  const handleBoundsChanged = useCallback(
-    (bounds: google.maps.LatLngBounds) => {
-      setMapBounds(bounds);
-    },
-    []
-  );
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
@@ -121,8 +100,8 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   }, []);
 
   const markers = useMemo(() => {
-    return filteredMatches.map(createMarker);
-  }, [filteredMatches, createMarker]);
+    return matches.map(createMarker);
+  }, [matches, createMarker]);
 
   const mapOptions = useMemo(
     () => ({
@@ -167,127 +146,47 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     setHoveredMatch(null);
   }, []);
 
-  const handleFilterChange = useCallback(
-    (field: keyof FilterState, value: FilterState[keyof FilterState]) => {
-      setFilters(prev => ({ ...prev, [field]: value }));
-    },
-    []
-  );
-
-  const handleFilterApply = () => {
-    if (filters.minAge > filters.maxAge) {
-      toast({
-        title: 'Invalid Age Range',
-        description: 'Minimum age cannot be greater than maximum age',
-        variant: 'error',
-      });
-      return;
-    }
-    toast({
-      title: 'Filters Applied',
-      description: 'Map view has been updated with your filters',
-      variant: 'default',
-    });
-  };
-
   return (
     <div className="relative h-full w-full">
       <div className="absolute inset-0">
         <BaseMapView
-          center={center || { lat: 0, lng: 0 }}
-          zoom={zoom || 12}
+          center={center}
+          zoom={zoom}
           markers={markers}
           onMarkerClick={handleMarkerClick}
           onMarkerMouseEnter={handleMarkerMouseEnter}
           onMarkerMouseLeave={handleMarkerMouseLeave}
           options={mapOptions}
-          onBoundsChanged={handleBoundsChanged}
-          enableClustering
-          clusterOptions={{
-            styles: [
-              {
-                textColor: 'white',
-                textSize: 14,
-                width: 40,
-                height: 40,
-                url: '/images/match-cluster.svg',
-              },
-            ],
-          }}
         />
       </div>
 
-      <div className="absolute top-4 left-4 z-10 space-y-4">
-        <Card className="w-80">
-          <CardContent className="p-4 space-y-4">
+      <div className="absolute top-4 left-4 z-10 w-80">
+        <Card>
+          <CardContent className="p-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="Search matches..."
-                className="w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={handleSearchChange}
+                className="w-full rounded-md border border-input bg-background pl-10 pr-4 py-2 text-sm"
               />
             </div>
-
-            <div className="flex items-center space-x-2">
+            <div className="mt-4">
               <Select
                 value={mapStyle}
-                onValueChange={(value: string) => setMapStyle(value)}
+                onValueChange={setMapStyle}
                 options={mapStyleOptions}
+                placeholder="Map Style"
               />
             </div>
-
-            <div className="flex items-center space-x-2">
+            <div className="mt-4">
               <Select
                 value={matchDistance}
-                onValueChange={(value: string) => setMatchDistance(value)}
+                onValueChange={setMatchDistance}
                 options={distanceOptions}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Activity Type</label>
-              <Select
-                value={filters.activity}
-                onValueChange={handleActivityChange}
-                options={[
-                  { value: 'all', label: 'All Activities' },
-                  { value: 'coffee', label: 'Coffee' },
-                  { value: 'lunch', label: 'Lunch' },
-                  { value: 'dinner', label: 'Dinner' },
-                  { value: 'drinks', label: 'Drinks' },
-                ]}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Time Window</label>
-              <Select
-                value={filters.timeWindow}
-                onValueChange={handleTimeWindowChange}
-                options={[
-                  { value: 'all', label: 'Any Time' },
-                  { value: 'now', label: 'Right Now' },
-                  { value: '15min', label: 'Next 15 Minutes' },
-                  { value: '30min', label: 'Next 30 Minutes' },
-                  { value: '1hour', label: 'Next Hour' },
-                  { value: 'today', label: 'Today' },
-                ]}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                Search Radius ({filters.radius}km)
-              </label>
-              <Slider
-                value={[filters.radius]}
-                onValueChange={handleRadiusChange}
-                min={1}
-                max={100}
-                step={1}
+                placeholder="Match Distance"
               />
             </div>
           </CardContent>
@@ -303,21 +202,23 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
             className="absolute bottom-4 left-4 z-10"
           >
             <Card className="w-80">
-              <CardContent className="p-4">
-                <div className="flex items-center space-x-4">
-                  {hoveredMatch.profileImage && (
-                    <img
-                      src={hoveredMatch.profileImage}
-                      alt={hoveredMatch.name}
-                      className="w-12 h-12 rounded-full object-cover"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-medium">{hoveredMatch.name}</h3>
-                    <p className="text-sm text-gray-500">
-                      {hoveredMatch.distance}km away
-                    </p>
-                  </div>
+              <CardContent className="p-4 flex items-center space-x-4">
+                <div className="relative h-16 w-16 rounded-full overflow-hidden">
+                  <Image
+                    src={
+                      hoveredMatch.profileImage || '/images/default-avatar.png'
+                    }
+                    alt={hoveredMatch.name}
+                    width={64}
+                    height={64}
+                    className="object-cover"
+                  />
+                </div>
+                <div>
+                  <h3 className="font-semibold">{hoveredMatch.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {hoveredMatch.age} • {hoveredMatch.distance}km away
+                  </p>
                 </div>
               </CardContent>
             </Card>

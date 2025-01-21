@@ -44,7 +44,12 @@ export function Header() {
                 >
                   Messages
                 </Link>
-                <UserMenu user={user} onLogout={handleLogout} />
+                <UserMenu
+                  user={user}
+                  onLogout={() => {
+                    void handleLogout();
+                  }}
+                />
               </>
             )}
           </nav>

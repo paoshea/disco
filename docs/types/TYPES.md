@@ -86,7 +86,6 @@
    - Represents a user's participation in an event
    - Links users to events with status information
 
-
 ### Location and Places Types
 
 1. **Place** (`src/components/chat/PlaceSuggestions.tsx`)
@@ -141,7 +140,7 @@
      error?: string;
      data?: any;
    }
-   ``` 
+   ```
 
 ### Next.js App Router Route Handler Types
 
@@ -241,21 +240,24 @@
    - Need to be careful not to mix up similar-sounding statuses
 
 5. **Optional Fields**
+
    - Many types use optional fields extensively
    - Requires careful null/undefined handling in the code
    - Example:
      ```typescript
      onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
      ```
- 
+
 6. **External API Integration**
+
    - When working with external APIs (e.g., Google Places), prefer using string literal types
    - Map external API types to internal types for better type safety
    - Example:
+
      ```typescript
      // Instead of using the API's type directly
-     type: google.maps.places.PlaceType
-     
+     type: google.maps.places.PlaceType;
+
      // Define our own type that matches the API
      type GooglePlaceType = 'cafe' | 'restaurant' | 'bar' | 'establishment';
      ```

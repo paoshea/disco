@@ -104,7 +104,7 @@ export class MatchingService {
     const cacheKey = `nearby:${userId}:${matchPreferences.maxDistance}`;
     const cachedUsers = await redis.get(cacheKey);
     let nearbyUsers: AppUser[] | null = cachedUsers
-      ? JSON.parse(cachedUsers)
+      ? (JSON.parse(cachedUsers) as AppUser[])
       : null;
 
     if (!nearbyUsers) {

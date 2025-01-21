@@ -65,7 +65,7 @@ class AuthService {
         }
       );
 
-      const { token, refreshToken, user } = response.data;
+      const { token, refreshToken } = response.data;
       this.setTokens(token, refreshToken);
 
       return response.data;

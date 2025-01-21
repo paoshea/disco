@@ -6,7 +6,9 @@ import type { UserPreferences } from '@/types/user';
 export class UserService {
   private static instance: UserService;
 
-  private constructor() {}
+  private constructor() {
+    // Private constructor for singleton pattern
+  }
 
   public static getInstance(): UserService {
     if (!UserService.instance) {
@@ -61,8 +63,13 @@ export class UserService {
   async getUserPreferences(userId: string): Promise<UserPreferences | null> {
     const cachedPrefs = await redis.get(`user:${userId}:preferences`);
     if (cachedPrefs) {
-      const parsedPrefs = JSON.parse(cachedPrefs);
-      return parsedPrefs as UserPreferences;
+      try {
+        return JSON.parse(cachedPrefs) as UserPreferences;
+      } catch (error) {
+        // Handle JSON parsing error
+        console.error('Error parsing cached preferences:', error);
+        return null;
+      }
     }
 
     const user = await this.getUserById(userId);

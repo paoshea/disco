@@ -56,7 +56,10 @@ export class MatchSocketService {
   private static instance: MatchSocketService;
   private socket: Socket<ServerToClientEvents, ClientToServerEvents> | null =
     null;
-  private listeners: Map<keyof EventMap, Set<EventCallback<any>>> = new Map();
+  private listeners: Map<
+    keyof EventMap,
+    Set<EventCallback<EventMap[keyof EventMap]>>
+  > = new Map();
 
   private constructor() {
     // Private constructor for singleton pattern
@@ -153,27 +156,36 @@ export class MatchSocketService {
     }
 
     const eventListeners = this.listeners.get(event);
-    if (!eventListeners) return () => {};
+    if (!eventListeners) {
+      return () => {
+        // Clean up function even if no listeners exist
+        this.listeners.delete(event);
+      };
+    }
 
-    eventListeners.add(callback);
+    eventListeners.add(callback as EventCallback<EventMap[keyof EventMap]>);
 
     if (this.socket) {
-      const typedCallback = ((data: EventMap[K]) => callback(data)) as (
-        ...args: any[]
-      ) => void;
+      const typedCallback = function (data: EventMap[K]) {
+        callback(data);
+      };
 
-      this.socket.on(event as any, typedCallback);
+      (this.socket as any).on(event, typedCallback);
 
       return () => {
         if (this.socket) {
-          this.socket.off(event as any, typedCallback);
+          (this.socket as any).off(event, typedCallback);
         }
-        eventListeners.delete(callback);
+        eventListeners.delete(
+          callback as EventCallback<EventMap[keyof EventMap]>
+        );
       };
     }
 
     return () => {
-      eventListeners.delete(callback);
+      eventListeners.delete(
+        callback as EventCallback<EventMap[keyof EventMap]>
+      );
     };
   }
 
@@ -200,10 +212,10 @@ export class MatchSocketService {
     data: EventMap[K]
   ): void {
     const listeners = this.listeners.get(event);
-    if (!listeners) return;
-
-    listeners.forEach(callback => {
-      callback(data);
-    });
+    if (listeners) {
+      listeners.forEach(callback => {
+        (callback as EventCallback<EventMap[K]>)(data);
+      });
+    }
   }
 }

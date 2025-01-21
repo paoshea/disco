@@ -5,11 +5,13 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { ScrollArea } from '@/components/ui/ScrollArea';
 
+type GooglePlaceType = 'cafe' | 'restaurant' | 'bar' | 'establishment';
+
 interface Place {
   id: string;
   name: string;
   address: string;
-  category: string;
+  category: GooglePlaceType;
   rating: number;
   priceLevel: number;
   position: {
@@ -23,8 +25,6 @@ interface PlaceSuggestionsProps {
   matchLocation: google.maps.LatLng;
   onPlaceSelect: (place: Place) => void;
 }
-
-type GooglePlaceType = 'cafe' | 'restaurant' | 'bar' | 'establishment';
 
 type PlaceCategory = {
   id: GooglePlaceType;
@@ -44,11 +44,13 @@ export function PlaceSuggestions({
   matchLocation,
   onPlaceSelect,
 }: PlaceSuggestionsProps) {
-  const [selectedCategory, setSelectedCategory] = useState<PlaceCategory['id'] | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<
+    PlaceCategory['id'] | null
+  >(null);
   const [places, setPlaces] = useState<Place[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchPlaces = async (categoryId: PlaceCategory['id']) => {
+  const fetchPlaces = (categoryId: PlaceCategory['id']) => {
     setLoading(true);
     setSelectedCategory(categoryId);
 
@@ -68,7 +70,7 @@ export function PlaceSuggestions({
       const request: google.maps.places.PlaceSearchRequest = {
         location: midpoint,
         radius: 1000, // 1km radius
-        type: categoryId, // This is already the correct string literal type
+        type: categoryId,
       };
 
       service.nearbySearch(
@@ -79,19 +81,26 @@ export function PlaceSuggestions({
         ) => {
           if (status === google.maps.places.PlacesServiceStatus.OK && results) {
             const mappedPlaces: Place[] = results
-              .filter(result => result.geometry && result.name)
-              .map(result => ({
-                id: result.place_id || Math.random().toString(),
-                name: result.name || 'Unknown Place',
-                address: result.vicinity || '',
-                category: categoryId,
-                rating: result.rating || 0,
-                priceLevel: result.price_level || 0,
-                position: {
-                  lat: result.geometry!.location!.lat(),
-                  lng: result.geometry!.location!.lng(),
-                },
-              }));
+              .filter(result => result.geometry?.location && result.name)
+              .map(result => {
+                const location = result.geometry?.location;
+                if (!location) {
+                  return null;
+                }
+                return {
+                  id: result.place_id || Math.random().toString(),
+                  name: result.name || 'Unknown Place',
+                  address: result.vicinity || '',
+                  category: categoryId,
+                  rating: result.rating || 0,
+                  priceLevel: result.price_level || 0,
+                  position: {
+                    lat: location.lat(),
+                    lng: location.lng(),
+                  },
+                } as Place;
+              })
+              .filter((place): place is Place => place !== null);
             setPlaces(mappedPlaces);
           }
           setLoading(false);
@@ -113,7 +122,8 @@ export function PlaceSuggestions({
   };
 
   const renderPlaceCard = (place: Place) => {
-    const CategoryIcon = CATEGORIES.find(c => c.id === place.category)?.icon || MapPin;
+    const CategoryIcon =
+      CATEGORIES.find(c => c.id === place.category)?.icon || MapPin;
 
     return (
       <motion.div
@@ -133,9 +143,7 @@ export function PlaceSuggestions({
             <p className="text-sm text-gray-500">{place.address}</p>
             <div className="mt-2 flex items-center space-x-2">
               {place.rating > 0 && (
-                <Badge variant="secondary">
-                  {place.rating.toFixed(1)} ★
-                </Badge>
+                <Badge variant="secondary">{place.rating.toFixed(1)} ★</Badge>
               )}
               {place.priceLevel > 0 && (
                 <Badge variant="secondary">

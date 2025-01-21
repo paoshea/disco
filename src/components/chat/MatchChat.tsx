@@ -9,18 +9,6 @@ import { EmojiPicker, type Emoji } from '@/components/ui/emoji-picker';
 import { Button } from '@/components/ui/Button';
 import { LocationShareModal } from './LocationShareModal';
 
-interface ChatMessagePayload extends MessageWithSender {
-  matchId: string;
-  chatRoomId: string;
-  reactions: Reaction[];
-}
-
-interface TypingPayload {
-  userId: string;
-  isTyping: boolean;
-  matchId: string;
-}
-
 interface Reaction {
   id: string;
   emoji: string;
@@ -61,8 +49,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
       try {
         const response = await fetch(`/api/chat/messages/${chatRoomId}`);
         if (!response.ok) throw new Error('Failed to fetch messages');
-        const data: { messages: ExtendedMessageWithSender[] } =
-          await response.json();
+        const data = (await response.json()) as {
+          messages: ExtendedMessageWithSender[];
+        };
         setMessages(data.messages);
       } catch (error) {
         console.error('Error fetching messages:', error);
@@ -72,22 +61,26 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
     void fetchMessages();
 
-    const messageUnsub = socketService.subscribeToMessages(data => {
-      if (data.matchId === matchId) {
-        const messageWithReactions: ExtendedMessageWithSender = {
-          ...data.message,
-          reactions: [],
-        };
-        setMessages(prev => [...prev, messageWithReactions]);
-        scrollToBottom();
+    const messageUnsub = socketService.subscribeToMessages(
+      (data: { matchId: string; message: MessageWithSender }) => {
+        if (data.matchId === matchId) {
+          const messageWithReactions: ExtendedMessageWithSender = {
+            ...data.message,
+            reactions: [],
+          };
+          setMessages(prev => [...prev, messageWithReactions]);
+          scrollToBottom();
+        }
       }
-    });
+    );
 
-    const typingUnsub = socketService.subscribeToTyping(event => {
-      if (event.matchId === matchId && event.userId === otherUserId) {
-        setIsTyping(event.isTyping);
+    const typingUnsub = socketService.subscribeToTyping(
+      (event: { matchId: string; userId: string; isTyping: boolean }) => {
+        if (event.matchId === matchId && event.userId === otherUserId) {
+          setIsTyping(event.isTyping);
+        }
       }
-    });
+    );
 
     return () => {
       messageUnsub();
@@ -136,7 +129,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
 
       if (!response.ok) throw new Error('Failed to add reaction');
 
-      const updatedMessage: { reactions: Reaction[] } = await response.json();
+      const updatedMessage = (await response.json()) as {
+        reactions: Reaction[];
+      };
       setMessages(prev =>
         prev.map(msg =>
           msg.id === messageId
@@ -199,6 +194,11 @@ export const MatchChat: React.FC<MatchChatProps> = ({
                 ? 'justify-end'
                 : 'justify-start'
             }`}
+            onClick={() => {
+              void (async () => {
+                // Handle click
+              })();
+            }}
           >
             {message.senderId !== session?.user?.id && (
               <Avatar

@@ -25,7 +25,7 @@ interface WakeLockSentinel {
   readonly released: boolean;
   readonly type: WakeLockType;
   release(): Promise<void>;
-  onrelease: ((this: WakeLockSentinel, ev: Event) => any) | null;
+  onrelease: ((this: WakeLockSentinel, ev: Event) => void) | null;
   addEventListener(
     type: 'release',
     listener: EventListenerOrEventListenerObject,

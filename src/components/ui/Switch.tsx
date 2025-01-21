@@ -16,9 +16,9 @@ const Switch = React.forwardRef<
   SwitchProps
 >(({ className, onChange, ...props }, ref) => {
   const handleChange = React.useCallback(
-    async (checked: boolean) => {
+    (checked: boolean) => {
       if (onChange) {
-        await onChange(checked);
+        void onChange(checked);
       }
     },
     [onChange]

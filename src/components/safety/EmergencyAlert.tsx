@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
-import {
-  BaseMapView,
-  type MapMarker,
-  type BaseMapViewProps,
-} from '@/components/map/BaseMapView';
+import { BaseMapView, type MapMarker } from '@/components/map/BaseMapView';
 import { useGeolocation } from '@/hooks/useGeolocation';
 import { safetyService } from '@/services/api/safety.service';
 import type { EmergencyAlertProps, SafetyAlertNew } from '@/types/safety';
@@ -58,7 +53,7 @@ export function EmergencyAlert({
         updatedAt: new Date().toISOString(),
       };
 
-      const response = await safetyService.createAlert({
+      await safetyService.createAlert({
         type: alert.type,
         description: alert.description,
         location: {
@@ -142,7 +137,9 @@ export function EmergencyAlert({
       <Button
         variant="danger"
         className="w-full"
-        onClick={handleTriggerAlert}
+        onClick={() => {
+          void handleTriggerAlert();
+        }}
         disabled={isTriggering || !position?.coords}
       >
         {isTriggering ? 'Triggering Alert...' : 'Trigger Emergency Alert'}

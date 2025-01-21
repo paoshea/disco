@@ -1,14 +1,12 @@
 import React, { useCallback, useState } from 'react';
 import type { SafetyCenterProps } from '@/types/safety';
 import type { SafetyAlertNew, SafetySettingsNew } from '@/types/safety';
-import type { User } from '@/types/user';
 import { EmergencyAlert } from './EmergencyAlert';
 import { SafetyFeatures } from './SafetyFeatures';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { ErrorMessage } from '@/components/ui/ErrorMessage';
 import { useSafetyAlert } from '@/contexts/SafetyAlertContext';
-import { Card } from '@/components/ui/Card';
 
 export const SafetyCenter: React.FC<SafetyCenterProps> = ({
   userId,
