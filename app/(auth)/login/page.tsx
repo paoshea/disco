@@ -2,24 +2,26 @@
 'use client';
 
 import { useState } from 'react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
+import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Alert } from '@/components/ui/Alert';
 import Link from 'next/link';
 import { Logo } from '@/components/ui/Logo';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { ToastTitle, ToastDescription } from '@/components/ui/toast';
 
 const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email address'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
+  email: z.string().email(),
+  password: z.string().min(8),
 });
 
-type LoginFormData = z.infer<typeof loginSchema>;
+type LoginValues = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -27,15 +29,11 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<LoginFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = async (data: LoginFormData) => {
+  async function onSubmit(data: LoginValues) {
     setIsLoading(true);
     setError(null);
 
@@ -44,9 +42,13 @@ export default function LoginPage() {
 
       if (result.success) {
         toast({
-          title: "Login Successful",
-          description: 'You have been logged in successfully',
-          variant: "default"
+          variant: "default",
+          children: (
+            <>
+              <ToastTitle>Success</ToastTitle>
+              <ToastDescription>Login Successful</ToastDescription>
+            </>
+          )
         });
         router.push('/dashboard');
         return;
@@ -55,9 +57,13 @@ export default function LoginPage() {
       if (result.error) {
         setError(result.error);
         toast({
-          title: "Authentication Error",
-          description: result.error,
-          variant: "destructive"
+          variant: "destructive",
+          children: (
+            <>
+              <ToastTitle>Error</ToastTitle>
+              <ToastDescription>{result.error}</ToastDescription>
+            </>
+          )
         });
         return;
       }
@@ -65,14 +71,18 @@ export default function LoginPage() {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
       toast({
-        title: "Authentication Error",
-        description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
+        children: (
+          <>
+            <ToastTitle>Error</ToastTitle>
+            <ToastDescription>{errorMessage}</ToastDescription>
+          </>
+        )
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">

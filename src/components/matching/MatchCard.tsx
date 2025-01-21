@@ -5,6 +5,7 @@ import { MatchPreview } from '@/types/match';
 import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
+import { MapPin } from 'lucide-react';
 
 interface MatchCardProps {
   match: MatchPreview;
@@ -112,8 +113,14 @@ export const MatchCard: React.FC<MatchCardProps> = ({
             transition={{ delay: 0.2 }}
           >
             <h3 className="text-xl font-semibold text-white mb-1">{match.name}</h3>
+            <div className="flex items-center space-x-2 text-sm text-gray-500">
+              <MapPin className="h-4 w-4" />
+              <span>
+                {match.distance !== null ? `${match.distance}km away` : 'Distance unknown'}
+              </span>
+            </div>
             <p className="text-white/80 text-sm">
-              {match.distance.toFixed(1)}km away · Active {formatDistanceToNow(new Date(match.lastActive), { addSuffix: true })}
+              Active {formatDistanceToNow(new Date(match.lastActive), { addSuffix: true })}
             </p>
           </motion.div>
         </div>

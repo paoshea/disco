@@ -144,43 +144,30 @@ export class LocationService {
     }
   ): Promise<ServiceResponse<Location>> {
     try {
-      if (!data.latitude || !data.longitude) {
-        throw new Error('Latitude and longitude are required');
-      }
-
-      // Delete old locations for this user (keep only the latest)
-      await this.prisma.deleteMany({
+      const location = await db.location.upsert({
         where: {
-          userId,
-          timestamp: {
-            lt: new Date(Date.now() - 24 * 60 * 60 * 1000), // Older than 24 hours
-          },
+          id: `${userId}_${Date.now()}`
         },
-      });
-
-      const locationData = {
-        userId,
-        latitude: data.latitude,
-        longitude: data.longitude,
-        accuracy: data.accuracy ?? null,
-        privacyMode: data.privacyMode,
-        sharingEnabled: data.sharingEnabled ?? true,
-        timestamp: new Date(),
-      };
-
-      const prismaLocation = await this.prisma.create({
-        data: locationData,
+        create: {
+          id: `${userId}_${Date.now()}`,
+          userId,
+          ...data,
+          timestamp: new Date()
+        },
+        update: {
+          ...data,
+          timestamp: new Date()
+        }
       });
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(prismaLocation),
+        data: this.mapPrismaLocationToLocation(location)
       };
     } catch (error) {
-      console.error('Error updating location:', error);
       return {
         success: false,
-        error: 'Failed to update location',
+        error: 'Failed to update location'
       };
     }
   }
@@ -421,64 +408,50 @@ export class LocationService {
   }
 
   async getNearbyUsers(
-    latitude: number,
-    longitude: number,
-    radiusInMeters: number = 10000 // Default 10km
+    location: { latitude: number; longitude: number },
+    radius: number
   ): Promise<User[]> {
-    try {
-      // Get all locations within the last 24 hours
-      const recentLocations = await this.prisma.findMany({
-        where: {
-          timestamp: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000),
-          },
-          sharingEnabled: true,
-        },
-        include: {
-          user: true
-        },
-        orderBy: {
-          timestamp: 'desc',
-        },
-      });
-
-      // Filter locations by distance and map to unique users
-      const nearbyUsers = recentLocations
-        .filter(location => {
-          const distance = this.calculateDistance(
-            latitude,
-            longitude,
-            location.latitude,
-            location.longitude
-          );
-          return distance <= radiusInMeters / 1000; // Convert meters to km
-        })
-        .map(location => ({
-          id: location.user!.id,
-          email: location.user!.email,
-          firstName: location.user!.firstName,
-          lastName: location.user!.lastName,
-          emailVerified: location.user!.emailVerified,
-          createdAt: location.user!.createdAt,
-          updatedAt: location.user!.updatedAt,
-          location: {
-            latitude: location.latitude,
-            longitude: location.longitude,
-            accuracy: location.accuracy || undefined,
-            privacyMode: location.privacyMode as LocationPrivacyMode,
-            timestamp: location.timestamp
+    const nearbyUsers = await db.user.findMany({
+      where: {
+        locations: {
+          some: {
+            latitude: {
+              gte: location.latitude - radius / 111000,
+              lte: location.latitude + radius / 111000,
+            },
+            longitude: {
+              gte: location.longitude - radius / (111000 * Math.cos(location.latitude * Math.PI / 180)),
+              lte: location.longitude + radius / (111000 * Math.cos(location.latitude * Math.PI / 180)),
+            },
+            sharingEnabled: true,
+            timestamp: {
+              gte: new Date(Date.now() - 24 * 60 * 60 * 1000)
+            }
           }
-        }))
-        // Remove duplicates by user ID
-        .filter((user, index, self) =>
-          index === self.findIndex((u) => u.id === user.id)
-        );
+        }
+      },
+      include: {
+        locations: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+          where: { sharingEnabled: true }
+        }
+      }
+    });
 
-      return nearbyUsers;
-    } catch (error) {
-      console.error('Error getting nearby users:', error);
-      return [];
-    }
+    return nearbyUsers.map(user => ({
+      id: user.id,
+      name: `${user.firstName} ${user.lastName}`,
+      lastActive: user.updatedAt,
+      verificationStatus: user.emailVerified ? 'verified' : 'pending',
+      location: user.locations[0] ? {
+        latitude: user.locations[0].latitude,
+        longitude: user.locations[0].longitude,
+        accuracy: user.locations[0].accuracy ?? undefined,
+        timestamp: user.locations[0].timestamp,
+        privacyMode: user.locations[0].privacyMode as LocationPrivacyMode
+      } : undefined
+    } as User));
   }
 
   private calculateDistance(

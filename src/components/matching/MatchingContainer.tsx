@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import type { Session } from 'next-auth';
 import { Match, MatchPreferences } from '@/types/match';
@@ -118,6 +118,20 @@ export function MatchingContainer() {
     }
   }, [fetchMatches]);
 
+  const sortedMatches = useMemo(() => {
+    return matches.sort((a, b) => {
+      // Sort by distance if available
+      if (a.distance !== null && b.distance !== null) {
+        return a.distance - b.distance;
+      }
+      // If one has distance and other doesn't, prioritize the one with distance
+      if (a.distance !== null) return -1;
+      if (b.distance !== null) return 1;
+      // If neither has distance, sort by match score
+      return (b.matchScore?.total || 0) - (a.matchScore?.total || 0);
+    });
+  }, [matches]);
+
   // Setup WebSocket connection and listeners
   useEffect(() => {
     if (!session?.user?.id) return;
@@ -182,7 +196,7 @@ export function MatchingContainer() {
 
         <TabsContent value="list">
           <MatchList
-            matches={matches}
+            matches={sortedMatches}
             onMatchClick={(matchId: string) => handleMatchAction(matchId, 'accept')}
             loading={loading}
           />
@@ -190,11 +204,14 @@ export function MatchingContainer() {
 
         <TabsContent value="map">
           <MatchMapView
-            matches={matches}
+            matches={sortedMatches}
             onMarkerClick={(match) => {
               toast({
                 title: match.name,
-                description: `${match.distance.toFixed(1)} km away`,
+                description: match.distance !== null 
+                  ? `${match.distance}km away`
+                  : 'Distance unknown',
+                variant: "default"
               });
             }}
           />

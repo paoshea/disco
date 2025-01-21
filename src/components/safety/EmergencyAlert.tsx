@@ -50,27 +50,28 @@ export function EmergencyAlert({
           latitude: position.coords.latitude,
           longitude: position.coords.longitude,
           accuracy: position.coords.accuracy,
+          timestamp: new Date().toISOString(),
         },
         type: 'emergency',
         status: 'active',
       };
 
       const response = await emergencyService.createAlert(alert);
-      if (response.success) {
-        toast({
-          title: "Emergency Alert Sent",
-          description: "Help is on the way. Stay safe.",
-          variant: "default"
-        });
-        onAlertTriggered(response.data);
-      } else {
-        throw new Error(response.error || 'Failed to send emergency alert');
+      
+      toast({
+        title: "Emergency Alert Sent",
+        description: "Emergency contacts have been notified of your location",
+        variant: "success"
+      });
+
+      if (onAlertTriggered) {
+        onAlertTriggered(response);
       }
     } catch (error) {
       console.error('Error sending emergency alert:', error);
       toast({
         title: "Error",
-        description: "Failed to send emergency alert. Please try again or call emergency services directly.",
+        description: "Failed to send emergency alert. Please try again.",
         variant: "destructive"
       });
     } finally {
@@ -78,42 +79,32 @@ export function EmergencyAlert({
     }
   };
 
-  if (error) {
-    return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <p className="text-red-700">
-          Error accessing location. Please enable location services to use this feature.
-        </p>
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      <div className="h-64 w-full rounded-lg overflow-hidden">
+        <BaseMapView
+          center={position ? {
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          } : undefined}
+          zoom={15}
+          markers={markers}
+        />
+      </div>
+
       <Button
         onClick={handleEmergencyAlert}
         disabled={isLoading || !position}
-        className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-4 rounded-lg"
+        className="w-full bg-red-600 hover:bg-red-700 text-white"
       >
         {isLoading ? 'Sending Alert...' : 'Send Emergency Alert'}
       </Button>
 
-      {position && (
-        <div className="h-64 w-full rounded-lg overflow-hidden">
-          <BaseMapView
-            center={{
-              lat: position.coords.latitude,
-              lng: position.coords.longitude,
-            }}
-            zoom={15}
-            markers={markers}
-          />
-        </div>
+      {error && (
+        <p className="text-sm text-red-600">
+          Error: {error.message}
+        </p>
       )}
-
-      <p className="text-sm text-gray-500 mt-2">
-        Your current location will be shared with emergency responders when you send an alert.
-      </p>
     </div>
   );
 }

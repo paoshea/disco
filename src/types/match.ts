@@ -2,24 +2,16 @@ export interface MatchPreview {
   id: string;
   name: string;
   profileImage?: string;
-  distance: number;
+  distance: number | null;
   commonInterests: string[];
   lastActive: string;
 }
 
 export interface MatchScore {
   total: number;
-  criteria: {
-    distance: number;
-    interests: number;
-    activityPreference: number;
-    timeWindow: number;
-    verificationStatus: number;
-    responseRate: number;
-    meetupSuccess: number;
-  };
+  criteria: Record<keyof WeightedCriteria, number>;
   commonInterests: string[];
-  distance: number;
+  distance: number | null;
 }
 
 export interface Match extends MatchPreview {

@@ -18,7 +18,7 @@ export type VerificationStatus =
   | 'verified'
   | 'rejected';
 
-export type SafetyAlertType = 'sos' | 'check-in' | 'location-share' | 'custom';
+export type SafetyAlertType = 'sos' | 'meetup' | 'location' | 'custom' | 'emergency';
 export type SafetyAlertStatus = 'pending' | 'active' | 'resolved' | 'dismissed';
 export type SafetyCheckStatus = 'pending' | 'safe' | 'unsafe' | 'missed';
 
@@ -232,9 +232,16 @@ export interface SafetyAlertNew {
   id: string;
   userId: string;
   user?: User;
-  type: 'sos' | 'meetup' | 'location' | 'custom';
+  type: SafetyAlertType;
   status: 'active' | 'resolved' | 'dismissed';
-  location: Location;
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp: Date;
+  };
+  message?: string;
+  contacts?: string[];
   description?: string;
   evidence?: SafetyEvidence[];
   createdAt: string;

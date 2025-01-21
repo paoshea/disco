@@ -42,7 +42,11 @@ export class MatchAlgorithm {
     let distance: number | null = null;
 
     // Distance score (inverse relationship - closer is better)
-    if (user.location && potentialMatch.location) {
+    if (user.location?.latitude != null && 
+        user.location?.longitude != null && 
+        potentialMatch.location?.latitude != null && 
+        potentialMatch.location?.longitude != null) {
+      
       distance = calculateDistance(
         user.location.latitude,
         user.location.longitude,
@@ -52,7 +56,7 @@ export class MatchAlgorithm {
       const maxDistance = Math.max(userPrefs.maxDistance, matchPrefs.maxDistance);
       scores.distance = 1 - Math.min(distance / maxDistance, 1);
     } else {
-      scores.distance = 0.5;
+      scores.distance = 0; // No location match if either user lacks location
     }
 
     // Interest overlap score

@@ -28,7 +28,7 @@ const toastVariants = cva(
   {
     variants: {
       variant: {
-        default: "border bg-background",
+        default: "border bg-background text-foreground",
         destructive:
           "destructive group border-destructive bg-destructive text-destructive-foreground",
       },
@@ -39,7 +39,7 @@ const toastVariants = cva(
   }
 );
 
-const Toast = React.forwardRef<
+const ToastRoot = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Root>,
   React.ComponentPropsWithoutRef<typeof ToastPrimitives.Root> &
     VariantProps<typeof toastVariants>
@@ -52,7 +52,7 @@ const Toast = React.forwardRef<
     />
   );
 });
-Toast.displayName = ToastPrimitives.Root.displayName;
+ToastRoot.displayName = ToastPrimitives.Root.displayName;
 
 const ToastAction = React.forwardRef<
   React.ElementRef<typeof ToastPrimitives.Action>,
@@ -111,16 +111,56 @@ const ToastDescription = React.forwardRef<
 ));
 ToastDescription.displayName = ToastPrimitives.Description.displayName;
 
-type ToastProps = React.ComponentPropsWithoutRef<typeof Toast>;
-
+type ToastProps = React.ComponentPropsWithoutRef<typeof ToastRoot>;
 type ToastActionElement = React.ReactElement<typeof ToastAction>;
+
+// Create a toast utility function
+const createToast = (props: ToastProps) => {
+  return <ToastRoot {...props} />;
+};
+
+export const toast = {
+  success: (message: string) => {
+    return createToast({
+      variant: "default",
+      children: (
+        <>
+          <ToastTitle>Success</ToastTitle>
+          <ToastDescription>{message}</ToastDescription>
+        </>
+      ),
+    });
+  },
+  error: (message: string) => {
+    return createToast({
+      variant: "destructive",
+      children: (
+        <>
+          <ToastTitle>Error</ToastTitle>
+          <ToastDescription>{message}</ToastDescription>
+        </>
+      ),
+    });
+  },
+  info: (message: string) => {
+    return createToast({
+      variant: "default",
+      children: (
+        <>
+          <ToastTitle>Info</ToastTitle>
+          <ToastDescription>{message}</ToastDescription>
+        </>
+      ),
+    });
+  },
+};
 
 export {
   type ToastProps,
   type ToastActionElement,
   ToastProvider,
   ToastViewport,
-  Toast,
+  ToastRoot as Toast,
   ToastTitle,
   ToastDescription,
   ToastClose,

@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useCallback } from 'react';
+import React, { useMemo, useState, useCallback, ChangeEvent } from 'react';
 import { Match } from '@/types/match';
 import { BaseMapView, MapMarker } from '../map/BaseMapView';
 import { Button } from '@/components/ui/Button';
@@ -7,21 +7,8 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@
 import { Card, CardContent } from '@/components/ui/Card';
 import { Search, MapPin, Filter } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface MatchMapViewProps {
-  matches: Match[];
-  onMarkerClick: (match: Match) => void;
-  center?: google.maps.LatLngLiteral;
-  zoom?: number;
-}
-
-interface FilterState {
-  radius: number;
-  activity: string;
-  timeWindow: string;
-  minAge: number;
-  maxAge: number;
-}
+import { toast } from '@/hooks/use-toast';
+import type { ToastProps } from '@/components/ui/Toast';
 
 interface ExtendedMapMarker extends MapMarker {
   data: Match;
@@ -37,6 +24,21 @@ interface ExtendedMapMarker extends MapMarker {
     fontWeight: string;
     className: string;
   };
+}
+
+interface MatchMapViewProps {
+  matches: Match[];
+  onMarkerClick: (match: Match) => void;
+  center?: google.maps.LatLngLiteral;
+  zoom?: number;
+}
+
+interface FilterState {
+  radius: number;
+  activity: string;
+  timeWindow: string;
+  minAge: number;
+  maxAge: number;
 }
 
 export const MatchMapView: React.FC<MatchMapViewProps> = ({
@@ -76,6 +78,30 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
   const handleBoundsChanged = useCallback((bounds: google.maps.LatLngBounds) => {
     setMapBounds(bounds);
   }, []);
+
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const handleRadiusChange = (value: number[]) => {
+    setFilters(prev => ({ ...prev, radius: value[0] }));
+  };
+
+  const handleActivityChange = (value: string) => {
+    setFilters(prev => ({ ...prev, activity: value }));
+  };
+
+  const handleTimeWindowChange = (value: string) => {
+    setFilters(prev => ({ ...prev, timeWindow: value }));
+  };
+
+  const handleAgeRangeChange = (values: number[]) => {
+    setFilters(prev => ({
+      ...prev,
+      minAge: values[0],
+      maxAge: values[1]
+    }));
+  };
 
   const filteredMarkers = useMemo<ExtendedMapMarker[]>(() => {
     return matches
@@ -166,10 +192,16 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     [mapStyle]
   );
 
-  const handleMarkerClick = useCallback((marker: MapMarker & { data?: Match }) => {
-    if (marker.data) {
-      onMarkerClick(marker.data);
+  const handleMarkerClick = useCallback((marker: ExtendedMapMarker) => {
+    if (!marker.data) {
+      toast({
+        title: "Error",
+        description: "Match data not found",
+        variant: "destructive"
+      } satisfies ToastProps);
+      return;
     }
+    onMarkerClick(marker.data);
   }, [onMarkerClick]);
 
   const handleMarkerMouseEnter = useCallback((marker: MapMarker & { data?: Match }) => {
@@ -186,6 +218,23 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
     setFilters(prev => ({ ...prev, [field]: value }));
   }, []);
 
+  const handleFilterApply = () => {
+    if (filters.minAge > filters.maxAge) {
+      toast({
+        title: "Invalid Age Range",
+        description: "Minimum age cannot be greater than maximum age",
+        variant: "destructive"
+      } satisfies ToastProps);
+      return;
+    }
+    setShowFilters(false);
+    toast({
+      title: "Filters Applied",
+      description: "Map view has been updated with your filters",
+      variant: "default"
+    } satisfies ToastProps);
+  };
+
   return (
     <div className="relative h-full">
       <div className="absolute inset-0">
@@ -193,17 +242,9 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
           center={center}
           zoom={zoom}
           markers={filteredMarkers}
-          onMarkerClick={(marker: MapMarker & { data?: Match }) => {
-            if (marker.data) {
-              onMarkerClick(marker.data);
-            }
-          }}
-          onMarkerMouseEnter={(marker: MapMarker & { data?: Match }) => {
-            if (marker.data) {
-              setHoveredMatch(marker.data);
-            }
-          }}
-          onMarkerMouseLeave={() => setHoveredMatch(null)}
+          onMarkerClick={handleMarkerClick}
+          onMarkerMouseEnter={handleMarkerMouseEnter}
+          onMarkerMouseLeave={handleMarkerMouseLeave}
           options={mapOptions}
           onBoundsChanged={handleBoundsChanged}
           enableClustering
@@ -231,51 +272,31 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
                 placeholder="Search matches..."
                 className="w-full pl-10 pr-4 py-2 rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={handleSearchChange}
               />
             </div>
 
             <div className="flex items-center space-x-2">
               <Select
                 value={mapStyle}
-                onValueChange={(value: string) => setMapStyle(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select map style" />
-                </SelectTrigger>
-                <SelectContent>
-                  {mapStyleOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value: string) => setMapStyle(value)}
+                options={mapStyleOptions}
+              />
             </div>
 
             <div className="flex items-center space-x-2">
               <Select
                 value={matchDistance}
-                onValueChange={(value: string) => setMatchDistance(value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select match distance" />
-                </SelectTrigger>
-                <SelectContent>
-                  {distanceOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                onChange={(value: string) => setMatchDistance(value)}
+                options={distanceOptions}
+              />
             </div>
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Activity Type</label>
               <Select
                 value={filters.activity}
-                onChange={(e) => handleFilterChange('activity', e.target.value)}
+                onChange={handleActivityChange}
                 options={[
                   { value: 'all', label: 'All Activities' },
                   { value: 'coffee', label: 'Coffee' },
@@ -290,7 +311,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
               <label className="text-sm font-medium">Time Window</label>
               <Select
                 value={filters.timeWindow}
-                onChange={(e) => handleFilterChange('timeWindow', e.target.value)}
+                onChange={handleTimeWindowChange}
                 options={[
                   { value: 'all', label: 'Any Time' },
                   { value: 'now', label: 'Right Now' },
@@ -306,7 +327,7 @@ export const MatchMapView: React.FC<MatchMapViewProps> = ({
               <label className="text-sm font-medium">Search Radius ({filters.radius}km)</label>
               <Slider
                 value={[filters.radius]}
-                onValueChange={(value: number[]) => handleFilterChange('radius', value[0])}
+                onValueChange={handleRadiusChange}
                 min={1}
                 max={100}
                 step={1}

@@ -1,15 +1,17 @@
-import React from 'react';
+import React, { ChangeEvent } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card';
 import { Select, SelectProps } from '@/components/ui/Select';
-import { Switch } from '@/components/ui/Switch';
+import { Switch } from "@/components/ui/Switch";
 import { Slider } from '@/components/ui/Slider';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { MatchPreferences } from '@/types/match';
+import { toast } from '@/hooks/use-toast';
+import type { ToastProps } from '@/components/ui/Toast';
 
 interface MatchPreferencesPanelProps {
   onSubmit: (data: MatchPreferences) => void;
@@ -49,7 +51,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
     defaultValues: {
       maxDistance: 50,
       minAge: 18,
-      maxAge: 100,
+      maxAge: 99,
       interests: [],
       verifiedOnly: false,
       withPhoto: true,
@@ -61,15 +63,49 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
   const [newInterest, setNewInterest] = React.useState('');
   const interests = watch('interests');
 
-  const handleAddInterest = () => {
-    if (newInterest.trim() && !interests.includes(newInterest.trim())) {
-      setValue('interests', [...interests, newInterest.trim()]);
-      setNewInterest('');
+  const handleAddInterest = (e: ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.trim();
+    if (!value) {
+      toast({
+        title: "Invalid Interest",
+        description: "Interest cannot be empty",
+        variant: "destructive"
+      } satisfies ToastProps);
+      return;
     }
+    
+    const currentInterests = watch('interests');
+    if (currentInterests.includes(value)) {
+      toast({
+        title: "Duplicate Interest",
+        description: "This interest has already been added",
+        variant: "destructive"
+      } satisfies ToastProps);
+      return;
+    }
+
+    setValue('interests', [...currentInterests, value]);
+    setNewInterest('');
+    toast({
+      title: "Interest Added",
+      description: `Added "${value}" to your interests`,
+      variant: "default"
+    } satisfies ToastProps);
   };
 
   const handleRemoveInterest = (interest: string) => {
-    setValue('interests', interests.filter(i => i !== interest));
+    const currentInterests = watch('interests');
+    setValue('interests', currentInterests.filter(i => i !== interest));
+  };
+
+  const handleTimeWindowChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setValue('timeWindow', value as MatchPreferences['timeWindow']);
+  };
+
+  const handlePrivacyModeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setValue('privacyMode', value as MatchPreferences['privacyMode']);
   };
 
   return (
@@ -85,7 +121,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               {...register('timeWindow')}
               options={timeWindowOptions}
               value={watch('timeWindow') || ''}
-              onChange={(e) => setValue('timeWindow', e.target.value as MatchPreferences['timeWindow'])}
+              onChange={handleTimeWindowChange}
               placeholder="Select time window"
             />
           </div>
@@ -96,7 +132,7 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
               {...register('privacyMode')}
               options={privacyModeOptions}
               value={watch('privacyMode') || ''}
-              onChange={(e) => setValue('privacyMode', e.target.value as MatchPreferences['privacyMode'])}
+              onChange={handlePrivacyModeChange}
               placeholder="Select privacy mode"
             />
           </div>
@@ -108,9 +144,9 @@ export function MatchPreferencesPanel({ onSubmit, initialValues }: MatchPreferen
                 value={newInterest}
                 onChange={(e) => setNewInterest(e.target.value)}
                 placeholder="Add an interest"
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest())}
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), handleAddInterest(e))}
               />
-              <Button type="button" onClick={handleAddInterest}>Add</Button>
+              <Button type="button" onClick={() => handleAddInterest({ target: { value: newInterest } } as any)}>Add</Button>
             </div>
             <div className="flex flex-wrap gap-2 mt-2">
               {interests.map((interest) => (

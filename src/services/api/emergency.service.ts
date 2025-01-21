@@ -1,9 +1,17 @@
 import { Location } from '@/types/location';
-import { EmergencyContact, EmergencyAlert } from '@/types/safety';
+import { EmergencyContact, EmergencyAlert, SafetyAlertNew } from '@/types/safety';
 import { apiClient } from './api.client';
 
 class EmergencyService {
   private readonly baseUrl = '/emergency';
+
+  async createAlert(alert: SafetyAlertNew): Promise<EmergencyAlert> {
+    const response = await apiClient.post<EmergencyAlert>(
+      `${this.baseUrl}/alerts/create`,
+      alert
+    );
+    return response.data;
+  }
 
   async sendAlert(data: {
     location: Location;
