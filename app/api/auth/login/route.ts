@@ -1,117 +1,104 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { comparePasswords, generateTokens } from '@/lib/auth';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
-interface LoginRequest {
-  email: string;
-  password: string;
-}
+const LoginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(8),
+});
 
-export async function POST(request: NextRequest): Promise<Response> {
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as LoginRequest;
-    const { email, password } = body;
+    const body = await request.json();
+    const result = LoginSchema.safeParse(body);
 
-    if (!email || !password) {
+    if (!result.success) {
       return NextResponse.json(
-        { message: 'Email and password are required' },
+        { error: 'Invalid input', details: result.error },
         { status: 400 }
       );
     }
 
-    const user = await db.user.findUnique({
+    const { email, password } = result.data;
+
+    const user = await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
         email: true,
         password: true,
+        role: true,
         firstName: true,
         lastName: true,
-        role: true,
-        streakCount: true,
         emailVerified: true,
+        streakCount: true,
       },
     });
 
     if (!user || !user.password) {
       return NextResponse.json(
-        { message: 'Invalid email or password' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Verify password hash
-    const isPasswordValid = await comparePasswords(password, user.password);
-    if (!isPasswordValid) {
+    const isValid = await comparePasswords(password, user.password);
+
+    if (!isValid) {
       return NextResponse.json(
-        { message: 'Invalid email or password' },
+        { error: 'Invalid credentials' },
         { status: 401 }
       );
     }
 
-    // Generate tokens
-    const { token, refreshToken, accessTokenExpiresIn } = await generateTokens({
-      id: user.id,
-      email: user.email,
-      role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      emailVerified: user.emailVerified,
-      streakCount: user.streakCount,
-    });
+    const { password: _, ...userWithoutPassword } = user;
+    const tokens = await generateTokens(userWithoutPassword);
 
-    // Update last login and streak
-    const now = new Date();
-    await db.user.update({
+    // Update last login time and streak
+    await prisma.user.update({
       where: { id: user.id },
       data: {
-        lastLogin: now,
-        refreshToken,
+        lastLogin: new Date(),
+        refreshToken: tokens.refreshToken,
         refreshTokenExpiresAt: new Date(
-          now.getTime() + accessTokenExpiresIn * 1000
+          new Date().getTime() + tokens.refreshTokenExpiresIn * 1000
         ),
       },
     });
 
-    // Create response with cookies
     const response = NextResponse.json({
-      token,
-      refreshToken,
-      expiresIn: accessTokenExpiresIn,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        streakCount: user.streakCount,
-        emailVerified: user.emailVerified,
-      },
+      user: userWithoutPassword,
+      ...tokens,
     });
 
-    // Set cookies in response
-    response.cookies.set('accessToken', token, {
+    // Set refresh token in HTTP-only cookie
+    response.cookies.set('refreshToken', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: accessTokenExpiresIn,
       path: '/',
+      maxAge: tokens.refreshTokenExpiresIn,
     });
 
-    response.cookies.set('refreshToken', refreshToken, {
+    // Set access token in HTTP-only cookie
+    response.cookies.set('accessToken', tokens.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 30 * 24 * 60 * 60, // 30 days
       path: '/',
+      maxAge: tokens.accessTokenExpiresIn,
     });
 
     return response;
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json(
-      { message: 'An error occurred during login' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

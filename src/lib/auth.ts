@@ -1,64 +1,75 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { hash, compare } from 'bcrypt';
+import { hash, compare } from 'bcryptjs';
 import crypto from 'crypto';
-import { db } from './prisma';
-import type { Session } from 'next-auth';
-import type { NextRequest } from 'next/server';
-import type { JWTPayload, JoseJWTPayload } from '@/types/auth';
+import { PrismaAdapter } from '@next-auth/prisma-adapter';
+import { prisma } from './prisma';
+import type { NextAuthOptions } from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+import CredentialsProvider from 'next-auth/providers/credentials';
+import { NextRequest } from 'next/server';
 
-// Extend the built-in types
-export interface User {
-  id: string;
-  email: string;
-  role: string;
-  firstName: string;
-  lastName: string;
+declare module 'next-auth' {
+  interface Session {
+    user: {
+      id: string;
+      email: string;
+      name: string | null;
+      role: string;
+    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+    firstName: string;
+    lastName: string;
+    emailVerified?: Date | null;
+    image?: string | null;
+    verificationToken?: string | null;
+    refreshToken?: string | null;
+    refreshTokenExpiresAt?: Date | null;
+    lastLogin?: Date | null;
+  }
 }
 
-export interface TokenUserPayload {
-  userId: string;
-  email: string;
-  role: string;
-  firstName: string;
-  lastName: string;
+declare module 'next-auth/jwt' {
+  interface JWT {
+    id: string;
+    email: string;
+    name: string | null;
+    role: string;
+  }
 }
 
 const accessTokenExpiresIn = 15 * 60; // 15 minutes
 const refreshTokenExpiresIn = 7 * 24 * 60 * 60; // 7 days
 
-export const comparePasswords = async (
-  password: string,
-  hash: string
-): Promise<boolean> => {
+export interface TokenUser {
+  id: string;
+  email: string;
+  name?: string | null;
+  role: string;
+  emailVerified?: Date | null;
+  streakCount?: number;
+}
+
+export const comparePasswords = async (password: string, hash: string) => {
   return compare(password, hash);
 };
 
-export const hashPassword = async (password: string): Promise<string> => {
+export const hashPassword = async (password: string) => {
   return hash(password, 10);
 };
 
-export const generateTokens = async (user: {
-  id: string;
-  email: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-  emailVerified?: boolean;
-  streakCount?: number;
-}): Promise<{
-  token: string;
-  refreshToken: string;
-  accessTokenExpiresIn: number;
-  refreshTokenExpiresIn: number;
-}> => {
-  // Create a payload that satisfies both our JWTPayload and jose's JWTPayload
-  const payload: JWTPayload & JoseJWTPayload = {
+export const generateTokens = async (user: TokenUser) => {
+  const payload = {
     id: user.id,
     email: user.email,
     role: user.role,
-    firstName: user.firstName,
-    lastName: user.lastName,
-    sub: user.id, // Add sub property, using user.id as per JWT standard
+    name: user.name,
+    sub: user.id,
     emailVerified: user.emailVerified ?? false,
     streakCount: user.streakCount ?? 0,
   };
@@ -67,13 +78,11 @@ export const generateTokens = async (user: {
     process.env.NEXTAUTH_SECRET || 'your-secret-key'
   );
 
-  // Generate access token
   const token = await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setExpirationTime(Math.floor(Date.now() / 1000) + accessTokenExpiresIn)
     .sign(secret);
 
-  // Generate refresh token with a different type
   const refreshPayload = {
     ...payload,
     type: 'refresh',
@@ -92,9 +101,7 @@ export const generateTokens = async (user: {
   };
 };
 
-export const verifyToken = async (
-  token: string
-): Promise<JWTPayload | null> => {
+export const verifyToken = async (token: string) => {
   try {
     const secret = new TextEncoder().encode(
       process.env.NEXTAUTH_SECRET || 'your-secret-key'
@@ -102,38 +109,23 @@ export const verifyToken = async (
 
     const { payload } = await jwtVerify(token, secret);
 
-    // Verify the payload has all required fields
-    if (
-      typeof payload.id === 'string' &&
-      typeof payload.email === 'string' &&
-      typeof payload.role === 'string' &&
-      typeof payload.firstName === 'string' &&
-      typeof payload.lastName === 'string' &&
-      typeof payload.sub === 'string'
-    ) {
-      return {
-        id: payload.id,
-        email: payload.email,
-        role: payload.role,
-        firstName: payload.firstName,
-        lastName: payload.lastName,
-        sub: payload.sub,
-        emailVerified: payload.emailVerified === true,
-        streakCount:
-          typeof payload.streakCount === 'number' ? payload.streakCount : 0,
-      };
-    }
-    return null;
+    return {
+      id: payload.id as string,
+      email: payload.email as string,
+      role: payload.role as string,
+      name: payload.name as string | null,
+      sub: payload.sub as string,
+      emailVerified: payload.emailVerified === true,
+      streakCount:
+        typeof payload.streakCount === 'number' ? payload.streakCount : 0,
+    };
   } catch (error) {
     console.error('Error verifying token:', error);
     return null;
   }
 };
 
-export const verifyRefreshToken = async (
-  token: string,
-  secret: string = process.env.NEXTAUTH_SECRET || ''
-): Promise<{ userId: string; email: string } | null> => {
+export const verifyRefreshToken = async (token: string, secret: string) => {
   try {
     const secretKey = new TextEncoder().encode(secret);
     const { payload } = await jwtVerify(token, secretKey);
@@ -155,9 +147,9 @@ export const verifyRefreshToken = async (
 export const generateRefreshToken = async (
   userId: string,
   email: string,
-  secret: string = process.env.NEXTAUTH_SECRET || '',
-  expiresIn: number = 7 * 24 * 60 * 60 // 7 days in seconds
-): Promise<string> => {
+  secret: string,
+  expiresIn: number
+) => {
   const secretKey = new TextEncoder().encode(secret);
   const token = await new SignJWT({
     id: userId,
@@ -172,14 +164,11 @@ export const generateRefreshToken = async (
   return token;
 };
 
-export async function generatePasswordResetToken(
-  email: string
-): Promise<string> {
+export async function generatePasswordResetToken(email: string) {
   const token = crypto.randomBytes(32).toString('hex');
   const hashedToken = await hash(token, 10);
 
-  // First find the user
-  const user = await db.user.findUnique({
+  const user = await prisma.user.findUnique({
     where: { email },
   });
 
@@ -187,8 +176,7 @@ export async function generatePasswordResetToken(
     throw new Error('User not found');
   }
 
-  // Store the token in the database with expiration
-  await db.passwordReset.create({
+  await prisma.passwordReset.create({
     data: {
       token: hashedToken,
       userId: user.id,
@@ -199,82 +187,109 @@ export async function generatePasswordResetToken(
   return token;
 }
 
-// Export properly typed auth config
-export const authConfig = {
+export const authOptions: NextAuthOptions = {
+  adapter: PrismaAdapter(prisma),
   providers: [
-    {
-      id: 'credentials',
-      type: 'credentials',
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
+    }),
+    CredentialsProvider({
       name: 'Credentials',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Password', type: 'password' },
       },
-      authorize: async (
-        credentials: { email: string; password: string } | undefined
-      ) => {
+      async authorize(
+        credentials: Record<'email' | 'password', string> | undefined
+      ) {
         if (!credentials?.email || !credentials?.password) {
           return null;
         }
 
-        const user = await db.user.findUnique({
+        const user = await prisma.user.findUnique({
           where: { email: credentials.email },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            password: true,
+            role: true,
+            firstName: true,
+            lastName: true,
+            emailVerified: true,
+            image: true,
+            verificationToken: true,
+            refreshToken: true,
+            refreshTokenExpiresAt: true,
+            lastLogin: true,
+          },
         });
 
-        if (!user) {
+        if (!user?.password) {
           return null;
         }
 
-        const isPasswordValid = await comparePasswords(
-          credentials.password,
-          user.password
-        );
+        const isValid = await compare(credentials.password, user.password);
 
-        if (!isPasswordValid) {
+        if (!isValid) {
           return null;
         }
 
-        return {
+        // Create new object without password using Omit utility type
+        const userWithoutPassword: Omit<typeof user, 'password'> = {
           id: user.id,
           email: user.email,
+          name: user.name,
           role: user.role,
           firstName: user.firstName,
           lastName: user.lastName,
+          emailVerified: user.emailVerified,
+          image: user.image,
+          verificationToken: user.verificationToken,
+          refreshToken: user.refreshToken,
+          refreshTokenExpiresAt: user.refreshTokenExpiresAt,
+          lastLogin: user.lastLogin,
         };
+
+        return userWithoutPassword;
       },
-    },
+    }),
   ],
   session: {
-    strategy: 'jwt' as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
-    updateAge: 24 * 60 * 60, // 24 hours
+    strategy: 'jwt',
   },
-} as const;
-
-export const authOptions = {
-  // Configure JWT
-  jwt: async ({
-    token,
-    user,
-  }: {
-    token: Record<string, unknown>;
-    user?: Record<string, unknown>;
-  }) => {
-    if (user) {
-      await Promise.resolve(); // Add await to satisfy require-await
-      token.id = user.id;
-      token.email = user.email;
-      token.role = user.role;
-      token.firstName = user.firstName;
-      token.lastName = user.lastName;
-    }
-    return token;
+  pages: {
+    signIn: '/auth/signin',
+    error: '/auth/error',
+    newUser: '/auth/new-user',
+  },
+  callbacks: {
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.email = user.email;
+        token.role = user.role;
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { lastLogin: new Date() },
+        });
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token && session.user) {
+        session.user.id = token.id;
+        session.user.email = token.email;
+        session.user.role = token.role;
+        await prisma.user.findUnique({ where: { id: token.id } });
+      }
+      return session;
+    },
   },
 };
 
-export const getServerAuthSession = async (
-  req: NextRequest
-): Promise<Session | null> => {
+export const getServerAuthSession = async (req: NextRequest) => {
   const sessionToken = req.cookies.get('next-auth.session-token');
 
   if (!sessionToken) {
@@ -291,9 +306,8 @@ export const getServerAuthSession = async (
       user: {
         id: session.id,
         email: session.email,
+        name: session.name,
         role: session.role,
-        firstName: session.firstName,
-        lastName: session.lastName,
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };
@@ -303,7 +317,7 @@ export const getServerAuthSession = async (
   }
 };
 
-export const getSession = async (req: NextRequest): Promise<Session | null> => {
+export const getSession = async (req: NextRequest) => {
   const sessionToken = req.cookies.get('next-auth.session-token');
 
   if (!sessionToken) {
@@ -320,9 +334,8 @@ export const getSession = async (req: NextRequest): Promise<Session | null> => {
       user: {
         id: session.id,
         email: session.email,
+        name: session.name,
         role: session.role,
-        firstName: session.firstName,
-        lastName: session.lastName,
       },
       expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
     };

@@ -11,7 +11,7 @@ import {
   Location as PrismaLocation,
 } from '@prisma/client';
 import { MatchAlgorithm } from './match.algorithm';
-import { db } from '@/lib/db/client';
+import { prisma } from '@/lib/prisma';
 import { redis } from '@/lib/redis';
 import { LocationService } from '@/services/location/location.service';
 import { UserService } from '@/services/user/user.service';
@@ -20,7 +20,6 @@ import type { LocationPrivacyMode } from '@/types/location';
 const MATCH_SCORE_CACHE_TTL = 3600; // 1 hour
 const NEARBY_USERS_CACHE_TTL = 1800; // 30 minutes
 
-const prisma = new PrismaClient();
 const locationService = LocationService.getInstance(); // Use getInstance instead of new
 
 // Helper function to convert Prisma User to App User
@@ -33,7 +32,7 @@ function convertToAppUser(
     email: prismaUser.email,
     firstName: prismaUser.firstName,
     lastName: prismaUser.lastName,
-    emailVerified: prismaUser.emailVerified,
+    emailVerified: prismaUser.emailVerified !== null,
     name: `${prismaUser.firstName} ${prismaUser.lastName}`,
     verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
     lastActive: prismaUser.updatedAt,
@@ -255,7 +254,7 @@ export class MatchingService {
    * Get the status of a match
    */
   async getMatchStatus(userId: string, matchId: string): Promise<MatchStatus> {
-    const match = await db.$queryRaw<{ status: MatchStatus }[]>`
+    const match = await prisma.$queryRaw<{ status: MatchStatus }[]>`
       SELECT status FROM "UserMatch"
       WHERE id = ${matchId}
       AND (user_id = ${userId} OR matched_user_id = ${userId})
@@ -273,7 +272,7 @@ export class MatchingService {
    * Accept a match
    */
   async acceptMatch(userId: string, matchId: string): Promise<void> {
-    await db.$executeRaw`
+    await prisma.$executeRaw`
       UPDATE "UserMatch"
       SET status = 'ACCEPTED'
       WHERE id = ${matchId}
@@ -285,7 +284,7 @@ export class MatchingService {
    * Reject a match
    */
   async rejectMatch(userId: string, matchId: string): Promise<void> {
-    await db.$executeRaw`
+    await prisma.$executeRaw`
       UPDATE "UserMatch"
       SET status = 'REJECTED'
       WHERE id = ${matchId}
@@ -297,7 +296,7 @@ export class MatchingService {
    * Block a match
    */
   async blockMatch(userId: string, matchId: string): Promise<void> {
-    await db.$executeRaw`
+    await prisma.$executeRaw`
       UPDATE "UserMatch"
       SET status = 'BLOCKED'
       WHERE id = ${matchId}
@@ -313,7 +312,7 @@ export class MatchingService {
     matchId: string,
     reason: string
   ): Promise<void> {
-    await db.$executeRaw`
+    await prisma.$executeRaw`
       UPDATE "UserMatch"
       SET status = 'REPORTED',
           report_reason = ${reason}
@@ -326,7 +325,7 @@ export class MatchingService {
     userId: string,
     maxDistance: number
   ): Promise<PrismaUser[]> {
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -337,7 +336,7 @@ export class MatchingService {
       return [];
     }
 
-    const nearbyUsers = await db.user.findMany({
+    const nearbyUsers = await prisma.user.findMany({
       where: {
         NOT: {
           id: userId,

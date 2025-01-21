@@ -1,4 +1,4 @@
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { EmergencyContact, SafetyCheck } from '@prisma/client';
 
 interface SafetySettings {
@@ -28,7 +28,7 @@ export class SafetyService {
   }
 
   async getEmergencyContacts(userId: string): Promise<EmergencyContact[]> {
-    return await db.emergencyContact.findMany({
+    return await prisma.emergencyContact.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
     });
@@ -43,7 +43,7 @@ export class SafetyService {
       phoneNumber?: string;
     }
   ): Promise<EmergencyContact> {
-    return await db.emergencyContact.create({
+    return await prisma.emergencyContact.create({
       data: {
         ...contactData,
         userId,
@@ -61,7 +61,7 @@ export class SafetyService {
       phoneNumber: string;
     }>
   ): Promise<EmergencyContact> {
-    const contact = await db.emergencyContact.findUnique({
+    const contact = await prisma.emergencyContact.findUnique({
       where: { id: contactId },
     });
 
@@ -69,7 +69,7 @@ export class SafetyService {
       throw new Error('Contact not found or unauthorized');
     }
 
-    return await db.emergencyContact.update({
+    return await prisma.emergencyContact.update({
       where: { id: contactId },
       data: contactData,
     });
@@ -79,7 +79,7 @@ export class SafetyService {
     userId: string,
     contactId: string
   ): Promise<EmergencyContact> {
-    const contact = await db.emergencyContact.findUnique({
+    const contact = await prisma.emergencyContact.findUnique({
       where: { id: contactId },
     });
 
@@ -87,7 +87,7 @@ export class SafetyService {
       throw new Error('Contact not found or unauthorized');
     }
 
-    return await db.emergencyContact.delete({
+    return await prisma.emergencyContact.delete({
       where: { id: contactId },
     });
   }
@@ -98,10 +98,10 @@ export class SafetyService {
       type: string;
       scheduledFor: Date;
       location?: { latitude: number; longitude: number; accuracy?: number };
-      description?: string;
+      description: string;
     }
   ): Promise<SafetyCheck> {
-    return await db.safetyCheck.create({
+    return await prisma.safetyCheck.create({
       data: {
         ...checkData,
         userId,
@@ -114,7 +114,7 @@ export class SafetyService {
     userId: string,
     checkId: string
   ): Promise<SafetyCheck> {
-    const check = await db.safetyCheck.findUnique({
+    const check = await prisma.safetyCheck.findUnique({
       where: { id: checkId },
     });
 
@@ -122,7 +122,7 @@ export class SafetyService {
       throw new Error('Safety check not found or unauthorized');
     }
 
-    return await db.safetyCheck.update({
+    return await prisma.safetyCheck.update({
       where: { id: checkId },
       data: {
         status: 'completed',
@@ -135,7 +135,7 @@ export class SafetyService {
     userId: string,
     status?: 'pending' | 'completed' | 'missed'
   ): Promise<SafetyCheck[]> {
-    return await db.safetyCheck.findMany({
+    return await prisma.safetyCheck.findMany({
       where: {
         userId,
         ...(status ? { status } : {}),
@@ -148,7 +148,7 @@ export class SafetyService {
     const contacts = await this.getEmergencyContacts(userId);
 
     // Get the user's safety preferences from the database
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         safetyEnabled: true, // You'll need to add this field to your User model
@@ -175,7 +175,7 @@ export class SafetyService {
   ): Promise<void> {
     // Update user's safety preferences
     if (settings.enabled !== undefined) {
-      await db.user.update({
+      await prisma.user.update({
         where: { id: userId },
         data: {
           safetyEnabled: settings.enabled,

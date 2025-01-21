@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { hashPassword, generateTokens } from '@/lib/auth';
 import { randomUUID } from 'crypto';
 import { sendVerificationEmail } from '@/lib/email';
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     console.log('Checking for existing user...');
     // Check if user already exists
-    const existingUser = await db.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email },
       select: { id: true },
     });
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     const verificationToken = randomUUID();
 
     console.log('Creating user...');
-    const user = await db.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         password: hashedPassword,
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest): Promise<Response> {
         lastName,
         verificationToken,
         role: 'user',
-        emailVerified: false,
+        emailVerified: null,
         streakCount: 0,
       },
       select: {
@@ -83,15 +83,13 @@ export async function POST(request: NextRequest): Promise<Response> {
       id: user.id,
       email: user.email,
       role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
       emailVerified: user.emailVerified,
       streakCount: user.streakCount,
     });
 
     // Store refresh token in database
     const now = new Date();
-    await db.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         refreshToken,

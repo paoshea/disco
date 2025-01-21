@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { verifyRefreshToken, generateTokens } from '@/lib/auth';
-import { db } from '@/lib/prisma';
 
 export async function POST(request: NextRequest): Promise<Response> {
   try {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Verify refresh token
-    const decoded = await verifyRefreshToken(refreshToken);
+    const decoded = await verifyRefreshToken(refreshToken, process.env.JWT_SECRET || 'default-secret');
     if (!decoded) {
       return NextResponse.json(
         { message: 'Invalid refresh token', code: 'REFRESH_TOKEN_INVALID' },
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Verify user and token in database
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: {
         id: decoded.userId,
         refreshToken,
@@ -35,9 +35,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       select: {
         id: true,
         email: true,
-        firstName: true,
-        lastName: true,
         role: true,
+        emailVerified: true,
+        streakCount: true,
       },
     });
 
@@ -53,12 +53,12 @@ export async function POST(request: NextRequest): Promise<Response> {
       id: user.id,
       email: user.email,
       role: user.role,
-      firstName: user.firstName,
-      lastName: user.lastName,
+      emailVerified: user.emailVerified,
+      streakCount: user.streakCount,
     });
 
     // Update refresh token in database
-    await db.user.update({
+    await prisma.user.update({
       where: { id: user.id },
       data: {
         refreshToken: tokenResult.refreshToken,
@@ -69,23 +69,25 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     // Create response with new tokens
-    return NextResponse.json({
-      token: tokenResult.token,
-      refreshToken: tokenResult.refreshToken,
-      accessTokenExpiresIn: tokenResult.accessTokenExpiresIn,
-      refreshExpiresIn: tokenResult.refreshTokenExpiresIn,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-      },
+    const response = NextResponse.json({
+      user,
+      ...tokenResult,
     });
+
+    // Set new refresh token in cookie
+    response.cookies.set('refreshToken', tokenResult.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: tokenResult.refreshTokenExpiresIn,
+    });
+
+    return response;
   } catch (error) {
-    console.error('Error in refresh token:', error);
+    console.error('Token refresh error:', error);
     return NextResponse.json(
-      { message: 'Internal server error', code: 'SERVER_ERROR' },
+      { message: 'Internal server error', code: 'INTERNAL_ERROR' },
       { status: 500 }
     );
   }

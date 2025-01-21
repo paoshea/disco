@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { MessageWithSender } from '@/types/chat';
 
 // Next.js 15.x specific configurations
@@ -50,7 +50,7 @@ async function verifyRoomAccess(
   roomId: string,
   userId: string
 ): Promise<boolean> {
-  const chatRoom = await db.chatRoom.findFirst({
+  const chatRoom = await prisma.chatRoom.findFirst({
     where: {
       id: roomId,
       OR: [{ creatorId: userId }, { participantId: userId }],
@@ -80,7 +80,7 @@ export async function GET(
       );
     }
 
-    const messages = await db.message.findMany({
+    const messages = await prisma.message.findMany({
       where: {
         chatRoomId: roomId,
       },
@@ -120,7 +120,7 @@ export async function GET(
 }
 
 async function createMessage(content: string, roomId: string, userId: string) {
-  const message = await db.message.create({
+  const message = await prisma.message.create({
     data: {
       content,
       chatRoomId: roomId,

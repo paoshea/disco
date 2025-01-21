@@ -1,4 +1,4 @@
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type {
   Location as PrismaLocation,
   User as PrismaUser,
@@ -50,7 +50,7 @@ type WakeLockType = 'screen';
 
 export class LocationService {
   private static instance: LocationService;
-  private prisma: typeof db.location;
+  private prisma: typeof prisma.location;
   private trackingIntervals: Map<string, number> = new Map();
   private backgroundSync = false;
   private locationQueue: Map<string, GeolocationPosition[]> = new Map();
@@ -64,7 +64,7 @@ export class LocationService {
   private wakeLock: WakeLockSentinel | null = null;
 
   private constructor() {
-    this.prisma = db.location;
+    this.prisma = prisma.location;
     // Only initialize service worker in browser environment
     if (typeof window !== 'undefined') {
       void this.initServiceWorker();
@@ -160,7 +160,7 @@ export class LocationService {
   }
 
   private async getUserWithProfile(userId: string): Promise<PrismaUser> {
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
     });
 
@@ -197,7 +197,7 @@ export class LocationService {
     }
   ): Promise<ServiceResponse<Location>> {
     try {
-      const location = await db.location.upsert({
+      const location = await prisma.location.upsert({
         where: {
           id: `${userId}_${Date.now()}`,
         },
@@ -443,7 +443,7 @@ export class LocationService {
     location: { latitude: number; longitude: number },
     radius: number
   ): Promise<User[]> {
-    const nearbyUsers = await db.user.findMany({
+    const nearbyUsers = await prisma.user.findMany({
       where: {
         locations: {
           some: {

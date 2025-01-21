@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { BaseMapView, type MapMarker } from '@/components/map/BaseMapView';
 import { useGeolocation } from '@/hooks/useGeolocation';
@@ -23,7 +23,7 @@ export function EmergencyAlert({
     };
   }, []);
 
-  const handleTriggerAlert = async () => {
+  const handleTriggerAlert = useCallback(async () => {
     if (isTriggering || !position?.coords) return;
 
     setIsTriggering(true);
@@ -53,18 +53,15 @@ export function EmergencyAlert({
         updatedAt: new Date().toISOString(),
       };
 
-      await safetyService.createAlert({
-        type: alert.type,
-        description: alert.description,
+      const createdAlert = await safetyService.createSafetyAlert(userId, {
+        type: 'emergency_sos',
+        description: 'User triggered emergency alert',
+        severity: 'high',
+        message: 'Emergency SOS Alert',
         location: {
-          id: location.id,
-          userId: location.userId,
           latitude: location.latitude,
           longitude: location.longitude,
           accuracy: location.accuracy,
-          timestamp: location.timestamp,
-          privacyMode: location.privacyMode,
-          sharingEnabled: location.sharingEnabled,
         },
       });
 
@@ -84,7 +81,7 @@ export function EmergencyAlert({
     } finally {
       setIsTriggering(false);
     }
-  };
+  }, [userId, position, onAlertTriggered]);
 
   const markers: MapMarker[] = position?.coords
     ? [

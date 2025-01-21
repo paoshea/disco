@@ -1,4 +1,4 @@
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { ServiceResponse } from '@/types/service';
 import type { EventWithParticipants } from '@/types/event';
 import type { ParticipantStatus } from '@/types/participant';
@@ -132,7 +132,7 @@ export class EventService {
     data: EventCreateInput
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await db.event.create({
+      const event = await prisma.event.create({
         data: {
           title: data.title,
           description: data.description || null,
@@ -172,7 +172,7 @@ export class EventService {
     id: string
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await db.event.findUnique({
+      const event = await prisma.event.findUnique({
         where: { id },
         include: {
           creator: true,
@@ -209,7 +209,7 @@ export class EventService {
     data: EventUpdateInput
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await db.event.update({
+      const event = await prisma.event.update({
         where: { id },
         data,
         include: {
@@ -237,7 +237,7 @@ export class EventService {
 
   async deleteEvent(id: string): Promise<ServiceResponse<void>> {
     try {
-      await db.event.delete({
+      await prisma.event.delete({
         where: { id },
       });
 
@@ -258,7 +258,7 @@ export class EventService {
     userId: string
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await db.event.update({
+      const event = await prisma.event.update({
         where: { id: eventId },
         data: {
           participants: {
@@ -295,7 +295,7 @@ export class EventService {
     userId: string
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await db.event.update({
+      const event = await prisma.event.update({
         where: { id: eventId },
         data: {
           participants: {
@@ -329,7 +329,7 @@ export class EventService {
 
   async getEvents(): Promise<ServiceResponse<EventWithParticipants[]>> {
     try {
-      const events = await db.event.findMany({
+      const events = await prisma.event.findMany({
         include: {
           creator: true,
           participants: {
@@ -373,7 +373,7 @@ export class EventService {
       // This varies slightly with latitude due to Earth's ellipsoid shape
       const radiusInDegrees = radiusInKm / 111.32;
 
-      const events = await db.event.findMany({
+      const events = await prisma.event.findMany({
         where: {
           AND: [
             {

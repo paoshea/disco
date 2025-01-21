@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 // Define types for our data
 // type Achievement = {
@@ -49,7 +49,7 @@ async function checkAndCreateAchievement(userId: string, streakCount: number) {
   for (const { threshold, name, description } of streakAchievements) {
     if (streakCount === threshold) {
       // Create achievement using raw SQL
-      await db.$executeRaw`
+      await prisma.$executeRaw`
         INSERT INTO "Achievement" ("userId", "type", "name", "description")
         VALUES (${userId}, 'streak', ${name}, ${description})
       `;
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const userId = session.user.id;
 
     // Get user's current stats
-    const user = await db.user.findUnique({
+    const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
         streakCount: true,
@@ -90,14 +90,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     );
 
     // Get total events participated
-    const eventsParticipated = await db.eventParticipant.count({
+    const eventsParticipated = await prisma.eventParticipant.count({
       where: {
         userId,
       },
     });
 
     // Get total events created
-    const eventsCreated = await db.event.count({
+    const eventsCreated = await prisma.event.count({
       where: {
         creatorId: userId,
       },

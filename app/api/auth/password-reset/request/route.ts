@@ -1,50 +1,70 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/prisma';
+import type { NextRequest } from 'next/server';
+import { prisma } from '@/lib/prisma';
 import { generatePasswordResetToken } from '@/lib/auth';
 import { sendPasswordResetEmail } from '@/lib/email';
+import { z } from 'zod';
 
-interface PasswordResetRequest {
-  email: string;
-}
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
-export async function POST(request: Request): Promise<Response> {
+const RequestSchema = z.object({
+  email: z.string().email('Invalid email address'),
+});
+
+export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    const body = (await request.json()) as PasswordResetRequest;
-    const { email } = body;
+    const body = await request.json();
+    const result = RequestSchema.safeParse(body);
 
-    if (!email) {
+    if (!result.success) {
       return NextResponse.json(
-        { message: 'Email is required' },
+        { error: 'Invalid input', details: result.error },
         { status: 400 }
       );
     }
 
-    const user = await db.user.findUnique({
+    const { email } = result.data;
+
+    // Find user by email
+    const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+      },
     });
 
     if (!user) {
-      // Return success even if user doesn't exist to prevent email enumeration
+      // Return success even if user not found to prevent email enumeration
       return NextResponse.json({
-        message:
-          'If an account exists with that email, a password reset link has been sent.',
+        message: 'If an account exists with that email, a password reset link has been sent.',
       });
     }
 
-    // Generate reset token
-    const resetToken = await generatePasswordResetToken(email);
+    // Generate password reset token
+    const token = await generatePasswordResetToken(user.email);
 
-    // Send email with reset token
-    await sendPasswordResetEmail(email, resetToken);
+    // Create password reset record
+    await prisma.passwordReset.create({
+      data: {
+        token,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 hours
+        userId: user.id,
+      },
+    });
+
+    // Send password reset email
+    await sendPasswordResetEmail(user.email, token);
 
     return NextResponse.json({
-      message: 'Password reset email sent successfully',
+      message: 'If an account exists with that email, a password reset link has been sent.',
     });
   } catch (error) {
     console.error('Password reset request error:', error);
     return NextResponse.json(
-      { message: 'An error occurred while processing your request' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

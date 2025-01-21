@@ -1,242 +1,160 @@
-import {
-  EmergencyContact,
-  SafetyAlert,
+import { prisma } from '@/lib/prisma';
+import type { 
+  SafetyAlert, 
   SafetyCheck,
   SafetySettingsNew,
   SafetyReport,
 } from '@/types/safety';
-import { Location } from '@/types/location';
-import { apiClient } from './api.client';
+import { Prisma } from '@prisma/client';
 
-class SafetyService {
-  private readonly baseUrl = '/safety';
+interface SafetyCheckInput {
+  type: string;
+  description: string;
+  scheduledFor: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
+}
 
-  // Emergency Contacts
-  async getEmergencyContacts(userId: string): Promise<EmergencyContact[]> {
-    const response = await apiClient.get<{ contacts: EmergencyContact[] }>(
-      `${this.baseUrl}/users/${userId}/contacts`
-    );
-    return response.data.contacts;
-  }
+interface SafetyAlertInput {
+  type: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high';
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+  };
+  message?: string;
+}
 
-  async addEmergencyContact(
-    userId: string,
-    contact: Omit<EmergencyContact, 'id'>
-  ): Promise<EmergencyContact> {
-    const response = await apiClient.post<{ contact: EmergencyContact }>(
-      `${this.baseUrl}/users/${userId}/contacts`,
-      contact
-    );
-    return response.data.contact;
-  }
+export const safetyService = {
+  async getSafetyAlert(id: string) {
+    return prisma.safetyAlert.findUnique({
+      where: { id },
+    });
+  },
 
-  async updateEmergencyContact(
-    userId: string,
-    contactId: string,
-    updates: Partial<EmergencyContact>
-  ): Promise<EmergencyContact> {
-    const response = await apiClient.put<{ contact: EmergencyContact }>(
-      `${this.baseUrl}/users/${userId}/contacts/${contactId}`,
-      updates
-    );
-    return response.data.contact;
-  }
+  async getSafetyAlerts(userId: string) {
+    return prisma.safetyAlert.findMany({
+      where: {
+        userId,
+        dismissed: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
 
-  async deleteEmergencyContact(
-    userId: string,
-    contactId: string
-  ): Promise<void> {
-    await apiClient.delete<void>(
-      `${this.baseUrl}/users/${userId}/contacts/${contactId}`
-    );
-  }
+  async getActiveAlerts(userId: string) {
+    return prisma.safetyAlert.findMany({
+      where: {
+        userId,
+        dismissed: false,
+        resolved: false,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  },
 
-  // Safety Checks
-  async getSafetyChecks(userId: string): Promise<SafetyCheck[]> {
-    const response = await apiClient.get<{ checks: SafetyCheck[] }>(
-      `${this.baseUrl}/users/${userId}/checks`
-    );
-    return response.data.checks;
-  }
-
-  async createSafetyCheck(
-    userId: string,
-    check: Omit<SafetyCheck, 'id'>
-  ): Promise<SafetyCheck> {
-    const response = await apiClient.post<{ check: SafetyCheck }>(
-      `${this.baseUrl}/users/${userId}/checks`,
-      check
-    );
-    return response.data.check;
-  }
-
-  async updateSafetyCheck(
-    userId: string,
-    checkId: string,
-    updates: Partial<SafetyCheck>
-  ): Promise<SafetyCheck> {
-    const response = await apiClient.put<{ check: SafetyCheck }>(
-      `${this.baseUrl}/users/${userId}/checks/${checkId}`,
-      updates
-    );
-    return response.data.check;
-  }
-
-  async deleteSafetyCheck(userId: string, checkId: string): Promise<void> {
-    await apiClient.delete<void>(
-      `${this.baseUrl}/users/${userId}/checks/${checkId}`
-    );
-  }
-
-  async completeSafetyCheck(
-    userId: string,
-    checkId: string
-  ): Promise<SafetyCheck> {
-    const response = await apiClient.post<{ check: SafetyCheck }>(
-      `${this.baseUrl}/users/${userId}/checks/${checkId}/complete`
-    );
-    return response.data.check;
-  }
-
-  async resolveSafetyCheck(
-    userId: string,
-    checkId: string,
-    data: { status: 'safe' | 'unsafe'; notes?: string }
-  ): Promise<SafetyCheck> {
-    const response = await apiClient.post<{ check: SafetyCheck }>(
-      `${this.baseUrl}/users/${userId}/checks/${checkId}/resolve`,
-      data
-    );
-    return response.data.check;
-  }
-
-  // Safety Alerts
-  async getSafetyAlerts(userId: string): Promise<SafetyAlert[]> {
-    const response = await apiClient.get<{ alerts: SafetyAlert[] }>(
-      `${this.baseUrl}/users/${userId}/alerts`
-    );
-    return response.data.alerts;
-  }
+  async getSafetyChecks(userId: string) {
+    return prisma.safetyCheck.findMany({
+      where: {
+        userId,
+        status: 'pending',
+      },
+      orderBy: { scheduledFor: 'asc' },
+    });
+  },
 
   async createSafetyAlert(
     userId: string,
-    alert: Omit<SafetyAlert, 'id'>
+    data: SafetyAlertInput
   ): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/users/${userId}/alerts`,
-      alert
-    );
-    return response.data.alert;
-  }
+    const alert = await prisma.safetyAlert.create({
+      data: {
+        userId,
+        type: data.type,
+        priority: data.severity,
+        message: data.message ?? null,
+        description: data.description,
+        location: data.location 
+          ? (data.location as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        dismissed: false,
+        resolved: false,
+      },
+    });
 
-  async triggerEmergencyAlert(
+    return {
+      ...alert,
+      status: 'active',
+      contactedEmergencyServices: false,
+      notifiedContacts: [],
+    };
+  },
+
+  async createSafetyCheck(
     userId: string,
-    data: { type: string; message: string; location?: Location }
-  ): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/users/${userId}/alerts/emergency`,
-      data
-    );
-    return response.data.alert;
-  }
+    data: SafetyCheckInput
+  ): Promise<SafetyCheck> {
+    const check = await prisma.safetyCheck.create({
+      data: {
+        userId,
+        type: data.type,
+        status: 'pending',
+        description: data.description,
+        scheduledFor: new Date(data.scheduledFor),
+        location: data.location 
+          ? (data.location as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        completedAt: null,
+      },
+    });
 
-  async dismissEmergencyAlert(userId: string, alertId: string): Promise<void> {
-    await apiClient.post<void>(
-      `${this.baseUrl}/users/${userId}/alerts/${alertId}/dismiss`
-    );
-  }
-
-  async createAlert(data: {
-    type: string;
-    description?: string;
-    location?: Location;
-  }): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/alerts`,
-      data
-    );
-    return response.data.alert;
-  }
-
-  async resolveAlert(alertId: string): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/alerts/${alertId}/resolve`
-    );
-    return response.data.alert;
-  }
-
-  async updateSafetyAlert(
-    userId: string,
-    alertId: string,
-    updates: Partial<SafetyAlert>
-  ): Promise<SafetyAlert> {
-    const response = await apiClient.put<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/users/${userId}/alerts/${alertId}`,
-      updates
-    );
-    return response.data.alert;
-  }
-
-  async resolveSafetyAlert(
-    userId: string,
-    alertId: string
-  ): Promise<SafetyAlert> {
-    const response = await apiClient.post<{ alert: SafetyAlert }>(
-      `${this.baseUrl}/users/${userId}/alerts/${alertId}/resolve`
-    );
-    return response.data.alert;
-  }
-
-  // Safety Settings
-  async getSafetySettings(userId: string): Promise<SafetySettingsNew> {
-    const response = await apiClient.get<{ settings: SafetySettingsNew }>(
-      `${this.baseUrl}/users/${userId}/settings`
-    );
-    return response.data.settings;
-  }
+    return {
+      ...check,
+      scheduledTime: check.scheduledFor.toISOString(),
+      notifiedContacts: [],
+    };
+  },
 
   async updateSafetySettings(
     userId: string,
-    updates: Partial<SafetySettingsNew>
-  ): Promise<SafetySettingsNew> {
-    const response = await apiClient.put<{ settings: SafetySettingsNew }>(
-      `${this.baseUrl}/users/${userId}/settings`,
-      updates
-    );
-    return response.data.settings;
-  }
+    data: Partial<SafetySettingsNew>
+  ): Promise<void> {
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        safetyPreferences: data as Prisma.InputJsonValue,
+      },
+    });
+  },
 
-  // Safety Reports
-  async createSafetyReport(
-    userId: string,
-    report: Omit<SafetyReport, 'id'>
-  ): Promise<SafetyReport> {
-    const response = await apiClient.post<{ report: SafetyReport }>(
-      `${this.baseUrl}/users/${userId}/reports`,
-      report
-    );
-    return response.data.report;
-  }
+  async dismissAlert(alertId: string, userId: string): Promise<void> {
+    await prisma.safetyAlert.update({
+      where: {
+        id: alertId,
+        userId,
+      },
+      data: {
+        dismissed: true,
+        dismissedAt: new Date(),
+      },
+    });
+  },
 
-  async uploadEvidence(
-    userId: string,
-    alertId: string,
-    file: File
-  ): Promise<{ url: string }> {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await apiClient.post<{ url: string }>(
-      `${this.baseUrl}/users/${userId}/alerts/${alertId}/evidence`,
-      formData,
-      {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      }
-    );
-    return response.data;
-  }
-}
-
-export const safetyService = new SafetyService();
+  async resolveAlert(alertId: string, userId: string): Promise<void> {
+    await prisma.safetyAlert.update({
+      where: {
+        id: alertId,
+        userId,
+      },
+      data: {
+        resolved: true,
+        resolvedAt: new Date(),
+      },
+    });
+  },
+};

@@ -11,8 +11,12 @@ import type {
   SafetyAlertNew,
   SafetyCheckNew,
   SafetyAlert,
+  SafetyAlertType,
 } from '@/types/safety';
 import { Location } from '@/types/location';
+import { Prisma } from '@prisma/client';
+
+type JsonValue = Prisma.JsonValue;
 
 interface SafetyContextType {
   alerts: SafetyAlertNew[];
@@ -55,7 +59,21 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const convertToSafetyAlertNew = (alert: SafetyAlert): SafetyAlertNew => {
+  const convertToSafetyAlertNew = (alert: {
+    id: string;
+    createdAt: Date;
+    updatedAt: Date;
+    userId: string;
+    type: string;
+    priority: string;
+    message: string | null;
+    description: string | null;
+    location: JsonValue;
+    dismissed: boolean;
+    dismissedAt: Date | null;
+    resolved: boolean;
+    resolvedAt: Date | null;
+  }): SafetyAlertNew => {
     // Create full Location object first
     const createLocation = (loc?: Partial<Location>): Location => ({
       id: crypto.randomUUID(),
@@ -78,23 +96,21 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
     const defaultLocation = createLocation();
     const alertLocation = alert.location
-      ? createLocation(alert.location)
+      ? createLocation(alert.location as any)
       : defaultLocation;
 
     return {
-      ...alert,
-      type:
-        alert.type === 'location'
-          ? 'location'
-          : alert.type === 'sos'
-            ? 'sos'
-            : alert.type === 'meetup'
-              ? 'meetup'
-              : 'custom',
-      status: alert.status === 'pending' ? 'active' : alert.status,
+      id: alert.id,
+      userId: alert.userId,
+      type: alert.type as SafetyAlertType,
+      status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active',
       location: getLocationForAlert(alertLocation),
-      description: alert.message,
+      message: alert.message || undefined,
+      description: alert.description || undefined,
       evidence: [],
+      createdAt: alert.createdAt.toISOString(),
+      updatedAt: alert.updatedAt.toISOString(),
+      resolvedAt: alert.resolvedAt?.toISOString(),
     };
   };
 
@@ -214,17 +230,17 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
   const dismissAlert = useCallback(
     async (alertId: string) => {
       if (!user?.id) return;
-
       try {
-        setError(null);
-        await safetyService.dismissEmergencyAlert(user.id, alertId);
-        setAlerts(prev => prev.filter(alert => alert.id !== alertId));
-      } catch (err) {
-        console.error('Error dismissing alert:', err);
-        throw err instanceof Error ? err : new Error('Failed to dismiss alert');
+        await safetyService.dismissAlert(alertId, user.id);
+        setAlerts(alerts.map(alert =>
+          alert.id === alertId ? { ...alert, status: 'dismissed' } : alert
+        ));
+      } catch (error) {
+        setError('Failed to dismiss alert');
+        console.error('Failed to dismiss alert:', error);
       }
     },
-    [user?.id]
+    [user?.id, alerts]
   );
 
   const addAlert = useCallback(
@@ -233,25 +249,13 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
       try {
         setError(null);
-        const location = alertData.location
-          ? {
-              id: crypto.randomUUID(),
-              userId: user.id,
-              latitude: alertData.location.latitude,
-              longitude: alertData.location.longitude,
-              accuracy: alertData.location.accuracy ?? 0,
-              timestamp: alertData.location.timestamp || new Date(),
-              privacyMode: 'precise' as const,
-              sharingEnabled: true,
-            }
-          : undefined;
-
-        const newAlert = await safetyService.createAlert({
-          type: alertData.type || 'sos',
-          description: alertData.description,
-          location,
+        const newAlert = await safetyService.createSafetyAlert(user.id, {
+          type: alertData.type || 'custom',
+          description: alertData.description || 'Custom alert',
+          severity: 'medium',
+          location: alertData.location,
+          message: alertData.message,
         });
-
         setAlerts(prev => [convertToSafetyAlertNew(newAlert), ...prev]);
       } catch (err) {
         console.error('Error adding alert:', err);
@@ -264,21 +268,17 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
   const resolveAlert = useCallback(
     async (alertId: string) => {
       if (!user?.id) return;
-
       try {
-        setError(null);
-        const updatedAlert = await safetyService.resolveAlert(alertId);
-        setAlerts(prev =>
-          prev.map(alert =>
-            alert.id === alertId ? convertToSafetyAlertNew(updatedAlert) : alert
-          )
-        );
-      } catch (err) {
-        console.error('Error resolving alert:', err);
-        throw err instanceof Error ? err : new Error('Failed to resolve alert');
+        await safetyService.resolveAlert(alertId, user.id);
+        setAlerts(alerts.map(alert =>
+          alert.id === alertId ? { ...alert, status: 'resolved' } : alert
+        ));
+      } catch (error) {
+        setError('Failed to resolve alert');
+        console.error('Failed to resolve alert:', error);
       }
     },
-    [user?.id]
+    [user?.id, alerts]
   );
 
   const value = {

@@ -1,4 +1,4 @@
-import { db } from './prisma';
+import { prisma } from './prisma';
 import { MessageWithSender } from '@/types/chat';
 
 interface ChatRoomAccess {
@@ -9,7 +9,7 @@ export async function verifyRoomAccess(
   roomId: string,
   userId: string
 ): Promise<boolean> {
-  const chatRoom = await db.$queryRaw<ChatRoomAccess[]>`
+  const chatRoom = await prisma.$queryRaw<ChatRoomAccess[]>`
     SELECT cr.id
     FROM "ChatRoom" cr
     WHERE cr.id = ${roomId}
@@ -25,7 +25,7 @@ export async function createMessage(
   roomId: string,
   userId: string
 ): Promise<MessageWithSender> {
-  const [newMessage] = await db.$queryRaw<MessageWithSender[]>`
+  const [newMessage] = await prisma.$queryRaw<MessageWithSender[]>`
     WITH new_message AS (
       INSERT INTO "Message" (
         id,

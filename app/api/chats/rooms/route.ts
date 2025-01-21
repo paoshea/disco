@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { ChatRoomWithRelations } from '@/types/chat';
 
 async function handleGet(request: NextRequest) {
@@ -15,7 +15,7 @@ async function handleGet(request: NextRequest) {
 
     const userId = session.user.id;
 
-    const chatRooms = await db.$queryRaw<ChatRoomWithRelations[]>`
+    const chatRooms = await prisma.$queryRaw<ChatRoomWithRelations[]>`
       SELECT 
         cr.id,
         cr.name,

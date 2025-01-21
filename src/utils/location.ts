@@ -1,4 +1,4 @@
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { LocationPrivacyMode } from '@/types/location';
 
 export interface LocationData {
@@ -23,8 +23,8 @@ interface PrivacyZoneData {
 const EARTH_RADIUS_KM = 6371; // Earth's radius in kilometers
 
 // Initialize Prisma clients
-const locationDb = db.location;
-const privacyZoneDb = db.privacyZone;
+const locationDb = prisma.location;
+const privacyZoneDb = prisma.privacyZone;
 
 function toRad(degrees: number): number {
   return (degrees * Math.PI) / 180;
@@ -51,7 +51,7 @@ export function calculateDistance(
 }
 
 export async function createLocation(data: LocationData) {
-  return await db.location.create({
+  return await prisma.location.create({
     data,
     include: {
       user: true,
@@ -60,7 +60,7 @@ export async function createLocation(data: LocationData) {
 }
 
 export async function createPrivacyZone(data: PrivacyZoneData) {
-  return await db.privacyZone.create({
+  return await prisma.privacyZone.create({
     data,
     include: {
       user: true,
