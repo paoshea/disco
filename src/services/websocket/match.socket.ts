@@ -166,15 +166,29 @@ export class MatchSocketService {
     eventListeners.add(callback as EventCallback<EventMap[keyof EventMap]>);
 
     if (this.socket) {
-      const typedCallback = function (data: EventMap[K]) {
-        callback(data);
+      // Create a type-safe event handler
+      type SocketListener = (
+        data: Parameters<ServerToClientEvents[K]>[0]
+      ) => void;
+
+      const typedCallback: SocketListener = data => {
+        callback(data as EventMap[K]);
       };
 
-      (this.socket as any).on(event, typedCallback);
+      // Use type assertion to match Socket.IO's internal event emitter
+      const socket = this.socket as Socket<
+        ServerToClientEvents,
+        ClientToServerEvents
+      > & {
+        on(ev: K, listener: SocketListener): void;
+        off(ev: K, listener: SocketListener): void;
+      };
+
+      socket.on(event, typedCallback);
 
       return () => {
         if (this.socket) {
-          (this.socket as any).off(event, typedCallback);
+          socket.off(event, typedCallback);
         }
         eventListeners.delete(
           callback as EventCallback<EventMap[keyof EventMap]>

@@ -222,10 +222,12 @@ export const MatchChat: React.FC<MatchChatProps> = ({
                 messageId={message.id}
                 reactions={message.reactions}
                 currentUserId={session?.user?.id || ''}
-                onReactionAdd={emoji => void handleReaction(message.id, emoji)}
-                onReactionRemove={emoji =>
-                  void handleReaction(message.id, emoji)
-                }
+                onReactionAdd={emoji => {
+                  void handleReaction(message.id, emoji);
+                }}
+                onReactionRemove={emoji => {
+                  void handleReaction(message.id, emoji);
+                }}
               />
               <div className="text-xs text-muted-foreground mt-1">
                 {new Date(message.timestamp).toLocaleTimeString()}
@@ -247,14 +249,18 @@ export const MatchChat: React.FC<MatchChatProps> = ({
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            onClick={() => {
+              void setShowEmojiPicker(!showEmojiPicker);
+            }}
           >
             😊
           </Button>
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => setShowLocationModal(true)}
+            onClick={() => {
+              void setShowLocationModal(true);
+            }}
           >
             📍
           </Button>
@@ -268,7 +274,13 @@ export const MatchChat: React.FC<MatchChatProps> = ({
             placeholder="Type a message..."
             className="flex-1 bg-background rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
           />
-          <Button onClick={() => void handleSendMessage()}>Send</Button>
+          <Button
+            onClick={() => {
+              void handleSendMessage();
+            }}
+          >
+            Send
+          </Button>
         </div>
 
         {showEmojiPicker && (
@@ -282,7 +294,9 @@ export const MatchChat: React.FC<MatchChatProps> = ({
         <LocationShareModal
           isOpen={showLocationModal}
           onClose={() => setShowLocationModal(false)}
-          onLocationSelect={handleLocationShare}
+          onLocationSelect={location => {
+            void handleLocationShare(location);
+          }}
         />
       )}
     </div>

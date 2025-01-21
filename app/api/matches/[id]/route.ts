@@ -76,8 +76,8 @@ export async function POST(
     }
 
     // Parse and validate request body
-    const body = await req.json();
-    const result = matchActionSchema.safeParse(body);
+    const rawBody = (await req.json()) as unknown;
+    const result = matchActionSchema.safeParse(rawBody);
 
     if (!result.success) {
       return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
@@ -110,6 +110,67 @@ export async function POST(
     console.error('Error updating match:', error);
     return NextResponse.json(
       { error: 'Failed to update match' },
+      { status: 500 }
+    );
+  }
+}
+
+// PATCH /api/matches/[id] - Update match status (accept/reject/block)
+export async function PATCH(
+  req: NextRequest,
+  context: RouteContext
+): Promise<NextResponse> {
+  try {
+    const params = await context.params;
+    const { id } = params;
+
+    // Check authentication
+    const session = await getServerSession();
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Parse and validate request body
+    const rawBody = (await req.json()) as unknown;
+    const result = matchActionSchema.safeParse(rawBody);
+
+    if (!result.success) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    }
+
+    const { action } = result.data;
+
+    // Update match status
+    const matchingService = MatchingService.getInstance();
+
+    switch (action) {
+      case 'accept':
+        await matchingService.acceptMatch(session.user.id, id);
+        break;
+      case 'reject':
+        await matchingService.rejectMatch(session.user.id, id);
+        break;
+      case 'block':
+        await matchingService.blockMatch(session.user.id, id);
+        break;
+    }
+
+    // Get updated match status
+    const status: MatchStatus = await matchingService.getMatchStatus(
+      session.user.id,
+      id
+    );
+    return NextResponse.json({ status });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+    console.error('Error updating match:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

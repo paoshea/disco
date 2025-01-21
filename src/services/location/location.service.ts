@@ -65,31 +65,42 @@ export class LocationService {
 
   private constructor() {
     this.prisma = db.location;
-    this.initServiceWorker().catch(console.error);
+    // Only initialize service worker in browser environment
+    if (typeof window !== 'undefined') {
+      void this.initServiceWorker();
+    }
   }
 
   private async initServiceWorker(): Promise<void> {
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      try {
-        const registration = (await navigator.serviceWorker.register(
-          '/sw.js'
-        )) as ExtendedServiceWorkerRegistration;
+    // Skip if not in browser environment
+    if (typeof window === 'undefined' || typeof navigator === 'undefined') {
+      return;
+    }
 
-        // Request periodic background sync permission
-        if (registration.periodicSync) {
-          await registration.periodicSync.register('location-sync', {
+    try {
+      if ('serviceWorker' in navigator) {
+        const registration =
+          await navigator.serviceWorker.register('/service-worker.js');
+
+        // Register for background sync if supported
+        if ('sync' in registration) {
+          await (
+            registration as ExtendedServiceWorkerRegistration
+          ).sync?.register('locationSync');
+          this.backgroundSync = true;
+        }
+
+        // Register for periodic background sync if supported
+        if ('periodicSync' in registration) {
+          await (
+            registration as ExtendedServiceWorkerRegistration
+          ).periodicSync?.register('locationUpdate', {
             minInterval: this.SYNC_INTERVAL,
           });
         }
-
-        // Enable background sync
-        if (registration.sync) {
-          void registration.sync.register('location-sync');
-          this.backgroundSync = true;
-        }
-      } catch (error) {
-        console.error('Service Worker registration failed:', error);
       }
+    } catch (error) {
+      console.error('Failed to initialize service worker:', error);
     }
   }
 

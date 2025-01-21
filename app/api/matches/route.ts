@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
+import { prisma } from '@/lib/prisma';
 
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
@@ -57,45 +58,34 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Parse query parameters
     const searchParams = req.nextUrl.searchParams;
-    const searchPreferences = userPreferencesSchema.parse({
-      maxDistance: Number(searchParams.get('maxDistance')) || 10,
-      ageRange: {
-        min: Number(searchParams.get('minAge')) || 18,
-        max: Number(searchParams.get('maxAge')) || 100,
-      },
-      interests:
-        searchParams.get('interests')?.split(',').filter(Boolean) || [],
-      gender: searchParams.get('gender')?.split(',').filter(Boolean) || ['any'],
-      lookingFor: searchParams
-        .get('lookingFor')
-        ?.split(',')
-        .filter(Boolean) || ['any'],
-      relationshipType: searchParams
-        .get('relationshipType')
-        ?.split(',')
-        .filter(Boolean) || ['any'],
-      notifications: {
-        matches: true,
-        messages: true,
-        events: true,
-        safety: true,
-      },
-      privacy: {
-        showOnlineStatus: true,
-        showLastSeen: true,
-        showLocation: true,
-        showAge: true,
-      },
-      safety: {
-        requireVerifiedMatch: false,
-        meetupCheckins: true,
-        emergencyContactAlerts: true,
+    const validatedPreferences = userPreferencesSchema.safeParse(
+      Object.fromEntries(searchParams)
+    );
+
+    if (!validatedPreferences.success) {
+      return NextResponse.json(
+        { error: 'Invalid search parameters' },
+        { status: 400 }
+      );
+    }
+
+    // Get matches
+    const userId = session.user.id;
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        locations: true,
       },
     });
 
-    // Get matches
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
     const matchingService = MatchingService.getInstance();
-    const matches = await matchingService.findMatches(session.user.id);
+    // Update user preferences before finding matches
+    await matchingService.setPreferences(userId, validatedPreferences.data);
+    const matches = await matchingService.findMatches(userId);
 
     return NextResponse.json({ matches });
   } catch (error) {
@@ -122,8 +112,8 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Parse and validate request body
-    const body = await req.json();
-    const result = userPreferencesSchema.safeParse(body);
+    const rawBody = (await req.json()) as unknown;
+    const result = userPreferencesSchema.safeParse(rawBody);
 
     if (!result.success) {
       return NextResponse.json(
