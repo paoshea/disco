@@ -45,44 +45,20 @@ export default function LoginPage() {
       const result = await login(data.email, data.password);
 
       if (result.success) {
-        toast({
-          variant: 'default',
-          children: (
-            <>
-              <ToastTitle>Success</ToastTitle>
-              <ToastDescription>Login Successful</ToastDescription>
-            </>
-          ),
-        });
+        toast.success('Login Successful');
         router.push('/dashboard');
         return;
       }
 
       if (result.error) {
         setError(result.error);
-        toast({
-          variant: 'destructive',
-          children: (
-            <>
-              <ToastTitle>Error</ToastTitle>
-              <ToastDescription>{result.error}</ToastDescription>
-            </>
-          ),
-        });
+        toast.error(result.error);
         return;
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Login failed';
       setError(errorMessage);
-      toast({
-        variant: 'destructive',
-        children: (
-          <>
-            <ToastTitle>Error</ToastTitle>
-            <ToastDescription>{errorMessage}</ToastDescription>
-          </>
-        ),
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }

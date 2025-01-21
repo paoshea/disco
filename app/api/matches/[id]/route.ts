@@ -3,6 +3,15 @@ import { getServerSession } from 'next-auth';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
 
+// Configuration
+export const dynamic = 'force-dynamic'; // Disable static optimization
+export const runtime = 'nodejs'; // Use Node.js runtime
+
+// Types
+type RouteContext = {
+  params: Promise<Record<string, string>>;
+};
+
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
   windowMs: 60000, // 1 minute
@@ -12,9 +21,10 @@ const rateLimiter = new RateLimiter({
 // GET /api/matches/[id] - Get specific match details
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: RouteContext
+): Promise<NextResponse> {
   try {
+    const params = await context.params;
     const { id } = params;
 
     // Check authentication
@@ -29,20 +39,18 @@ export async function GET(
 
     return NextResponse.json({ match });
   } catch (error) {
-    console.error('Error in GET /api/matches/[id]:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error getting match:', error);
+    return NextResponse.json({ error: 'Failed to get match' }, { status: 500 });
   }
 }
 
 // POST /api/matches/[id] - Update match status (accept/reject/block)
 export async function POST(
   req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+  context: RouteContext
+): Promise<NextResponse> {
   try {
+    const params = await context.params;
     const { id } = params;
 
     // Check authentication
@@ -52,9 +60,8 @@ export async function POST(
     }
 
     // Rate limiting
-    const identifier = session.user.id;
-    const limited = await rateLimiter.isRateLimited(identifier);
-    if (limited) {
+    const isLimited = await rateLimiter.isRateLimited(session.user.id);
+    if (isLimited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
 
@@ -62,8 +69,13 @@ export async function POST(
     const body = await req.json();
     const { action } = body;
 
+    if (!action || !['accept', 'reject', 'block'].includes(action)) {
+      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    }
+
     // Update match status
     const matchingService = MatchingService.getInstance();
+
     switch (action) {
       case 'accept':
         await matchingService.acceptMatch(session.user.id, id);
@@ -74,15 +86,15 @@ export async function POST(
       case 'block':
         await matchingService.blockMatch(session.user.id, id);
         break;
-      default:
-        return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
 
-    return NextResponse.json({ success: true });
+    // Get updated match status
+    const status = await matchingService.getMatchStatus(session.user.id, id);
+    return NextResponse.json({ status });
   } catch (error) {
-    console.error('Error in POST /api/matches/[id]:', error);
+    console.error('Error updating match:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to update match' },
       { status: 500 }
     );
   }

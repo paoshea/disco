@@ -25,11 +25,7 @@ export default function MatchingPage() {
       .startTracking(user.id, {}, backgroundTracking)
       .catch(error => {
         console.error('Failed to start location tracking:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to start location tracking',
-          variant: 'destructive',
-        });
+        toast.error('Failed to start location tracking');
       });
 
     return () => {
@@ -41,11 +37,7 @@ export default function MatchingPage() {
 
   const handleBackgroundTrackingChange = async (checked: boolean) => {
     if (!user?.id) {
-      toast({
-        title: 'Error',
-        description: 'You must be logged in to change tracking settings',
-        variant: 'destructive',
-      });
+      toast.error('You must be logged in to change tracking settings');
       return;
     }
 
@@ -57,21 +49,10 @@ export default function MatchingPage() {
       await locationService.startTracking(user.id, {}, checked);
 
       setBackgroundTracking(checked);
-
-      toast({
-        title: 'Background Tracking',
-        description: checked
-          ? 'Background location tracking enabled'
-          : 'Background location tracking disabled',
-        variant: 'default',
-      });
+      toast.success(`Background tracking ${checked ? 'enabled' : 'disabled'}`);
     } catch (error) {
-      console.error('Error updating tracking settings:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update tracking settings',
-        variant: 'destructive',
-      });
+      console.error('Failed to update background tracking:', error);
+      toast.error('Failed to update background tracking settings');
     }
   };
 

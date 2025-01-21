@@ -45,11 +45,9 @@ export default function LocationPrivacy({
         }
       } catch (error) {
         console.error('Error fetching location state:', error);
-        toast({
-          title: 'Error fetching location settings',
-          description: 'Please try again later',
-          variant: 'destructive',
-        });
+        toast.error(
+          'Failed to fetch location settings. Please try again later'
+        );
       }
     };
 
@@ -77,18 +75,10 @@ export default function LocationPrivacy({
 
       setLocationState(prev => ({ ...prev, privacyMode: mode }));
       onPrivacyChange(mode);
-      toast({
-        title: 'Privacy settings updated',
-        description: 'Your location privacy settings have been updated',
-        variant: 'default',
-      });
+      toast.success('Location privacy settings updated successfully');
     } catch (error) {
       console.error('Error updating privacy settings:', error);
-      toast({
-        title: 'Error updating privacy settings',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update privacy settings. Please try again later');
     }
   };
 
@@ -113,20 +103,12 @@ export default function LocationPrivacy({
 
       setLocationState(prev => ({ ...prev, sharingEnabled: enabled }));
       onSharingChange(enabled);
-      toast({
-        title: 'Sharing settings updated',
-        description: enabled
-          ? 'Location sharing is now enabled'
-          : 'Location sharing is now disabled',
-        variant: 'default',
-      });
+      toast.success(
+        `Location sharing ${enabled ? 'enabled' : 'disabled'} successfully`
+      );
     } catch (error) {
       console.error('Error updating sharing settings:', error);
-      toast({
-        title: 'Error updating sharing settings',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update sharing settings. Please try again later');
     }
   };
 

@@ -117,7 +117,7 @@ export const SafetyAlertNotification: React.FC<
                         icon: {
                           url: '/images/alert-marker.svg',
                           scaledSize: new google.maps.Size(32, 32),
-                          anchor: new google.maps.Point(16, 32)
+                          anchor: new google.maps.Point(16, 32),
                         },
                         title: getAlertTitle(),
                       },

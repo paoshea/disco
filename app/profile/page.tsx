@@ -200,8 +200,9 @@ export default function ProfilePage() {
                     lastActive: authUser.updatedAt as Date,
                     createdAt: authUser.createdAt as Date,
                     updatedAt: authUser.updatedAt as Date,
-                    verificationStatus:
-                      authUser.emailVerified ? 'verified' : 'pending',
+                    verificationStatus: authUser.emailVerified
+                      ? 'verified'
+                      : 'pending',
                   }}
                 />
               )}

@@ -42,19 +42,11 @@ export function NearbyEvents({
       if (success && data) {
         setEvents(data);
       } else if (error) {
-        toast({
-          title: 'Error loading events',
-          description: 'Failed to load nearby events',
-          variant: 'destructive',
-        });
+        toast.error('Failed to load nearby events');
       }
     } catch (error) {
       console.error('Error fetching nearby events:', error);
-      toast({
-        title: 'Error loading events',
-        description: 'Failed to load nearby events',
-        variant: 'destructive',
-      });
+      toast.error('Failed to load nearby events');
     } finally {
       setLoading(false);
     }

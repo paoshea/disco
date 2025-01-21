@@ -47,22 +47,21 @@ export default function SafetyPage() {
 
       try {
         const safetyService = SafetyService.getInstance();
-        const { data: safetySettings }: { data: SafetySettingsResponse } =
-          await safetyService.getSafetySettings(user.id);
+        const contacts = await safetyService.getEmergencyContacts(user.id);
 
-        if (safetySettings) {
-          setSettings({
-            enabled: safetySettings.enabled,
-            emergencyContacts: safetySettings.emergencyContacts,
-          });
-        }
+        setSettings({
+          enabled: true, // TODO: Get from settings when implemented
+          emergencyContacts: contacts.map(c => ({
+            id: c.id,
+            name: `${c.firstName} ${c.lastName}`,
+            phone: c.phoneNumber || '',
+            email: c.email || '',
+            priority: 'primary' as const,
+          })),
+        });
       } catch (error) {
         console.error('Error fetching safety settings:', error);
-        toast({
-          title: 'Error Fetching Safety Settings',
-          description: 'Please try again later',
-          variant: 'destructive',
-        });
+        toast.error('Failed to fetch safety settings. Please try again later');
       } finally {
         setLoading(false);
       }
@@ -80,25 +79,84 @@ export default function SafetyPage() {
         enabled,
       });
       setSettings(prev => ({ ...prev, enabled }));
-      toast({
-        title: enabled ? 'Safety Features Enabled' : 'Safety Features Disabled',
-        description: enabled
-          ? 'Safety features are now enabled'
-          : 'Safety features are now disabled',
-        variant: 'default',
-      });
+      toast.success(
+        enabled ? 'Safety features enabled' : 'Safety features disabled'
+      );
     } catch (error) {
       console.error('Error updating safety settings:', error);
-      toast({
-        title: 'Error Updating Safety Settings',
-        description: 'Please try again later',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update safety settings. Please try again later');
     }
   };
 
   const handleToggleSafetySync = (enabled: boolean) => {
     void handleToggleSafety(enabled);
+  };
+
+  const handleAddContact = async (contact: {
+    name: string;
+    phone: string;
+    email: string;
+    priority: 'primary' | 'secondary';
+  }) => {
+    if (!user?.id) return;
+
+    try {
+      const safetyService = SafetyService.getInstance();
+      const [firstName, ...lastNameParts] = contact.name.split(' ');
+      const lastName = lastNameParts.join(' ');
+
+      const newContact = await safetyService.addEmergencyContact(user.id, {
+        firstName,
+        lastName: lastName || firstName, // Fallback if no last name
+        email: contact.email,
+        phoneNumber: contact.phone,
+      });
+
+      // Refresh emergency contacts
+      const contacts = await safetyService.getEmergencyContacts(user.id);
+      setSettings(prev => ({
+        ...prev,
+        emergencyContacts: contacts.map(c => ({
+          id: c.id,
+          name: `${c.firstName} ${c.lastName}`,
+          phone: c.phoneNumber || '',
+          email: c.email || '',
+          priority: 'primary' as const,
+        })),
+      }));
+
+      toast.success('Emergency contact added successfully');
+    } catch (error) {
+      console.error('Error adding emergency contact:', error);
+      toast.error('Failed to add emergency contact. Please try again later');
+    }
+  };
+
+  const handleRemoveContact = async (contactId: string) => {
+    if (!user?.id) return;
+
+    try {
+      const safetyService = SafetyService.getInstance();
+      await safetyService.deleteEmergencyContact(user.id, contactId);
+
+      // Refresh emergency contacts
+      const contacts = await safetyService.getEmergencyContacts(user.id);
+      setSettings(prev => ({
+        ...prev,
+        emergencyContacts: contacts.map(c => ({
+          id: c.id,
+          name: `${c.firstName} ${c.lastName}`,
+          phone: c.phoneNumber || '',
+          email: c.email || '',
+          priority: 'primary' as const,
+        })),
+      }));
+
+      toast.success('Emergency contact removed successfully');
+    } catch (error) {
+      console.error('Error removing emergency contact:', error);
+      toast.error('Failed to remove emergency contact. Please try again later');
+    }
   };
 
   if (loading) {

@@ -56,17 +56,30 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
   const [error, setError] = useState<string | null>(null);
 
   const convertToSafetyAlertNew = (alert: SafetyAlert): SafetyAlertNew => {
-    // Default location if not provided
-    const defaultLocation: Location = {
+    // Create full Location object first
+    const createLocation = (loc?: Partial<Location>): Location => ({
       id: crypto.randomUUID(),
       userId: alert.userId,
-      latitude: 0,
-      longitude: 0,
-      accuracy: 0,
-      timestamp: new Date(),
+      latitude: loc?.latitude || 0,
+      longitude: loc?.longitude || 0,
+      accuracy: loc?.accuracy || 0,
+      timestamp: loc?.timestamp || new Date(),
       privacyMode: 'precise',
       sharingEnabled: true,
-    };
+    });
+
+    // Extract only the fields needed for SafetyAlertNew
+    const getLocationForAlert = (loc: Location) => ({
+      latitude: loc.latitude,
+      longitude: loc.longitude,
+      accuracy: loc.accuracy,
+      timestamp: loc.timestamp,
+    });
+
+    const defaultLocation = createLocation();
+    const alertLocation = alert.location
+      ? createLocation(alert.location)
+      : defaultLocation;
 
     return {
       ...alert,
@@ -79,16 +92,7 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
               ? 'meetup'
               : 'custom',
       status: alert.status === 'pending' ? 'active' : alert.status,
-      location: alert.location ? {
-        id: crypto.randomUUID(),
-        userId: alert.userId,
-        latitude: alert.location.latitude,
-        longitude: alert.location.longitude,
-        accuracy: alert.location.accuracy ?? 0,
-        privacyMode: 'precise',
-        sharingEnabled: true,
-        timestamp: alert.location.timestamp || new Date()
-      } : defaultLocation,
+      location: getLocationForAlert(alertLocation),
       description: alert.message,
       evidence: [],
     };
@@ -229,10 +233,23 @@ export const SafetyAlertProvider: React.FC<SafetyAlertProviderProps> = ({
 
       try {
         setError(null);
+        const location = alertData.location
+          ? {
+              id: crypto.randomUUID(),
+              userId: user.id,
+              latitude: alertData.location.latitude,
+              longitude: alertData.location.longitude,
+              accuracy: alertData.location.accuracy ?? 0,
+              timestamp: alertData.location.timestamp || new Date(),
+              privacyMode: 'precise' as const,
+              sharingEnabled: true,
+            }
+          : undefined;
+
         const newAlert = await safetyService.createAlert({
           type: alertData.type || 'sos',
           description: alertData.description,
-          location: alertData.location,
+          location,
         });
 
         setAlerts(prev => [convertToSafetyAlertNew(newAlert), ...prev]);
