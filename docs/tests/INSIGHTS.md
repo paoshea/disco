@@ -206,6 +206,183 @@ This document captures interesting nuances discovered during testing and provide
    - Add load tests
    - Add end-to-end tests
 
+## Geolocation Hook (`useGeolocation.ts`)
+**Test File**: `useGeolocation.test.ts`
+
+### Key Insights:
+1. **State Management**
+   - 🔍 **Issue**: Initial implementation caused infinite update loops due to effect dependencies
+   - ✅ **Solution**: Used `useRef` for options to prevent unnecessary rerenders
+   - 💡 **Best Practice**: Store frequently changing props in refs when they're only needed in effects
+
+2. **Async Testing**
+   - 🔍 **Issue**: React warnings about updates not wrapped in act()
+   - ✅ **Solution**: Used Jest's timer mocking (`useFakeTimers`) and properly wrapped updates in `act`
+   - 💡 **Best Practice**: For geolocation testing:
+     - Mock the navigator.geolocation API
+     - Use fake timers to control async behavior
+     - Wrap state updates in act()
+
+3. **Effect Dependencies**
+   - 🔍 **Issue**: Including options in effect dependencies caused unnecessary reruns
+   - ✅ **Solution**: Only included stable callbacks in dependencies, read options from ref
+   - 💡 **Best Practice**: Minimize effect dependencies to prevent unnecessary reruns
+
+4. **Mock Implementation**
+   - Properly mocks both `getCurrentPosition` and `watchPosition`
+   - Simulates both success and error cases
+   - Handles timeout and unsupported browser scenarios
+   - 💡 **Recommendation**: Consider adding tests for permission denied cases
+
+### Future Considerations
+1. **Edge Cases**
+   - [ ] Test high-frequency position updates
+   - [ ] Test position accuracy thresholds
+   - [ ] Test behavior when switching between watch and single-shot modes
+
+2. **Error Handling**
+   - [ ] Add specific error codes for different failure scenarios
+   - [ ] Consider retry logic for transient failures
+   - [ ] Add timeout handling for slow position responses
+
+3. **Performance**
+   - [ ] Monitor effect rerun frequency
+   - [ ] Consider caching recent position updates
+   - [ ] Implement debouncing for high-frequency updates in watch mode
+
+## Session Management (`session.test.ts`)
+
+### Testing Insights
+
+1. **State Management with Zustand**
+   - Mock implementation requires careful handling of state updates
+   - State must be properly cleared during token expiration
+   - 🔍 **Potential Issue**: State updates might not trigger React re-renders
+   - 💡 **Recommendation**: Return new object references to ensure React updates
+
+2. **localStorage Persistence**
+   - All auth-related items must be cleared on token expiration:
+     - `auth-storage`
+     - `token`
+     - `refreshToken`
+   - 🔍 **Potential Issue**: Incomplete cleanup could lead to state inconsistencies
+   - 💡 **Recommendation**: Maintain a list of all auth-related storage keys
+
+3. **Token Expiration Handling**
+   - Requires proper error interception from API client
+   - Must handle both state and storage cleanup
+   - Must trigger navigation to login page
+   - 🔍 **Potential Issue**: Race conditions between cleanup and navigation
+   - 💡 **Recommendation**: Consider using a cleanup queue
+
+4. **Testing Infrastructure**
+   - Mock implementations should match real behavior:
+     - State updates
+     - Storage persistence
+     - Navigation
+   - 💡 **Recommendation**: Extract mock implementations to shared test utilities
+
+## Event Service Testing Insights
+
+### Event Validation and Error Handling
+1. **Event Existence Checks**
+   - Always validate event existence before operations (update, join, etc.)
+   - Use `findUnique` for precise record lookup
+   - Return early with appropriate error messages when event not found
+
+2. **Participant Management**
+   - Track participants using a separate join table
+   - Validate participant count against `maxParticipants`
+   - Prevent duplicate joins and creator self-joins
+   - Include participant user details in responses
+
+3. **Mock Data Structure**
+   - Mock event data should include:
+     ```typescript
+     {
+       id: string
+       title: string
+       description: string
+       type: 'social' | 'virtual' | 'hybrid'
+       creatorId: string
+       latitude: number
+       longitude: number
+       startTime: Date
+       endTime: Date
+       maxParticipants: number
+       participants: Array<{
+         id: string
+         userId: string
+         eventId: string
+         user: {
+           id: string
+           firstName: string
+           lastName: string
+           email: string
+         }
+       }>
+       tags: string[]
+       createdAt: Date
+       updatedAt: Date
+     }
+     ```
+
+### Testing Strategies
+1. **Prisma Mock Setup**
+   - Mock all required Prisma client methods:
+     ```typescript
+     prisma.event.create
+     prisma.event.findMany
+     prisma.event.findFirst
+     prisma.event.findUnique
+     prisma.event.update
+     prisma.event.delete
+     ```
+   - Include proper type assertions for mocked functions
+
+2. **Test Cases Coverage**
+   - Event Creation:
+     - Successful creation with valid data
+     - Validation of required fields
+     - Future date validation for event times
+   - Event Updates:
+     - Successful updates with valid data
+     - Handling non-existent events
+   - Event Joining:
+     - Successful participant addition
+     - Full event handling
+     - Creator join prevention
+     - Participant count validation
+
+3. **Response Structure**
+   - All operations return a consistent `ServiceResponse` type:
+     ```typescript
+     {
+       success: boolean
+       data?: T
+       error?: string
+     }
+     ```
+   - Include specific error messages for different failure cases
+
+### Best Practices
+1. **Data Consistency**
+   - Always include creator and participant details in responses
+   - Maintain consistent date formats across the service
+   - Use proper typing for event properties
+
+2. **Error Messages**
+   - Use clear, specific error messages:
+     - "Event not found"
+     - "Event is full"
+     - "Cannot join your own event"
+   - Include error logging for debugging
+
+3. **Performance Considerations**
+   - Use `findUnique` for single record lookups
+   - Include necessary relations in single query using `include`
+   - Batch participant updates when possible
+
 ## Recommended Codebase Modifications
 
 ### Immediate Improvements

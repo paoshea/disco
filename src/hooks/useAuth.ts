@@ -69,7 +69,7 @@ const userSchema = z.object({
   email: z.string(),
   firstName: z.string(),
   lastName: z.string(),
-  role: z.string(),
+  role: z.enum(['user', 'admin', 'moderator']),
   streakCount: z.number(),
   emailVerified: z.boolean(),
   name: z.string(),

@@ -24,7 +24,7 @@ const mockUser = {
   email: 'test@example.com',
   firstName: 'Test',
   lastName: 'User',
-  role: 'user',
+  role: 'user' as const,
   streakCount: 0,
   emailVerified: false,
   name: 'Test User',

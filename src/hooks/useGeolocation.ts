@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 interface GeolocationState {
   position: GeolocationPosition | null;
@@ -22,6 +22,9 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
     error: null,
     isLoading: true,
   });
+
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
 
   const {
     watchPosition = false,
@@ -49,6 +52,12 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
   }, []);
 
   useEffect(() => {
+    const { 
+      watchPosition = false,
+      timeout = 10000,
+      ...positionOptions 
+    } = optionsRef.current;
+
     if (!navigator.geolocation) {
       setState({
         position: null,
@@ -87,7 +96,7 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
         navigator.geolocation.clearWatch(watchId);
       }
     };
-  }, [watchPosition, timeout, handleSuccess, handleError, positionOptions]);
+  }, [handleSuccess, handleError]); // Only depend on the callbacks
 
   return state;
 };

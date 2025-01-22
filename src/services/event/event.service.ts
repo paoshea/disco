@@ -209,6 +209,19 @@ export class EventService {
     data: EventUpdateInput
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
+      // Check if event exists
+      const existingEvent = await prisma.event.findUnique({
+        where: { id },
+      });
+
+      if (!existingEvent) {
+        return {
+          success: false,
+          error: 'Event not found',
+        };
+      }
+
+      // Update event
       const event = await prisma.event.update({
         where: { id },
         data,
@@ -258,7 +271,44 @@ export class EventService {
     userId: string
   ): Promise<ServiceResponse<EventWithParticipants>> {
     try {
-      const event = await prisma.event.update({
+      // Check if event exists and get current participants
+      const existingEvent = await prisma.event.findUnique({
+        where: { id: eventId },
+        include: {
+          creator: true,
+          participants: {
+            include: {
+              user: true,
+            },
+          },
+        },
+      });
+
+      if (!existingEvent) {
+        return {
+          success: false,
+          error: 'Event not found',
+        };
+      }
+
+      // Check if user is the creator
+      if (existingEvent.creatorId === userId) {
+        return {
+          success: false,
+          error: 'Cannot join your own event',
+        };
+      }
+
+      // Check if event is full
+      if (existingEvent.maxParticipants && existingEvent.participants.length >= existingEvent.maxParticipants) {
+        return {
+          success: false,
+          error: 'Event is full',
+        };
+      }
+
+      // Add user to participants
+      const updatedEvent = await prisma.event.update({
         where: { id: eventId },
         data: {
           participants: {
@@ -279,7 +329,7 @@ export class EventService {
 
       return {
         success: true,
-        data: this.mapDbEventToEvent(event as unknown as DbEvent),
+        data: this.mapDbEventToEvent(updatedEvent as unknown as DbEvent),
       };
     } catch (error) {
       console.error('Error joining event:', error);

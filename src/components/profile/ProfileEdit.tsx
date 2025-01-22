@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useForm } from 'react-hook-form';
 import { User } from '@/types/user';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
@@ -35,105 +34,152 @@ const AVAILABLE_INTERESTS = [
 export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const [formData] = useState({
-    firstName: user.firstName || '',
-    lastName: user.lastName || '',
-    email: user.email || '',
-    bio: user.bio || '',
-    interests: user.interests || [],
-    phoneNumber: user.phoneNumber || '',
-  });
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    setValue,
-    watch,
-  } = useForm<ProfileFormData>({
-    defaultValues: formData,
-  });
-
-  const selectedInterests = watch('interests');
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(user.interests || []);
 
   const toggleInterest = (interest: string) => {
-    const current = selectedInterests || [];
-    const updated = current.includes(interest)
-      ? current.filter(i => i !== interest)
-      : [...current, interest];
-    setValue('interests', updated);
+    const newInterests = selectedInterests.includes(interest)
+      ? selectedInterests.filter(i => i !== interest)
+      : [...selectedInterests, interest];
+    
+    setSelectedInterests(newInterests);
+    onUpdate({ interests: newInterests });
   };
 
-  const handleFormSubmit = async (data: ProfileFormData) => {
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSubmitting(true);
+    setError(null);
+
     try {
-      setIsSubmitting(true);
-      await onUpdate(data);
+      const formData = new FormData(event.currentTarget);
+      const firstName = formData.get('firstName') as string;
+      const lastName = formData.get('lastName') as string;
+      const email = formData.get('email') as string;
+      const phoneNumber = formData.get('phoneNumber') as string;
+      const bio = formData.get('bio') as string;
+
+      // Validate required fields
+      const errors: string[] = [];
+      if (!firstName.trim()) errors.push('First name is required');
+      if (!lastName.trim()) errors.push('Last name is required');
+      if (!email.trim()) errors.push('Email is required');
+
+      if (errors.length > 0) {
+        setError(errors.join(', '));
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate email format
+      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setError('Invalid email address');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Validate phone number format (if provided)
+      if (phoneNumber && !/^\+?[\d-]{10,}$/.test(phoneNumber)) {
+        setError('Invalid phone number');
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Only include changed fields
+      const updates: Partial<User> = {};
+      if (firstName !== user.firstName) updates.firstName = firstName;
+      if (lastName !== user.lastName) updates.lastName = lastName;
+      if (bio !== user.bio) updates.bio = bio;
+
+      await onUpdate(updates);
     } catch (err) {
-      console.error('Error updating profile:', err);
-      setError('Failed to update profile. Please try again.');
+      setError(err instanceof Error ? err.message : 'Update failed');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleFormSubmitWrapper = (e: React.FormEvent) => {
-    e.preventDefault();
-    void handleSubmit(handleFormSubmit)(e);
-  };
-
   return (
-    <form onSubmit={handleFormSubmitWrapper} className="space-y-6">
+    <form className="space-y-6" onSubmit={handleSubmit}>
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
+        <div role="alert" className="rounded-md bg-red-50 p-4">
           <p className="text-sm text-red-700">{error}</p>
         </div>
       )}
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
-          <Input
-            label="First Name"
-            {...register('firstName', { required: 'First name is required' })}
-            error={errors.firstName?.message}
-          />
+          <div className="flex flex-col gap-1">
+            <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+              First Name
+            </label>
+            <Input
+              id="firstName"
+              name="firstName"
+              defaultValue={user.firstName}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+          </div>
         </div>
 
         <div>
+          <div className="flex flex-col gap-1">
+            <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+              Last Name
+            </label>
+            <Input
+              id="lastName"
+              name="lastName"
+              defaultValue={user.lastName}
+              className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div className="flex flex-col gap-1">
+          <label htmlFor="email" className="text-sm font-medium text-gray-700">
+            Email
+          </label>
           <Input
-            label="Last Name"
-            {...register('lastName', { required: 'Last name is required' })}
-            error={errors.lastName?.message}
+            id="email"
+            name="email"
+            type="email"
+            defaultValue={user.email}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
         </div>
       </div>
 
       <div>
-        <Input
-          label="Email"
-          type="email"
-          {...register('email', { required: 'Email is required' })}
-          error={errors.email?.message}
-        />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+            Phone Number
+          </label>
+          <Input
+            id="phoneNumber"
+            name="phoneNumber"
+            type="tel"
+            defaultValue={user.phoneNumber}
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+        </div>
       </div>
 
       <div>
-        <Input
-          label="Phone Number"
-          type="tel"
-          {...register('phoneNumber')}
-          error={errors.phoneNumber?.message}
-        />
-      </div>
-
-      <div>
-        <TextArea
-          label="Bio"
-          {...register('bio')}
-          error={errors.bio?.message}
-          rows={4}
-          placeholder="Tell us about yourself..."
-        />
+        <div className="flex flex-col gap-1">
+          <label htmlFor="bio" className="text-sm font-medium text-gray-700">
+            Bio
+          </label>
+          <TextArea
+            id="bio"
+            name="bio"
+            rows={4}
+            defaultValue={user.bio}
+            placeholder="Tell us about yourself..."
+            className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 min-h-[100px] resize-y"
+          />
+        </div>
       </div>
 
       <div>
@@ -147,7 +193,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
               type="button"
               onClick={() => toggleInterest(interest)}
               className={`rounded-full px-3 py-1 text-sm font-medium ${
-                selectedInterests?.includes(interest)
+                selectedInterests.includes(interest)
                   ? 'bg-primary-100 text-primary-800'
                   : 'bg-gray-100 text-gray-800'
               } hover:bg-primary-200`}
@@ -159,8 +205,13 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       </div>
 
       <div className="flex justify-end space-x-4">
-        <Button type="submit" variant="primary" loading={isSubmitting}>
-          Save Changes
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className={isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
+          aria-disabled={isSubmitting}
+        >
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
         </Button>
       </div>
     </form>

@@ -1,6 +1,24 @@
 import '@testing-library/jest-dom';
 import { jest } from '@jest/globals';
 
+// Mock ResizeObserver
+class ResizeObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+global.ResizeObserver = ResizeObserverMock;
+
+// Mock IntersectionObserver
+class IntersectionObserverMock {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+
+global.IntersectionObserver = IntersectionObserverMock;
+
 // Mock next/router
 jest.mock('next/router', () => ({
   useRouter() {

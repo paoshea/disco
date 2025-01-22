@@ -7,8 +7,8 @@ module.exports = {
   },
   testMatch: ['**/__tests__/**/*.ts?(x)', '**/?(*.)+(spec|test).ts?(x)'],
   transform: {
-    '^.+\\.(ts|tsx)$': ['ts-jest', {
-      tsconfig: 'tsconfig.json',
+    '^.+\\.(ts|tsx)$': ['babel-jest', {
+      presets: ['@babel/preset-env', '@babel/preset-react', '@babel/preset-typescript'],
     }],
   },
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
