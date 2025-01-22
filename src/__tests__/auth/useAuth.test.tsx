@@ -1,132 +1,180 @@
 import { renderHook, act } from '@testing-library/react';
 import { useAuth } from '@/hooks/useAuth';
-import { mockUser } from '../mocks/user';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { useSession } from 'next-auth/react';
+import { mockUser } from '../__mocks__/user';
+import { mockSession } from '../__mocks__/next-auth';
+import { signIn, signOut, useSession } from 'next-auth/react';
+import apiClient from '@/services/api/api.client';
 
-// Mock the API client
-const mockAxios = {
-  interceptors: {
-    request: { use: jest.fn(), eject: jest.fn() },
-    response: { use: jest.fn(), eject: jest.fn() },
-  },
-  post: jest.fn(),
-  get: jest.fn(),
-};
+jest.mock('next-auth/react');
 
-jest.mock('@/services/api/api.client', () => ({
-  apiClient: mockAxios,
-}));
+// Mock API client
+jest.mock('@/services/api/api.client', () => {
+  return {
+    __esModule: true,
+    default: {
+      post: jest.fn(),
+      interceptors: {
+        request: { use: jest.fn(), eject: jest.fn() },
+        response: { use: jest.fn(), eject: jest.fn() },
+      },
+    },
+  };
+});
 
-jest.mock('next-auth/react', () => ({
-  useSession: jest.fn(),
-  signIn: jest.fn(),
-  signOut: jest.fn(),
-}));
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
-describe('useAuth', () => {
-  const mockUseSession = useSession as jest.Mock;
-
+describe('useAuth Hook', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    // Default to unauthenticated state
+    (useSession as jest.Mock).mockReturnValue({
+      data: null,
+      status: 'unauthenticated',
+    });
   });
 
-  it('should return authenticated state when session exists', () => {
-    mockUseSession.mockReturnValue({
-      data: {
-        user: mockUser,
-        expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
-      },
+  it('should initialize with no session', () => {
+    const { result } = renderHook(() => useAuth());
+    expect(result.current.user).toBe(null);
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('should initialize with existing session', () => {
+    (useSession as jest.Mock).mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
+    });
+    
+    const { result } = renderHook(() => useAuth());
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.isAuthenticated).toBe(true);
+    expect(result.current.isLoading).toBe(false);
+  });
+
+  it('should handle successful login', async () => {
+    const credentials = {
+      email: 'test@example.com',
+      password: 'password123',
+    };
+
+    (signIn as jest.Mock).mockResolvedValue({
+      ok: true,
+      error: null,
+    });
+
+    (useSession as jest.Mock).mockReturnValue({
+      data: mockSession,
       status: 'authenticated',
     });
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
+    const { result } = renderHook(() => useAuth());
+
+    await act(async () => {
+      await result.current.login(credentials);
     });
 
+    expect(signIn).toHaveBeenCalledWith('credentials', {
+      ...credentials,
+      redirect: false,
+    });
     expect(result.current.user).toEqual(mockUser);
-    expect(result.current.status).toBe('authenticated');
+    expect(result.current.isAuthenticated).toBe(true);
   });
 
-  it('should return unauthenticated state when no session exists', () => {
-    mockUseSession.mockReturnValue({
+  it('should handle failed login', async () => {
+    const credentials = {
+      email: 'test@example.com',
+      password: 'wrongpassword',
+    };
+
+    (signIn as jest.Mock).mockResolvedValue({
+      ok: false,
+      error: 'Invalid credentials',
+    });
+
+    const { result } = renderHook(() => useAuth());
+
+    let error;
+    await act(async () => {
+      error = await result.current.login(credentials);
+    });
+
+    expect(error).toBeDefined();
+    expect(result.current.user).toBe(null);
+    expect(result.current.isAuthenticated).toBe(false);
+  });
+
+  it('should handle logout', async () => {
+    (useSession as jest.Mock).mockReturnValue({
       data: null,
       status: 'unauthenticated',
     });
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
-    });
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.status).toBe('unauthenticated');
-  });
-
-  it('should return loading state while session is loading', () => {
-    mockUseSession.mockReturnValue({
-      data: null,
-      status: 'loading',
-    });
-
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
-    });
-
-    expect(result.current.user).toBeNull();
-    expect(result.current.status).toBe('loading');
-  });
-
-  it('should handle sign out', async () => {
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
-    });
+    const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      await result.current.signOut();
+      await result.current.logout();
     });
 
-    expect(result.current.user).toBeNull();
-    expect(result.current.status).toBe('unauthenticated');
+    expect(signOut).toHaveBeenCalled();
+    expect(result.current.user).toBe(null);
+    expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('should handle sign in', async () => {
-    mockAxios.post.mockResolvedValueOnce({
-      data: {
-        user: mockUser,
-        token: 'test-token',
-      },
+  it('should handle registration', async () => {
+    const registrationData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+    };
+
+    mockApiClient.post.mockResolvedValueOnce({ data: { success: true } });
+
+    (signIn as jest.Mock).mockResolvedValueOnce({
+      ok: true,
+      error: null,
     });
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
+    (useSession as jest.Mock).mockReturnValue({
+      data: mockSession,
+      status: 'authenticated',
     });
+
+    const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      await result.current.signIn({
-        email: 'test@example.com',
-        password: 'password',
-      });
+      await result.current.register(registrationData);
     });
 
+    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/register', registrationData);
+    expect(signIn).toHaveBeenCalledWith('credentials', {
+      email: registrationData.email,
+      password: registrationData.password,
+      redirect: false,
+    });
     expect(result.current.user).toEqual(mockUser);
-    expect(result.current.status).toBe('authenticated');
+    expect(result.current.isAuthenticated).toBe(true);
   });
 
-  it('should handle sign in error', async () => {
-    mockAxios.post.mockRejectedValueOnce(new Error('Invalid credentials'));
+  it('should handle registration failure', async () => {
+    const registrationData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'password123',
+    };
 
-    const { result } = renderHook(() => useAuth(), {
-      wrapper: AuthProvider,
-    });
+    mockApiClient.post.mockRejectedValueOnce(new Error('Registration failed'));
 
+    const { result } = renderHook(() => useAuth());
+
+    let error;
     await act(async () => {
-      await result.current.signIn({
-        email: 'test@example.com',
-        password: 'wrong-password',
-      });
+      error = await result.current.register(registrationData);
     });
 
-    expect(result.current.error).toBe('Invalid credentials');
-    expect(result.current.status).toBe('unauthenticated');
+    expect(error).toBeDefined();
+    expect(result.current.user).toBe(null);
+    expect(result.current.isAuthenticated).toBe(false);
   });
 });

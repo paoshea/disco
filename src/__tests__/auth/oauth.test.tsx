@@ -1,11 +1,22 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { signIn } from 'next-auth/react';
-import { mockGoogleProvider } from '../__mocks__/next-auth';
+import { signIn, getProviders } from 'next-auth/react';
+import { mockUser } from '../__mocks__/user';
 
 // Mock next-auth
-jest.mock('next-auth/react');
+jest.mock('next-auth/react', () => ({
+  signIn: jest.fn(),
+  getProviders: jest.fn(),
+}));
+
+const mockGoogleProvider = {
+  id: 'google',
+  name: 'Google',
+  type: 'oauth',
+  signinUrl: 'http://localhost:3000/api/auth/signin/google',
+  callbackUrl: 'http://localhost:3000/api/auth/callback/google',
+};
 
 // Mock auth options
 jest.mock('@/lib/auth', () => ({
@@ -26,12 +37,27 @@ describe('OAuth Integration', () => {
   });
 
   describe('Provider Configuration', () => {
-    it('should have Google provider properly configured', () => {
-      const googleProvider = mockGoogleProvider;
+    it('should have Google provider properly configured', async () => {
+      (getProviders as jest.Mock).mockResolvedValue({
+        google: mockGoogleProvider,
+      });
+
+      const providers = await getProviders();
+      const googleProvider = providers?.google;
+
       expect(googleProvider).toBeDefined();
-      expect(googleProvider.id).toBe('google');
-      expect(googleProvider.clientId).toBe('mock-client-id');
-      expect(googleProvider.clientSecret).toBe('mock-client-secret');
+      expect(googleProvider?.id).toBe('google');
+      expect(googleProvider?.name).toBe('Google');
+      expect(googleProvider?.type).toBe('oauth');
+      expect(googleProvider?.signinUrl).toBe('http://localhost:3000/api/auth/signin/google');
+      expect(googleProvider?.callbackUrl).toBe('http://localhost:3000/api/auth/callback/google');
+    });
+
+    it('should handle no providers available', async () => {
+      (getProviders as jest.Mock).mockResolvedValue(null);
+
+      const providers = await getProviders();
+      expect(providers).toBeNull();
     });
 
     it('should throw error if OAuth environment variables are missing', () => {
@@ -58,13 +84,6 @@ describe('OAuth Integration', () => {
 
   describe('Authentication Flow', () => {
     it('should handle successful Google sign in', async () => {
-      const mockUser = {
-        id: '123',
-        email: 'test@example.com',
-        name: 'Test User',
-        image: 'https://example.com/avatar.jpg',
-      };
-
       (signIn as jest.Mock).mockResolvedValueOnce({
         ok: true,
         error: null,

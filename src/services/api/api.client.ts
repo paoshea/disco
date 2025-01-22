@@ -17,7 +17,7 @@ interface AuthResponse {
 }
 
 // Create axios instance with default config
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL || '',
   headers: {
     'Content-Type': 'application/json',
@@ -96,5 +96,4 @@ apiClient.interceptors.response.use(
   }
 );
 
-export { apiClient };
 export type { AuthResponse };

@@ -52,25 +52,33 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 
   - [x] User login flow
   - [x] User registration
-  - [x] Password reset
-  - [x] Email verification
   - [x] Session management
   - [x] OAuth integration
-    - [x] Provider configuration
-    - [x] Authentication flow
-    - [x] Session management
-    - [x] User profile sync
+  - [x] Token refresh
+  - [x] Error handling
 
-- [ ] User Profile
+- [x] User Profile (Complete)
 
   - [x] Profile creation
   - [x] Profile editing
-    - [x] Form validation
-    - [x] Error handling
-    - [x] Loading states
-    - [x] Accessibility
-  - [ ] Avatar upload
-  - [ ] Privacy settings
+  - [x] Preferences management
+  - [x] Form validation
+  - [x] Error handling
+  - [x] Loading states
+
+- [ ] Location Services (In Progress)
+
+  - [x] Geolocation hook
+  - [x] Basic position tracking
+  - [ ] Location sharing
+  - [ ] Privacy controls
+
+- [ ] Matching System (Pending)
+
+  - [x] Basic match service
+  - [ ] Match algorithm
+  - [ ] Match filtering
+  - [ ] Recommendations
 
 - [ ] Safety Features
 
@@ -123,23 +131,107 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 
 ### Directory Structure
 
+Tests are organized to mirror the source code structure, with a few key differences:
+
 ```
 src/
-├── __tests__/           # Jest tests
-│   ├── auth/           # Authentication tests
-│   ├── components/     # Component tests
-│   ├── hooks/         # Hook tests
-│   └── utils/         # Utility function tests
-├── e2e/               # End-to-end tests (future)
-└── integration/       # Integration tests (future)
+├── __tests__/           # Test files
+│   ├── __mocks__/      # Global mocks
+│   │   ├── next-auth.ts
+│   │   ├── prisma.ts
+│   │   ├── redis.ts
+│   │   ├── user.ts
+│   │   └── localStorage.ts
+│   ├── auth/           # Auth-related tests
+│   │   ├── useAuth.test.tsx
+│   │   ├── session.test.tsx
+│   │   └── oauth.test.tsx
+│   ├── profile/        # Profile-related tests
+│   │   ├── ProfileSettings.test.tsx
+│   │   ├── ProfileEdit.test.tsx
+│   │   └── profile.service.test.ts
+│   ├── hooks/          # Hook tests
+│   │   └── useGeolocation.test.ts
+│   └── models/         # Model tests
+│       └── user.test.ts
+└── services/           # Service tests
+    ├── event/__tests__/
+    │   └── event.service.test.ts
+    ├── location/__tests__/
+    │   └── location.service.test.ts
+    ├── matching/__tests__/
+    │   └── match.service.test.ts
+    └── preferences/__tests__/
+        └── preferences.service.test.ts
 ```
 
-### Naming Conventions
+### Test File Naming
 
-- Test files: `*.test.tsx` or `*.test.ts`
-- Test utilities: `*.test.utils.ts`
-- Test fixtures: `*.fixtures.ts`
-- Mock data: `*.mocks.ts`
+- Test files should be named after the module they test with the `.test.ts` or `.test.tsx` extension
+- Mock files should be prefixed with `mock` and placed in the appropriate `__mocks__` directory
+- Test utilities should be placed in a `__utils__` directory at the appropriate level
+
+### Mock Organization
+
+We maintain several levels of mocks:
+
+1. **Global Mocks** (`src/__tests__/__mocks__/`)
+   - User data
+   - localStorage
+   - Session data
+   - API responses
+
+2. **Service-Level Mocks** (`src/services/<service>/__tests__/__mocks__/`)
+   - Service-specific mock data
+   - Mock implementations
+
+3. **Feature-Level Mocks** (alongside test files)
+   - Component-specific props
+   - Event handlers
+   - Context providers
+
+### Best Practices
+
+1. **Mock Management**
+   - Keep mocks close to where they're used
+   - Share common mocks through the global `__mocks__` directory
+   - Version control mock data for consistency
+
+2. **Test Structure**
+   - Group related tests using `describe` blocks
+   - Use clear, descriptive test names
+   - Follow the Arrange-Act-Assert pattern
+   - Mock at the appropriate level (global vs local)
+
+3. **Testing Hooks**
+   - Use `renderHook` from `@testing-library/react-hooks`
+   - Test all possible states
+   - Verify cleanup/unmount behavior
+   - Test error conditions
+
+4. **Testing Components**
+   - Focus on user interaction
+   - Test accessibility
+   - Verify error states
+   - Check loading indicators
+
+### Recent Changes (January 2025)
+
+1. **Auth Tests Reorganization**
+   - Moved auth-related tests to dedicated `auth/` directory
+   - Split session management tests from auth hook tests
+   - Improved mock implementations for consistency
+   - Added comprehensive OAuth integration tests
+
+2. **Service Tests Structure**
+   - Standardized service test organization
+   - Added dedicated `__tests__` directories per service
+   - Improved separation of concerns in test files
+
+3. **Mock Data Management**
+   - Centralized common mock data
+   - Added type safety to mock implementations
+   - Improved mock data versioning
 
 ## Running Tests
 

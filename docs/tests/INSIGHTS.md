@@ -684,3 +684,117 @@ jest.mock('@/lib/redis', () => ({
    - Test role change restrictions
    - Verify location privacy enforcement
    - Validate data access controls
+
+## Authentication and Session Testing
+
+### useAuth Hook Testing
+
+#### Key Insights:
+
+1. **API Client Mocking**
+   - Mock the entire API client module, not just individual methods
+   - Ensure mock maintains the same interface as the real client
+   - Example of proper API client mock:
+     ```typescript
+     jest.mock('@/services/api/api.client', () => ({
+       __esModule: true,
+       default: {
+         post: jest.fn(),
+         interceptors: {
+           request: { use: jest.fn(), eject: jest.fn() },
+           response: { use: jest.fn(), eject: jest.fn() },
+         },
+       },
+     }));
+     ```
+
+2. **Session State Management**
+   - Initialize with proper null state, not undefined
+   - Mock session data consistently across related tests
+   - Handle session status transitions properly:
+     - unauthenticated → authenticated
+     - authenticated → unauthenticated
+
+3. **NextAuth Integration**
+   - Mock NextAuth hooks before any imports
+   - Ensure consistent behavior between useSession and signIn/signOut
+   - Example:
+     ```typescript
+     jest.mock('next-auth/react');
+     (useSession as jest.Mock).mockReturnValue({
+       data: mockSession,
+       status: 'authenticated',
+     });
+     ```
+
+### React Component Testing
+
+#### State Updates in Tests
+
+1. **Act Warnings**
+   - Wrap state updates in act() to prevent warnings
+   - Include both synchronous and asynchronous operations
+   - Example:
+     ```typescript
+     await act(async () => {
+       fireEvent.click(submitButton);
+     });
+     ```
+
+2. **Form Submissions**
+   - Test both success and failure scenarios
+   - Verify loading states during submission
+   - Check proper error message display
+   - Example test structure:
+     ```typescript
+     it('handles form submission error', async () => {
+       mockApiCall.mockRejectedValue(new Error());
+       await act(async () => {
+         fireEvent.submit(form);
+       });
+       expect(errorMessage).toBeInTheDocument();
+     });
+     ```
+
+### Testing Best Practices
+
+1. **Mock Reset**
+   - Clear all mocks in beforeEach
+   - Reset specific mock implementations between tests
+   - Example:
+     ```typescript
+     beforeEach(() => {
+       jest.clearAllMocks();
+       mockApiClient.post.mockReset();
+     });
+     ```
+
+2. **Type Safety**
+   - Use proper TypeScript types for mocked functions
+   - Maintain type consistency with real implementations
+   - Example:
+     ```typescript
+     const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
+     ```
+
+3. **Async Operations**
+   - Always await async operations in tests
+   - Use proper error boundaries for failed operations
+   - Test both resolved and rejected promises
+
+### Areas for Improvement
+
+1. **Test Coverage**
+   - [ ] Add tests for token refresh scenarios
+   - [ ] Test session timeout handling
+   - [ ] Add tests for concurrent auth operations
+
+2. **Error Handling**
+   - [ ] Test network timeout scenarios
+   - [ ] Test invalid token responses
+   - [ ] Test session recovery after errors
+
+3. **Performance**
+   - [ ] Monitor auth hook re-render frequency
+   - [ ] Test caching of auth state
+   - [ ] Measure token refresh impact

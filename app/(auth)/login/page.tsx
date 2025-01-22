@@ -42,23 +42,25 @@ export default function LoginPage() {
     setError(null);
 
     try {
-      const result = await login(data.email, data.password);
+      const result = await login(data);
 
-      if (result.success) {
+      if (!result) {
         toast.success('Login Successful');
         router.push('/dashboard');
         return;
       }
 
-      if (result.error) {
-        setError(result.error);
-        toast.error(result.error);
-        return;
-      }
+      // If we get here, result is an Error
+      setError(result.message);
+      toast.error('Login Failed', {
+        description: result.message,
+      });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed';
-      setError(errorMessage);
-      toast.error(errorMessage);
+      const message = err instanceof Error ? err.message : 'An error occurred during login';
+      setError(message);
+      toast.error('Login Failed', {
+        description: message,
+      });
     } finally {
       setIsLoading(false);
     }

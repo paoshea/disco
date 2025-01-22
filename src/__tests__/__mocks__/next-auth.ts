@@ -1,64 +1,37 @@
-import { Provider } from 'next-auth/providers';
 import { Session } from 'next-auth';
-import { mockUser } from '../mocks/user';
+import { mockUser } from './user';
 
-export const mockGoogleProvider: Provider = {
-  id: 'google',
-  name: 'Google',
-  type: 'oauth',
-  signinUrl: 'http://localhost:3000/api/auth/signin/google',
-  callbackUrl: 'http://localhost:3000/api/auth/callback/google',
-  clientId: 'mock-client-id',
-  clientSecret: 'mock-client-secret',
-  authorization: {
-    params: {
-      prompt: 'consent',
-      access_type: 'offline',
-      response_type: 'code',
-    },
-  },
-  token: 'https://oauth2.googleapis.com/token',
-  userinfo: 'https://www.googleapis.com/oauth2/v2/userinfo',
-  profile: profile => {
-    return {
-      id: profile.id,
-      name: profile.name,
-      email: profile.email,
-      image: profile.picture,
-    };
-  },
+export const mockSession: Session = {
+  user: mockUser,
+  expires: '2025-01-21T22:12:49.000Z',
 };
 
-const mockSession: Session = {
-  user: {
-    ...mockUser,
+const nextAuth = jest.fn(() => ({
+  auth: {
+    session: mockSession,
+    signIn: jest.fn(),
+    signOut: jest.fn(),
   },
-  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
-};
+}));
 
-export function useSession() {
-  return {
-    data: mockSession,
-    status: 'authenticated',
-    update: jest.fn(),
-  };
-}
+export default nextAuth;
 
-export function signIn() {
-  return Promise.resolve({ ok: true, error: null });
-}
+// Mock the useSession hook
+export const useSession = jest.fn(() => ({
+  data: mockSession,
+  status: 'authenticated',
+  update: jest.fn(),
+}));
 
-export function signOut() {
-  return Promise.resolve({ ok: true });
-}
+// Mock the signIn and signOut functions
+export const signIn = jest.fn().mockImplementation((provider, options) => {
+  if (options?.email === 'test@example.com' && options?.password === 'password123') {
+    return Promise.resolve({ ok: true, error: null });
+  }
+  return Promise.resolve({ ok: false, error: 'Invalid credentials' });
+});
 
-export function getSession() {
-  return Promise.resolve(mockSession);
-}
+export const signOut = jest.fn().mockImplementation(() => Promise.resolve({ ok: true }));
 
-export default {
-  useSession,
-  signIn,
-  signOut,
-  getSession,
-};
+// Mock the getSession function
+export const getSession = jest.fn().mockImplementation(() => Promise.resolve(mockSession));

@@ -1,327 +1,120 @@
-import { create } from 'zustand';
-import { persist, createJSONStorage } from 'zustand/middleware';
+import { useSession, signIn, signOut } from 'next-auth/react';
+import { useCallback, useEffect } from 'react';
 import { apiClient } from '@/services/api/api.client';
-import { z } from 'zod';
-import type {
-  LoginResponse,
-  RegisterResponse,
-  UpdateProfileResponse,
-} from '@/types/auth';
 import type { User } from '@/types/user';
 
-interface AuthState {
-  user: User | null;
-  token: string | null;
-  isLoading: boolean;
-  error: string | null;
-  login: (
-    email: string,
-    password: string
-  ) => Promise<{
-    success?: boolean;
-    error?: string;
-    needsVerification?: boolean;
-  }>;
-  logout: () => Promise<void>;
-  register: (data: RegisterData) => Promise<{
-    success: boolean;
-    error?: string;
-    needsVerification?: boolean;
-  }>;
-  requestPasswordReset: (
-    email: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  resetPassword: (
-    token: string,
-    password: string
-  ) => Promise<{ success: boolean; error?: string }>;
-  updateProfile: (
-    data: UpdateProfileData
-  ) => Promise<{ success: boolean; error?: string }>;
-  sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
-  verifyEmail: (token: string) => Promise<{ success: boolean; error?: string }>;
-  set: (state: Partial<AuthState>) => void;
+interface LoginCredentials {
+  email: string;
+  password: string;
 }
 
-export interface LoginResult {
-  success?: boolean;
-  error?: string;
-  needsVerification?: boolean;
-}
-
-export interface RegisterData {
+interface RegistrationData {
   email: string;
   password: string;
   firstName: string;
   lastName: string;
 }
 
-export interface UpdateProfileData {
-  firstName?: string;
-  lastName?: string;
-  email?: string;
-  currentPassword?: string;
-  newPassword?: string;
+interface ResetPasswordData {
+  token: string;
+  password: string;
 }
 
-const userSchema = z.object({
-  id: z.string(),
-  email: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  role: z.enum(['user', 'admin', 'moderator']),
-  streakCount: z.number(),
-  emailVerified: z.boolean(),
-  name: z.string(),
-  lastActive: z.date(),
-  verificationStatus: z.enum(['pending', 'verified', 'rejected']),
-  createdAt: z.date(),
-  updatedAt: z.date(),
-});
+export function useAuth() {
+  const { data: session, status } = useSession();
+  const user = session?.user ? (session.user as User) : null;
+  const isAuthenticated = status === 'authenticated';
+  const isLoading = status === 'loading';
 
-const authResponseSchema = z.object({
-  user: userSchema,
-  token: z.string(),
-  needsVerification: z.boolean().optional(),
-  expiresIn: z.number().optional(),
-});
+  useEffect(() => {
+    // Add axios interceptor to handle token expiration
+    if (apiClient?.interceptors?.response) {
+      const interceptor = apiClient.interceptors.response.use(
+        response => response,
+        error => {
+          if (error.response?.status === 401) {
+            signOut();
+          }
+          return Promise.reject(error);
+        }
+      );
 
-// Add axios interceptor to handle token expiration
-apiClient.interceptors.response.use(
-  response => response,
-  error => {
-    if (
-      error.name === 'TokenExpiredError' ||
-      (error.response?.status === 401 &&
-        error.response?.data?.message === 'Token expired')
-    ) {
-      const auth = useAuth.getState();
-      auth.set({
-        user: null,
-        token: null,
-        error: 'Session expired. Please log in again.',
+      return () => {
+        apiClient.interceptors.response.eject(interceptor);
+      };
+    }
+  }, []);
+
+  const login = useCallback(async (credentials: LoginCredentials) => {
+    try {
+      const result = await signIn('credentials', {
+        ...credentials,
+        redirect: false,
       });
+
+      if (!result?.ok) {
+        throw new Error(result?.error || 'Login failed');
+      }
+    } catch (error) {
+      if (error instanceof Error) {
+        return error;
+      }
+      return new Error('Login failed');
     }
-    return Promise.reject(error);
-  }
-);
+  }, []);
 
-export const useAuth = create<AuthState>()(
-  persist(
-    set => ({
-      user: null,
-      token: null,
-      isLoading: false,
-      error: null,
-      async login(email, password) {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await apiClient.post<LoginResponse>(
-            '/api/auth/login',
-            {
-              email,
-              password,
-            }
-          );
+  const logout = useCallback(async () => {
+    await signOut();
+  }, []);
 
-          const result = authResponseSchema.safeParse(response.data);
-          if (!result.success) {
-            console.error('Invalid response schema:', result.error);
-            set({ error: 'Invalid response from server' });
-            return { error: 'Invalid response from server' };
-          }
-
-          const { token, user, needsVerification } = result.data;
-
-          if (needsVerification) {
-            return { needsVerification: true };
-          }
-
-          if (user && token) {
-            set({ user, token });
-            return { success: true };
-          }
-
-          set({ error: 'Login failed' });
-          return { error: 'Login failed' };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Login failed';
-          set({ error: message });
-          return { error: message };
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-      async logout() {
-        set({ isLoading: true });
-        try {
-          const token = useAuth.getState().token;
-          if (token) {
-            await apiClient.delete('/api/auth/logout', {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            });
-          }
-        } catch (error) {
-          console.error('Logout error:', error);
-        } finally {
-          set({
-            user: null,
-            token: null,
-            isLoading: false,
-            error: null,
-          });
-        }
-      },
-      async register(data: RegisterData) {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await apiClient.post<RegisterResponse>(
-            '/api/auth/signup',
-            data
-          );
-          const result = authResponseSchema.safeParse(response.data);
-
-          if (!result.success) {
-            console.error('Invalid response schema:', result.error);
-            set({ error: 'Invalid response from server' });
-            return { success: false, error: 'Invalid response from server' };
-          }
-
-          const { token, user, needsVerification } = result.data;
-
-          set({ user, token });
-
-          // Set cookies for middleware
-          document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
-
-          return {
-            success: true,
-            needsVerification: needsVerification || false,
-          };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Registration failed';
-          set({ error: message });
-          return { success: false, error: message };
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-      async updateProfile(data) {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await apiClient.patch<UpdateProfileResponse>(
-            '/api/auth/profile',
-            data
-          );
-
-          const result = userSchema.safeParse(response.data.user);
-          if (!result.success) {
-            console.error('Invalid user data:', result.error);
-            set({ error: 'Invalid response from server' });
-            return { success: false, error: 'Invalid response from server' };
-          }
-
-          set({ user: result.data });
-          return { success: true };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Profile update failed';
-          set({ error: message });
-          return { success: false, error: message };
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-      async sendVerificationEmail() {
-        set({ isLoading: true, error: null });
-        try {
-          const token = useAuth.getState().token;
-          await apiClient.post(
-            '/api/auth/send-verification-email',
-            {},
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
-            }
-          );
-          return { success: true };
-        } catch (error) {
-          const message =
-            error instanceof Error
-              ? error.message
-              : 'Failed to send verification email';
-          set({ error: message });
-          return { success: false, error: message };
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-      async verifyEmail(token: string) {
-        set({ isLoading: true, error: null });
-        try {
-          const response = await apiClient.post('/api/auth/verify-email', {
-            token,
-          });
-
-          const result = z
-            .object({
-              user: userSchema,
-            })
-            .safeParse(response.data);
-
-          if (!result.success) {
-            console.error('Invalid response schema:', result.error);
-            set({ error: 'Invalid response from server' });
-            return { success: false, error: 'Invalid response from server' };
-          }
-
-          const { user } = result.data;
-          set({ user });
-          return { success: true };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Failed to verify email';
-          set({ error: message });
-          return { success: false, error: message };
-        } finally {
-          set({ isLoading: false });
-        }
-      },
-      async requestPasswordReset(email) {
-        try {
-          await apiClient.post('/api/auth/request-reset', { email });
-          return { success: true };
-        } catch (error) {
-          const message =
-            error instanceof Error
-              ? error.message
-              : 'Failed to request password reset';
-          return { success: false, error: message };
-        }
-      },
-      async resetPassword(token, password) {
-        try {
-          await apiClient.post('/api/auth/reset-password', {
-            token,
-            password,
-          });
-          return { success: true };
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : 'Failed to reset password';
-          return { success: false, error: message };
-        }
-      },
-      set,
-    }),
-    {
-      name: 'auth-storage',
-      storage: createJSONStorage(() => localStorage),
+  const register = useCallback(async (data: RegistrationData) => {
+    try {
+      const { firstName, lastName, ...rest } = data;
+      await apiClient.post('/auth/register', {
+        ...rest,
+        name: `${firstName} ${lastName}`,
+      });
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Registration failed' };
     }
-  )
-);
+  }, []);
+
+  const resetPassword = useCallback(async (data: ResetPasswordData) => {
+    try {
+      await apiClient.post('/auth/reset-password', data);
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Password reset failed' };
+    }
+  }, []);
+
+  const requestPasswordReset = useCallback(async (email: string) => {
+    try {
+      await apiClient.post('/auth/forgot-password', { email });
+      return { success: true };
+    } catch (error) {
+      if (error instanceof Error) {
+        return { success: false, error: error.message };
+      }
+      return { success: false, error: 'Failed to request password reset' };
+    }
+  }, []);
+
+  return {
+    user,
+    isAuthenticated,
+    isLoading,
+    login,
+    logout,
+    register,
+    resetPassword,
+    requestPasswordReset,
+  };
+}

@@ -1,0 +1,10 @@
+__tests__/
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+jest.setup.js
+coverage/
+test/
+tests/

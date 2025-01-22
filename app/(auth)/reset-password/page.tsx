@@ -79,12 +79,18 @@ export default function ResetPasswordPage() {
     setSuccess(null);
 
     try {
-      await resetPassword(token, data.password);
-      setSuccess('Password has been successfully reset');
-      resetPasswordForm.reset();
-      setTimeout(() => router.push('/login'), 2000);
+      const result = await resetPassword({ token, password: data.password });
+      
+      if (result.success) {
+        setSuccess('Password has been successfully reset');
+        resetPasswordForm.reset();
+        setTimeout(() => router.push('/login'), 2000);
+      } else {
+        setError(result.error || 'Failed to reset password');
+      }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to reset password');
+      const message = err instanceof Error ? err.message : 'An error occurred';
+      setError(message);
     } finally {
       setIsLoading(false);
     }

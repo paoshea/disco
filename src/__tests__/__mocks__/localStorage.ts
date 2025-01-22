@@ -1,39 +1,45 @@
 // Mock localStorage
-const mockStorage: { [key: string]: string } = {};
-
 export const mockLocalStorage = {
-  getItem: jest.fn((key: string) => mockStorage[key] || null),
+  store: {} as { [key: string]: string },
+  getItem: jest.fn((key: string) => mockLocalStorage.store[key] || null),
   setItem: jest.fn((key: string, value: string) => {
-    mockStorage[key] = value;
-  }),
-  clear: jest.fn(() => {
-    Object.keys(mockStorage).forEach(key => {
-      delete mockStorage[key];
-    });
+    mockLocalStorage.store[key] = value;
   }),
   removeItem: jest.fn((key: string) => {
-    delete mockStorage[key];
+    delete mockLocalStorage.store[key];
+  }),
+  clear: jest.fn(() => {
+    mockLocalStorage.store = {};
   }),
 };
 
-describe('LocalStorage Mock', () => {
+Object.defineProperty(global, 'localStorage', {
+  value: mockLocalStorage,
+  writable: true,
+});
+
+describe('localStorage Mock', () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     mockLocalStorage.clear();
+    jest.clearAllMocks();
   });
 
-  it('should store and retrieve values', () => {
+  it('should store and retrieve items', () => {
     mockLocalStorage.setItem('test-key', 'test-value');
     expect(mockLocalStorage.getItem('test-key')).toBe('test-value');
   });
 
-  it('should remove values', () => {
+  it('should return null for non-existent items', () => {
+    expect(mockLocalStorage.getItem('non-existent')).toBeNull();
+  });
+
+  it('should remove items', () => {
     mockLocalStorage.setItem('test-key', 'test-value');
     mockLocalStorage.removeItem('test-key');
     expect(mockLocalStorage.getItem('test-key')).toBeNull();
   });
 
-  it('should clear all values', () => {
+  it('should clear all items', () => {
     mockLocalStorage.setItem('key1', 'value1');
     mockLocalStorage.setItem('key2', 'value2');
     mockLocalStorage.clear();
