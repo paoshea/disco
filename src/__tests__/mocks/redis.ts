@@ -9,13 +9,31 @@ interface RedisClient {
 }
 
 const mockRedis = {
-  connect: jest.fn(),
-  disconnect: jest.fn(),
-  get: jest.fn(),
-  set: jest.fn(),
-  del: jest.fn(),
-  exists: jest.fn(),
-  expire: jest.fn(),
+  get: jest.fn<Promise<string | null>, [string]>(),
+  set: jest.fn<Promise<string>, [string, string]>(),
+  del: jest.fn<Promise<number>, [string]>(),
+  exists: jest.fn<Promise<number>, [string]>(),
+  expire: jest.fn<Promise<number>, [string, number]>(),
+};
+
+export const mockGetValue = (mockValue: string | null) => {
+  mockRedis.get.mockResolvedValue(mockValue);
+};
+
+export const mockSetValue = () => {
+  mockRedis.set.mockResolvedValue('OK');
+};
+
+export const mockDelValue = () => {
+  mockRedis.del.mockResolvedValue(1);
+};
+
+export const mockExistsValue = () => {
+  mockRedis.exists.mockResolvedValue(1);
+};
+
+export const mockExpireValue = () => {
+  mockRedis.expire.mockResolvedValue(1);
 };
 
 jest.mock('@/lib/redis', () => ({
@@ -23,7 +41,7 @@ jest.mock('@/lib/redis', () => ({
   redis: mockRedis,
 }));
 
-export { mockRedis };
+export default mockRedis;
 
 describe('Redis Mock', () => {
   beforeEach(() => {
@@ -32,7 +50,7 @@ describe('Redis Mock', () => {
 
   it('should mock get operation', async () => {
     const mockValue = 'test-value';
-    mockRedis.get.mockResolvedValue(mockValue);
+    mockGetValue(mockValue);
 
     const result = await mockRedis.get('test-key');
     expect(result).toBe(mockValue);
@@ -40,7 +58,7 @@ describe('Redis Mock', () => {
   });
 
   it('should mock set operation', async () => {
-    mockRedis.set.mockResolvedValue('OK');
+    mockSetValue();
 
     const result = await mockRedis.set('test-key', 'test-value');
     expect(result).toBe('OK');
@@ -48,7 +66,7 @@ describe('Redis Mock', () => {
   });
 
   it('should mock del operation', async () => {
-    mockRedis.del.mockResolvedValue(1);
+    mockDelValue();
 
     const result = await mockRedis.del('test-key');
     expect(result).toBe(1);
@@ -56,7 +74,7 @@ describe('Redis Mock', () => {
   });
 
   it('should mock exists operation', async () => {
-    mockRedis.exists.mockResolvedValue(1);
+    mockExistsValue();
 
     const result = await mockRedis.exists('test-key');
     expect(result).toBe(1);
@@ -64,7 +82,7 @@ describe('Redis Mock', () => {
   });
 
   it('should mock expire operation', async () => {
-    mockRedis.expire.mockResolvedValue(1);
+    mockExpireValue();
 
     const result = await mockRedis.expire('test-key', 3600);
     expect(result).toBe(1);

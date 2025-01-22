@@ -1,9 +1,13 @@
 import { Provider } from 'next-auth/providers';
+import { Session } from 'next-auth';
+import { mockUser } from '../mocks/user';
 
 export const mockGoogleProvider: Provider = {
   id: 'google',
   name: 'Google',
   type: 'oauth',
+  signinUrl: 'http://localhost:3000/api/auth/signin/google',
+  callbackUrl: 'http://localhost:3000/api/auth/callback/google',
   clientId: 'mock-client-id',
   clientSecret: 'mock-client-secret',
   authorization: {
@@ -25,9 +29,36 @@ export const mockGoogleProvider: Provider = {
   },
 };
 
-export const mockNextAuth = {
-  getSession: jest.fn(),
-  signIn: jest.fn(),
-  signOut: jest.fn(),
-  useSession: jest.fn(),
+const mockSession: Session = {
+  user: {
+    ...mockUser,
+  },
+  expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 24 hours from now
+};
+
+export function useSession() {
+  return {
+    data: mockSession,
+    status: 'authenticated',
+    update: jest.fn(),
+  };
+}
+
+export function signIn() {
+  return Promise.resolve({ ok: true, error: null });
+}
+
+export function signOut() {
+  return Promise.resolve({ ok: true });
+}
+
+export function getSession() {
+  return Promise.resolve(mockSession);
+}
+
+export default {
+  useSession,
+  signIn,
+  signOut,
+  getSession,
 };

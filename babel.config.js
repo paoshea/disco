@@ -1,5 +1,14 @@
 module.exports = {
-  plugins: ['@babel/plugin-syntax-import-attributes'],
+  presets: ['next/babel'],
+  plugins: [
+    '@babel/plugin-syntax-import-attributes',
+    ['module-resolver', {
+      root: ['./src'],
+      alias: {
+        '@': './src',
+      },
+    }],
+  ],
   env: {
     test: {
       presets: [

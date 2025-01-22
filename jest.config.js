@@ -1,25 +1,24 @@
 module.exports = {
   preset: 'ts-jest',
+  testEnvironment: 'jsdom',
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
   transform: {
-    '^.+\\.(ts|tsx)$': [
-      'babel-jest',
-      {
-        presets: [
-          '@babel/preset-env',
-          '@babel/preset-react',
-          '@babel/preset-typescript',
-        ],
-        plugins: ['@babel/plugin-syntax-import-attributes'],
-      },
-    ],
+    '^.+\\.(ts|tsx)$': ['ts-jest', {
+      tsconfig: 'tsconfig.json',
+      isolatedModules: true,
+      jsx: 'react-jsx',
+    }],
+    '^.+\\.(js|jsx)$': ['babel-jest', {
+      presets: ['next/babel'],
+    }],
   },
+  setupFilesAfterEnv: ['<rootDir>/src/setupTests.ts'],
+  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
   transformIgnorePatterns: [
     'node_modules/(?!(jose|@next-auth|next|@next-auth/prisma-adapter)/)',
   ],
-  setupFilesAfterEnv: ['<rootDir>/jest.setup.js'],
-  testEnvironment: 'jsdom',
-  testPathIgnorePatterns: ['<rootDir>/node_modules/', '<rootDir>/.next/'],
+  moduleDirectories: ['node_modules', '<rootDir>/src'],
 };

@@ -3,63 +3,37 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
-import * as preferencesService from '@/services/user/preferences.service';
+import { mockUser } from '../mocks/user';
+import { mockPreferencesService } from '../mocks/preferencesService';
 
-jest.mock('@/services/user/preferences.service');
+// Mock the preferences service
+jest.mock('@/services/preferences/preferences.service', () => ({
+  preferencesService: {
+    updatePreferences: jest.fn(),
+  },
+}));
 
 const mockDate = new Date('2025-01-21T22:12:49-06:00');
-
-const mockUser = {
-  id: '1',
-  firstName: 'Test',
-  lastName: 'User',
-  email: 'test@example.com',
-  name: 'Test User',
-  bio: 'Test bio',
-  interests: ['Technology', 'Gaming'],
-  phoneNumber: '+1234567890',
-  avatar: 'https://example.com/avatar.jpg',
-  role: 'user',
-  emailVerified: true,
-  lastActive: mockDate,
-  verificationStatus: 'verified',
-  streakCount: 0,
-  createdAt: mockDate,
-  updatedAt: mockDate,
-  preferences: {
-    maxDistance: 50,
-    ageRange: { min: 18, max: 99 },
-    interests: ['Technology', 'Gaming'],
-    gender: ['any'],
-    lookingFor: ['friendship'],
-    relationshipType: ['casual'],
-    notifications: {
-      email: true,
-      push: true,
-      messages: true,
-      matches: true,
-      events: true,
-      safety: true,
-    },
-    privacy: {
-      showAge: true,
-      showLocation: true,
-      showOnlineStatus: true,
-      showLastSeen: true,
-    },
-    safety: {
-      requireVerifiedMatch: true,
-      blockUnverifiedUsers: false,
-      emergencyContactEnabled: true,
-      emergencyContactAlerts: true,
-      meetupCheckins: true,
-    },
-  },
-};
 
 describe('ProfileSettings', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  it('should render all preferences sections', () => {
+    render(<ProfileSettings user={mockUser} />);
+
+    // Check for section headings
+    expect(screen.getByText('Profile Settings')).toBeInTheDocument();
+    expect(screen.getByText('Notifications')).toBeInTheDocument();
+    expect(screen.getByText('Privacy')).toBeInTheDocument();
+    expect(screen.getByText('Safety')).toBeInTheDocument();
+
+    // Check for specific preferences
+    expect(screen.getByLabelText('Show Online Status')).toBeInTheDocument();
+    expect(screen.getByLabelText('Show Location')).toBeInTheDocument();
+    expect(screen.getByLabelText('Match Notifications')).toBeInTheDocument();
+    expect(screen.getByLabelText('Message Notifications')).toBeInTheDocument();
   });
 
   it('should render profile settings with user preferences', () => {
@@ -71,75 +45,99 @@ describe('ProfileSettings', () => {
     expect(screen.getByText('Privacy')).toBeInTheDocument();
     expect(screen.getByText('Safety')).toBeInTheDocument();
 
-    // Check notification toggles
-    expect(screen.getByLabelText('Match Notifications')).toBeInTheDocument();
-    expect(screen.getByLabelText('Message Notifications')).toBeInTheDocument();
-    expect(screen.getByLabelText('Email Notifications')).toBeInTheDocument();
+    // Check notification checkboxes
+    const matchNotifications = screen.getByLabelText('Match Notifications');
+    const messageNotifications = screen.getByLabelText('Message Notifications');
+    const emailNotifications = screen.getByLabelText('Email Notifications');
+    
+    expect(matchNotifications).toBeInTheDocument();
+    expect(messageNotifications).toBeInTheDocument();
+    expect(emailNotifications).toBeInTheDocument();
+    
+    expect(matchNotifications).toBeChecked();
+    expect(messageNotifications).toBeChecked();
+    expect(emailNotifications).toBeChecked();
 
-    // Check privacy toggles
-    expect(screen.getByLabelText('Show Online Status')).toBeInTheDocument();
-    expect(screen.getByLabelText('Show Location')).toBeInTheDocument();
+    // Check privacy checkboxes
+    const showOnlineStatus = screen.getByLabelText('Show Online Status');
+    const showLocation = screen.getByLabelText('Show Location');
+    
+    expect(showOnlineStatus).toBeInTheDocument();
+    expect(showLocation).toBeInTheDocument();
+    
+    expect(showOnlineStatus).toBeChecked();
+    expect(showLocation).toBeChecked();
 
-    // Check safety toggles
-    expect(screen.getByLabelText('Require Verified Match')).toBeInTheDocument();
-    expect(screen.getByLabelText('Block Unverified Users')).toBeInTheDocument();
+    // Check safety checkboxes
+    const requireVerifiedMatch = screen.getByLabelText('Require Verified Match');
+    const blockUnverifiedUsers = screen.getByLabelText('Block Unverified Users');
+    
+    expect(requireVerifiedMatch).toBeInTheDocument();
+    expect(blockUnverifiedUsers).toBeInTheDocument();
+    
+    expect(requireVerifiedMatch).toBeChecked();
+    expect(blockUnverifiedUsers).not.toBeChecked();
   });
 
-  it('should update preferences when toggling switches', async () => {
-    const updatedPreferences = {
-      ...mockUser.preferences,
-      privacy: {
-        ...mockUser.preferences.privacy,
-        showOnlineStatus: false,
+  it('should update preferences when toggling checkboxes', async () => {
+    mockPreferencesService.updatePreferences.mockResolvedValueOnce({
+      success: true,
+      data: {
+        id: '1',
+        userId: mockUser.id,
+        privacy: {
+          showLocation: false,
+          showOnlineStatus: false,
+        },
       },
-    };
-
-    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(updatedPreferences);
+    });
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
-    const locationSwitch = screen.getByLabelText('Show Location');
+    const onlineStatusCheckbox = screen.getByLabelText('Show Online Status') as HTMLInputElement;
+    const locationCheckbox = screen.getByLabelText('Show Location') as HTMLInputElement;
 
-    fireEvent.click(onlineStatusSwitch);
-    fireEvent.click(locationSwitch);
+    // Toggle checkboxes
+    fireEvent.click(onlineStatusCheckbox);
+    fireEvent.click(locationCheckbox);
+
+    // Submit form
+    const saveButton = screen.getByRole('button', { name: /save changes/i });
+    fireEvent.click(saveButton);
 
     await waitFor(() => {
-      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
+      expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
           privacy: expect.objectContaining({
-            showOnlineStatus: false,
             showLocation: false,
+            showOnlineStatus: false,
           }),
         })
       );
     });
-  });
 
-  it('should show error message when update fails', async () => {
-    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
-
-    render(<ProfileSettings user={mockUser} />);
-
-    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
-    fireEvent.click(onlineStatusSwitch);
-
+    // Success message should be shown
     await waitFor(() => {
-      expect(screen.getByText('Failed to update settings')).toBeInTheDocument();
+      expect(screen.getByText(/preferences updated successfully/i)).toBeInTheDocument();
     });
   });
 
-  it('should show success message when update succeeds', async () => {
-    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(mockUser.preferences);
+  it('should show error message when update fails', async () => {
+    mockPreferencesService.updatePreferences.mockRejectedValueOnce(new Error('Failed to update'));
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
-    fireEvent.click(onlineStatusSwitch);
+    const onlineStatusCheckbox = screen.getByLabelText('Show Online Status') as HTMLInputElement;
+    fireEvent.click(onlineStatusCheckbox);
 
+    // Submit form
+    const saveButton = screen.getByRole('button', { name: /save changes/i });
+    fireEvent.click(saveButton);
+
+    // Error message should be shown
     await waitFor(() => {
-      expect(screen.getByText('Settings updated successfully')).toBeInTheDocument();
+      expect(screen.getByText(/failed to update preferences/i)).toBeInTheDocument();
     });
   });
 
@@ -148,14 +146,14 @@ describe('ProfileSettings', () => {
 
     const maxDistanceInput = screen.getByLabelText(/maximum distance/i);
 
-    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce();
+    mockPreferencesService.updatePreferences.mockResolvedValueOnce();
 
     await userEvent.clear(maxDistanceInput);
     await userEvent.type(maxDistanceInput, '25');
     fireEvent.blur(maxDistanceInput);
 
     await waitFor(() => {
-      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
+      expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
           preferences: expect.objectContaining({
@@ -172,7 +170,7 @@ describe('ProfileSettings', () => {
     const minAgeInput = screen.getByLabelText(/minimum age/i);
     const maxAgeInput = screen.getByLabelText(/maximum age/i);
 
-    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce();
+    mockPreferencesService.updatePreferences.mockResolvedValueOnce();
 
     await userEvent.clear(minAgeInput);
     await userEvent.type(minAgeInput, '21');
@@ -181,7 +179,7 @@ describe('ProfileSettings', () => {
     fireEvent.blur(maxAgeInput);
 
     await waitFor(() => {
-      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
+      expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
           preferences: expect.objectContaining({
@@ -195,11 +193,11 @@ describe('ProfileSettings', () => {
   it('should handle preference update errors', async () => {
     render(<ProfileSettings user={mockUser} />);
 
-    const showOnlineStatusToggle = screen.getByRole('switch', {
+    const showOnlineStatusToggle = screen.getByRole('checkbox', {
       name: /show online status/i,
     });
 
-    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
+    mockPreferencesService.updatePreferences.mockRejectedValueOnce(new Error('Update failed'));
 
     fireEvent.click(showOnlineStatusToggle);
 
@@ -213,10 +211,10 @@ describe('ProfileSettings', () => {
   it('should render user preferences correctly', () => {
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', {
+    const onlineStatusSwitch = screen.getByRole('checkbox', {
       name: /show online status/i,
     });
-    const emailNotificationsSwitch = screen.getByRole('switch', {
+    const emailNotificationsSwitch = screen.getByRole('checkbox', {
       name: /email notifications/i,
     });
     const themeSelect = screen.getByLabelText(/theme/i);
@@ -226,42 +224,63 @@ describe('ProfileSettings', () => {
     expect(themeSelect).toHaveValue('light');
   });
 
-  it('should update preferences when toggling switches', async () => {
-    const updatedPreferences = {
-      ...mockUser.preferences,
-      privacy: {
-        ...mockUser.preferences.privacy,
-        showOnlineStatus: false,
+  it('should update preferences when toggling checkboxes', async () => {
+    mockPreferencesService.updatePreferences.mockResolvedValueOnce({
+      success: true,
+      data: {
+        id: '1',
+        userId: mockUser.id,
+        privacy: {
+          showLocation: false,
+          showOnlineStatus: false,
+        },
       },
-    };
-
-    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(updatedPreferences);
+    });
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', {
+    const onlineStatusSwitch = screen.getByRole('checkbox', {
       name: /show online status/i,
-    });
+    }) as HTMLInputElement;
     fireEvent.click(onlineStatusSwitch);
 
+    // Submit form
+    const saveButton = screen.getByText('Save Changes');
+    fireEvent.click(saveButton);
+
     await waitFor(() => {
-      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
+      expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
-        updatedPreferences
+        expect.objectContaining({
+          privacy: expect.objectContaining({
+            showLocation: false,
+            showOnlineStatus: false,
+          }),
+        })
       );
+    });
+
+    // Success message should be shown
+    await waitFor(() => {
+      expect(screen.getByText('Preferences updated successfully')).toBeInTheDocument();
     });
   });
 
   it('should show error message when update fails', async () => {
-    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
+    mockPreferencesService.updatePreferences.mockRejectedValueOnce(new Error('Update failed'));
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', {
+    const onlineStatusSwitch = screen.getByRole('checkbox', {
       name: /show online status/i,
-    });
+    }) as HTMLInputElement;
     fireEvent.click(onlineStatusSwitch);
 
+    // Submit form
+    const saveButton = screen.getByText('Save Changes');
+    fireEvent.click(saveButton);
+
+    // Error message should be shown
     await waitFor(() => {
       expect(
         screen.getByText(/failed to update preferences/i)

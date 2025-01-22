@@ -113,11 +113,11 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">
+            <label htmlFor="maxDistance" className="block text-sm font-medium text-gray-700">
               Maximum Distance (km)
             </label>
             <input
-              type="number"
+              id="maxDistance"
               {...register('maxDistance')}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
             />
@@ -131,7 +131,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="notifications.matches" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Match Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -140,6 +140,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="notifications.matches"
                     type="checkbox"
                     {...register('notifications.matches')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -148,7 +149,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="notifications.messages" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Message Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -157,6 +158,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="notifications.messages"
                     type="checkbox"
                     {...register('notifications.messages')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -165,7 +167,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="notifications.email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Email Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -174,6 +176,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="notifications.email"
                     type="checkbox"
                     {...register('notifications.email')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -191,7 +194,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="privacy.showOnlineStatus" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Show Online Status
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -200,6 +203,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="privacy.showOnlineStatus"
                     type="checkbox"
                     {...register('privacy.showOnlineStatus')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -208,7 +212,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="privacy.showLocation" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Show Location
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -217,6 +221,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="privacy.showLocation"
                     type="checkbox"
                     {...register('privacy.showLocation')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -234,7 +239,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="safety.requireVerifiedMatch" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Require Verified Match
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -243,6 +248,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="safety.requireVerifiedMatch"
                     type="checkbox"
                     {...register('safety.requireVerifiedMatch')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
@@ -251,7 +257,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label htmlFor="safety.blockUnverifiedUsers" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                     Block Unverified Users
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -260,6 +266,7 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
                 </div>
                 <label className="block text-sm font-medium text-gray-700">
                   <input
+                    id="safety.blockUnverifiedUsers"
                     type="checkbox"
                     {...register('safety.blockUnverifiedUsers')}
                     className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"

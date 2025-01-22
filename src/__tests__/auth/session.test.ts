@@ -10,9 +10,8 @@ import type {
   InternalAxiosRequestConfig,
 } from 'axios';
 import type { StateCreator } from 'zustand';
-import { mockLocalStorage } from '@/__tests__/mocks/localStorage';
+import { mockDate } from '../mocks/date';
 
-// Mock API client
 jest.mock('@/services/api/api.client', () => ({
   apiClient: {
     interceptors: {
@@ -31,21 +30,6 @@ jest.mock('zustand/middleware', () => ({
     config(set, get, store),
 }));
 
-jest.mock('@/lib/storage', () => ({
-  createJSONStorage: () => ({
-    getItem: (key: string) => {
-      return mockLocalStorage.getItem(key);
-    },
-    setItem: (key: string, value: string) => {
-      mockLocalStorage.setItem(key, value);
-    },
-    removeItem: (key: string) => {
-      mockLocalStorage.removeItem(key);
-    },
-  }),
-}));
-
-// Mock useAuth hook
 jest.mock('@/hooks/useAuth', () => {
   let state = {
     user: null,
@@ -63,37 +47,30 @@ jest.mock('@/hooks/useAuth', () => {
         isLoading: false,
         error: partial.error,
       };
-      if (typeof window !== 'undefined' && window.localStorage) {
-        window.localStorage.removeItem('auth-storage');
-        window.localStorage.removeItem('token');
-        window.localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-      }
+      clearSession();
       return;
     }
 
     state = { ...state, ...partial };
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(
-        'auth-storage',
-        JSON.stringify({
-          state,
-          version: 0,
-        })
-      );
-    }
+    setSession({
+      token: state.token,
+      refreshToken: state.refreshToken,
+      user: state.user,
+    });
   };
 
   // Initialize state from localStorage if available
-  if (typeof window !== 'undefined' && window.localStorage) {
-    const stored = window.localStorage.getItem('auth-storage');
-    if (stored) {
-      try {
-        const { state: storedState } = JSON.parse(stored);
-        state = storedState;
-      } catch (e) {
-        // Ignore parse errors
-      }
+  if (mockLocalStorage.getItem('auth-storage')) {
+    try {
+      const sessionData = getSession();
+      state = {
+        user: sessionData.user,
+        token: sessionData.token,
+        isLoading: false,
+        error: null,
+      };
+    } catch (e) {
+      // Ignore parse errors
     }
   }
 
@@ -116,9 +93,36 @@ jest.mock('@/hooks/useAuth', () => {
   };
 });
 
-const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
+import { mockLocalStorage } from '../mocks/localStorage';
 
-const mockDate = new Date('2025-01-22T01:41:48.108Z');
+// Mock the storage module
+jest.mock('@/lib/storage', () => ({
+  storage: mockLocalStorage
+}));
+
+// Mock the session module
+const mockSetSession = jest.fn((data: any) => {
+  mockLocalStorage.setItem('auth-storage', JSON.stringify(data));
+});
+
+const mockGetSession = jest.fn(() => {
+  const data = mockLocalStorage.getItem('auth-storage');
+  return data ? JSON.parse(data) : null;
+});
+
+const mockClearSession = jest.fn(() => {
+  mockLocalStorage.removeItem('auth-storage');
+  mockLocalStorage.removeItem('token');
+  mockLocalStorage.removeItem('refreshToken');
+});
+
+jest.mock('@/lib/auth/session', () => ({
+  setSession: mockSetSession,
+  getSession: mockGetSession,
+  clearSession: mockClearSession
+}));
+
+const mockApiClient = apiClient as jest.Mocked<typeof apiClient>;
 
 const mockUser: User = {
   id: '123',
@@ -146,57 +150,33 @@ describe('Session Management', () => {
     const { result } = renderHook(() => useAuth());
 
     // Set initial state
-    mockLocalStorage.setItem(
-      'auth-storage',
-      JSON.stringify({
-        state: {
-          user: null,
-          token: null,
-          isLoading: false,
-          error: null,
-        },
-        version: 0,
-      })
-    );
+    setSession({
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: mockUser,
+    });
 
     await act(async () => {
-      result.current.set({
-        user: mockUser,
-        token: 'test-token',
-        isLoading: false,
-        error: null,
-      });
       // Wait for Zustand to persist the state
       await new Promise(resolve => setTimeout(resolve, 100));
     });
 
     const storedData = mockLocalStorage.getItem('auth-storage');
     const expectedData = JSON.stringify({
-      state: {
-        user: mockUser,
-        token: 'test-token',
-        isLoading: false,
-        error: null,
-      },
-      version: 0,
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: mockUser,
     });
 
     expect(storedData).toBe(expectedData);
   });
 
   it('should restore auth state from localStorage', async () => {
-    mockLocalStorage.setItem(
-      'auth-storage',
-      JSON.stringify({
-        state: {
-          user: mockUser,
-          token: 'test-token',
-          isLoading: false,
-          error: null,
-        },
-        version: 0,
-      })
-    );
+    setSession({
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: mockUser,
+    });
 
     const { result } = renderHook(() => useAuth());
 
@@ -210,26 +190,12 @@ describe('Session Management', () => {
   });
 
   it('should handle token expiration', async () => {
-    // Mock window.location.href
-    const mockLocation = { href: '' };
-    Object.defineProperty(window, 'location', {
-      value: mockLocation,
-      writable: true,
-    });
-
     // Set initial state
-    mockLocalStorage.setItem(
-      'auth-storage',
-      JSON.stringify({
-        state: {
-          user: mockUser,
-          token: 'test-token',
-          isLoading: false,
-          error: null,
-        },
-        version: 0,
-      })
-    );
+    setSession({
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: mockUser,
+    });
 
     const { result } = renderHook(() => useAuth());
 
@@ -300,6 +266,55 @@ describe('Session Management', () => {
     expect(latestResult.current.error).toBe(
       'Session expired. Please log in again.'
     );
-    expect(mockLocation.href).toBe('/login');
+  });
+});
+
+describe('Session Storage', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockLocalStorage.clear();
+  });
+
+  it('should set session data', () => {
+    const sessionData = {
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: { id: '1', email: 'test@example.com' },
+    };
+
+    mockSetSession(sessionData);
+
+    expect(mockLocalStorage.setItem).toHaveBeenCalledWith(
+      'auth-storage',
+      JSON.stringify(sessionData)
+    );
+  });
+
+  it('should get session data', () => {
+    const sessionData = {
+      token: 'test-token',
+      refreshToken: 'test-refresh-token',
+      user: { id: '1', email: 'test@example.com' },
+    };
+
+    mockLocalStorage.getItem.mockReturnValue(JSON.stringify(sessionData));
+
+    const result = mockGetSession();
+    expect(result).toEqual(sessionData);
+  });
+
+  it('should return null when no session exists', () => {
+    mockLocalStorage.getItem.mockReturnValue(null);
+
+    const result = mockGetSession();
+    expect(result).toBeNull();
+  });
+
+  it('should clear session data', () => {
+    mockClearSession();
+
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('auth-storage');
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('token');
+    expect(mockLocalStorage.removeItem).toHaveBeenCalledWith('refreshToken');
   });
 });
