@@ -73,11 +73,15 @@ describe('Email Verification', () => {
       expect(response.error).toBeUndefined();
     });
 
-    expect(mockApiClient.post).toHaveBeenCalledWith('/api/auth/send-verification-email', {}, {
-      headers: {
-        Authorization: 'Bearer test-token',
-      },
-    });
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/api/auth/send-verification-email',
+      {},
+      {
+        headers: {
+          Authorization: 'Bearer test-token',
+        },
+      }
+    );
   });
 
   it('should handle verification email sending failure', async () => {

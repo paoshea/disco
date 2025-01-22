@@ -5,22 +5,27 @@ This document captures interesting nuances discovered during testing and provide
 ## Matching Service (`match.service.ts`)
 
 ### User Type Conversion
+
 **Test File**: `match.service.test.ts`
 
 #### Key Insights:
+
 1. **Role Handling**
+
    - Default role is 'user' if undefined
    - Supports 'admin' and 'moderator' roles
    - 🔍 **Potential Issue**: No validation against invalid role types
    - 💡 **Recommendation**: Add role validation in the service layer
 
 2. **Location Privacy**
+
    - Location data is optional
    - Supports null accuracy values
    - 🔍 **Potential Issue**: No validation of privacy mode values
    - 💡 **Recommendation**: Add privacy mode enum validation
 
 3. **Email Verification**
+
    - Handles both verified and unverified states
    - Uses null check for emailVerified field
    - 🔍 **Potential Issue**: Verification status could be more granular
@@ -34,7 +39,9 @@ This document captures interesting nuances discovered during testing and provide
 ### Testing Infrastructure Insights
 
 #### Mock Setup Requirements
+
 1. **Prisma Client**
+
    - Must be mocked before any imports
    - Requires custom event methods mocking
    - 🔍 **Potential Issue**: Browser environment detection in tests
@@ -49,6 +56,7 @@ This document captures interesting nuances discovered during testing and provide
 #### Test Coverage Gaps
 
 1. **Edge Cases**
+
    - Missing tests for:
      - Maximum field lengths
      - Special characters in names
@@ -67,14 +75,18 @@ This document captures interesting nuances discovered during testing and provide
 ### Testing Insights
 
 1. **Mock Type Safety**
+
    - TypeScript's type checking for mocked functions requires explicit typing
    - Use `jest.MockedFunction<typeof>` for proper mock typing
    - Example:
      ```typescript
-     const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<typeof prisma.location.findFirst>;
+     const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<
+       typeof prisma.location.findFirst
+     >;
      ```
 
 2. **Prisma Model Requirements**
+
    - PrismaUser model requires all fields to be present in mocks
    - Missing fields like `lastLogin`, `lastStreak`, `safetyEnabled` will cause type errors
    - Example required fields:
@@ -92,11 +104,13 @@ This document captures interesting nuances discovered during testing and provide
      ```
 
 3. **Location Privacy Handling**
+
    - Location service properly handles different privacy modes
    - Tests verify privacy mode transitions (precise -> approximate)
    - Recommendation: Add validation for privacy mode values
 
 4. **Error Handling**
+
    - Service returns `ServiceResponse` type with success/error states
    - Database errors are properly caught and transformed
    - Recommendation: Add more specific error types
@@ -112,6 +126,7 @@ This document captures interesting nuances discovered during testing and provide
 ### Common Issues & Solutions
 
 1. **Mock Data Complexity**
+
    ```typescript
    // Problem: Missing required fields
    const mockUser = {
@@ -127,6 +142,7 @@ This document captures interesting nuances discovered during testing and provide
    ```
 
 2. **Location Updates**
+
    ```typescript
    // Problem: Location update fails silently
    await locationService.updateLocation(userId, location);
@@ -139,6 +155,7 @@ This document captures interesting nuances discovered during testing and provide
    ```
 
 3. **Privacy Mode Changes**
+
    ```typescript
    // Problem: Invalid privacy mode
    await locationService.updateLocation(userId, {
@@ -156,11 +173,13 @@ This document captures interesting nuances discovered during testing and provide
 ### Test Coverage Goals
 
 1. **Edge Cases**
+
    - [ ] Test maximum radius limits
    - [ ] Test location accuracy thresholds
    - [ ] Test timezone handling
 
 2. **Performance Tests**
+
    - [ ] Test nearby user search with large datasets
    - [ ] Test location update batching
    - [ ] Test concurrent updates
@@ -173,6 +192,7 @@ This document captures interesting nuances discovered during testing and provide
 ### Monitoring Recommendations
 
 1. **Key Metrics**
+
    - Location update frequency per user
    - Privacy mode distribution
    - Search radius patterns
@@ -187,16 +207,19 @@ This document captures interesting nuances discovered during testing and provide
 ### Future Improvements
 
 1. **Type Safety**
+
    - Create stricter types for location data
    - Add validation decorators
    - Use zod for runtime validation
 
 2. **Error Handling**
+
    - Add custom error classes
    - Improve error messages
    - Add retry logic for transient failures
 
 3. **Performance**
+
    - Add caching for nearby searches
    - Implement batch updates
    - Optimize geospatial queries
@@ -209,10 +232,13 @@ This document captures interesting nuances discovered during testing and provide
 ## Profile Service (`profile.service.ts`)
 
 ### Profile Edit Component (`ProfileEdit.tsx`)
+
 **Test File**: `ProfileEdit.test.tsx`
 
 #### Key Insights:
+
 1. **Form Validation**
+
    - Required fields (firstName, lastName, email) are properly validated
    - Email format validation using regex pattern
    - Phone number format validation (optional field)
@@ -220,12 +246,14 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Add internationalization support for phone numbers
 
 2. **State Management**
+
    - Loading state properly managed during form submission
    - Error state handled with accessibility considerations (role="alert")
    - 🔍 **Potential Issue**: No debounce on form submission
    - 💡 **Recommendation**: Add debounce to prevent double submissions
 
 3. **Data Updates**
+
    - Only changed fields are sent to the server
    - Prevents unnecessary data transmission
    - 🔍 **Potential Issue**: No optimistic updates
@@ -240,6 +268,7 @@ This document captures interesting nuances discovered during testing and provide
 #### Testing Infrastructure Insights
 
 1. **Mock Setup**
+
    - User mock data needs careful date handling
    - Update function mocking requires proper typing
    - 🔍 **Potential Issue**: Timezone handling in tests
@@ -253,15 +282,19 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Add race condition tests
 
 ## Geolocation Hook (`useGeolocation.ts`)
+
 **Test File**: `useGeolocation.test.ts`
 
 ### Key Insights:
+
 1. **State Management**
+
    - 🔍 **Issue**: Initial implementation caused infinite update loops due to effect dependencies
    - ✅ **Solution**: Used `useRef` for options to prevent unnecessary rerenders
    - 💡 **Best Practice**: Store frequently changing props in refs when they're only needed in effects
 
 2. **Async Testing**
+
    - 🔍 **Issue**: React warnings about updates not wrapped in act()
    - ✅ **Solution**: Used Jest's timer mocking (`useFakeTimers`) and properly wrapped updates in `act`
    - 💡 **Best Practice**: For geolocation testing:
@@ -270,6 +303,7 @@ This document captures interesting nuances discovered during testing and provide
      - Wrap state updates in act()
 
 3. **Effect Dependencies**
+
    - 🔍 **Issue**: Including options in effect dependencies caused unnecessary reruns
    - ✅ **Solution**: Only included stable callbacks in dependencies, read options from ref
    - 💡 **Best Practice**: Minimize effect dependencies to prevent unnecessary reruns
@@ -281,12 +315,15 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Consider adding tests for permission denied cases
 
 ### Future Considerations
+
 1. **Edge Cases**
+
    - [ ] Test high-frequency position updates
    - [ ] Test position accuracy thresholds
    - [ ] Test behavior when switching between watch and single-shot modes
 
 2. **Error Handling**
+
    - [ ] Add specific error codes for different failure scenarios
    - [ ] Consider retry logic for transient failures
    - [ ] Add timeout handling for slow position responses
@@ -301,12 +338,14 @@ This document captures interesting nuances discovered during testing and provide
 ### Testing Insights
 
 1. **State Management with Zustand**
+
    - Mock implementation requires careful handling of state updates
    - State must be properly cleared during token expiration
    - 🔍 **Potential Issue**: State updates might not trigger React re-renders
    - 💡 **Recommendation**: Return new object references to ensure React updates
 
 2. **localStorage Persistence**
+
    - All auth-related items must be cleared on token expiration:
      - `auth-storage`
      - `token`
@@ -315,6 +354,7 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Maintain a list of all auth-related storage keys
 
 3. **Token Expiration Handling**
+
    - Requires proper error interception from API client
    - Must handle both state and storage cleanup
    - Must trigger navigation to login page
@@ -329,28 +369,34 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Extract mock implementations to shared test utilities
 
 ## OAuth Integration (`auth.ts`)
+
 **Test File**: `oauth.test.tsx`
 
 #### Key Insights:
+
 1. **Mock Strategy**
+
    - Created dedicated mock provider for Google OAuth
    - Mocked NextAuth.js functions using Jest
    - 🔍 **Potential Issue**: Need to consider mocking other OAuth providers (e.g., Facebook, GitHub)
    - 💡 **Recommendation**: Create a mock factory for different OAuth providers
 
 2. **Environment Variables**
+
    - Tests verify proper handling of missing OAuth configuration
    - Mock environment variables set in test setup
    - 🔍 **Potential Issue**: Environment variables not validated at runtime
    - 💡 **Recommendation**: Add runtime validation for critical OAuth configuration
 
 3. **Error Handling**
+
    - Tests cover OAuth sign-in failures
    - Error messages properly displayed with accessibility roles
    - 🔍 **Potential Issue**: Limited error scenarios covered
    - 💡 **Recommendation**: Add tests for network failures, timeout scenarios
 
 4. **Session Management**
+
    - Session persistence verified after OAuth login
    - Session expiry properly handled
    - 🔍 **Potential Issue**: No tests for token refresh flow
@@ -362,7 +408,9 @@ This document captures interesting nuances discovered during testing and provide
    - 💡 **Recommendation**: Add tests for handling incomplete OAuth profile data
 
 #### Testing Infrastructure Insights:
+
 1. **Jest Configuration**
+
    - Required special setup for ES modules and JSX
    - Custom transformIgnorePatterns for NextAuth dependencies
    - 🔍 **Potential Issue**: Complex setup might be hard to maintain
@@ -377,12 +425,15 @@ This document captures interesting nuances discovered during testing and provide
 ## Event Service Testing Insights
 
 ### Event Validation and Error Handling
+
 1. **Event Existence Checks**
+
    - Always validate event existence before operations (update, join, etc.)
    - Use `findUnique` for precise record lookup
    - Return early with appropriate error messages when event not found
 
 2. **Participant Management**
+
    - Track participants using a separate join table
    - Validate participant count against `maxParticipants`
    - Prevent duplicate joins and creator self-joins
@@ -420,19 +471,22 @@ This document captures interesting nuances discovered during testing and provide
      ```
 
 ### Testing Strategies
+
 1. **Prisma Mock Setup**
+
    - Mock all required Prisma client methods:
      ```typescript
-     prisma.event.create
-     prisma.event.findMany
-     prisma.event.findFirst
-     prisma.event.findUnique
-     prisma.event.update
-     prisma.event.delete
+     prisma.event.create;
+     prisma.event.findMany;
+     prisma.event.findFirst;
+     prisma.event.findUnique;
+     prisma.event.update;
+     prisma.event.delete;
      ```
    - Include proper type assertions for mocked functions
 
 2. **Test Cases Coverage**
+
    - Event Creation:
      - Successful creation with valid data
      - Validation of required fields
@@ -458,12 +512,15 @@ This document captures interesting nuances discovered during testing and provide
    - Include specific error messages for different failure cases
 
 ### Best Practices
+
 1. **Data Consistency**
+
    - Always include creator and participant details in responses
    - Maintain consistent date formats across the service
    - Use proper typing for event properties
 
 2. **Error Messages**
+
    - Use clear, specific error messages:
      - "Event not found"
      - "Event is full"
@@ -478,17 +535,20 @@ This document captures interesting nuances discovered during testing and provide
 ## Recommended Codebase Modifications
 
 ### Immediate Improvements
+
 1. **Type Safety**
+
    ```typescript
    // Add enum for role types
    export enum UserRole {
      USER = 'user',
      ADMIN = 'admin',
-     MODERATOR = 'moderator'
+     MODERATOR = 'moderator',
    }
    ```
 
 2. **Validation**
+
    ```typescript
    // Add validation functions
    export function validateUserRole(role: string): boolean {
@@ -507,11 +567,14 @@ This document captures interesting nuances discovered during testing and provide
    ```
 
 ### Future Considerations
+
 1. **Performance**
+
    - Add caching for frequently accessed user data
    - Implement batch processing for multiple user conversions
 
 2. **Security**
+
    - Add rate limiting for role changes
    - Implement audit logging for sensitive operations
 
@@ -522,6 +585,7 @@ This document captures interesting nuances discovered during testing and provide
 ## Common Troubleshooting Scenarios
 
 ### 1. User Role Issues
+
 ```typescript
 // Problem: User role not being set correctly
 const user = convertToAppUser(prismaUser);
@@ -532,6 +596,7 @@ console.log(user.role); // undefined
 ```
 
 ### 2. Location Privacy
+
 ```typescript
 // Problem: Location privacy mode not working
 const user = convertToAppUser(prismaUser);
@@ -542,6 +607,7 @@ console.log(user.location?.privacyMode); // undefined
 ```
 
 ### 3. Streak Count Reset
+
 ```typescript
 // Problem: Streak count unexpectedly reset
 const user = convertToAppUser(prismaUser);
@@ -554,6 +620,7 @@ console.log(user.streakCount); // 0
 ## Test Environment Setup
 
 ### Required Mocks
+
 ```typescript
 jest.mock('@/lib/prisma', () => ({
   prisma: {
@@ -571,11 +638,14 @@ jest.mock('@/lib/redis', () => ({
 ```
 
 ### Common Test Failures
+
 1. **Prisma Browser Environment Error**
+
    - Cause: Test environment not properly configured
    - Solution: Mock Prisma client before any imports
 
 2. **Redis Connection Error**
+
    - Cause: Redis client not properly mocked
    - Solution: Add comprehensive Redis mock
 
@@ -586,6 +656,7 @@ jest.mock('@/lib/redis', () => ({
 ## Monitoring Recommendations
 
 1. **Key Metrics to Track**
+
    - User role change frequency
    - Location privacy mode usage
    - Streak count distribution
@@ -598,11 +669,13 @@ jest.mock('@/lib/redis', () => ({
 ## Future Test Coverage Goals
 
 1. **Integration Tests**
+
    - Add tests for role-based access control
    - Test location privacy in real scenarios
    - Verify streak calculation accuracy
 
 2. **Performance Tests**
+
    - Measure user conversion speed
    - Test batch processing capability
    - Verify caching effectiveness

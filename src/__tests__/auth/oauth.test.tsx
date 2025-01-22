@@ -41,7 +41,10 @@ describe('OAuth Integration', () => {
       delete process.env.GOOGLE_CLIENT_SECRET;
 
       const validateConfig = () => {
-        if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+        if (
+          !process.env.GOOGLE_CLIENT_ID ||
+          !process.env.GOOGLE_CLIENT_SECRET
+        ) {
           throw new Error('Missing OAuth configuration');
         }
         return mockGoogleProvider;

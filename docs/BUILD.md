@@ -133,6 +133,7 @@ session({ session, token }) {
 
 **Issue:**
 Redis connection may show `NOAUTH Authentication required` errors when:
+
 - Redis is running without authentication but code expects a password
 - Password is set but empty in environment variables
 - Redis is configured with authentication but no password is provided
@@ -140,6 +141,7 @@ Redis connection may show `NOAUTH Authentication required` errors when:
 **Solution:**
 
 1. Environment Configuration:
+
 ```bash
 # Redis Configuration
 LOCATION_REDIS_URL=localhost:6379
@@ -147,6 +149,7 @@ LOCATION_REDIS_PASSWORD=  # Empty for non-auth mode
 ```
 
 2. Redis Client Configuration:
+
 ```typescript
 const redisConfig = {
   host: env.REDIS_HOST || 'localhost',
@@ -158,10 +161,13 @@ const redisConfig = {
 ```
 
 3. Error Handling:
+
 ```typescript
 redis.on('error', (error: Error) => {
   if (error.message.includes('NOAUTH')) {
-    console.debug('Redis running in non-auth mode - this is normal if no password is set');
+    console.debug(
+      'Redis running in non-auth mode - this is normal if no password is set'
+    );
   } else {
     console.error('Redis connection error:', error);
   }
@@ -171,11 +177,13 @@ redis.on('error', (error: Error) => {
 ### 2. Development vs Production Configuration
 
 **Development:**
+
 - Can run without authentication
 - Set `LOCATION_REDIS_PASSWORD=` (empty) in `.env`
 - Errors will be logged as debug messages
 
 **Production:**
+
 - Should always use authentication
 - Set strong password in environment variables
 - Configure Redis server with authentication
@@ -357,6 +365,7 @@ export default function Page() {
 Pages using `useSession` from `next-auth/react` may encounter undefined errors during static generation or server-side rendering.
 
 **Solution:**
+
 - Replace `useSession` with custom `useAuth` hook
 - Update component structure to handle loading and authentication states
 - Ensure proper redirection for unauthenticated users
@@ -380,6 +389,7 @@ React.useEffect(() => {
 ```
 
 **Affected Pages:**
+
 - `/about`
 - `/blog`
 - `/careers`
@@ -395,6 +405,7 @@ React.useEffect(() => {
 Pages with authentication may fail during static generation due to missing session context.
 
 **Solution:**
+
 - Add proper loading states
 - Handle null/undefined user states
 - Use dynamic imports for authenticated content when necessary
@@ -448,12 +459,14 @@ Remember to always:
 ## Best Practices
 
 1. **Authentication:**
+
    - Use `useAuth` hook consistently across all authenticated pages
    - Always handle loading states
    - Implement proper redirection
    - Add appropriate error boundaries
 
 2. **Redis:**
+
    - Never commit Redis passwords to version control
    - Use different configurations for development and production
    - Implement proper error handling

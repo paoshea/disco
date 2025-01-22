@@ -1,7 +1,6 @@
 import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useToast } from '@/hooks/use-toast';
-import { LabeledSwitch } from '@/components/ui/LabeledSwitch';
 import { Button } from '@/components/ui/Button';
 import { userService } from '@/services/api/user.service';
 import type { User, UserPreferences } from '@/types/user';
@@ -130,42 +129,57 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               Configure how you receive notifications.
             </p>
             <div className="mt-4 space-y-4">
-              <LabeledSwitch
-                checked={watch('notifications.matches')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'matches',
-                    'notifications',
-                    checked
-                  );
-                }}
-                label="Match Notifications"
-                description="Get notified when you have new matches"
-              />
-              <LabeledSwitch
-                checked={watch('notifications.messages')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'messages',
-                    'notifications',
-                    checked
-                  );
-                }}
-                label="Message Notifications"
-                description="Get notified when you receive new messages"
-              />
-              <LabeledSwitch
-                checked={watch('notifications.events')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'events',
-                    'notifications',
-                    checked
-                  );
-                }}
-                label="Event Notifications"
-                description="Get notified about upcoming events and activities"
-              />
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Match Notifications
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when you have new matches
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('notifications.matches')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Message Notifications
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when you receive new messages
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('notifications.messages')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Email Notifications
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Receive notifications via email
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('notifications.email')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
@@ -175,69 +189,83 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               Manage your privacy settings.
             </p>
             <div className="mt-4 space-y-4">
-              <LabeledSwitch
-                checked={watch('privacy.showOnlineStatus')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'showOnlineStatus',
-                    'privacy',
-                    checked
-                  );
-                }}
-                label="Show Online Status"
-                description="Let others see when you're online"
-              />
-              <LabeledSwitch
-                checked={watch('privacy.showLastSeen')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'showLastSeen',
-                    'privacy',
-                    checked
-                  );
-                }}
-                label="Show Last Seen"
-                description="Let others see when you were last active"
-              />
-              <LabeledSwitch
-                checked={watch('privacy.showLocation')}
-                onChange={checked => {
-                  void handlePreferenceChange(
-                    'showLocation',
-                    'privacy',
-                    checked
-                  );
-                }}
-                label="Show Location"
-                description="Let others see your approximate location"
-              />
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Show Online Status
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Let others see when you're online
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('privacy.showOnlineStatus')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Show Location
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Show your location to others
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('privacy.showLocation')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Safety Settings
-            </label>
-            <div className="mt-2 space-y-2">
-              <LabeledSwitch
-                checked={watch('safety.requireVerifiedMatch')}
-                onChange={checked =>
-                  setValue('safety.requireVerifiedMatch', checked)
-                }
-                label="Require Verified Match"
-              />
-              <LabeledSwitch
-                checked={watch('safety.meetupCheckins')}
-                onChange={checked => setValue('safety.meetupCheckins', checked)}
-                label="Enable Meetup Check-ins"
-              />
-              <LabeledSwitch
-                checked={watch('safety.emergencyContactAlerts')}
-                onChange={checked =>
-                  setValue('safety.emergencyContactAlerts', checked)
-                }
-                label="Enable Emergency Contact Alerts"
-              />
+            <h3 className="text-lg font-medium">Safety</h3>
+            <p className="text-sm text-muted-foreground">
+              Configure your safety settings.
+            </p>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Require Verified Match
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Only match with verified users
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('safety.requireVerifiedMatch')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
+              <div className="flex items-center justify-between space-x-4">
+                <div className="space-y-0.5">
+                  <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                    Block Unverified Users
+                  </label>
+                  <p className="text-sm text-muted-foreground">
+                    Prevent unverified users from contacting you
+                  </p>
+                </div>
+                <label className="block text-sm font-medium text-gray-700">
+                  <input
+                    type="checkbox"
+                    {...register('safety.blockUnverifiedUsers')}
+                    className="peer mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>

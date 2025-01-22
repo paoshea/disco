@@ -38,20 +38,20 @@ const mockUser: User = {
       messages: true,
       matches: true,
       events: true,
-      safety: true
+      safety: true,
     },
     privacy: {
       showAge: true,
       showLocation: true,
       showOnlineStatus: true,
-      showLastSeen: true
+      showLastSeen: true,
     },
     safety: {
       requireVerifiedMatch: true,
       meetupCheckins: true,
-      emergencyContactAlerts: true
-    }
-  }
+      emergencyContactAlerts: true,
+    },
+  },
 };
 
 const mockOnUpdate = jest.fn();
@@ -65,16 +65,20 @@ describe('ProfileEdit', () => {
 
   it('should render user profile data', () => {
     render(<ProfileEdit user={mockUser} onUpdate={mockOnUpdate} />);
-    
+
     expect(screen.getByLabelText(/first name/i)).toHaveValue('Test');
     expect(screen.getByLabelText(/last name/i)).toHaveValue('User');
     expect(screen.getByLabelText(/email/i)).toHaveValue('test@example.com');
     expect(screen.getByLabelText(/phone number/i)).toHaveValue('+1234567890');
     expect(screen.getByLabelText(/bio/i)).toHaveValue('Test bio');
-    
+
     // Check selected interests
-    expect(screen.getByRole('button', { name: 'Technology' })).toHaveClass('bg-primary-100');
-    expect(screen.getByRole('button', { name: 'Gaming' })).toHaveClass('bg-primary-100');
+    expect(screen.getByRole('button', { name: 'Technology' })).toHaveClass(
+      'bg-primary-100'
+    );
+    expect(screen.getByRole('button', { name: 'Gaming' })).toHaveClass(
+      'bg-primary-100'
+    );
   });
 
   it('should handle interest selection', async () => {
@@ -87,7 +91,7 @@ describe('ProfileEdit', () => {
     // Verify the onUpdate call includes the new interest
     await waitFor(() => {
       expect(mockOnUpdate).toHaveBeenCalledWith({
-        interests: ['Technology', 'Gaming', 'Sports']
+        interests: ['Technology', 'Gaming', 'Sports'],
       });
     });
 
@@ -98,7 +102,7 @@ describe('ProfileEdit', () => {
     // Verify the onUpdate call removes the interest
     await waitFor(() => {
       expect(mockOnUpdate).toHaveBeenCalledWith({
-        interests: ['Gaming', 'Sports']
+        interests: ['Gaming', 'Sports'],
       });
     });
   });
@@ -118,7 +122,9 @@ describe('ProfileEdit', () => {
     // Check for validation errors
     await waitFor(() => {
       const errorDiv = screen.getByRole('alert');
-      expect(errorDiv).toHaveTextContent('First name is required, Last name is required');
+      expect(errorDiv).toHaveTextContent(
+        'First name is required, Last name is required'
+      );
       expect(mockOnUpdate).not.toHaveBeenCalled();
     });
   });
@@ -144,7 +150,7 @@ describe('ProfileEdit', () => {
       expect(mockOnUpdate).toHaveBeenCalledWith({
         firstName: 'Updated',
         lastName: 'Name',
-        bio: 'Updated bio'
+        bio: 'Updated bio',
       });
     });
   });
@@ -165,9 +171,11 @@ describe('ProfileEdit', () => {
   });
 
   it('should disable form submission while submitting', async () => {
-    const mockOnUpdateWithDelay = jest.fn().mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100))
-    );
+    const mockOnUpdateWithDelay = jest
+      .fn()
+      .mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
     render(<ProfileEdit user={mockUser} onUpdate={mockOnUpdateWithDelay} />);
 
@@ -177,26 +185,36 @@ describe('ProfileEdit', () => {
     await waitFor(() => {
       expect(submitButton).toHaveAttribute('disabled');
       expect(submitButton).toHaveTextContent('Saving...');
-      expect(submitButton.closest('button')).toHaveClass('opacity-50', 'cursor-not-allowed');
+      expect(submitButton.closest('button')).toHaveClass(
+        'opacity-50',
+        'cursor-not-allowed'
+      );
     });
 
     await waitFor(() => {
       expect(submitButton).not.toHaveAttribute('disabled');
       expect(submitButton).toHaveTextContent('Save Changes');
-      expect(submitButton.closest('button')).not.toHaveClass('opacity-50', 'cursor-not-allowed');
+      expect(submitButton.closest('button')).not.toHaveClass(
+        'opacity-50',
+        'cursor-not-allowed'
+      );
     });
   });
 
   it('should render profile settings with user preferences', () => {
     render(<ProfileEdit user={mockUser} onUpdate={mockOnUpdate} />);
-    
+
     // Check form fields
-    expect(screen.getByLabelText(/first name/i)).toHaveValue(mockUser.firstName);
+    expect(screen.getByLabelText(/first name/i)).toHaveValue(
+      mockUser.firstName
+    );
     expect(screen.getByLabelText(/last name/i)).toHaveValue(mockUser.lastName);
     expect(screen.getByLabelText(/email/i)).toHaveValue(mockUser.email);
-    expect(screen.getByLabelText(/phone number/i)).toHaveValue(mockUser.phoneNumber);
+    expect(screen.getByLabelText(/phone number/i)).toHaveValue(
+      mockUser.phoneNumber
+    );
     expect(screen.getByLabelText(/bio/i)).toHaveValue(mockUser.bio);
-    
+
     // Check interests
     (mockUser.interests || []).forEach(interest => {
       const button = screen.getByRole('button', { name: interest });
@@ -225,7 +243,7 @@ describe('ProfileEdit', () => {
       expect(mockOnUpdate).toHaveBeenCalledWith({
         firstName: 'Updated',
         lastName: 'Name',
-        bio: 'Updated bio'
+        bio: 'Updated bio',
       });
     });
   });
@@ -239,7 +257,9 @@ describe('ProfileEdit', () => {
     await userEvent.clear(firstNameInput);
     fireEvent.click(submitButton);
 
-    expect(await screen.findByRole('alert')).toHaveTextContent('First name is required');
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'First name is required'
+    );
     expect(mockOnUpdate).not.toHaveBeenCalled();
   });
 
@@ -256,9 +276,11 @@ describe('ProfileEdit', () => {
   });
 
   it('should disable form submission while submitting', async () => {
-    const mockOnUpdateWithDelay = jest.fn().mockImplementation(
-      () => new Promise((resolve) => setTimeout(resolve, 100))
-    );
+    const mockOnUpdateWithDelay = jest
+      .fn()
+      .mockImplementation(
+        () => new Promise(resolve => setTimeout(resolve, 100))
+      );
 
     render(<ProfileEdit user={mockUser} onUpdate={mockOnUpdateWithDelay} />);
 
@@ -280,7 +302,7 @@ describe('ProfileEdit', () => {
 
     await userEvent.clear(firstNameInput);
     await userEvent.type(firstNameInput, 'Updated');
-    
+
     fireEvent.click(submitButton);
     expect(submitButton).toHaveAttribute('disabled');
 

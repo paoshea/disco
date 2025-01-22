@@ -43,7 +43,9 @@ class UserService {
     }
   }
 
-  async updateProfile(data: Partial<UserProfile> & { id: string }): Promise<User> {
+  async updateProfile(
+    data: Partial<UserProfile> & { id: string }
+  ): Promise<User> {
     try {
       const { id, ...updateData } = data;
       let formData: FormData | object = updateData;

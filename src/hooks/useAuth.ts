@@ -88,10 +88,13 @@ const authResponseSchema = z.object({
 
 // Add axios interceptor to handle token expiration
 apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.name === 'TokenExpiredError' || 
-        (error.response?.status === 401 && error.response?.data?.message === 'Token expired')) {
+  response => response,
+  error => {
+    if (
+      error.name === 'TokenExpiredError' ||
+      (error.response?.status === 401 &&
+        error.response?.data?.message === 'Token expired')
+    ) {
       const auth = useAuth.getState();
       auth.set({
         user: null,
@@ -105,7 +108,7 @@ apiClient.interceptors.response.use(
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set) => ({
+    set => ({
       user: null,
       token: null,
       isLoading: false,
@@ -237,14 +240,21 @@ export const useAuth = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
           const token = useAuth.getState().token;
-          await apiClient.post('/api/auth/send-verification-email', {}, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          });
+          await apiClient.post(
+            '/api/auth/send-verification-email',
+            {},
+            {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            }
+          );
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to send verification email';
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to send verification email';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -258,9 +268,11 @@ export const useAuth = create<AuthState>()(
             token,
           });
 
-          const result = z.object({
-            user: userSchema,
-          }).safeParse(response.data);
+          const result = z
+            .object({
+              user: userSchema,
+            })
+            .safeParse(response.data);
 
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
@@ -272,7 +284,8 @@ export const useAuth = create<AuthState>()(
           set({ user });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to verify email';
+          const message =
+            error instanceof Error ? error.message : 'Failed to verify email';
           set({ error: message });
           return { success: false, error: message };
         } finally {

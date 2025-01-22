@@ -4,8 +4,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { describe, it, expect, jest, beforeEach } from '@jest/globals';
 import { apiClient } from '@/services/api/api.client';
 import type { User } from '@/types/user';
-import type { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type {
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig,
+} from 'axios';
 import type { StateCreator } from 'zustand';
+import { mockLocalStorage } from '@/__tests__/mocks/localStorage';
 
 // Mock API client
 jest.mock('@/services/api/api.client', () => ({
@@ -22,18 +27,20 @@ jest.mock('@/services/api/api.client', () => ({
 
 // Mock Zustand persist middleware
 jest.mock('zustand/middleware', () => ({
-  persist: (config: any) => (set: any, get: any, store: any) => config(set, get, store),
+  persist: (config: any) => (set: any, get: any, store: any) =>
+    config(set, get, store),
+}));
+
+jest.mock('@/lib/storage', () => ({
   createJSONStorage: () => ({
     getItem: (key: string) => {
-      const str = window.localStorage.getItem(key);
-      if (!str) return null;
-      return JSON.parse(str);
+      return mockLocalStorage.getItem(key);
     },
     setItem: (key: string, value: string) => {
-      window.localStorage.setItem(key, JSON.stringify(value));
+      mockLocalStorage.setItem(key, value);
     },
     removeItem: (key: string) => {
-      window.localStorage.removeItem(key);
+      mockLocalStorage.removeItem(key);
     },
   }),
 }));
@@ -127,29 +134,6 @@ const mockUser: User = {
   createdAt: mockDate,
   updatedAt: mockDate,
 };
-
-// Mock localStorage
-const mockStorage: { [key: string]: string } = {};
-
-const mockLocalStorage = {
-  getItem: (key: string) => mockStorage[key] || null,
-  setItem: (key: string, value: string) => {
-    mockStorage[key] = value;
-  },
-  clear: () => {
-    Object.keys(mockStorage).forEach(key => {
-      delete mockStorage[key];
-    });
-  },
-  removeItem: (key: string) => {
-    delete mockStorage[key];
-  },
-};
-
-Object.defineProperty(window, 'localStorage', {
-  value: mockLocalStorage,
-  writable: true,
-});
 
 describe('Session Management', () => {
   beforeEach(() => {
@@ -313,7 +297,9 @@ describe('Session Management', () => {
     const { result: latestResult } = renderHook(() => useAuth());
     expect(latestResult.current.user).toBeNull();
     expect(latestResult.current.token).toBeNull();
-    expect(latestResult.current.error).toBe('Session expired. Please log in again.');
+    expect(latestResult.current.error).toBe(
+      'Session expired. Please log in again.'
+    );
     expect(mockLocation.href).toBe('/login');
   });
 });

@@ -52,10 +52,10 @@ export const useGeolocation = (options: GeolocationOptions = {}) => {
   }, []);
 
   useEffect(() => {
-    const { 
+    const {
       watchPosition = false,
       timeout = 10000,
-      ...positionOptions 
+      ...positionOptions
     } = optionsRef.current;
 
     if (!navigator.geolocation) {

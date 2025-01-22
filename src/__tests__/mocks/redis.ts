@@ -8,7 +8,9 @@ interface RedisClient {
   expire(key: string, seconds: number): Promise<number>;
 }
 
-export const redisMock: jest.Mocked<RedisClient> = {
+const mockRedis = {
+  connect: jest.fn(),
+  disconnect: jest.fn(),
   get: jest.fn(),
   set: jest.fn(),
   del: jest.fn(),
@@ -18,8 +20,10 @@ export const redisMock: jest.Mocked<RedisClient> = {
 
 jest.mock('@/lib/redis', () => ({
   __esModule: true,
-  redis: redisMock,
+  redis: mockRedis,
 }));
+
+export { mockRedis };
 
 describe('Redis Mock', () => {
   beforeEach(() => {
@@ -28,42 +32,42 @@ describe('Redis Mock', () => {
 
   it('should mock get operation', async () => {
     const mockValue = 'test-value';
-    redisMock.get.mockResolvedValue(mockValue);
+    mockRedis.get.mockResolvedValue(mockValue);
 
-    const result = await redisMock.get('test-key');
+    const result = await mockRedis.get('test-key');
     expect(result).toBe(mockValue);
-    expect(redisMock.get).toHaveBeenCalledWith('test-key');
+    expect(mockRedis.get).toHaveBeenCalledWith('test-key');
   });
 
   it('should mock set operation', async () => {
-    redisMock.set.mockResolvedValue('OK');
+    mockRedis.set.mockResolvedValue('OK');
 
-    const result = await redisMock.set('test-key', 'test-value');
+    const result = await mockRedis.set('test-key', 'test-value');
     expect(result).toBe('OK');
-    expect(redisMock.set).toHaveBeenCalledWith('test-key', 'test-value');
+    expect(mockRedis.set).toHaveBeenCalledWith('test-key', 'test-value');
   });
 
   it('should mock del operation', async () => {
-    redisMock.del.mockResolvedValue(1);
+    mockRedis.del.mockResolvedValue(1);
 
-    const result = await redisMock.del('test-key');
+    const result = await mockRedis.del('test-key');
     expect(result).toBe(1);
-    expect(redisMock.del).toHaveBeenCalledWith('test-key');
+    expect(mockRedis.del).toHaveBeenCalledWith('test-key');
   });
 
   it('should mock exists operation', async () => {
-    redisMock.exists.mockResolvedValue(1);
+    mockRedis.exists.mockResolvedValue(1);
 
-    const result = await redisMock.exists('test-key');
+    const result = await mockRedis.exists('test-key');
     expect(result).toBe(1);
-    expect(redisMock.exists).toHaveBeenCalledWith('test-key');
+    expect(mockRedis.exists).toHaveBeenCalledWith('test-key');
   });
 
   it('should mock expire operation', async () => {
-    redisMock.expire.mockResolvedValue(1);
+    mockRedis.expire.mockResolvedValue(1);
 
-    const result = await redisMock.expire('test-key', 3600);
+    const result = await mockRedis.expire('test-key', 3600);
     expect(result).toBe(1);
-    expect(redisMock.expire).toHaveBeenCalledWith('test-key', 3600);
+    expect(mockRedis.expire).toHaveBeenCalledWith('test-key', 3600);
   });
 });

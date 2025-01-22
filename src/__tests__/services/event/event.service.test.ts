@@ -1,5 +1,9 @@
 import { jest, describe, beforeEach, it, expect } from '@jest/globals';
-import type { Event as PrismaEvent, User as PrismaUser, Location as PrismaLocation } from '@prisma/client';
+import type {
+  Event as PrismaEvent,
+  User as PrismaUser,
+  Location as PrismaLocation,
+} from '@prisma/client';
 
 // Mock modules before importing the service
 jest.mock('@/lib/prisma', () => ({
@@ -111,7 +115,9 @@ describe('EventService', () => {
     };
 
     it('should create a new event successfully', async () => {
-      const mockCreate = prisma.event.create as jest.MockedFunction<typeof prisma.event.create>;
+      const mockCreate = prisma.event.create as jest.MockedFunction<
+        typeof prisma.event.create
+      >;
       mockCreate.mockResolvedValue({
         id: 'event1',
         title: eventData.title,
@@ -139,22 +145,28 @@ describe('EventService', () => {
 
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toEqual(expect.objectContaining({
-          title: eventData.title,
-          description: eventData.description,
-          creatorId: eventData.creatorId,
-          type: eventData.type,
-          location: {
-            latitude: eventData.latitude,
-            longitude: eventData.longitude,
-          },
-        }));
+        expect(result.data).toEqual(
+          expect.objectContaining({
+            title: eventData.title,
+            description: eventData.description,
+            creatorId: eventData.creatorId,
+            type: eventData.type,
+            location: {
+              latitude: eventData.latitude,
+              longitude: eventData.longitude,
+            },
+          })
+        );
       }
     });
 
     it('should validate event data', async () => {
-      const mockCreate = prisma.event.create as jest.MockedFunction<typeof prisma.event.create>;
-      mockCreate.mockRejectedValue(new Error('Start time must be in the future'));
+      const mockCreate = prisma.event.create as jest.MockedFunction<
+        typeof prisma.event.create
+      >;
+      mockCreate.mockRejectedValue(
+        new Error('Start time must be in the future')
+      );
 
       const invalidEventData = {
         ...eventData,
@@ -172,34 +184,38 @@ describe('EventService', () => {
 
   describe('getNearbyEvents', () => {
     it('should find events within radius', async () => {
-      const mockFindMany = prisma.event.findMany as jest.MockedFunction<typeof prisma.event.findMany>;
-      mockFindMany.mockResolvedValue([{
-        id: 'event1',
-        title: 'Test Event',
-        description: 'A test event',
-        type: 'social',
-        latitude: 37.7749,
-        longitude: -122.4194,
-        startTime: mockDate,
-        endTime: new Date(mockDate.getTime() + 3600000),
-        maxParticipants: 10,
-        tags: ['test'],
-        creatorId: 'user1',
-        createdAt: mockDate,
-        updatedAt: mockDate,
-        creator: {
-          id: 'user1',
-          firstName: 'John',
-          lastName: 'Doe',
-          email: 'john@example.com',
+      const mockFindMany = prisma.event.findMany as jest.MockedFunction<
+        typeof prisma.event.findMany
+      >;
+      mockFindMany.mockResolvedValue([
+        {
+          id: 'event1',
+          title: 'Test Event',
+          description: 'A test event',
+          type: 'social',
+          latitude: 37.7749,
+          longitude: -122.4194,
+          startTime: mockDate,
+          endTime: new Date(mockDate.getTime() + 3600000),
+          maxParticipants: 10,
+          tags: ['test'],
+          creatorId: 'user1',
+          createdAt: mockDate,
+          updatedAt: mockDate,
+          creator: {
+            id: 'user1',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john@example.com',
+          },
+          participants: [],
         },
-        participants: [],
-      }] as any);
+      ] as any);
 
       const result = await eventService.getNearbyEvents(
         37.7749,
         -122.4194,
-        5000, // 5km
+        5000 // 5km
       );
 
       expect(result.success).toBe(true);
@@ -210,13 +226,15 @@ describe('EventService', () => {
     });
 
     it('should handle no events found', async () => {
-      const mockFindMany = prisma.event.findMany as jest.MockedFunction<typeof prisma.event.findMany>;
+      const mockFindMany = prisma.event.findMany as jest.MockedFunction<
+        typeof prisma.event.findMany
+      >;
       mockFindMany.mockResolvedValue([]);
 
       const result = await eventService.getNearbyEvents(
         37.7749,
         -122.4194,
-        5000,
+        5000
       );
 
       expect(result.success).toBe(true);
@@ -233,8 +251,12 @@ describe('EventService', () => {
     };
 
     it('should update event successfully', async () => {
-      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<typeof prisma.event.findUnique>;
-      const mockUpdate = prisma.event.update as jest.MockedFunction<typeof prisma.event.update>;
+      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<
+        typeof prisma.event.findUnique
+      >;
+      const mockUpdate = prisma.event.update as jest.MockedFunction<
+        typeof prisma.event.update
+      >;
 
       mockFindUnique.mockResolvedValue(mockEvent as any);
       mockUpdate.mockResolvedValue({
@@ -251,7 +273,9 @@ describe('EventService', () => {
     });
 
     it('should fail if event not found', async () => {
-      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<typeof prisma.event.findUnique>;
+      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<
+        typeof prisma.event.findUnique
+      >;
       mockFindUnique.mockResolvedValue(null);
 
       const result = await eventService.updateEvent('event1', updateData);
@@ -265,8 +289,12 @@ describe('EventService', () => {
 
   describe('joinEvent', () => {
     it('should allow user to join event', async () => {
-      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<typeof prisma.event.findUnique>;
-      const mockUpdate = prisma.event.update as jest.MockedFunction<typeof prisma.event.update>;
+      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<
+        typeof prisma.event.findUnique
+      >;
+      const mockUpdate = prisma.event.update as jest.MockedFunction<
+        typeof prisma.event.update
+      >;
 
       mockFindUnique.mockResolvedValue({
         ...mockEvent,
@@ -302,7 +330,9 @@ describe('EventService', () => {
     });
 
     it('should prevent joining full events', async () => {
-      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<typeof prisma.event.findUnique>;
+      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<
+        typeof prisma.event.findUnique
+      >;
 
       const fullEvent = {
         ...mockEvent,
@@ -348,10 +378,15 @@ describe('EventService', () => {
     });
 
     it('should prevent creator from joining their own event', async () => {
-      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<typeof prisma.event.findUnique>;
+      const mockFindUnique = prisma.event.findUnique as jest.MockedFunction<
+        typeof prisma.event.findUnique
+      >;
       mockFindUnique.mockResolvedValue(mockEvent as any);
 
-      const result = await eventService.joinEvent('event1', mockEvent.creatorId);
+      const result = await eventService.joinEvent(
+        'event1',
+        mockEvent.creatorId
+      );
 
       expect(result.success).toBe(false);
       if (!result.success) {

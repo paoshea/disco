@@ -1,22 +1,27 @@
 # Testing Strategy and Documentation
 
 ## Overview
+
 This document outlines our testing strategy, tools, and goals for the Disco application. Our testing approach aims to ensure high-quality code, prevent regressions, and maintain a robust application as we scale.
 
 ## Testing Tools and Libraries
 
 ### Current Stack
+
 - **Jest** - Primary testing framework
+
   - Chosen for its extensive feature set, great TypeScript support, and excellent integration with React
   - Provides snapshot testing, code coverage reporting, and parallel test execution
   - Large ecosystem of extensions and matchers
 
 - **React Testing Library**
+
   - Used for testing React components and hooks
   - Promotes testing best practices by focusing on user behavior rather than implementation details
   - Excellent integration with Jest and TypeScript
 
 - **jest-dom**
+
   - Extends Jest with custom DOM element matchers
   - Makes assertions about the state of DOM elements more natural and readable
 
@@ -29,6 +34,7 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 ### Planned Future Additions
 
 1. **Mock Service Worker (MSW)**
+
    - For API mocking and testing
    - Will provide consistent API mocking across unit tests and development
    - Planned implementation: Q2 2025
@@ -41,7 +47,9 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 ## Test Coverage Goals
 
 ### Current Test Coverage
+
 - [x] Authentication (Complete)
+
   - [x] User login flow
   - [x] User registration
   - [x] Password reset
@@ -54,6 +62,7 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
     - [x] User profile sync
 
 - [ ] User Profile
+
   - [x] Profile creation
   - [x] Profile editing
     - [x] Form validation
@@ -64,12 +73,14 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
   - [ ] Privacy settings
 
 - [ ] Safety Features
+
   - [ ] User blocking
   - [ ] Report system
   - [ ] Content moderation
   - [ ] Emergency contacts
 
 - [ ] Location Services
+
   - [x] Geolocation hook implementation
     - [x] Basic position tracking
     - [x] Watch mode
@@ -88,13 +99,16 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
   - [ ] Match recommendations
 
 ### Testing Standards
+
 1. **Unit Tests**
+
    - Minimum 80% code coverage for new features
    - All utility functions must have unit tests
    - All hooks must have comprehensive tests
    - All reducers and state management must be tested
 
 2. **Integration Tests**
+
    - All critical user flows must have integration tests
    - API integration points must be tested
    - Error handling must be tested
@@ -108,6 +122,7 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 ## Test Organization
 
 ### Directory Structure
+
 ```
 src/
 ├── __tests__/           # Jest tests
@@ -120,6 +135,7 @@ src/
 ```
 
 ### Naming Conventions
+
 - Test files: `*.test.tsx` or `*.test.ts`
 - Test utilities: `*.test.utils.ts`
 - Test fixtures: `*.fixtures.ts`
@@ -128,6 +144,7 @@ src/
 ## Running Tests
 
 ### Available Commands
+
 ```bash
 # Run all tests
 npm test
@@ -144,6 +161,7 @@ npm run test:ui      # Run UI component tests
 ```
 
 ## Continuous Integration
+
 - All PRs must pass tests before merging
 - Coverage reports are generated for each PR
 - Performance benchmarks are tracked
@@ -152,6 +170,7 @@ npm run test:ui      # Run UI component tests
 ## Best Practices
 
 ### Writing Tests
+
 1. Follow the Arrange-Act-Assert pattern
 2. Use meaningful test descriptions
 3. Test edge cases and error conditions
@@ -159,6 +178,7 @@ npm run test:ui      # Run UI component tests
 5. Use appropriate levels of testing (unit, integration, E2E)
 
 ### Test Data
+
 1. Use meaningful test data
 2. Avoid sharing mutable state between tests
 3. Clean up after tests
@@ -166,6 +186,7 @@ npm run test:ui      # Run UI component tests
 5. Mock external services appropriately
 
 ## Future Improvements
+
 1. Implement visual regression testing
 2. Add performance testing suite
 3. Implement API contract testing
@@ -173,13 +194,16 @@ npm run test:ui      # Run UI component tests
 5. Implement load testing for critical endpoints
 
 ## Monitoring and Reporting
+
 - Weekly test coverage reports
 - Performance regression tracking
 - Test execution time monitoring
 - Flaky test detection and resolution
 
 ## Contributing
+
 When adding new features or modifying existing ones:
+
 1. Write tests before implementing features (TDD approach)
 2. Maintain or improve existing test coverage
 3. Document test cases and scenarios
@@ -188,11 +212,13 @@ When adding new features or modifying existing ones:
 ## Testing Strategy
 
 ### Overview
+
 The Disco application employs a comprehensive testing strategy that includes both unit tests and end-to-end (E2E) tests to ensure reliability and maintainability.
 
 ### Testing Environments
 
 #### Unit Testing Environment
+
 - **Framework**: Jest + React Testing Library
 - **Location**: `/src/__tests__/`
 - **Mock Strategy**: API calls and external dependencies are mocked
@@ -200,6 +226,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 - **Coverage Reports**: `npm run test:coverage`
 
 #### End-to-End Testing Environment
+
 - **Framework**: Cypress
 - **Prerequisites**:
   - Go backend running (`go run cmd/main.go`)
@@ -211,7 +238,9 @@ The Disco application employs a comprehensive testing strategy that includes bot
 ### Test Structure
 
 #### Unit Tests (`/src/__tests__/`)
+
 1. **Authentication Tests** (`/auth/`)
+
    - User session management
    - Email verification
    - Token handling
@@ -219,6 +248,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
    - Registration process
 
 2. **Component Tests** (`/components/`)
+
    - UI component rendering
    - User interactions
    - State management
@@ -226,6 +256,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
    - Accessibility
 
 3. **Hook Tests** (`/hooks/`)
+
    - Custom hook behavior
    - State updates
    - Side effects
@@ -238,7 +269,9 @@ The Disco application employs a comprehensive testing strategy that includes bot
    - Error handling
 
 #### End-to-End Tests (`/cypress/`)
+
 1. **Authentication Flows**
+
    - User registration
    - Login/Logout
    - Password reset
@@ -246,6 +279,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
    - Session persistence
 
 2. **User Features**
+
    - Profile management
    - Preferences settings
    - Location services
@@ -261,6 +295,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 ### Testing Goals and Coverage
 
 #### Current Coverage
+
 - Unit Tests:
   - [x] Authentication system
   - [x] Core components
@@ -268,6 +303,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
   - [x] Utility functions
 
 #### Planned Coverage
+
 - End-to-End Tests:
   - [ ] Complete user journeys
   - [ ] Cross-browser compatibility
@@ -277,6 +313,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 ### Best Practices
 
 #### Unit Testing
+
 1. Test isolated functionality
 2. Mock external dependencies
 3. Focus on behavior, not implementation
@@ -284,6 +321,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 5. Use meaningful assertions
 
 #### End-to-End Testing
+
 1. Test complete user flows
 2. Verify integration points
 3. Test in production-like environment
@@ -293,6 +331,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 ### Tools and Libraries
 
 #### Unit Testing
+
 - Jest
 - React Testing Library
 - MSW (Mock Service Worker)
@@ -300,18 +339,21 @@ The Disco application employs a comprehensive testing strategy that includes bot
 - user-event
 
 #### End-to-End Testing
+
 - Cypress
 - Cypress Testing Library
 - Cypress Axe (accessibility)
 - Percy (visual testing)
 
 ### Continuous Integration
+
 - GitHub Actions for automated testing
 - Pre-commit hooks for test validation
 - Coverage reports in PRs
 - E2E tests in staging environment
 
 ### Future Improvements
+
 1. Increase test coverage
 2. Add visual regression testing
 3. Implement performance testing
@@ -319,6 +361,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 5. Enhance accessibility testing
 
 ### Test Maintenance
+
 1. Regular updates of test dependencies
 2. Periodic review of test coverage
 3. Documentation updates
@@ -326,6 +369,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 5. Test performance optimization
 
 ### Debugging Tests
+
 1. Jest debugging configuration
 2. Cypress debugging tools
 3. Common issues and solutions
@@ -333,6 +377,7 @@ The Disco application employs a comprehensive testing strategy that includes bot
 5. Performance profiling
 
 ### Contributing to Tests
+
 1. Test creation guidelines
 2. Code review process
 3. Documentation requirements

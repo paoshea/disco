@@ -53,7 +53,7 @@ describe('useAuth Hook', () => {
 
   it('should initialize with empty state', () => {
     const { result } = renderHook(() => useAuth());
-    
+
     expect(result.current.user).toBeNull();
     expect(result.current.token).toBeNull();
     expect(result.current.isLoading).toBe(false);
@@ -73,7 +73,10 @@ describe('useAuth Hook', () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      const loginResult = await result.current.login('test@example.com', 'password');
+      const loginResult = await result.current.login(
+        'test@example.com',
+        'password'
+      );
       expect(loginResult.success).toBe(true);
     });
 
@@ -90,7 +93,10 @@ describe('useAuth Hook', () => {
     const { result } = renderHook(() => useAuth());
 
     await act(async () => {
-      const loginResult = await result.current.login('test@example.com', 'wrong-password');
+      const loginResult = await result.current.login(
+        'test@example.com',
+        'wrong-password'
+      );
       expect(loginResult.error).toBe(errorMessage);
     });
 

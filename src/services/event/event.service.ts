@@ -300,7 +300,10 @@ export class EventService {
       }
 
       // Check if event is full
-      if (existingEvent.maxParticipants && existingEvent.participants.length >= existingEvent.maxParticipants) {
+      if (
+        existingEvent.maxParticipants &&
+        existingEvent.participants.length >= existingEvent.maxParticipants
+      ) {
         return {
           success: false,
           error: 'Event is full',

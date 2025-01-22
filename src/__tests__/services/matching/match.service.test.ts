@@ -166,9 +166,9 @@ describe('MatchingService', () => {
     });
 
     it('should handle undefined streakCount', () => {
-      const userWithoutStreak = { 
-        ...mockPrismaUser, 
-        streakCount: undefined as unknown as number 
+      const userWithoutStreak = {
+        ...mockPrismaUser,
+        streakCount: undefined as unknown as number,
       };
       const appUser = convertToAppUser(userWithoutStreak);
 
@@ -178,10 +178,12 @@ describe('MatchingService', () => {
     it('should handle location without accuracy', () => {
       const userWithLocationNoAccuracy = {
         ...mockPrismaUser,
-        locations: [{
-          ...mockPrismaUser.locations![0],
-          accuracy: null,
-        }],
+        locations: [
+          {
+            ...mockPrismaUser.locations![0],
+            accuracy: null,
+          },
+        ],
       };
       const appUser = convertToAppUser(userWithLocationNoAccuracy);
 

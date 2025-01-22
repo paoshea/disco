@@ -11,18 +11,30 @@ export class ProfileService {
     }
   }
 
-  async updateProfile(userId: string, updateData: Partial<User>): Promise<User> {
+  async updateProfile(
+    userId: string,
+    updateData: Partial<User>
+  ): Promise<User> {
     try {
-      const { data } = await apiClient.patch<User>(`/api/users/${userId}`, updateData);
+      const { data } = await apiClient.patch<User>(
+        `/api/users/${userId}`,
+        updateData
+      );
       return data;
     } catch (error) {
       throw new Error('Failed to update profile');
     }
   }
 
-  async updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<User> {
+  async updatePreferences(
+    userId: string,
+    preferences: Partial<UserPreferences>
+  ): Promise<User> {
     try {
-      const { data } = await apiClient.patch<User>(`/api/users/${userId}/preferences`, preferences);
+      const { data } = await apiClient.patch<User>(
+        `/api/users/${userId}/preferences`,
+        preferences
+      );
       return data;
     } catch (error) {
       throw new Error('Failed to update preferences');
@@ -33,12 +45,16 @@ export class ProfileService {
     try {
       const formData = new FormData();
       formData.append('avatar', file);
-      
-      const { data } = await apiClient.post<User>(`/api/users/${userId}/avatar`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+
+      const { data } = await apiClient.post<User>(
+        `/api/users/${userId}/avatar`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       return data;
     } catch (error) {
       throw new Error('Failed to update avatar');
@@ -47,7 +63,9 @@ export class ProfileService {
 
   async deleteAvatar(userId: string): Promise<User> {
     try {
-      const { data } = await apiClient.delete<User>(`/api/users/${userId}/avatar`);
+      const { data } = await apiClient.delete<User>(
+        `/api/users/${userId}/avatar`
+      );
       return data;
     } catch (error) {
       throw new Error('Failed to delete avatar');

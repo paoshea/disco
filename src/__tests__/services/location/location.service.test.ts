@@ -1,5 +1,8 @@
 import { jest, describe, beforeEach, it, expect } from '@jest/globals';
-import type { Location as PrismaLocation, User as PrismaUser } from '@prisma/client';
+import type {
+  Location as PrismaLocation,
+  User as PrismaUser,
+} from '@prisma/client';
 
 // Mock modules before importing the service
 jest.mock('@/lib/prisma', () => ({
@@ -48,7 +51,9 @@ describe('LocationService', () => {
 
   describe('getLocation', () => {
     it('should return the most recent location for a user', async () => {
-      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<typeof prisma.location.findFirst>;
+      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<
+        typeof prisma.location.findFirst
+      >;
       mockFindFirst.mockResolvedValue(mockLocation);
 
       const result = await locationService.getLocation('user1');
@@ -61,7 +66,9 @@ describe('LocationService', () => {
     });
 
     it('should return null if no location exists', async () => {
-      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<typeof prisma.location.findFirst>;
+      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<
+        typeof prisma.location.findFirst
+      >;
       mockFindFirst.mockResolvedValue(null);
 
       const result = await locationService.getLocation('user1');
@@ -85,7 +92,9 @@ describe('LocationService', () => {
         ...newLocation,
       };
 
-      const mockUpsert = prisma.location.upsert as jest.MockedFunction<typeof prisma.location.upsert>;
+      const mockUpsert = prisma.location.upsert as jest.MockedFunction<
+        typeof prisma.location.upsert
+      >;
       mockUpsert.mockResolvedValue(mockResponse);
 
       const result = await locationService.updateLocation('user1', newLocation);
@@ -115,17 +124,24 @@ describe('LocationService', () => {
         ...approximateLocation,
       };
 
-      const mockUpsert = prisma.location.upsert as jest.MockedFunction<typeof prisma.location.upsert>;
+      const mockUpsert = prisma.location.upsert as jest.MockedFunction<
+        typeof prisma.location.upsert
+      >;
       mockUpsert.mockResolvedValue(mockResponse);
 
-      const result = await locationService.updateLocation('user1', approximateLocation);
+      const result = await locationService.updateLocation(
+        'user1',
+        approximateLocation
+      );
 
       expect(result.success).toBe(true);
       expect(result.data?.privacyMode).toBe('approximate');
     });
 
     it('should handle errors gracefully', async () => {
-      const mockUpsert = prisma.location.upsert as jest.MockedFunction<typeof prisma.location.upsert>;
+      const mockUpsert = prisma.location.upsert as jest.MockedFunction<
+        typeof prisma.location.upsert
+      >;
       mockUpsert.mockRejectedValue(new Error('Database error'));
 
       const result = await locationService.updateLocation('user1', newLocation);
@@ -171,7 +187,9 @@ describe('LocationService', () => {
     ];
 
     beforeEach(() => {
-      const mockFindMany = prisma.user.findMany as jest.MockedFunction<typeof prisma.user.findMany>;
+      const mockFindMany = prisma.user.findMany as jest.MockedFunction<
+        typeof prisma.user.findMany
+      >;
       mockFindMany.mockResolvedValue(mockUsers);
     });
 
@@ -192,14 +210,18 @@ describe('LocationService', () => {
     });
 
     it('should handle users without locations', async () => {
-      const usersWithoutLocation: (PrismaUser & { locations: PrismaLocation[] })[] = [
+      const usersWithoutLocation: (PrismaUser & {
+        locations: PrismaLocation[];
+      })[] = [
         {
           ...mockUsers[0],
           locations: [],
         },
       ];
 
-      const mockFindMany = prisma.user.findMany as jest.MockedFunction<typeof prisma.user.findMany>;
+      const mockFindMany = prisma.user.findMany as jest.MockedFunction<
+        typeof prisma.user.findMany
+      >;
       mockFindMany.mockResolvedValue(usersWithoutLocation);
 
       const result = await locationService.getNearbyUsers(
@@ -214,7 +236,9 @@ describe('LocationService', () => {
     });
 
     it('should handle no nearby users', async () => {
-      const mockFindMany = prisma.user.findMany as jest.MockedFunction<typeof prisma.user.findMany>;
+      const mockFindMany = prisma.user.findMany as jest.MockedFunction<
+        typeof prisma.user.findMany
+      >;
       mockFindMany.mockResolvedValue([]);
 
       const result = await locationService.getNearbyUsers(
@@ -231,12 +255,22 @@ describe('LocationService', () => {
 
   describe('toggleLocationSharing', () => {
     it('should toggle location sharing', async () => {
-      const currentLocation: PrismaLocation = { ...mockLocation, sharingEnabled: false };
-      const updatedLocation: PrismaLocation = { ...mockLocation, sharingEnabled: true };
+      const currentLocation: PrismaLocation = {
+        ...mockLocation,
+        sharingEnabled: false,
+      };
+      const updatedLocation: PrismaLocation = {
+        ...mockLocation,
+        sharingEnabled: true,
+      };
 
-      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<typeof prisma.location.findFirst>;
-      const mockUpdate = prisma.location.update as jest.MockedFunction<typeof prisma.location.update>;
-      
+      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<
+        typeof prisma.location.findFirst
+      >;
+      const mockUpdate = prisma.location.update as jest.MockedFunction<
+        typeof prisma.location.update
+      >;
+
       mockFindFirst.mockResolvedValue(currentLocation);
       mockUpdate.mockResolvedValue(updatedLocation);
 
@@ -250,7 +284,9 @@ describe('LocationService', () => {
     });
 
     it('should return null if no location exists', async () => {
-      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<typeof prisma.location.findFirst>;
+      const mockFindFirst = prisma.location.findFirst as jest.MockedFunction<
+        typeof prisma.location.findFirst
+      >;
       mockFindFirst.mockResolvedValue(null);
 
       const result = await locationService.toggleLocationSharing('user1');

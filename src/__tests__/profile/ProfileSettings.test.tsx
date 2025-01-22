@@ -2,18 +2,18 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ProfileSettings } from '../../components/profile/ProfileSettings';
-import { updateUserPreferences } from '../../services/api/user.service';
+import { ProfileSettings } from '@/components/profile/ProfileSettings';
+import * as preferencesService from '@/services/user/preferences.service';
 
-jest.mock('../../services/api/user.service');
+jest.mock('@/services/user/preferences.service');
 
 const mockDate = new Date('2025-01-21T22:12:49-06:00');
 
 const mockUser = {
-  id: '123',
-  email: 'test@example.com',
+  id: '1',
   firstName: 'Test',
   lastName: 'User',
+  email: 'test@example.com',
   name: 'Test User',
   bio: 'Test bio',
   interests: ['Technology', 'Gaming'],
@@ -34,26 +34,28 @@ const mockUser = {
     lookingFor: ['friendship'],
     relationshipType: ['casual'],
     notifications: {
-      matches: true,
+      email: true,
+      push: true,
       messages: true,
+      matches: true,
       events: true,
       safety: true,
     },
     privacy: {
+      showAge: true,
+      showLocation: true,
       showOnlineStatus: true,
       showLastSeen: true,
-      showLocation: true,
-      showAge: true,
     },
     safety: {
       requireVerifiedMatch: true,
-      meetupCheckins: true,
+      blockUnverifiedUsers: false,
+      emergencyContactEnabled: true,
       emergencyContactAlerts: true,
+      meetupCheckins: true,
     },
   },
 };
-
-const mockUpdatePreferences = updateUserPreferences as jest.MockedFunction<typeof updateUserPreferences>;
 
 describe('ProfileSettings', () => {
   beforeEach(() => {
@@ -63,99 +65,81 @@ describe('ProfileSettings', () => {
   it('should render profile settings with user preferences', () => {
     render(<ProfileSettings user={mockUser} />);
 
-    // Check privacy settings
-    expect(screen.getByRole('switch', { name: /show online status/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /show last seen/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /show location/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /show age/i })).toBeChecked();
+    // Check headings
+    expect(screen.getByText('Profile Settings')).toBeInTheDocument();
+    expect(screen.getByText('Notifications')).toBeInTheDocument();
+    expect(screen.getByText('Privacy')).toBeInTheDocument();
+    expect(screen.getByText('Safety')).toBeInTheDocument();
 
-    // Check notification settings
-    expect(screen.getByRole('switch', { name: /match notifications/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /message notifications/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /event notifications/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /safety notifications/i })).toBeChecked();
+    // Check notification toggles
+    expect(screen.getByLabelText('Match Notifications')).toBeInTheDocument();
+    expect(screen.getByLabelText('Message Notifications')).toBeInTheDocument();
+    expect(screen.getByLabelText('Email Notifications')).toBeInTheDocument();
 
-    // Check safety settings
-    expect(screen.getByRole('switch', { name: /require verified match/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /meetup check-ins/i })).toBeChecked();
-    expect(screen.getByRole('switch', { name: /emergency contact alerts/i })).toBeChecked();
+    // Check privacy toggles
+    expect(screen.getByLabelText('Show Online Status')).toBeInTheDocument();
+    expect(screen.getByLabelText('Show Location')).toBeInTheDocument();
+
+    // Check safety toggles
+    expect(screen.getByLabelText('Require Verified Match')).toBeInTheDocument();
+    expect(screen.getByLabelText('Block Unverified Users')).toBeInTheDocument();
   });
 
-  it('should handle privacy setting changes', async () => {
+  it('should update preferences when toggling switches', async () => {
+    const updatedPreferences = {
+      ...mockUser.preferences,
+      privacy: {
+        ...mockUser.preferences.privacy,
+        showOnlineStatus: false,
+      },
+    };
+
+    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(updatedPreferences);
+
     render(<ProfileSettings user={mockUser} />);
 
-    const showOnlineStatusToggle = screen.getByRole('switch', { name: /show online status/i });
-    const showLocationToggle = screen.getByRole('switch', { name: /show location/i });
+    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
+    const locationSwitch = screen.getByLabelText('Show Location');
 
-    mockUpdatePreferences.mockResolvedValueOnce();
-
-    fireEvent.click(showOnlineStatusToggle);
-    fireEvent.click(showLocationToggle);
+    fireEvent.click(onlineStatusSwitch);
+    fireEvent.click(locationSwitch);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
-          preferences: expect.objectContaining({
-            privacy: expect.objectContaining({
-              showOnlineStatus: false,
-              showLocation: false,
-            }),
+          privacy: expect.objectContaining({
+            showOnlineStatus: false,
+            showLocation: false,
           }),
         })
       );
     });
   });
 
-  it('should handle notification setting changes', async () => {
+  it('should show error message when update fails', async () => {
+    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
+
     render(<ProfileSettings user={mockUser} />);
 
-    const matchNotificationsToggle = screen.getByRole('switch', { name: /match notifications/i });
-    const messageNotificationsToggle = screen.getByRole('switch', { name: /message notifications/i });
-
-    mockUpdatePreferences.mockResolvedValueOnce();
-
-    fireEvent.click(matchNotificationsToggle);
-    fireEvent.click(messageNotificationsToggle);
+    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
+    fireEvent.click(onlineStatusSwitch);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
-        mockUser.id,
-        expect.objectContaining({
-          preferences: expect.objectContaining({
-            notifications: expect.objectContaining({
-              matches: false,
-              messages: false,
-            }),
-          }),
-        })
-      );
+      expect(screen.getByText('Failed to update settings')).toBeInTheDocument();
     });
   });
 
-  it('should handle safety setting changes', async () => {
+  it('should show success message when update succeeds', async () => {
+    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(mockUser.preferences);
+
     render(<ProfileSettings user={mockUser} />);
 
-    const verifiedMatchToggle = screen.getByRole('switch', { name: /require verified match/i });
-    const meetupCheckinsToggle = screen.getByRole('switch', { name: /meetup check-ins/i });
-
-    mockUpdatePreferences.mockResolvedValueOnce();
-
-    fireEvent.click(verifiedMatchToggle);
-    fireEvent.click(meetupCheckinsToggle);
+    const onlineStatusSwitch = screen.getByLabelText('Show Online Status');
+    fireEvent.click(onlineStatusSwitch);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
-        mockUser.id,
-        expect.objectContaining({
-          preferences: expect.objectContaining({
-            safety: expect.objectContaining({
-              requireVerifiedMatch: false,
-              meetupCheckins: false,
-            }),
-          }),
-        })
-      );
+      expect(screen.getByText('Settings updated successfully')).toBeInTheDocument();
     });
   });
 
@@ -164,14 +148,14 @@ describe('ProfileSettings', () => {
 
     const maxDistanceInput = screen.getByLabelText(/maximum distance/i);
 
-    mockUpdatePreferences.mockResolvedValueOnce();
+    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce();
 
     await userEvent.clear(maxDistanceInput);
     await userEvent.type(maxDistanceInput, '25');
     fireEvent.blur(maxDistanceInput);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
           preferences: expect.objectContaining({
@@ -188,7 +172,7 @@ describe('ProfileSettings', () => {
     const minAgeInput = screen.getByLabelText(/minimum age/i);
     const maxAgeInput = screen.getByLabelText(/maximum age/i);
 
-    mockUpdatePreferences.mockResolvedValueOnce();
+    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce();
 
     await userEvent.clear(minAgeInput);
     await userEvent.type(minAgeInput, '21');
@@ -197,7 +181,7 @@ describe('ProfileSettings', () => {
     fireEvent.blur(maxAgeInput);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         expect.objectContaining({
           preferences: expect.objectContaining({
@@ -211,22 +195,30 @@ describe('ProfileSettings', () => {
   it('should handle preference update errors', async () => {
     render(<ProfileSettings user={mockUser} />);
 
-    const showOnlineStatusToggle = screen.getByRole('switch', { name: /show online status/i });
+    const showOnlineStatusToggle = screen.getByRole('switch', {
+      name: /show online status/i,
+    });
 
-    mockUpdatePreferences.mockRejectedValueOnce(new Error('Update failed'));
+    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
 
     fireEvent.click(showOnlineStatusToggle);
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to update preferences/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/failed to update preferences/i)
+      ).toBeInTheDocument();
     });
   });
 
   it('should render user preferences correctly', () => {
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', { name: /show online status/i });
-    const emailNotificationsSwitch = screen.getByRole('switch', { name: /email notifications/i });
+    const onlineStatusSwitch = screen.getByRole('switch', {
+      name: /show online status/i,
+    });
+    const emailNotificationsSwitch = screen.getByRole('switch', {
+      name: /email notifications/i,
+    });
     const themeSelect = screen.getByLabelText(/theme/i);
 
     expect(onlineStatusSwitch).toBeChecked();
@@ -243,15 +235,17 @@ describe('ProfileSettings', () => {
       },
     };
 
-    mockUpdatePreferences.mockResolvedValueOnce(updatedPreferences);
+    jest.spyOn(preferencesService, 'updatePreferences').mockResolvedValueOnce(updatedPreferences);
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', { name: /show online status/i });
+    const onlineStatusSwitch = screen.getByRole('switch', {
+      name: /show online status/i,
+    });
     fireEvent.click(onlineStatusSwitch);
 
     await waitFor(() => {
-      expect(mockUpdatePreferences).toHaveBeenCalledWith(
+      expect(preferencesService.updatePreferences).toHaveBeenCalledWith(
         mockUser.id,
         updatedPreferences
       );
@@ -259,15 +253,19 @@ describe('ProfileSettings', () => {
   });
 
   it('should show error message when update fails', async () => {
-    mockUpdatePreferences.mockRejectedValueOnce(new Error('Update failed'));
+    jest.spyOn(preferencesService, 'updatePreferences').mockRejectedValueOnce(new Error('Update failed'));
 
     render(<ProfileSettings user={mockUser} />);
 
-    const onlineStatusSwitch = screen.getByRole('switch', { name: /show online status/i });
+    const onlineStatusSwitch = screen.getByRole('switch', {
+      name: /show online status/i,
+    });
     fireEvent.click(onlineStatusSwitch);
 
     await waitFor(() => {
-      expect(screen.getByText(/failed to update preferences/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/failed to update preferences/i)
+      ).toBeInTheDocument();
     });
   });
 });

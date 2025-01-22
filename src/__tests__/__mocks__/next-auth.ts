@@ -15,7 +15,7 @@ export const mockGoogleProvider: Provider = {
   },
   token: 'https://oauth2.googleapis.com/token',
   userinfo: 'https://www.googleapis.com/oauth2/v2/userinfo',
-  profile: (profile) => {
+  profile: profile => {
     return {
       id: profile.id,
       name: profile.name,

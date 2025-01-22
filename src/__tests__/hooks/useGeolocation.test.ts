@@ -22,9 +22,9 @@ const mockPosition = {
     altitude: null,
     altitudeAccuracy: null,
     heading: null,
-    speed: null
+    speed: null,
   } as GeolocationCoordinates,
-  timestamp: Date.now()
+  timestamp: Date.now(),
 } as GeolocationPosition;
 
 const mockError: GeolocationPositionError = {
@@ -49,13 +49,13 @@ describe('useGeolocation', () => {
 
   it('should handle successful geolocation', async () => {
     jest.useFakeTimers();
-    
-    mockGeolocation.getCurrentPosition.mockImplementation((success) => {
+
+    mockGeolocation.getCurrentPosition.mockImplementation(success => {
       setTimeout(() => success(mockPosition), 0);
     });
 
     const { result } = renderHook(() => useGeolocation());
-    
+
     expect(result.current.isLoading).toBe(true);
     expect(result.current.position).toBeNull();
     expect(result.current.error).toBeNull();
@@ -80,7 +80,7 @@ describe('useGeolocation', () => {
 
     // Wait for state update
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     expect(result.current.isLoading).toBe(false);
@@ -94,7 +94,7 @@ describe('useGeolocation', () => {
   it('should handle watch position mode', async () => {
     const watchId = 123;
     mockGeolocation.watchPosition.mockReturnValue(watchId);
-    mockGeolocation.watchPosition.mockImplementation((success) => {
+    mockGeolocation.watchPosition.mockImplementation(success => {
       success(mockPosition);
       return watchId;
     });
@@ -105,7 +105,7 @@ describe('useGeolocation', () => {
 
     // Wait for state update
     await act(async () => {
-      await new Promise((resolve) => setTimeout(resolve, 0));
+      await new Promise(resolve => setTimeout(resolve, 0));
     });
 
     expect(result.current.position).toEqual(mockPosition);

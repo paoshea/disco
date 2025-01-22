@@ -177,9 +177,8 @@ export class MatchingService {
 
           if (!matchScore) {
             const appUser = MatchingService.convertToAppUser(user);
-            const appPotentialMatch = MatchingService.convertToAppUser(
-              potentialMatchUser
-            );
+            const appPotentialMatch =
+              MatchingService.convertToAppUser(potentialMatchUser);
             matchScore = this.algorithm.calculateMatchScore(
               appUser,
               appPotentialMatch,

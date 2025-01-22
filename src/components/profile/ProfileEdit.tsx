@@ -34,13 +34,15 @@ const AVAILABLE_INTERESTS = [
 export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedInterests, setSelectedInterests] = useState<string[]>(user.interests || []);
+  const [selectedInterests, setSelectedInterests] = useState<string[]>(
+    user.interests || []
+  );
 
   const toggleInterest = (interest: string) => {
     const newInterests = selectedInterests.includes(interest)
       ? selectedInterests.filter(i => i !== interest)
       : [...selectedInterests, interest];
-    
+
     setSelectedInterests(newInterests);
     onUpdate({ interests: newInterests });
   };
@@ -112,7 +114,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="firstName" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="firstName"
+              className="text-sm font-medium text-gray-700"
+            >
               First Name
             </label>
             <Input
@@ -126,7 +131,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
 
         <div>
           <div className="flex flex-col gap-1">
-            <label htmlFor="lastName" className="text-sm font-medium text-gray-700">
+            <label
+              htmlFor="lastName"
+              className="text-sm font-medium text-gray-700"
+            >
               Last Name
             </label>
             <Input
@@ -156,7 +164,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
 
       <div>
         <div className="flex flex-col gap-1">
-          <label htmlFor="phoneNumber" className="text-sm font-medium text-gray-700">
+          <label
+            htmlFor="phoneNumber"
+            className="text-sm font-medium text-gray-700"
+          >
             Phone Number
           </label>
           <Input

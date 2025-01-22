@@ -74,7 +74,9 @@ describe('ProfileService', () => {
       const error = new Error('Failed to fetch profile');
       mockApiClient.get.mockRejectedValueOnce(error);
 
-      await expect(profileService.fetchProfile('123')).rejects.toThrow('Failed to fetch profile');
+      await expect(profileService.fetchProfile('123')).rejects.toThrow(
+        'Failed to fetch profile'
+      );
       expect(mockApiClient.get).toHaveBeenCalledWith('/api/users/123');
     });
   });
@@ -93,15 +95,23 @@ describe('ProfileService', () => {
       const result = await profileService.updateProfile('123', updateData);
 
       expect(result).toEqual(updatedUser);
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/users/123', updateData);
+      expect(mockApiClient.patch).toHaveBeenCalledWith(
+        '/api/users/123',
+        updateData
+      );
     });
 
     it('should handle update profile error', async () => {
       const error = new Error('Failed to update profile');
       mockApiClient.patch.mockRejectedValueOnce(error);
 
-      await expect(profileService.updateProfile('123', updateData)).rejects.toThrow('Failed to update profile');
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/users/123', updateData);
+      await expect(
+        profileService.updateProfile('123', updateData)
+      ).rejects.toThrow('Failed to update profile');
+      expect(mockApiClient.patch).toHaveBeenCalledWith(
+        '/api/users/123',
+        updateData
+      );
     });
   });
 
@@ -122,15 +132,23 @@ describe('ProfileService', () => {
       const result = await profileService.updatePreferences('123', preferences);
 
       expect(result).toEqual(updatedUser);
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/users/123/preferences', preferences);
+      expect(mockApiClient.patch).toHaveBeenCalledWith(
+        '/api/users/123/preferences',
+        preferences
+      );
     });
 
     it('should handle update preferences error', async () => {
       const error = new Error('Failed to update preferences');
       mockApiClient.patch.mockRejectedValueOnce(error);
 
-      await expect(profileService.updatePreferences('123', preferences)).rejects.toThrow('Failed to update preferences');
-      expect(mockApiClient.patch).toHaveBeenCalledWith('/api/users/123/preferences', preferences);
+      await expect(
+        profileService.updatePreferences('123', preferences)
+      ).rejects.toThrow('Failed to update preferences');
+      expect(mockApiClient.patch).toHaveBeenCalledWith(
+        '/api/users/123/preferences',
+        preferences
+      );
     });
   });
 
@@ -147,19 +165,29 @@ describe('ProfileService', () => {
       const result = await profileService.updateAvatar('123', mockFile);
 
       expect(result).toEqual(updatedUser);
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/users/123/avatar', expect.any(FormData), {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/users/123/avatar',
+        expect.any(FormData),
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
     });
 
     it('should handle update avatar error', async () => {
       const error = new Error('Failed to update avatar');
       mockApiClient.post.mockRejectedValueOnce(error);
 
-      await expect(profileService.updateAvatar('123', mockFile)).rejects.toThrow('Failed to update avatar');
-      expect(mockApiClient.post).toHaveBeenCalledWith('/api/users/123/avatar', expect.any(FormData), {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      await expect(
+        profileService.updateAvatar('123', mockFile)
+      ).rejects.toThrow('Failed to update avatar');
+      expect(mockApiClient.post).toHaveBeenCalledWith(
+        '/api/users/123/avatar',
+        expect.any(FormData),
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        }
+      );
     });
   });
 
@@ -174,15 +202,21 @@ describe('ProfileService', () => {
       const result = await profileService.deleteAvatar('123');
 
       expect(result).toEqual(updatedUser);
-      expect(mockApiClient.delete).toHaveBeenCalledWith('/api/users/123/avatar');
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
+        '/api/users/123/avatar'
+      );
     });
 
     it('should handle delete avatar error', async () => {
       const error = new Error('Failed to delete avatar');
       mockApiClient.delete.mockRejectedValueOnce(error);
 
-      await expect(profileService.deleteAvatar('123')).rejects.toThrow('Failed to delete avatar');
-      expect(mockApiClient.delete).toHaveBeenCalledWith('/api/users/123/avatar');
+      await expect(profileService.deleteAvatar('123')).rejects.toThrow(
+        'Failed to delete avatar'
+      );
+      expect(mockApiClient.delete).toHaveBeenCalledWith(
+        '/api/users/123/avatar'
+      );
     });
   });
 });

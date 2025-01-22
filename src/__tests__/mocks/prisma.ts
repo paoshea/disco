@@ -36,7 +36,7 @@ beforeEach(() => {
 
 describe('Prisma Mock', () => {
   const mockDate = new Date();
-  
+
   const mockEvent: Event = {
     id: '1',
     type: 'social',
@@ -44,7 +44,7 @@ describe('Prisma Mock', () => {
     description: 'A test event',
     creatorId: 'user123',
     latitude: 40.7128,
-    longitude: -74.0060,
+    longitude: -74.006,
     startTime: mockDate,
     endTime: new Date(mockDate.getTime() + 3600000), // 1 hour later
     maxParticipants: 10,
@@ -58,14 +58,14 @@ describe('Prisma Mock', () => {
 
     const result = await prismaMock.event.findNearby({
       lat: 40.7128,
-      lng: -74.0060,
+      lng: -74.006,
       radius: 10,
     });
 
     expect(result).toEqual([mockEvent]);
     expect(prismaMock.event.findNearby).toHaveBeenCalledWith({
       lat: 40.7128,
-      lng: -74.0060,
+      lng: -74.006,
       radius: 10,
     });
   });
@@ -80,7 +80,7 @@ describe('Prisma Mock', () => {
         description: 'A test event',
         creatorId: 'user123',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         startTime: mockDate,
         endTime: new Date(mockDate.getTime() + 3600000),
         maxParticipants: 10,
@@ -96,7 +96,7 @@ describe('Prisma Mock', () => {
         description: 'A test event',
         creatorId: 'user123',
         latitude: 40.7128,
-        longitude: -74.0060,
+        longitude: -74.006,
         startTime: mockDate,
         endTime: new Date(mockDate.getTime() + 3600000),
         maxParticipants: 10,
