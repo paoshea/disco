@@ -5,6 +5,10 @@
 DISCO! is a revolutionary social discovery platform that brings back the magic of serendipitous encounters in our increasingly digital world.
 By facilitating opt-in, proximity-based connections, DISCO! helps you meet like-minded people in your vicinity while maintaining complete control over your privacy and safety.
 
+DISCO! is available on iOS and Android, and is intended for users aged 13 and above.
+
+The name is a placeholder and needs to be updated in due course. Possible alternatives include "Spark" or "HookUps, not fuckups!".
+
 ## 🌟 Key Features
 
 ### Spontaneous Discovery
@@ -169,15 +173,120 @@ Expanding to new cities monthly - vote for your city at discoapp.com/expansion
 
 ## 🛠️ Technical Stack
 
+### Architecture
+- ✅ Microservices architecture with clear separation of concerns
+- ✅ Service-specific databases and cache layers
+- ✅ Message queues and gRPC for inter-service communication
+- ✅ Containerized infrastructure ready for cloud deployment
+- ✅ Comprehensive monitoring and logging system
+
+### Frontend
 - ✅ Next.js frontend with TypeScript
-- ✅ Microservices architecture
+- ✅ Real-time features optimized for performance and battery life
+- ✅ Extensive error handling and offline support
+
+### Backend Services
+- ✅ Microservices for user management, matching, and communications
 - ✅ WebSocket infrastructure for real-time features
 - ✅ Redis caching layer
 - ✅ PostgreSQL database
 - ✅ Prisma ORM
 - ✅ JWT authentication
 - ✅ End-to-end encryption
+
+### Real-time Features
+- ✅ Advanced chat system with read receipts and typing indicators
+- ✅ Sophisticated location-based matching algorithms
+- ✅ Enhanced privacy controls for location sharing
 - ✅ Service monitoring with Prometheus/Grafana
+
+## 🗺️ Development Roadmap
+
+### Immediate Priority
+1. Redis Optimization
+   - Connection pooling implementation
+   - Health check system
+   - Monitoring setup
+   - Backup strategy
+2. Authentication Enhancement
+   - Session recovery mechanism
+   - Rate limiting for auth endpoints
+   - Enhanced security headers
+   - 2FA support consideration
+3. Performance Optimization
+   - Code splitting for large pages
+   - Image lazy loading
+   - API response caching
+   - Performance monitoring setup
+
+### Medium Priority
+1. Enhanced Gamification
+   - Advanced achievements
+   - Community rewards
+   - Leaderboards
+   - Gamification integration
+2. Community Features
+   - Group activities
+   - Event system
+   - Social interactions
+3. Mobile Experience
+   - Responsive design
+   - Offline support
+   - Push notifications
+   - Location services integration
+
+### Long-term Goals
+1. Advanced Features
+   - AI recommendations
+   - Advanced analytics
+   - Premium features
+   - Multi-device support
+   - Multi-language support
+2. Platform Expansion
+   - Geographic scaling
+   - Language support
+   - Cultural adaptation
+   - Multi-user support
+   - Cross-platform compatibility
+3. Security Enhancements
+   - End-to-end encryption
+   - Perfect forward secrecy
+   - Key verification
+   - Secure key storage
+4. Support Infrastructure
+   - 24/7 in-app support chat
+   - Support ticket system
+   - Email support integration
+   - Help center documentation  
+   - FAQ system
+   - User feedback collection
+
+### Development Phases
+#### Phase 1: Location & Privacy 
+- Privacy-focused location processing
+- Profile visibility controls
+- Flexible radius settings (100ft to 1 mile)
+
+#### Phase 2: Matching & Filtering
+- Interest-based matching
+- Activity-based filtering
+- Enhanced user experience
+
+#### Phase 3: Real-time Notifications
+- Push notification system
+- Battery-optimized background location
+- Custom notification preferences
+
+#### Phase 4: Enhanced Proximity Features
+- Bluetooth proximity enhancement
+- Progressive information sharing
+- Advanced privacy controls
+
+### Success Metrics
+- Battery impact < 5% per day
+- Match notification latency < 30 seconds
+- False positive matches < 10%
+- User privacy control satisfaction > 90%
 
 ## 🤝 Contributing
 
