@@ -41,13 +41,17 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
 ## Test Coverage Goals
 
 ### Current Test Coverage
-- [ ] Authentication (In Progress)
+- [x] Authentication (Complete)
   - [x] User login flow
   - [x] User registration
   - [x] Password reset
-  - [ ] Email verification
+  - [x] Email verification
   - [x] Session management
-  - [ ] OAuth integration
+  - [x] OAuth integration
+    - [x] Provider configuration
+    - [x] Authentication flow
+    - [x] Session management
+    - [x] User profile sync
 
 - [ ] User Profile
   - [x] Profile creation

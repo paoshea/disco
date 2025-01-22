@@ -328,6 +328,52 @@ This document captures interesting nuances discovered during testing and provide
      - Navigation
    - 💡 **Recommendation**: Extract mock implementations to shared test utilities
 
+## OAuth Integration (`auth.ts`)
+**Test File**: `oauth.test.tsx`
+
+#### Key Insights:
+1. **Mock Strategy**
+   - Created dedicated mock provider for Google OAuth
+   - Mocked NextAuth.js functions using Jest
+   - 🔍 **Potential Issue**: Need to consider mocking other OAuth providers (e.g., Facebook, GitHub)
+   - 💡 **Recommendation**: Create a mock factory for different OAuth providers
+
+2. **Environment Variables**
+   - Tests verify proper handling of missing OAuth configuration
+   - Mock environment variables set in test setup
+   - 🔍 **Potential Issue**: Environment variables not validated at runtime
+   - 💡 **Recommendation**: Add runtime validation for critical OAuth configuration
+
+3. **Error Handling**
+   - Tests cover OAuth sign-in failures
+   - Error messages properly displayed with accessibility roles
+   - 🔍 **Potential Issue**: Limited error scenarios covered
+   - 💡 **Recommendation**: Add tests for network failures, timeout scenarios
+
+4. **Session Management**
+   - Session persistence verified after OAuth login
+   - Session expiry properly handled
+   - 🔍 **Potential Issue**: No tests for token refresh flow
+   - 💡 **Recommendation**: Add tests for automatic token refresh
+
+5. **Profile Synchronization**
+   - Tests verify user profile data sync after OAuth login
+   - 🔍 **Potential Issue**: No tests for partial profile data
+   - 💡 **Recommendation**: Add tests for handling incomplete OAuth profile data
+
+#### Testing Infrastructure Insights:
+1. **Jest Configuration**
+   - Required special setup for ES modules and JSX
+   - Custom transformIgnorePatterns for NextAuth dependencies
+   - 🔍 **Potential Issue**: Complex setup might be hard to maintain
+   - 💡 **Recommendation**: Document Jest configuration requirements
+
+2. **Component Testing**
+   - Error components tested with React Testing Library
+   - Proper accessibility testing included
+   - 🔍 **Potential Issue**: Limited integration with actual UI components
+   - 💡 **Recommendation**: Add more UI integration tests
+
 ## Event Service Testing Insights
 
 ### Event Validation and Error Handling
