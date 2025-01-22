@@ -100,13 +100,23 @@ describe('Email Verification', () => {
     const { result } = renderHook(() => useAuth());
     const verificationToken = 'valid-token';
 
+    // Set initial auth state
+    act(() => {
+      result.current.set({
+        user: mockUser,
+        token: 'test-token',
+      });
+    });
+
+    const verifiedUser = {
+      ...mockUser,
+      emailVerified: true,
+      verificationStatus: 'verified' as const,
+    };
+
     mockApiClient.post.mockResolvedValueOnce({
       data: {
-        user: {
-          ...mockUser,
-          emailVerified: true,
-          verificationStatus: 'verified' as const,
-        },
+        user: verifiedUser,
       },
     });
 
@@ -125,6 +135,14 @@ describe('Email Verification', () => {
     const invalidToken = 'invalid-token';
     const errorMessage = 'Invalid or expired verification token';
 
+    // Set initial auth state
+    act(() => {
+      result.current.set({
+        user: mockUser,
+        token: 'test-token',
+      });
+    });
+
     mockApiClient.post.mockRejectedValueOnce(new Error(errorMessage));
 
     await act(async () => {
@@ -141,6 +159,14 @@ describe('Email Verification', () => {
     const { result } = renderHook(() => useAuth());
     const expiredToken = 'expired-token';
     const errorMessage = 'Verification token has expired';
+
+    // Set initial auth state
+    act(() => {
+      result.current.set({
+        user: mockUser,
+        token: 'test-token',
+      });
+    });
 
     mockApiClient.post.mockRejectedValueOnce(new Error(errorMessage));
 
