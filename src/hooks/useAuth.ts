@@ -39,6 +39,7 @@ interface AuthState {
     data: UpdateProfileData
   ) => Promise<{ success: boolean; error?: string }>;
   sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
+  verifyEmail: (token: string) => Promise<{ success: boolean; error?: string }>;
   set: (state: Partial<AuthState>) => void;
 }
 
@@ -201,15 +202,49 @@ export const useAuth = create<AuthState>()(
         }
       },
       async sendVerificationEmail() {
+        set({ isLoading: true, error: null });
         try {
-          await apiClient.post('/api/auth/send-verification');
+          const token = useAuth.getState().token;
+          await apiClient.post('/api/auth/send-verification-email', {}, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
           return { success: true };
         } catch (error) {
-          const message =
-            error instanceof Error
-              ? error.message
-              : 'Failed to send verification email';
+          const message = error instanceof Error ? error.message : 'Failed to send verification email';
+          set({ error: message });
           return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+      async verifyEmail(token: string) {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await apiClient.post('/api/auth/verify-email', {
+            token,
+          });
+
+          const result = z.object({
+            user: userSchema,
+          }).safeParse(response.data);
+
+          if (!result.success) {
+            console.error('Invalid response schema:', result.error);
+            set({ error: 'Invalid response from server' });
+            return { success: false, error: 'Invalid response from server' };
+          }
+
+          const { user } = result.data;
+          set({ user });
+          return { success: true };
+        } catch (error) {
+          const message = error instanceof Error ? error.message : 'Failed to verify email';
+          set({ error: message });
+          return { success: false, error: message };
+        } finally {
+          set({ isLoading: false });
         }
       },
       async requestPasswordReset(email) {
