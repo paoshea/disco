@@ -84,10 +84,13 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
         return;
       }
 
-      // Only include changed fields
+      // Only send changed fields
       const updates: Partial<User> = {};
+
       if (firstName !== user.firstName) updates.firstName = firstName;
       if (lastName !== user.lastName) updates.lastName = lastName;
+      if (email !== user.email) updates.email = email;
+      if (phoneNumber !== user.phoneNumber) updates.phoneNumber = phoneNumber;
       if (bio !== user.bio) updates.bio = bio;
 
       await onUpdate(updates);

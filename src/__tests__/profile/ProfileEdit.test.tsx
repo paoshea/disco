@@ -223,10 +223,9 @@ describe('ProfileEdit', () => {
 
     await waitFor(() => {
       expect(mockOnUpdate).toHaveBeenCalledWith({
-        ...mockUser,
         firstName: 'Updated',
         lastName: 'Name',
-        bio: 'Updated bio',
+        bio: 'Updated bio'
       });
     });
   });

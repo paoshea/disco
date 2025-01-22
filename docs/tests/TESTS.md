@@ -50,8 +50,12 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
   - [ ] OAuth integration
 
 - [ ] User Profile
-  - [ ] Profile creation
-  - [ ] Profile editing
+  - [x] Profile creation
+  - [x] Profile editing
+    - [x] Form validation
+    - [x] Error handling
+    - [x] Loading states
+    - [x] Accessibility
   - [ ] Avatar upload
   - [ ] Privacy settings
 

@@ -206,6 +206,52 @@ This document captures interesting nuances discovered during testing and provide
    - Add load tests
    - Add end-to-end tests
 
+## Profile Service (`profile.service.ts`)
+
+### Profile Edit Component (`ProfileEdit.tsx`)
+**Test File**: `ProfileEdit.test.tsx`
+
+#### Key Insights:
+1. **Form Validation**
+   - Required fields (firstName, lastName, email) are properly validated
+   - Email format validation using regex pattern
+   - Phone number format validation (optional field)
+   - 🔍 **Potential Issue**: Consider using a more robust email validation library
+   - 💡 **Recommendation**: Add internationalization support for phone numbers
+
+2. **State Management**
+   - Loading state properly managed during form submission
+   - Error state handled with accessibility considerations (role="alert")
+   - 🔍 **Potential Issue**: No debounce on form submission
+   - 💡 **Recommendation**: Add debounce to prevent double submissions
+
+3. **Data Updates**
+   - Only changed fields are sent to the server
+   - Prevents unnecessary data transmission
+   - 🔍 **Potential Issue**: No optimistic updates
+   - 💡 **Recommendation**: Implement optimistic updates for better UX
+
+4. **Accessibility**
+   - Error messages use proper ARIA roles
+   - Form controls properly labeled
+   - 🔍 **Potential Issue**: No keyboard navigation for interest selection
+   - 💡 **Recommendation**: Enhance keyboard accessibility
+
+#### Testing Infrastructure Insights
+
+1. **Mock Setup**
+   - User mock data needs careful date handling
+   - Update function mocking requires proper typing
+   - 🔍 **Potential Issue**: Timezone handling in tests
+   - 💡 **Recommendation**: Add explicit timezone tests
+
+2. **Test Coverage**
+   - Form validation thoroughly tested
+   - Error handling scenarios covered
+   - Loading states verified
+   - 🔍 **Potential Issue**: Missing tests for concurrent updates
+   - 💡 **Recommendation**: Add race condition tests
+
 ## Geolocation Hook (`useGeolocation.ts`)
 **Test File**: `useGeolocation.test.ts`
 
