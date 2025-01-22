@@ -18,36 +18,6 @@ const NEARBY_USERS_CACHE_TTL = 1800; // 30 minutes
 
 const locationService = LocationService.getInstance(); // Use getInstance instead of new
 
-// Helper function to convert Prisma User to App User
-function convertToAppUser(
-  prismaUser: PrismaUser & { locations?: PrismaLocation[] }
-): AppUser {
-  const location = prismaUser.locations?.[0];
-  return {
-    id: prismaUser.id,
-    email: prismaUser.email,
-    firstName: prismaUser.firstName,
-    lastName: prismaUser.lastName,
-    emailVerified: prismaUser.emailVerified !== null,
-    name: `${prismaUser.firstName} ${prismaUser.lastName}`,
-    verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
-    lastActive: prismaUser.updatedAt,
-    role: (prismaUser.role as 'user' | 'admin' | 'moderator') || 'user',
-    streakCount: prismaUser.streakCount || 0,
-    location: location
-      ? {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          accuracy: location.accuracy ?? undefined,
-          privacyMode: location.privacyMode as LocationPrivacyMode,
-          timestamp: location.timestamp,
-        }
-      : undefined,
-    createdAt: prismaUser.createdAt,
-    updatedAt: prismaUser.updatedAt,
-  };
-}
-
 export class MatchingService {
   private static instance: MatchingService;
   private algorithm: MatchAlgorithm;
@@ -63,6 +33,36 @@ export class MatchingService {
       MatchingService.instance = new MatchingService();
     }
     return MatchingService.instance;
+  }
+
+  // Helper function to convert Prisma User to App User
+  private static convertToAppUser(
+    prismaUser: PrismaUser & { locations?: PrismaLocation[] }
+  ): AppUser {
+    const location = prismaUser.locations?.[0];
+    return {
+      id: prismaUser.id,
+      email: prismaUser.email,
+      firstName: prismaUser.firstName,
+      lastName: prismaUser.lastName,
+      emailVerified: prismaUser.emailVerified !== null,
+      name: `${prismaUser.firstName} ${prismaUser.lastName}`,
+      verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
+      lastActive: prismaUser.updatedAt,
+      role: (prismaUser.role as 'user' | 'admin' | 'moderator') || 'user',
+      streakCount: prismaUser.streakCount || 0,
+      location: location
+        ? {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            accuracy: location.accuracy ?? undefined,
+            privacyMode: location.privacyMode as LocationPrivacyMode,
+            timestamp: location.timestamp,
+          }
+        : undefined,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
+    };
   }
 
   /**
@@ -120,7 +120,7 @@ export class MatchingService {
 
       nearbyUsers = await Promise.all(
         nearbyPrismaUsers.map(async user => {
-          const appUser = convertToAppUser(user);
+          const appUser = MatchingService.convertToAppUser(user);
           const prefs = await this.userService.getUserPreferences(user.id);
           return { ...appUser, preferences: prefs || undefined };
         })
@@ -176,8 +176,10 @@ export class MatchingService {
           }
 
           if (!matchScore) {
-            const appUser = convertToAppUser(user);
-            const appPotentialMatch = convertToAppUser(potentialMatchUser);
+            const appUser = MatchingService.convertToAppUser(user);
+            const appPotentialMatch = MatchingService.convertToAppUser(
+              potentialMatchUser
+            );
             matchScore = this.algorithm.calculateMatchScore(
               appUser,
               appPotentialMatch,
@@ -237,7 +239,7 @@ export class MatchingService {
    * Create a Match object from a user and score
    */
   async createMatchObject(user: PrismaUser, score: MatchScore): Promise<Match> {
-    const appUser = convertToAppUser(user);
+    const appUser = MatchingService.convertToAppUser(user);
     const matchLocation = appUser.location
       ? {
           latitude: appUser.location.latitude,
