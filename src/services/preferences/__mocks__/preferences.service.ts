@@ -31,10 +31,12 @@ describe('Preferences Service Mock', () => {
   it('should mock updatePreferences', async () => {
     const newPrefs = { ...mockPreferences, theme: 'dark' };
     mockPreferencesService.updatePreferences.mockResolvedValueOnce(newPrefs);
-    
+
     const prefs = await mockPreferencesService.updatePreferences(newPrefs);
     expect(prefs).toEqual(newPrefs);
-    expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(newPrefs);
+    expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
+      newPrefs
+    );
   });
 });
 

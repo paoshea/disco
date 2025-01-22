@@ -12,9 +12,11 @@ const mockPrismaClient = {
     create: jest.fn(),
     update: jest.fn(),
     delete: jest.fn(),
-    findNearby: jest.fn().mockImplementation(async (latitude, longitude, radius = 10) => {
-      return [];
-    }),
+    findNearby: jest
+      .fn()
+      .mockImplementation(async (latitude, longitude, radius = 10) => {
+        return [];
+      }),
   },
   notification: {
     findMany: jest.fn(),

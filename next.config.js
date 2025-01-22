@@ -39,7 +39,7 @@ const nextConfig = {
           /\.test\./,
           /\.spec\./,
           /jest\.config\./,
-          /jest\.setup\./
+          /jest\.setup\./,
         ],
       });
     }

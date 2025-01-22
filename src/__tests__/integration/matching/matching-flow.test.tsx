@@ -48,9 +48,13 @@ describe('Matching System Flow', () => {
 
   it('completes the full matching flow', async () => {
     // Mock service responses
-    (preferencesService.getPreferences as jest.Mock).mockResolvedValueOnce(mockPreferences);
-    (matchingService.findMatches as jest.Mock).mockResolvedValueOnce([mockMatch]);
-    
+    (preferencesService.getPreferences as jest.Mock).mockResolvedValueOnce(
+      mockPreferences
+    );
+    (matchingService.findMatches as jest.Mock).mockResolvedValueOnce([
+      mockMatch,
+    ]);
+
     const { rerender } = render(<MatchPreferences />);
 
     // 1. Set up matching preferences
@@ -74,7 +78,9 @@ describe('Matching System Flow', () => {
 
     // Save preferences
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /save preferences/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save preferences/i })
+      );
     });
 
     // Verify preferences update
@@ -96,7 +102,9 @@ describe('Matching System Flow', () => {
     // Verify matches are loaded
     await waitFor(() => {
       expect(screen.getByText(mockMatch.name)).toBeInTheDocument();
-      expect(screen.getByText(`${mockMatch.matchScore * 100}% Match`)).toBeInTheDocument();
+      expect(
+        screen.getByText(`${mockMatch.matchScore * 100}% Match`)
+      ).toBeInTheDocument();
     });
 
     // 3. View match details
@@ -116,7 +124,9 @@ describe('Matching System Flow', () => {
 
     // Verify match details
     await waitFor(() => {
-      expect(screen.getByText(/i love outdoor activities!/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/i love outdoor activities!/i)
+      ).toBeInTheDocument();
       expect(screen.getByText(/5k run/i)).toBeInTheDocument();
     });
 
@@ -127,7 +137,9 @@ describe('Matching System Flow', () => {
 
     // Verify match request
     await waitFor(() => {
-      expect(matchingService.sendMatchRequest).toHaveBeenCalledWith(mockMatch.id);
+      expect(matchingService.sendMatchRequest).toHaveBeenCalledWith(
+        mockMatch.id
+      );
       expect(notificationService.sendNotification).toHaveBeenCalledWith(
         mockMatch.userId,
         expect.any(String)
@@ -143,7 +155,9 @@ describe('Matching System Flow', () => {
       fireEvent.change(screen.getByLabelText(/maximum distance/i), {
         target: { value: -1 }, // Invalid distance
       });
-      fireEvent.click(screen.getByRole('button', { name: /save preferences/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /save preferences/i })
+      );
     });
 
     // Verify validation errors
@@ -159,7 +173,9 @@ describe('Matching System Flow', () => {
     // Verify no matches message
     await waitFor(() => {
       expect(screen.getByText(/no matches found/i)).toBeInTheDocument();
-      expect(screen.getByText(/try adjusting your preferences/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/try adjusting your preferences/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -187,9 +203,11 @@ describe('Matching System Flow', () => {
 
     // Mock match status update
     const updatedMatch = { ...mockMatch, status: 'accepted' };
-    (matchingService.getMatchUpdates as jest.Mock).mockImplementation((callback) => {
-      callback(updatedMatch);
-    });
+    (matchingService.getMatchUpdates as jest.Mock).mockImplementation(
+      callback => {
+        callback(updatedMatch);
+      }
+    );
 
     // Verify status update
     await waitFor(() => {
@@ -202,7 +220,9 @@ describe('Matching System Flow', () => {
     // Verify updated status in details
     await waitFor(() => {
       expect(screen.getByText(/accepted/i)).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /start chat/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /start chat/i })
+      ).toBeInTheDocument();
     });
   });
 });

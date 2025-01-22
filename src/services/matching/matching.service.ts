@@ -5,25 +5,33 @@ import type { Match, MatchRequest } from '@/types/matching';
 export const matchingService = {
   async findMatches(userId: string): Promise<Match[]> {
     const userPreferences = await preferencesService.getPreferences(userId);
-    
-    return prisma.user.findMany({
-      where: {
-        AND: [
-          { id: { not: userId } },
-          { preferences: { activityTypes: { hasSome: userPreferences.activityTypes } } },
-          {
-            age: {
-              gte: userPreferences.ageRange[0],
-              lte: userPreferences.ageRange[1],
+
+    return prisma.user
+      .findMany({
+        where: {
+          AND: [
+            { id: { not: userId } },
+            {
+              preferences: {
+                activityTypes: { hasSome: userPreferences.activityTypes },
+              },
             },
-          },
-        ],
-      },
-      include: {
-        preferences: true,
-        activities: true,
-      },
-    }).then(users => users.map(user => this._calculateMatch(user, userPreferences)));
+            {
+              age: {
+                gte: userPreferences.ageRange[0],
+                lte: userPreferences.ageRange[1],
+              },
+            },
+          ],
+        },
+        include: {
+          preferences: true,
+          activities: true,
+        },
+      })
+      .then(users =>
+        users.map(user => this._calculateMatch(user, userPreferences))
+      );
   },
 
   async getMatchDetails(matchId: string): Promise<Match> {
@@ -43,7 +51,10 @@ export const matchingService = {
     return match;
   },
 
-  async sendMatchRequest(matchId: string, userId: string): Promise<MatchRequest> {
+  async sendMatchRequest(
+    matchId: string,
+    userId: string
+  ): Promise<MatchRequest> {
     return prisma.matchRequest.create({
       data: {
         matchId,
@@ -53,28 +64,33 @@ export const matchingService = {
     });
   },
 
-  async updateMatchStatus(requestId: string, status: 'accepted' | 'declined'): Promise<MatchRequest> {
+  async updateMatchStatus(
+    requestId: string,
+    status: 'accepted' | 'declined'
+  ): Promise<MatchRequest> {
     return prisma.matchRequest.update({
       where: { id: requestId },
       data: { status },
     });
   },
 
-  async getMatchUpdates(userId: string, callback: (match: Match) => void): Promise<() => void> {
+  async getMatchUpdates(
+    userId: string,
+    callback: (match: Match) => void
+  ): Promise<() => void> {
     // Subscribe to match updates
-    const unsubscribe = prisma.$subscribe.match({
-      where: {
-        OR: [
-          { userId },
-          { matchedUserId: userId },
-        ],
-      },
-    }).on('change', async (change) => {
-      if (change.type === 'update') {
-        const match = await this.getMatchDetails(change.id);
-        callback(match);
-      }
-    });
+    const unsubscribe = prisma.$subscribe
+      .match({
+        where: {
+          OR: [{ userId }, { matchedUserId: userId }],
+        },
+      })
+      .on('change', async change => {
+        if (change.type === 'update') {
+          const match = await this.getMatchDetails(change.id);
+          callback(match);
+        }
+      });
 
     return unsubscribe;
   },
@@ -88,7 +104,12 @@ export const matchingService = {
     const commonActivities = user.preferences.activityTypes.filter(
       (type: string) => preferences.activityTypes.includes(type)
     );
-    score += commonActivities.length / Math.max(preferences.activityTypes.length, user.preferences.activityTypes.length);
+    score +=
+      commonActivities.length /
+      Math.max(
+        preferences.activityTypes.length,
+        user.preferences.activityTypes.length
+      );
     commonInterests = commonActivities;
 
     // Experience level matching
@@ -100,7 +121,13 @@ export const matchingService = {
     const commonAvailability = user.preferences.availability.filter(
       (time: string) => preferences.availability.includes(time)
     );
-    score += commonAvailability.length / Math.max(preferences.availability.length, user.preferences.availability.length) * 0.3;
+    score +=
+      (commonAvailability.length /
+        Math.max(
+          preferences.availability.length,
+          user.preferences.availability.length
+        )) *
+      0.3;
 
     return {
       id: user.id,

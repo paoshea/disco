@@ -8,26 +8,30 @@ const config = {
     '^@/pages/(.*)$': '<rootDir>/src/__tests__/__mocks__/pages/$1',
     '^@prisma/client$': '<rootDir>/src/__tests__/__mocks__/@prisma/client.ts',
     '^.+\\.module\\.(css|sass|scss)$': 'identity-obj-proxy',
-    '^@/env.mjs$': '<rootDir>/src/__tests__/__mocks__/env.mjs'
+    '^@/env.mjs$': '<rootDir>/src/__tests__/__mocks__/env.mjs',
   },
   transform: {
-    '^.+\\.(js|jsx|ts|tsx|mjs)$': ['babel-jest', {
-      presets: [
-        ['@babel/preset-env', { targets: { node: 'current' } }],
-        '@babel/preset-typescript',
-        ['@babel/preset-react', { runtime: 'automatic' }],
-      ],
-      plugins: [
-        ['@babel/plugin-proposal-decorators', { legacy: true }],
-        ['@babel/plugin-proposal-class-properties', { loose: true }],
-        ['@babel/plugin-proposal-private-methods', { loose: true }],
-        ['@babel/plugin-proposal-private-property-in-object', { loose: true }]
-      ]
-    }]
+    '^.+\\.(js|jsx|ts|tsx|mjs)$': [
+      'babel-jest',
+      {
+        presets: [
+          ['@babel/preset-env', { targets: { node: 'current' } }],
+          '@babel/preset-typescript',
+          ['@babel/preset-react', { runtime: 'automatic' }],
+        ],
+        plugins: [
+          ['@babel/plugin-proposal-decorators', { legacy: true }],
+          ['@babel/plugin-proposal-class-properties', { loose: true }],
+          ['@babel/plugin-proposal-private-methods', { loose: true }],
+          [
+            '@babel/plugin-proposal-private-property-in-object',
+            { loose: true },
+          ],
+        ],
+      },
+    ],
   },
-  transformIgnorePatterns: [
-    '/node_modules/(?!(@prisma/client)/)'
-  ],
+  transformIgnorePatterns: ['/node_modules/(?!(@prisma/client)/)'],
   moduleDirectories: ['node_modules', '<rootDir>'],
   testPathIgnorePatterns: ['/node_modules/', '/.next/'],
   collectCoverageFrom: [
@@ -39,10 +43,10 @@ const config = {
   globals: {
     'ts-jest': {
       tsconfig: {
-        jsx: 'react'
-      }
-    }
-  }
+        jsx: 'react',
+      },
+    },
+  },
 };
 
 module.exports = config;

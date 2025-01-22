@@ -1,215 +1,170 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { toast } from 'react-toastify';
 import { useAuth } from '@/hooks/useAuth';
-import { Layout } from '@/components/layout/Layout';
-import { ProfileEdit } from '@/components/profile/ProfileEdit';
-import { ProfileSettings } from '@/components/profile/ProfileSettings';
-import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button } from '@/components/ui/Button';
-import { Tab } from '@headlessui/react';
-import { userService } from '@/services/api/user.service';
-import type { User } from '@/types/user';
+import type { User } from '@/types/auth';
 
-function classNames(...classes: string[]) {
-  return classes.filter(Boolean).join(' ');
+interface ProfileFormData {
+  email: string;
+  name: string;
+  bio?: string;
+  location?: string;
 }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const {
-    user: authUser,
-    isLoading: authLoading,
-    error: authError,
-    logout,
-    updateProfile,
-    sendVerificationEmail,
-  } = useAuth();
-  const [error, setError] = useState<string | null>(null);
+  const { user, updateProfile } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
-  const [profileData, setProfileData] = useState<User | null>(null);
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<ProfileFormData>();
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        if (!authUser) {
-          router.push('/login');
-          return;
-        }
-        await loadProfileData();
-      } catch (err) {
-        console.error('Profile initialization error:', err);
-      }
-    };
-
-    void init();
-  }, [router, authUser]);
-
-  const loadProfileData = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const data = await userService.getProfile();
-      setProfileData(data);
-    } catch (err) {
-      console.error('Error loading profile:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to load profile data'
-      );
-    } finally {
-      setIsLoading(false);
+    if (user) {
+      reset({
+        email: user.email,
+        name: user.name,
+        bio: user.bio || '',
+        location: user.location || '',
+      });
     }
-  };
+  }, [user, reset]);
 
-  const handleLogout = async () => {
+  const onSubmit = async (data: ProfileFormData) => {
+    setIsLoading(true);
     try {
-      await logout();
-      router.push('/login');
-    } catch (err) {
-      console.error('Logout error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to logout');
-    }
-  };
-
-  const handleUpdateProfile = async (data: Partial<User>): Promise<void> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      if (!authUser) {
-        throw new Error('Not authenticated');
+      const result = await updateProfile(data);
+      if (!result.success) {
+        toast.error(result.error?.message || 'Failed to update profile');
+        return;
       }
-      await updateProfile(data);
-      await loadProfileData();
+      toast.success('Profile updated successfully');
     } catch (err) {
       console.error('Profile update error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update profile');
+      toast.error('An unexpected error occurred while updating your profile');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendVerificationEmail = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await sendVerificationEmail();
-      setError('Verification email sent successfully');
-    } catch (err) {
-      console.error('Send verification email error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to send verification email'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (authLoading || isLoading) {
+  if (!user) {
     return (
-      <div className="flex h-screen items-center justify-center">
-        <LoadingSpinner size="lg" />
+      <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+        <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+          <div className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+            <div className="max-w-md mx-auto">
+              <div className="divide-y divide-gray-200">
+                <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+                  <p>Please sign in to view your profile.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
 
-  if (authError || !authUser) {
-    return null;
-  }
-
   return (
-    <Layout>
-      <div className="container mx-auto max-w-4xl px-4 py-8">
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold">Profile</h1>
-          <Button onClick={() => void handleLogout()} variant="secondary">
-            Logout
-          </Button>
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
+      <div className="relative py-3 sm:max-w-xl sm:mx-auto">
+        <div className="relative px-4 py-10 bg-white mx-8 md:mx-0 shadow rounded-3xl sm:p-10">
+          <div className="max-w-md mx-auto">
+            <div className="divide-y divide-gray-200">
+              <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
+                <h2 className="text-2xl font-bold mb-8">Profile Settings</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      id="email"
+                      disabled
+                      {...register('email')}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Name
+                    </label>
+                    <input
+                      type="text"
+                      id="name"
+                      {...register('name', {
+                        required: 'Name is required',
+                        minLength: {
+                          value: 2,
+                          message: 'Name must be at least 2 characters',
+                        },
+                      })}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                    {errors.name && (
+                      <p className="mt-2 text-sm text-red-600">
+                        {errors.name.message}
+                      </p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="bio"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Bio
+                    </label>
+                    <textarea
+                      id="bio"
+                      rows={3}
+                      {...register('bio')}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="location"
+                      className="block text-sm font-medium text-gray-700"
+                    >
+                      Location
+                    </label>
+                    <input
+                      type="text"
+                      id="location"
+                      {...register('location')}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="pt-5">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+                    >
+                      {isLoading ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
         </div>
-
-        {error && (
-          <div className="mb-4 rounded-md bg-red-50 p-4">
-            <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        {!authUser.emailVerified && (
-          <div className="mb-4 rounded-md bg-yellow-50 p-4">
-            <p className="text-sm text-yellow-700">
-              Your email is not verified.{' '}
-              <button
-                onClick={() => void handleSendVerificationEmail()}
-                className="font-medium text-yellow-800 hover:underline"
-              >
-                Click here to resend verification email
-              </button>
-            </p>
-          </div>
-        )}
-
-        <Tab.Group>
-          <Tab.List className="mb-8 flex space-x-1 rounded-xl bg-gray-100 p-1">
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-blue-700 shadow'
-                    : 'text-gray-600 hover:bg-white/[0.12] hover:text-blue-600'
-                )
-              }
-            >
-              Edit Profile
-            </Tab>
-            <Tab
-              className={({ selected }) =>
-                classNames(
-                  'w-full rounded-lg py-2.5 text-sm font-medium leading-5',
-                  'ring-white ring-opacity-60 ring-offset-2 ring-offset-blue-400 focus:outline-none focus:ring-2',
-                  selected
-                    ? 'bg-white text-blue-700 shadow'
-                    : 'text-gray-600 hover:bg-white/[0.12] hover:text-blue-600'
-                )
-              }
-            >
-              Settings
-            </Tab>
-          </Tab.List>
-          <Tab.Panels>
-            <Tab.Panel>
-              {profileData && (
-                <ProfileEdit
-                  user={profileData}
-                  onUpdate={async (data: Partial<User>) => {
-                    await handleUpdateProfile(data);
-                  }}
-                />
-              )}
-            </Tab.Panel>
-            <Tab.Panel>
-              {authUser && (
-                <ProfileSettings
-                  user={{
-                    id: authUser.id,
-                    email: authUser.email,
-                    firstName: authUser.firstName,
-                    lastName: authUser.lastName,
-                    emailVerified: authUser.emailVerified,
-                    name: `${authUser.firstName} ${authUser.lastName}`,
-                    lastActive: authUser.updatedAt,
-                    createdAt: authUser.createdAt,
-                    updatedAt: authUser.updatedAt,
-                    verificationStatus: authUser.emailVerified
-                      ? 'verified'
-                      : 'pending',
-                  }}
-                />
-              )}
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
       </div>
-    </Layout>
+    </div>
   );
 }

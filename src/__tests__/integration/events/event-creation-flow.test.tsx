@@ -177,7 +177,9 @@ describe('Event Creation Flow', () => {
 
   it('handles location validation errors', async () => {
     // Mock location validation failure
-    (locationService.validateLocation as jest.Mock).mockResolvedValueOnce(false);
+    (locationService.validateLocation as jest.Mock).mockResolvedValueOnce(
+      false
+    );
 
     render(<CreateEvent />);
 

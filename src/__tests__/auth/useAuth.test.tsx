@@ -45,7 +45,7 @@ describe('useAuth Hook', () => {
       data: mockSession,
       status: 'authenticated',
     });
-    
+
     const { result } = renderHook(() => useAuth());
     expect(result.current.user).toEqual(mockUser);
     expect(result.current.isAuthenticated).toBe(true);
@@ -147,7 +147,10 @@ describe('useAuth Hook', () => {
       await result.current.register(registrationData);
     });
 
-    expect(mockApiClient.post).toHaveBeenCalledWith('/auth/register', registrationData);
+    expect(mockApiClient.post).toHaveBeenCalledWith(
+      '/auth/register',
+      registrationData
+    );
     expect(signIn).toHaveBeenCalledWith('credentials', {
       email: registrationData.email,
       password: registrationData.password,

@@ -21,9 +21,11 @@ export default function NotificationCenter() {
     loadNotifications();
 
     // Subscribe to real-time notifications
-    const unsubscribe = notificationService.subscribeToNotifications((notification) => {
-      setNotifications(prev => [notification, ...prev]);
-    });
+    const unsubscribe = notificationService.subscribeToNotifications(
+      notification => {
+        setNotifications(prev => [notification, ...prev]);
+      }
+    );
 
     return () => {
       unsubscribe();
@@ -34,9 +36,7 @@ export default function NotificationCenter() {
     try {
       await notificationService.markAsRead(id);
       setNotifications(prev =>
-        prev.map(notif =>
-          notif.id === id ? { ...notif, read: true } : notif
-        )
+        prev.map(notif => (notif.id === id ? { ...notif, read: true } : notif))
       );
     } catch (err) {
       setError('Failed to mark notification as read');
@@ -75,12 +75,10 @@ export default function NotificationCenter() {
       </div>
 
       {notifications.length === 0 ? (
-        <div className="text-center text-gray-500 py-8">
-          No notifications
-        </div>
+        <div className="text-center text-gray-500 py-8">No notifications</div>
       ) : (
         <div className="space-y-4">
-          {notifications.map((notification) => (
+          {notifications.map(notification => (
             <div
               key={notification.id}
               className={`p-4 rounded-lg border ${

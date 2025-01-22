@@ -3,37 +3,57 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { notificationService } from '@/services/notification/notification.service';
+import { useAuth } from '@/hooks/useAuth';
 import type { NotificationPreferences } from '@/types/notifications';
 
 export default function NotificationsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<NotificationPreferences>();
+  const { user } = useAuth();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<NotificationPreferences>();
 
   useEffect(() => {
     const loadPreferences = async () => {
+      if (!user?.id) return;
+
       try {
-        const prefs = await notificationService.getPreferences();
-        Object.entries(prefs).forEach(([key, value]) => {
-          setValue(key as keyof NotificationPreferences, value);
-        });
+        const prefs = await notificationService.getSettings(user.id);
+        if (prefs) {
+          Object.entries(prefs).forEach(([key, value]) => {
+            setValue(key as keyof NotificationPreferences, value);
+          });
+        }
       } catch (err) {
+        console.error('Error loading notification preferences:', err);
         setError('Failed to load notification preferences');
       }
     };
 
-    loadPreferences();
-  }, [setValue]);
+    void loadPreferences();
+  }, [setValue, user?.id]);
 
   const onSubmit = async (data: NotificationPreferences) => {
+    if (!user?.id) {
+      setError('User not authenticated');
+      return;
+    }
+
     try {
-      await notificationService.updatePreferences(data);
-      setSuccess(true);
       setError(null);
+      setSuccess(false);
+      await notificationService.updateSettings(user.id, data);
+      setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update preferences');
-      setSuccess(false);
+      console.error('Error updating notification preferences:', err);
+      setError(
+        err instanceof Error ? err.message : 'Failed to update preferences'
+      );
     }
   };
 
@@ -56,7 +76,9 @@ export default function NotificationsPage() {
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div className="space-y-4">
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Push Notifications</label>
+            <label className="text-sm font-medium text-gray-700">
+              Push Notifications
+            </label>
             <input
               type="checkbox"
               {...register('pushEnabled')}
@@ -65,7 +87,9 @@ export default function NotificationsPage() {
           </div>
 
           <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">Email Notifications</label>
+            <label className="text-sm font-medium text-gray-700">
+              Email Notifications
+            </label>
             <input
               type="checkbox"
               {...register('emailEnabled')}
@@ -78,7 +102,9 @@ export default function NotificationsPage() {
           <h2 className="text-lg font-medium mb-4">Notification Categories</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Matches</label>
+              <label className="text-sm font-medium text-gray-700">
+                Matches
+              </label>
               <input
                 type="checkbox"
                 {...register('categories.matches')}
@@ -87,7 +113,9 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Messages</label>
+              <label className="text-sm font-medium text-gray-700">
+                Messages
+              </label>
               <input
                 type="checkbox"
                 {...register('categories.messages')}
@@ -96,7 +124,9 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Events</label>
+              <label className="text-sm font-medium text-gray-700">
+                Events
+              </label>
               <input
                 type="checkbox"
                 {...register('categories.events')}
@@ -105,7 +135,9 @@ export default function NotificationsPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">System Updates</label>
+              <label className="text-sm font-medium text-gray-700">
+                System Updates
+              </label>
               <input
                 type="checkbox"
                 {...register('categories.system')}
@@ -119,7 +151,9 @@ export default function NotificationsPage() {
           <h2 className="text-lg font-medium mb-4">Quiet Hours</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">Enable Quiet Hours</label>
+              <label className="text-sm font-medium text-gray-700">
+                Enable Quiet Hours
+              </label>
               <input
                 type="checkbox"
                 {...register('quiet_hours.enabled')}
@@ -129,7 +163,9 @@ export default function NotificationsPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700">Start Time</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  Start Time
+                </label>
                 <input
                   type="time"
                   {...register('quiet_hours.start')}
@@ -138,7 +174,9 @@ export default function NotificationsPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">End Time</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  End Time
+                </label>
                 <input
                   type="time"
                   {...register('quiet_hours.end')}

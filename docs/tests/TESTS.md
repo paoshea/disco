@@ -176,12 +176,14 @@ src/
 We maintain several levels of mocks:
 
 1. **Global Mocks** (`src/__tests__/__mocks__/`)
+
    - User data
    - localStorage
    - Session data
    - API responses
 
 2. **Service-Level Mocks** (`src/services/<service>/__tests__/__mocks__/`)
+
    - Service-specific mock data
    - Mock implementations
 
@@ -193,17 +195,20 @@ We maintain several levels of mocks:
 ### Best Practices
 
 1. **Mock Management**
+
    - Keep mocks close to where they're used
    - Share common mocks through the global `__mocks__` directory
    - Version control mock data for consistency
 
 2. **Test Structure**
+
    - Group related tests using `describe` blocks
    - Use clear, descriptive test names
    - Follow the Arrange-Act-Assert pattern
    - Mock at the appropriate level (global vs local)
 
 3. **Testing Hooks**
+
    - Use `renderHook` from `@testing-library/react-hooks`
    - Test all possible states
    - Verify cleanup/unmount behavior
@@ -218,12 +223,14 @@ We maintain several levels of mocks:
 ### Recent Changes (January 2025)
 
 1. **Auth Tests Reorganization**
+
    - Moved auth-related tests to dedicated `auth/` directory
    - Split session management tests from auth hook tests
    - Improved mock implementations for consistency
    - Added comprehensive OAuth integration tests
 
 2. **Service Tests Structure**
+
    - Standardized service test organization
    - Added dedicated `__tests__` directories per service
    - Improved separation of concerns in test files

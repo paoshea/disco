@@ -1,6 +1,12 @@
 /** @jest-environment jsdom */
 import React from 'react';
-import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+  act,
+} from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { mockUser } from '../__mocks__/user';
@@ -67,7 +73,9 @@ describe('ProfileSettings', () => {
     render(<ProfileSettings user={mockUser} />);
 
     // Toggle a preference
-    const showOnlineStatusCheckbox = screen.getByLabelText('Show Online Status') as HTMLInputElement;
+    const showOnlineStatusCheckbox = screen.getByLabelText(
+      'Show Online Status'
+    ) as HTMLInputElement;
     await act(async () => {
       fireEvent.click(showOnlineStatusCheckbox);
     });
@@ -90,12 +98,16 @@ describe('ProfileSettings', () => {
   });
 
   it('should handle form submission error', async () => {
-    (userService.updatePreferences as jest.Mock).mockRejectedValue(new Error('Update failed'));
+    (userService.updatePreferences as jest.Mock).mockRejectedValue(
+      new Error('Update failed')
+    );
 
     render(<ProfileSettings user={mockUser} />);
 
     // Toggle a preference
-    const showOnlineStatusCheckbox = screen.getByLabelText('Show Online Status') as HTMLInputElement;
+    const showOnlineStatusCheckbox = screen.getByLabelText(
+      'Show Online Status'
+    ) as HTMLInputElement;
     await act(async () => {
       fireEvent.click(showOnlineStatusCheckbox);
     });

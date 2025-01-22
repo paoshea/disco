@@ -44,7 +44,9 @@ export default function MatchPreferences() {
           {/* Error messages will be displayed here */}
           <div className="error-message">Distance must be positive</div>
         </div>
-        <button type="submit" aria-label="save preferences">Save Preferences</button>
+        <button type="submit" aria-label="save preferences">
+          Save Preferences
+        </button>
       </form>
     </div>
   );

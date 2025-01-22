@@ -1,4 +1,11 @@
-import { PrismaClient, Event, User, PrivacyZone, Notification, Match } from '@prisma/client';
+import {
+  PrismaClient,
+  Event,
+  User,
+  PrivacyZone,
+  Notification,
+  Match,
+} from '@prisma/client';
 import { mockDeep, mockReset, DeepMockProxy } from 'jest-mock-extended';
 
 interface FindNearbyParams {
@@ -13,7 +20,10 @@ interface PrismaClientExtended extends PrismaClient {
     findNearby(params: FindNearbyParams): Promise<Event[]>;
   };
   privacyZone: PrismaClient['privacyZone'] & {
-    findOverlapping(center: { latitude: number; longitude: number }, radius: number): Promise<PrivacyZone[]>;
+    findOverlapping(
+      center: { latitude: number; longitude: number },
+      radius: number
+    ): Promise<PrivacyZone[]>;
   };
   notification: PrismaClient['notification'] & {
     findUnread(userId: string): Promise<Notification[]>;

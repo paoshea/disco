@@ -23,8 +23,11 @@ describe('Preferences Service Mock', () => {
       language: 'es',
       timezone: 'UTC',
     };
-    const updatedPreferences = await mockPreferencesService.updatePreferences(newPreferences);
+    const updatedPreferences =
+      await mockPreferencesService.updatePreferences(newPreferences);
     expect(updatedPreferences).toBeDefined();
-    expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(newPreferences);
+    expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
+      newPreferences
+    );
   });
 });

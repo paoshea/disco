@@ -272,7 +272,77 @@ This test coverage plan will be updated as new features are added and testing re
 - [x] Safety Service Integration
 - [x] Matching Service Features
 
-### Technical Debt & Documentation
+### File reorganisation
+
+some suggestions for improvement:
+
+- Type Safety:
+  Some any types in the codebase
+  Inconsistent use of generics
+  Recommendation:
+  Remove all any types, Remove any types causing TypeScript errors
+  Use proper TypeScript generics consistently, Fix inconsistent generics that are causing build errors
+  Add proper return types to all functions, Add missing return types that TypeScript is complaining about
+- API Client Duplication: There are multiple API client implementations:
+  /lib/api.ts using native fetch
+  /src/lib/api/client.ts using Axios
+  /src/services/api/api.ts also using Axios
+  Recommendation: Consolidate these into a single API client implementation, preferably using Axios for better error handling and interceptors.
+  Since we're getting errors related to API calls and auth, we should consolidate the API clients
+  This will fix the current build errors in the auth and notification services
+- Authentication Flow:
+  Need to fix the immediate token/auth related errors. Currently, mixing Next-Auth with custom token-based auth
+  Token storage in localStorage which isn't secure for sensitive data
+  Recommendation:
+  Use Next-Auth consistently with JWT session strategy
+  Store tokens in HTTP-only cookies instead of localStorage
+  Focus on making the current auth approach work consistently before migrating to a new strategy
+- State Management:
+  Current mix of Context and Zustand works, just not ideal
+  Multiple state management approaches (Context, Zustand store)
+  Some components directly accessing localStorage
+  Recommendation:
+  Can gradually migrate to Zustand over time
+  Use Zustand consistently for global state
+  Create separate stores for different domains (auth, preferences, notifications)
+  Access localStorage only through store actions
+- Error Handling:
+  Inconsistent error handling across services. Can be improved gradually.
+  Current inconsistency doesn't prevent builds.
+  Some services throw raw errors, others return error objects
+  Recommendation:
+  Create a consistent error handling strategy
+  Use custom error classes with proper typing
+  Implement global error boundary
+- Service Organization:
+  Current structure works, just not optimal. Can be refactored gradually without breaking changes.
+  Services are spread across different patterns:
+  /src/services/api/_
+  /src/services/preferences/_
+  /lib/\*
+  Recommendation:
+  Follow domain-driven design
+  Organize services by feature rather than technical concern
+  Move all services under /src/services/[domain]
+- Middleware:
+  Both implementations are functional. Can be unified later as part of architectural improvement.
+  Multiple middleware implementations:
+  /middleware.ts
+  /src/middleware/authMiddleware.ts
+  Recommendation:
+  Consolidate middleware logic
+  Use Next.js middleware consistently
+  Add proper typing for middleware functions
+- WebSocket Services:
+  Current implementation works. Improvements can be made later for better reliability.
+  Multiple WebSocket service implementations
+  Inconsistent connection management
+  Recommendation:
+  Create a single WebSocket service
+  Implement proper reconnection strategy
+  Add proper error handling and logging
+
+### Technical Documentation
 
 - [ ] Update API documentation
 - [ ] Document import patterns

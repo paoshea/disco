@@ -25,13 +25,20 @@ export const useSession = jest.fn(() => ({
 
 // Mock the signIn and signOut functions
 export const signIn = jest.fn().mockImplementation((provider, options) => {
-  if (options?.email === 'test@example.com' && options?.password === 'password123') {
+  if (
+    options?.email === 'test@example.com' &&
+    options?.password === 'password123'
+  ) {
     return Promise.resolve({ ok: true, error: null });
   }
   return Promise.resolve({ ok: false, error: 'Invalid credentials' });
 });
 
-export const signOut = jest.fn().mockImplementation(() => Promise.resolve({ ok: true }));
+export const signOut = jest
+  .fn()
+  .mockImplementation(() => Promise.resolve({ ok: true }));
 
 // Mock the getSession function
-export const getSession = jest.fn().mockImplementation(() => Promise.resolve(mockSession));
+export const getSession = jest
+  .fn()
+  .mockImplementation(() => Promise.resolve(mockSession));

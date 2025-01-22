@@ -386,29 +386,6 @@ Remember to always shut down services in the correct order to prevent data corru
   npm run verify-env
   ```
 
-# Useful terminal commands
-
-npm audit fix
-npm run format:check
-npm run format  
-npx prettier --write .
-npx eslint . --fix
-
-npm run type-check
-npm run lint --fix
-npm run lint
-
-npm run type-check:watch
-npm run lint:watch
-
-npm run test
-npm run test:watch
-
-npm run verify-env
-
-rm -rf .next/  
-npm run build
-
 ## Need Help?
 
 If you encounter any issues:

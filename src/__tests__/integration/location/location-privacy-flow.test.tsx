@@ -46,9 +46,13 @@ describe('Location Privacy Flow', () => {
 
   it('completes the full location privacy setup flow', async () => {
     // Mock service responses
-    (locationService.getCurrentLocation as jest.Mock).mockResolvedValueOnce(mockGeolocation);
-    (privacyService.createPrivacyZone as jest.Mock).mockResolvedValueOnce(mockPrivacyZone);
-    
+    (locationService.getCurrentLocation as jest.Mock).mockResolvedValueOnce(
+      mockGeolocation
+    );
+    (privacyService.createPrivacyZone as jest.Mock).mockResolvedValueOnce(
+      mockPrivacyZone
+    );
+
     const { rerender } = render(<LocationSettings />);
 
     // 1. Configure location sharing settings
@@ -100,7 +104,9 @@ describe('Location Privacy Flow', () => {
 
     // Use current location for zone center
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /use current location/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /use current location/i })
+      );
     });
 
     // Save privacy zone
@@ -130,8 +136,12 @@ describe('Location Privacy Flow', () => {
     render(<LocationSettings />);
 
     // Verify error message
-    expect(screen.getByText(/location access is required/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /request permission/i })).toBeInTheDocument();
+    expect(
+      screen.getByText(/location access is required/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /request permission/i })
+    ).toBeInTheDocument();
   });
 
   it('validates privacy zone settings', async () => {
@@ -171,13 +181,17 @@ describe('Location Privacy Flow', () => {
 
     // Verify overlap warning
     await waitFor(() => {
-      expect(screen.getByText(/zone overlaps with existing zone/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/zone overlaps with existing zone/i)
+      ).toBeInTheDocument();
     });
   });
 
   it('updates zone privacy levels', async () => {
     // Mock existing zone
-    (privacyService.getPrivacyZones as jest.Mock).mockResolvedValueOnce([mockPrivacyZone]);
+    (privacyService.getPrivacyZones as jest.Mock).mockResolvedValueOnce([
+      mockPrivacyZone,
+    ]);
 
     render(<PrivacyZones />);
 

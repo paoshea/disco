@@ -93,7 +93,9 @@ describe('Location Utils Mock', () => {
     const coords = { latitude: 37.7749, longitude: -122.4194 };
     mockLocationUtils.getLocationFromAddress.mockResolvedValue(coords);
 
-    const result = await mockLocationUtils.getLocationFromAddress('123 Main St, San Francisco, CA');
+    const result = await mockLocationUtils.getLocationFromAddress(
+      '123 Main St, San Francisco, CA'
+    );
     expect(result).toEqual(coords);
     expect(mockLocationUtils.getLocationFromAddress).toHaveBeenCalled();
   });

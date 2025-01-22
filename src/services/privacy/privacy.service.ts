@@ -8,7 +8,10 @@ export const privacyService = {
     });
   },
 
-  async createPrivacyZone(userId: string, zone: Omit<PrivacyZone, 'id'>): Promise<PrivacyZone> {
+  async createPrivacyZone(
+    userId: string,
+    zone: Omit<PrivacyZone, 'id'>
+  ): Promise<PrivacyZone> {
     return prisma.privacyZone.create({
       data: {
         ...zone,
@@ -17,7 +20,10 @@ export const privacyService = {
     });
   },
 
-  async updatePrivacyZone(id: string, zone: Partial<PrivacyZone>): Promise<PrivacyZone> {
+  async updatePrivacyZone(
+    id: string,
+    zone: Partial<PrivacyZone>
+  ): Promise<PrivacyZone> {
     return prisma.privacyZone.update({
       where: { id },
       data: zone,
@@ -38,7 +44,7 @@ export const privacyService = {
   ): Promise<boolean> {
     const zones = await this.getPrivacyZones(userId);
     return zones.some(
-      (zone) =>
+      zone =>
         zone.id !== excludeId &&
         this._calculateDistance(center, zone.center) < radius + zone.radius
     );

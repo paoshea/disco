@@ -1,17 +1,20 @@
+import type { User } from './user';
+
 export interface UserPreferences {
+  interests: string[];
+  gender: string[];
+  lookingFor: string[];
+  relationshipType: string[];
   maxDistance: number;
   ageRange: {
     min: number;
     max: number;
   };
-  interests: string[];
-  gender: string[];
-  lookingFor: string[];
-  relationshipType: string[];
   notifications: {
     matches: boolean;
     messages: boolean;
-    email: boolean;
+    events: boolean;
+    safety: boolean;
   };
   privacy: {
     showOnlineStatus: boolean;
@@ -23,21 +26,23 @@ export interface UserPreferences {
     requireVerifiedMatch: boolean;
     meetupCheckins: boolean;
     emergencyContactAlerts: boolean;
-    blockUnverifiedUsers: boolean;
   };
   theme: 'light' | 'dark';
   language: string;
   timezone: string;
 }
 
-export interface PreferencesUpdateResponse {
+export interface PreferencesUpdateResponse<T = UserPreferences> {
   success: boolean;
-  data?: UserPreferences;
+  data?: T;
   error?: string;
 }
 
 export interface PreferencesServiceInterface {
   getUserPreferences(userId: string): Promise<UserPreferences>;
-  updatePreferences(userId: string, preferences: Partial<UserPreferences>): Promise<PreferencesUpdateResponse>;
+  updatePreferences(
+    userId: string,
+    preferences: Partial<UserPreferences>
+  ): Promise<PreferencesUpdateResponse>;
   resetPreferences(userId: string): Promise<PreferencesUpdateResponse>;
 }

@@ -47,7 +47,9 @@ export default function NotificationSettings() {
           {/* Error messages will be displayed here */}
         </div>
 
-        <button type="submit" aria-label="save notification settings">Save Settings</button>
+        <button type="submit" aria-label="save notification settings">
+          Save Settings
+        </button>
       </form>
     </div>
   );

@@ -98,10 +98,13 @@ describe('User Registration Flow', () => {
 
     // Verify profile update API call
     await waitFor(() => {
-      expect(userService.updateProfile).toHaveBeenCalledWith(expect.any(String), {
-        bio: 'I love outdoor activities!',
-        location: 'San Francisco',
-      });
+      expect(userService.updateProfile).toHaveBeenCalledWith(
+        expect.any(String),
+        {
+          bio: 'I love outdoor activities!',
+          location: 'San Francisco',
+        }
+      );
     });
 
     // 3. Move to Preferences Setup
@@ -162,7 +165,9 @@ describe('User Registration Flow', () => {
     render(<Register />);
 
     // Mock API error
-    (signIn as jest.Mock).mockRejectedValueOnce(new Error('Registration failed'));
+    (signIn as jest.Mock).mockRejectedValueOnce(
+      new Error('Registration failed')
+    );
 
     // Fill and submit form
     await act(async () => {

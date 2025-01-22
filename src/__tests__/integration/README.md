@@ -5,6 +5,7 @@ These tests verify complete user flows through multiple components and services.
 ## Test Structure
 
 Each test file focuses on a complete user flow, such as:
+
 - Registration to profile completion
 - Event creation and matching
 - Location sharing and privacy settings
@@ -19,6 +20,7 @@ Each test file focuses on a complete user flow, such as:
 ## Running Tests
 
 Run integration tests separately from unit tests:
+
 ```bash
 npm run test:integration
 ```

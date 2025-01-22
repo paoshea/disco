@@ -1,6 +1,9 @@
 import { prisma } from '@/lib/prisma';
 import { webSocketService } from '../websocket/websocket.service';
-import type { Notification, NotificationPreferences } from '@/types/notifications';
+import type {
+  Notification,
+  NotificationPreferences,
+} from '@/types/notifications';
 
 export const notificationService = {
   async getNotifications(userId: string): Promise<Notification[]> {

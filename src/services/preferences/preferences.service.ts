@@ -1,5 +1,10 @@
-import { UserPreferences, PreferencesUpdateResponse, PreferencesServiceInterface } from '@/types/preferences';
+import {
+  UserPreferences,
+  PreferencesUpdateResponse,
+  PreferencesServiceInterface,
+} from '@/types/preferences';
 import { apiClient } from '@/lib/api/client';
+import { MatchPreferences } from '@/types/matching';
 
 interface ApiResponse<T> {
   data: T;
@@ -25,7 +30,7 @@ export class PreferencesService implements PreferencesServiceInterface {
   async updatePreferences(
     userId: string,
     preferences: Partial<UserPreferences>
-  ): Promise<PreferencesUpdateResponse> {
+  ): Promise<PreferencesUpdateResponse<UserPreferences>> {
     try {
       const response = await apiClient.put<ApiResponse<UserPreferences>>(
         `${this.baseUrl}/${userId}/preferences`,
@@ -44,10 +49,12 @@ export class PreferencesService implements PreferencesServiceInterface {
     }
   }
 
-  async resetPreferences(userId: string): Promise<PreferencesUpdateResponse> {
+  async resetPreferences(
+    userId: string
+  ): Promise<PreferencesUpdateResponse<UserPreferences>> {
     try {
-      const response = await apiClient.post<ApiResponse<UserPreferences>>(
-        `${this.baseUrl}/${userId}/preferences/reset`
+      const response = await apiClient.delete<ApiResponse<UserPreferences>>(
+        `${this.baseUrl}/${userId}/preferences`
       );
       return {
         success: true,
@@ -58,6 +65,39 @@ export class PreferencesService implements PreferencesServiceInterface {
       return {
         success: false,
         error: 'Failed to reset preferences',
+      };
+    }
+  }
+
+  async getMatchPreferences(): Promise<MatchPreferences> {
+    try {
+      const response = await apiClient.get<ApiResponse<MatchPreferences>>(
+        `${this.baseUrl}/match-preferences`
+      );
+      return response.data.data;
+    } catch (error) {
+      console.error('PreferencesService Error:', error);
+      throw error;
+    }
+  }
+
+  async updateMatchPreferences(
+    preferences: Partial<MatchPreferences>
+  ): Promise<PreferencesUpdateResponse<MatchPreferences>> {
+    try {
+      const response = await apiClient.put<ApiResponse<MatchPreferences>>(
+        `${this.baseUrl}/match-preferences`,
+        preferences
+      );
+      return {
+        success: true,
+        data: response.data.data,
+      };
+    } catch (error) {
+      console.error('PreferencesService Error:', error);
+      return {
+        success: false,
+        error: 'Failed to update match preferences',
       };
     }
   }

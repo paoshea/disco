@@ -36,7 +36,9 @@ export default function CreateEvent() {
           <input type="number" aria-label="duration" min="0.5" step="0.5" />
         </label>
         <div role="alert" aria-live="polite" id="validation-errors"></div>
-        <button type="submit" aria-label="create event">Create Event</button>
+        <button type="submit" aria-label="create event">
+          Create Event
+        </button>
       </form>
     </div>
   );

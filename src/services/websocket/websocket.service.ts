@@ -7,7 +7,7 @@ class WebSocketService {
   connect(userId: string, token: string) {
     if (this.socket?.connected) return;
 
-    this.socket = io(process.env.NEXT_PUBLIC_WS_URL!, {
+    this.socket = io(process.env.NEXT_PUBLIC_WS_URL, {
       auth: { token },
       query: { userId },
     });

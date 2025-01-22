@@ -692,6 +692,7 @@ jest.mock('@/lib/redis', () => ({
 #### Key Insights:
 
 1. **API Client Mocking**
+
    - Mock the entire API client module, not just individual methods
    - Ensure mock maintains the same interface as the real client
    - Example of proper API client mock:
@@ -709,6 +710,7 @@ jest.mock('@/lib/redis', () => ({
      ```
 
 2. **Session State Management**
+
    - Initialize with proper null state, not undefined
    - Mock session data consistently across related tests
    - Handle session status transitions properly:
@@ -732,6 +734,7 @@ jest.mock('@/lib/redis', () => ({
 #### State Updates in Tests
 
 1. **Act Warnings**
+
    - Wrap state updates in act() to prevent warnings
    - Include both synchronous and asynchronous operations
    - Example:
@@ -759,6 +762,7 @@ jest.mock('@/lib/redis', () => ({
 ### Testing Best Practices
 
 1. **Mock Reset**
+
    - Clear all mocks in beforeEach
    - Reset specific mock implementations between tests
    - Example:
@@ -770,6 +774,7 @@ jest.mock('@/lib/redis', () => ({
      ```
 
 2. **Type Safety**
+
    - Use proper TypeScript types for mocked functions
    - Maintain type consistency with real implementations
    - Example:
@@ -785,11 +790,13 @@ jest.mock('@/lib/redis', () => ({
 ### Areas for Improvement
 
 1. **Test Coverage**
+
    - [ ] Add tests for token refresh scenarios
    - [ ] Test session timeout handling
    - [ ] Add tests for concurrent auth operations
 
 2. **Error Handling**
+
    - [ ] Test network timeout scenarios
    - [ ] Test invalid token responses
    - [ ] Test session recovery after errors

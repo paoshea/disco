@@ -17,18 +17,10 @@ const mockSession = {
 // Custom render function that includes providers
 function render(
   ui: ReactElement,
-  {
-    session = mockSession,
-    router = {},
-    ...options
-  } = {}
+  { session = mockSession, router = {}, ...options } = {}
 ) {
   function Wrapper({ children }: { children: ReactElement }) {
-    return (
-      <SessionProvider session={session}>
-        {children}
-      </SessionProvider>
-    );
+    return <SessionProvider session={session}>{children}</SessionProvider>;
   }
 
   return {

@@ -7,7 +7,7 @@ describe('User Mock', () => {
     expect(mockUser).toHaveProperty('name');
     expect(mockUser).toHaveProperty('email');
     expect(mockUser).toHaveProperty('preferences');
-    
+
     // Check preferences structure
     expect(mockUser.preferences).toHaveProperty('maxDistance');
     expect(mockUser.preferences).toHaveProperty('ageRange');
@@ -25,7 +25,7 @@ describe('User Mock', () => {
 
   it('should have valid preference values', () => {
     const { preferences } = mockUser;
-    
+
     expect(typeof preferences.maxDistance).toBe('number');
     expect(preferences.ageRange).toHaveProperty('min');
     expect(preferences.ageRange).toHaveProperty('max');

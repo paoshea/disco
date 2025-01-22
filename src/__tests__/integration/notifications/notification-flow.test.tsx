@@ -54,18 +54,22 @@ describe('Notification System Flow', () => {
 
   it('completes the full notification setup and handling flow', async () => {
     // Mock service responses
-    (notificationService.getSettings as jest.Mock).mockResolvedValueOnce(mockSettings);
-    (notificationService.getNotifications as jest.Mock).mockResolvedValueOnce([mockNotification]);
-    
+    (notificationService.getSettings as jest.Mock).mockResolvedValueOnce(
+      mockSettings
+    );
+    (notificationService.getNotifications as jest.Mock).mockResolvedValueOnce([
+      mockNotification,
+    ]);
+
     const { rerender } = render(<NotificationSettings />);
 
     // 1. Configure notification settings
     await act(async () => {
       fireEvent.click(screen.getByLabelText(/enable push notifications/i));
       fireEvent.click(screen.getByLabelText(/enable email notifications/i));
-      
+
       // Configure categories
-      Object.keys(mockSettings.categories).forEach((category) => {
+      Object.keys(mockSettings.categories).forEach(category => {
         fireEvent.click(screen.getByLabelText(new RegExp(category, 'i')));
       });
 
@@ -86,7 +90,9 @@ describe('Notification System Flow', () => {
 
     // Verify settings update
     await waitFor(() => {
-      expect(notificationService.updateSettings).toHaveBeenCalledWith(mockSettings);
+      expect(notificationService.updateSettings).toHaveBeenCalledWith(
+        mockSettings
+      );
     });
 
     // 2. Test push notification permission
@@ -97,7 +103,9 @@ describe('Notification System Flow', () => {
         permission: 'granted',
       } as any;
 
-      fireEvent.click(screen.getByRole('button', { name: /enable push notifications/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /enable push notifications/i })
+      );
     });
 
     // Verify push notification setup
@@ -139,7 +147,9 @@ describe('Notification System Flow', () => {
 
     // Verify notification marked as read
     await waitFor(() => {
-      expect(notificationService.markAsRead).toHaveBeenCalledWith(newNotification.id);
+      expect(notificationService.markAsRead).toHaveBeenCalledWith(
+        newNotification.id
+      );
       expect(mockRouter.push).toHaveBeenCalledWith(newNotification.actionUrl);
     });
   });
@@ -154,18 +164,24 @@ describe('Notification System Flow', () => {
     render(<NotificationSettings />);
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', { name: /enable push notifications/i }));
+      fireEvent.click(
+        screen.getByRole('button', { name: /enable push notifications/i })
+      );
     });
 
     // Verify permission denied message
-    expect(screen.getByText(/notification permission denied/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/notification permission denied/i)
+    ).toBeInTheDocument();
   });
 
   it('handles quiet hours correctly', async () => {
     // Mock current time within quiet hours
     jest.useFakeTimers().setSystemTime(new Date('2025-01-22T23:00:00'));
 
-    (notificationService.getSettings as jest.Mock).mockResolvedValueOnce(mockSettings);
+    (notificationService.getSettings as jest.Mock).mockResolvedValueOnce(
+      mockSettings
+    );
 
     render(<NotificationCenter />);
 
@@ -176,8 +192,12 @@ describe('Notification System Flow', () => {
 
     // Verify notification is queued but not displayed
     await waitFor(() => {
-      expect(screen.queryByText(mockNotification.title)).not.toBeInTheDocument();
-      expect(notificationService.queueNotification).toHaveBeenCalledWith(mockNotification);
+      expect(
+        screen.queryByText(mockNotification.title)
+      ).not.toBeInTheDocument();
+      expect(notificationService.queueNotification).toHaveBeenCalledWith(
+        mockNotification
+      );
     });
   });
 
@@ -189,13 +209,17 @@ describe('Notification System Flow', () => {
       { ...mockNotification, id: 'notif-3' },
     ];
 
-    (notificationService.getNotifications as jest.Mock).mockResolvedValueOnce(notifications);
+    (notificationService.getNotifications as jest.Mock).mockResolvedValueOnce(
+      notifications
+    );
 
     render(<NotificationCenter />);
 
     // Verify notifications are grouped
     await waitFor(() => {
-      expect(screen.getByText(/3 notifications from john doe/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/3 notifications from john doe/i)
+      ).toBeInTheDocument();
     });
 
     // Expand group
@@ -204,8 +228,10 @@ describe('Notification System Flow', () => {
     });
 
     // Verify all notifications visible
-    notifications.forEach((notification) => {
-      expect(screen.getByTestId(`notification-${notification.id}`)).toBeInTheDocument();
+    notifications.forEach(notification => {
+      expect(
+        screen.getByTestId(`notification-${notification.id}`)
+      ).toBeInTheDocument();
     });
   });
 

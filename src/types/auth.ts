@@ -1,4 +1,4 @@
-import { User } from './user';
+import { User as OriginalUser } from './user';
 import type { Session as NextAuthSession } from 'next-auth';
 import type { JWT as DefaultJWT } from 'next-auth/jwt';
 
@@ -74,6 +74,42 @@ export interface LoginResult {
   expiresIn: number;
 }
 
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+export interface RegisterCredentials {
+  email: string;
+  password: string;
+  name: string;
+}
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  emailVerified: boolean;
+  bio?: string;
+  location?: string;
+  createdAt: string;
+  updatedAt: string;
+  role?: string;
+  streakCount?: number;
+}
+
+export interface AuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  token: string | null;
+}
+
+export interface AuthResponse {
+  success: boolean;
+  error?: Error;
+}
+
 export interface SignupInput {
   email: string;
   password: string;
@@ -99,17 +135,6 @@ export interface ForgotPasswordInput {
 export interface VerifyEmailInput {
   email: string;
   token: string;
-}
-
-export interface AuthResponse {
-  success?: boolean;
-  error?: string;
-  message?: string;
-  needsVerification?: boolean;
-  token: string;
-  refreshToken?: string;
-  expiresIn?: number;
-  user: User;
 }
 
 export interface LoginResponse {

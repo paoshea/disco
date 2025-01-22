@@ -113,7 +113,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
 
         <div className="space-y-4">
           <div>
-            <label htmlFor="maxDistance" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="maxDistance"
+              className="block text-sm font-medium text-gray-700"
+            >
               Maximum Distance (km)
             </label>
             <input
@@ -131,7 +134,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="notifications.matches" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="notifications.matches"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Match Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -149,7 +155,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="notifications.messages" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="notifications.messages"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Message Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -167,7 +176,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="notifications.email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="notifications.email"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Email Notifications
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -194,7 +206,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="privacy.showOnlineStatus" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="privacy.showOnlineStatus"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Show Online Status
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -212,7 +227,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="privacy.showLocation" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="privacy.showLocation"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Show Location
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -239,7 +257,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
             <div className="mt-4 space-y-4">
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="safety.requireVerifiedMatch" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="safety.requireVerifiedMatch"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Require Verified Match
                   </label>
                   <p className="text-sm text-muted-foreground">
@@ -257,7 +278,10 @@ export const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user }) => {
               </div>
               <div className="flex items-center justify-between space-x-4">
                 <div className="space-y-0.5">
-                  <label htmlFor="safety.blockUnverifiedUsers" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  <label
+                    htmlFor="safety.blockUnverifiedUsers"
+                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  >
                     Block Unverified Users
                   </label>
                   <p className="text-sm text-muted-foreground">

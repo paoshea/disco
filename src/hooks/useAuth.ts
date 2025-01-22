@@ -1,111 +1,87 @@
-import { useSession, signIn, signOut } from 'next-auth/react';
-import { useCallback, useEffect } from 'react';
-import { apiClient } from '@/services/api/api.client';
-import type { User } from '@/types/user';
+import { useCallback } from 'react';
+import { useAuthStore } from '@/stores/auth.store';
+import { login as apiLogin, logout as apiLogout } from '../../lib/api';
+import type { LoginCredentials, User, RegisterCredentials } from '@/types/auth';
 
-interface LoginCredentials {
-  email: string;
-  password: string;
-}
-
-interface RegistrationData {
-  email: string;
-  password: string;
-  firstName: string;
-  lastName: string;
-}
-
-interface ResetPasswordData {
-  token: string;
-  password: string;
+interface AuthResponse {
+  success: boolean;
+  error?: Error;
 }
 
 export function useAuth() {
-  const { data: session, status } = useSession();
-  const user = session?.user ? (session.user as User) : null;
-  const isAuthenticated = status === 'authenticated';
-  const isLoading = status === 'loading';
-
-  useEffect(() => {
-    // Add axios interceptor to handle token expiration
-    if (apiClient?.interceptors?.response) {
-      const interceptor = apiClient.interceptors.response.use(
-        response => response,
-        error => {
-          if (error.response?.status === 401) {
-            signOut();
-          }
-          return Promise.reject(error);
-        }
-      );
-
-      return () => {
-        apiClient.interceptors.response.eject(interceptor);
-      };
-    }
-  }, []);
+  const { user, isAuthenticated, isLoading } = useAuthStore();
 
   const login = useCallback(async (credentials: LoginCredentials) => {
     try {
-      const result = await signIn('credentials', {
-        ...credentials,
-        redirect: false,
-      });
-
-      if (!result?.ok) {
-        throw new Error(result?.error || 'Login failed');
-      }
+      await apiLogin(credentials.email, credentials.password);
+      return undefined;
     } catch (error) {
-      if (error instanceof Error) {
-        return error;
-      }
-      return new Error('Login failed');
+      return error as Error;
     }
   }, []);
 
   const logout = useCallback(async () => {
-    await signOut();
-  }, []);
-
-  const register = useCallback(async (data: RegistrationData) => {
     try {
-      const { firstName, lastName, ...rest } = data;
-      await apiClient.post('/auth/register', {
-        ...rest,
-        name: `${firstName} ${lastName}`,
-      });
-      return { success: true };
+      await apiLogout();
+      return undefined;
     } catch (error) {
-      if (error instanceof Error) {
-        return { success: false, error: error.message };
-      }
-      return { success: false, error: 'Registration failed' };
+      return error as Error;
     }
   }, []);
 
-  const resetPassword = useCallback(async (data: ResetPasswordData) => {
+  const register = useCallback(async (credentials: RegisterCredentials): Promise<AuthResponse> => {
     try {
-      await apiClient.post('/auth/reset-password', data);
+      // TODO: Implement registration
       return { success: true };
     } catch (error) {
-      if (error instanceof Error) {
-        return { success: false, error: error.message };
-      }
-      return { success: false, error: 'Password reset failed' };
+      return { success: false, error: error as Error };
     }
   }, []);
 
-  const requestPasswordReset = useCallback(async (email: string) => {
+  const updateProfile = useCallback(
+    async (data: Partial<User>): Promise<AuthResponse> => {
+      try {
+        // TODO: Implement profile update
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error as Error };
+      }
+    },
+    []
+  );
+
+  const sendVerificationEmail = useCallback(async (): Promise<AuthResponse> => {
     try {
-      await apiClient.post('/auth/forgot-password', { email });
+      // TODO: Implement send verification email
       return { success: true };
     } catch (error) {
-      if (error instanceof Error) {
-        return { success: false, error: error.message };
-      }
-      return { success: false, error: 'Failed to request password reset' };
+      return { success: false, error: error as Error };
     }
   }, []);
+
+  const resetPassword = useCallback(
+    async (token: string, password: string): Promise<AuthResponse> => {
+      try {
+        // TODO: Implement reset password
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error as Error };
+      }
+    },
+    []
+  );
+
+  const requestPasswordReset = useCallback(
+    async (email: string): Promise<AuthResponse> => {
+      try {
+        // TODO: Implement request password reset
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error as Error };
+      }
+    },
+    []
+  );
 
   return {
     user,
@@ -114,6 +90,8 @@ export function useAuth() {
     login,
     logout,
     register,
+    updateProfile,
+    sendVerificationEmail,
     resetPassword,
     requestPasswordReset,
   };

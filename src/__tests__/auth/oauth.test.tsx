@@ -49,8 +49,12 @@ describe('OAuth Integration', () => {
       expect(googleProvider?.id).toBe('google');
       expect(googleProvider?.name).toBe('Google');
       expect(googleProvider?.type).toBe('oauth');
-      expect(googleProvider?.signinUrl).toBe('http://localhost:3000/api/auth/signin/google');
-      expect(googleProvider?.callbackUrl).toBe('http://localhost:3000/api/auth/callback/google');
+      expect(googleProvider?.signinUrl).toBe(
+        'http://localhost:3000/api/auth/signin/google'
+      );
+      expect(googleProvider?.callbackUrl).toBe(
+        'http://localhost:3000/api/auth/callback/google'
+      );
     });
 
     it('should handle no providers available', async () => {

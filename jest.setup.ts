@@ -11,10 +11,19 @@ class ResizeObserverMock {
 global.ResizeObserver = ResizeObserverMock;
 
 // Mock IntersectionObserver
-class IntersectionObserverMock {
+class IntersectionObserverMock implements IntersectionObserver {
+  readonly root: Element | null = null;
+  readonly rootMargin: string = '0px';
+  readonly thresholds: ReadonlyArray<number> = [0];
+
+  constructor(private callback: IntersectionObserverCallback) {}
+
   observe() {}
   unobserve() {}
   disconnect() {}
+  takeRecords(): IntersectionObserverEntry[] {
+    return [];
+  }
 }
 
 global.IntersectionObserver = IntersectionObserverMock;

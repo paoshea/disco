@@ -21,7 +21,7 @@ export default function SettingsLayout({
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="grid grid-cols-12 gap-8">
         <nav className="col-span-12 md:col-span-3 space-y-1">
-          {settingsLinks.map((link) => {
+          {settingsLinks.map(link => {
             const isActive = pathname === link.href;
             return (
               <Link

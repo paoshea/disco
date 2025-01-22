@@ -38,32 +38,48 @@ const AVAILABILITY = [
 export default function MatchPreferencesPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { register, handleSubmit, setValue, formState: { errors } } = useForm<MatchPreferences>();
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<MatchPreferences>();
 
   useEffect(() => {
     const loadPreferences = async () => {
       try {
         const prefs = await preferencesService.getMatchPreferences();
-        Object.entries(prefs).forEach(([key, value]) => {
-          setValue(key as keyof MatchPreferences, value);
-        });
+        if (prefs) {
+          Object.entries(prefs).forEach(([key, value]) => {
+            setValue(key as keyof MatchPreferences, value);
+          });
+        }
       } catch (err) {
-        setError('Failed to load match preferences');
+        console.error('Error loading preferences:', err);
+        setError(
+          err instanceof Error ? err.message : 'Failed to load preferences'
+        );
       }
     };
 
-    loadPreferences();
+    void loadPreferences();
   }, [setValue]);
 
   const onSubmit = async (data: MatchPreferences) => {
     try {
-      await preferencesService.updateMatchPreferences(data);
-      setSuccess(true);
       setError(null);
+      setSuccess(false);
+      const result = await preferencesService.updateMatchPreferences(data);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to update preferences');
+      }
+      setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to update preferences');
-      setSuccess(false);
+      console.error('Error updating preferences:', err);
+      setError(
+        err instanceof Error ? err.message : 'Failed to update preferences'
+      );
     }
   };
 
@@ -87,7 +103,7 @@ export default function MatchPreferencesPage() {
         <div>
           <h2 className="text-lg font-medium mb-4">Activity Types</h2>
           <div className="grid grid-cols-2 gap-4">
-            {ACTIVITY_TYPES.map((activity) => (
+            {ACTIVITY_TYPES.map(activity => (
               <div key={activity} className="flex items-center">
                 <input
                   type="checkbox"
@@ -105,7 +121,9 @@ export default function MatchPreferencesPage() {
           <h2 className="text-lg font-medium mb-4">Distance & Age</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Maximum Distance (km)</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Maximum Distance (km)
+              </label>
               <input
                 type="number"
                 {...register('maxDistance', {
@@ -115,12 +133,16 @@ export default function MatchPreferencesPage() {
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
               />
               {errors.maxDistance && (
-                <p className="mt-1 text-sm text-red-600">{errors.maxDistance.message}</p>
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.maxDistance.message}
+                </p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">Age Range</label>
+              <label className="block text-sm font-medium text-gray-700">
+                Age Range
+              </label>
               <div className="grid grid-cols-2 gap-2">
                 <input
                   type="number"
@@ -142,7 +164,9 @@ export default function MatchPreferencesPage() {
                 />
               </div>
               {(errors.ageRange?.[0] || errors.ageRange?.[1]) && (
-                <p className="mt-1 text-sm text-red-600">Please enter a valid age range</p>
+                <p className="mt-1 text-sm text-red-600">
+                  Please enter a valid age range
+                </p>
               )}
             </div>
           </div>
@@ -151,23 +175,29 @@ export default function MatchPreferencesPage() {
         <div>
           <h2 className="text-lg font-medium mb-4">Experience Level</h2>
           <select
-            {...register('experienceLevel', { required: 'Experience level is required' })}
+            {...register('experienceLevel', {
+              required: 'Experience level is required',
+            })}
             className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
           >
             <option value="">Select level</option>
-            {EXPERIENCE_LEVELS.map((level) => (
-              <option key={level} value={level}>{level}</option>
+            {EXPERIENCE_LEVELS.map(level => (
+              <option key={level} value={level}>
+                {level}
+              </option>
             ))}
           </select>
           {errors.experienceLevel && (
-            <p className="mt-1 text-sm text-red-600">{errors.experienceLevel.message}</p>
+            <p className="mt-1 text-sm text-red-600">
+              {errors.experienceLevel.message}
+            </p>
           )}
         </div>
 
         <div>
           <h2 className="text-lg font-medium mb-4">Availability</h2>
           <div className="grid grid-cols-2 gap-4">
-            {AVAILABILITY.map((time) => (
+            {AVAILABILITY.map(time => (
               <div key={time} className="flex items-center">
                 <input
                   type="checkbox"

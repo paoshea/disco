@@ -1,113 +1,76 @@
 'use client';
 
-import Link from 'next/link';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
 import { toast } from 'react-toastify';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuth } from '@/hooks/useAuth';
 import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Logo } from '@/components/ui/Logo';
-import { useState } from 'react';
 
-const signupSchema = z
-  .object({
-    email: z.string().email('Invalid email address'),
-    password: z
-      .string()
-      .min(8, 'Password must be at least 8 characters')
-      .regex(
-        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
-        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-      ),
-    confirmPassword: z.string(),
-    firstName: z.string().min(1, 'First name is required'),
-    lastName: z.string().min(1, 'Last name is required'),
-  })
-  .refine(data => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ['confirmPassword'],
-  });
+const signupSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z
+    .string()
+    .min(8, 'Password must be at least 8 characters')
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+    ),
+  confirmPassword: z.string(),
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  acceptTerms: z.boolean().refine(val => val === true, {
+    message: 'You must accept the terms and conditions',
+  }),
+}).refine(data => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ['confirmPassword'],
+});
+
+type SignupFormData = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const { register: signUp } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const form = useForm<z.infer<typeof signupSchema>>({
+  const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
       email: '',
       password: '',
       confirmPassword: '',
-      firstName: '',
-      lastName: '',
+      name: '',
+      acceptTerms: false,
     },
   });
 
-  const handleSignup = async (data: z.infer<typeof signupSchema>) => {
+  const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
-
     try {
-      const registerData = {
+      const result = await signUp({
         email: data.email,
         password: data.password,
-        firstName: data.firstName,
-        lastName: data.lastName,
-      };
-
-      console.log('Starting signup...');
-      const result = await signUp(registerData);
-      console.log('Signup result:', result);
+        name: data.name,
+      });
 
       if (result.success) {
-        console.log('Signup successful, preparing to redirect...');
-        toast.success(
-          'Account created successfully! Check your email for verification instructions.'
-        );
-
-        // Small delay to ensure state is updated and toast is shown
-        await new Promise(resolve => setTimeout(resolve, 500));
-
-        // Try programmatic navigation first
-        try {
-          console.log('Redirecting to dashboard...');
-          router.replace('/dashboard');
-        } catch (navError) {
-          console.error('Navigation error:', navError);
-          // Fallback to window.location if router fails
-          window.location.href = '/dashboard';
-        }
+        toast.success('Registration successful! Please check your email to verify your account.');
+        router.push('/login');
       } else {
         console.log('Signup failed:', result.error);
-        // Show the specific error message
-        toast.error(result.error || 'Registration failed');
-        // Reset the form on conflict
-        if (result.error?.includes('already exists')) {
+        toast.error(result.error?.message || 'Registration failed');
+        if (result.error?.message?.includes('already exists')) {
           form.reset();
         }
       }
-    } catch (err) {
-      console.error('Signup error:', err);
-      let errorMessage = 'An error occurred during registration';
-
-      // Handle specific error cases
-      if (err instanceof Error) {
-        if (
-          err.message.includes('409') ||
-          err.message.includes('already exists')
-        ) {
-          errorMessage = 'An account with this email already exists';
-          form.reset();
-        } else {
-          errorMessage = err.message;
-        }
-      }
-
-      toast.error(errorMessage);
+    } catch (error) {
+      console.error('Signup error:', error);
+      toast.error('An unexpected error occurred during registration');
     } finally {
       setIsLoading(false);
     }
@@ -115,106 +78,119 @@ export default function SignupPage() {
 
   return (
     <Layout>
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="flex justify-center">
-              <Logo />
-            </div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-md w-full space-y-8">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Create your account
+            </h2>
           </div>
-          <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
-            Join Disco today
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Or{' '}
-            <Link
-              href="/login"
-              className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
-            >
-              sign in to your existing account
-            </Link>
-          </p>
-
-          <form
-            onSubmit={e => {
-              e.preventDefault();
-              void form.handleSubmit(handleSignup)(e);
-            }}
-            className="mt-8 space-y-6"
-          >
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Input
-                    id="firstName"
-                    type="text"
-                    required
-                    placeholder="First name"
-                    className="rounded-lg"
-                    error={form.formState.errors.firstName?.message}
-                    {...form.register('firstName')}
-                  />
-                </div>
-                <div>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    required
-                    placeholder="Last name"
-                    className="rounded-lg"
-                    error={form.formState.errors.lastName?.message}
-                    {...form.register('lastName')}
-                  />
-                </div>
-              </div>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
+            <div className="rounded-md shadow-sm -space-y-px">
               <div>
+                <label htmlFor="email" className="sr-only">
+                  Email address
+                </label>
                 <Input
+                  {...form.register('email')}
                   id="email"
                   type="email"
                   autoComplete="email"
-                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Email address"
-                  className="rounded-lg"
-                  error={form.formState.errors.email?.message}
-                  {...form.register('email')}
                 />
+                {form.formState.errors.email && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {form.formState.errors.email.message}
+                  </p>
+                )}
               </div>
               <div>
+                <label htmlFor="name" className="sr-only">
+                  Full Name
+                </label>
                 <Input
+                  {...form.register('name')}
+                  id="name"
+                  type="text"
+                  autoComplete="name"
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Full Name"
+                />
+                {form.formState.errors.name && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Password
+                </label>
+                <Input
+                  {...form.register('password')}
                   id="password"
                   type="password"
                   autoComplete="new-password"
-                  required
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
                   placeholder="Password"
-                  className="rounded-lg"
-                  error={form.formState.errors.password?.message}
-                  {...form.register('password')}
                 />
+                {form.formState.errors.password && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {form.formState.errors.password.message}
+                  </p>
+                )}
               </div>
               <div>
+                <label htmlFor="confirmPassword" className="sr-only">
+                  Confirm Password
+                </label>
                 <Input
+                  {...form.register('confirmPassword')}
                   id="confirmPassword"
                   type="password"
                   autoComplete="new-password"
-                  required
-                  placeholder="Confirm password"
-                  className="rounded-lg"
-                  error={form.formState.errors.confirmPassword?.message}
-                  {...form.register('confirmPassword')}
+                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
+                  placeholder="Confirm Password"
                 />
+                {form.formState.errors.confirmPassword && (
+                  <p className="mt-2 text-sm text-red-600">
+                    {form.formState.errors.confirmPassword.message}
+                  </p>
+                )}
               </div>
             </div>
+
+            <div className="flex items-center">
+              <input
+                {...form.register('acceptTerms')}
+                id="acceptTerms"
+                type="checkbox"
+                className="h-4 w-4 text-indigo-600 focus:ring-indigo-500 border-gray-300 rounded"
+              />
+              <label
+                htmlFor="acceptTerms"
+                className="ml-2 block text-sm text-gray-900"
+              >
+                I accept the terms and conditions
+              </label>
+            </div>
+            {form.formState.errors.acceptTerms && (
+              <p className="mt-2 text-sm text-red-600">
+                {form.formState.errors.acceptTerms.message}
+              </p>
+            )}
 
             <div>
               <Button
                 type="submit"
-                className="w-full bg-gradient-to-r from-sky-500 to-sky-700 hover:from-sky-600 hover:to-sky-800 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:scale-[0.98]"
                 disabled={isLoading}
+                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
                 {isLoading ? (
                   <LoadingSpinner className="w-5 h-5" />
                 ) : (
-                  'Create account'
+                  'Sign up'
                 )}
               </Button>
             </div>

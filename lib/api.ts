@@ -1,4 +1,4 @@
-import { useAuth } from '@/hooks/useAuth';
+import { useAuthStore } from '@/stores/auth.store';
 import type { LoginResult } from '@/types/auth';
 
 class ApiError extends Error {
@@ -12,8 +12,7 @@ class ApiError extends Error {
 }
 
 async function fetchWithAuth(url: string, options: RequestInit = {}) {
-  const authStore = useAuth.getState();
-  const token = authStore.token;
+  const token = useAuthStore.getState().token;
 
   const headers = new Headers(options.headers || {});
   if (token) {
@@ -28,7 +27,7 @@ async function fetchWithAuth(url: string, options: RequestInit = {}) {
   if (!response.ok) {
     if (response.status === 401) {
       // Token might be expired, logout the user
-      void authStore.logout();
+      useAuthStore.getState().logout();
     }
     throw new ApiError(response.status, await response.text());
   }
@@ -76,30 +75,42 @@ export async function login(
   email: string,
   password: string
 ): Promise<LoginResult> {
-  try {
-    const response = await api.post<LoginResult>('/api/auth/login', {
-      email,
-      password,
-    });
-    return response;
-  } catch (error) {
-    throw error;
+  const response = await fetch('/api/auth/login', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await response.text());
   }
+
+  const data = await response.json();
+  useAuthStore.getState().setToken(data.token);
+  useAuthStore.getState().setUser(data.user);
+  return data;
 }
 
 export async function logout(): Promise<void> {
   try {
-    await api.post<void>('/api/auth/logout');
-  } catch (error) {
-    throw error;
+    await api.post('/api/auth/logout');
+  } finally {
+    useAuthStore.getState().logout();
   }
 }
 
 export async function refreshToken(): Promise<{ token: string }> {
-  try {
-    const response = await api.post<{ token: string }>('/api/auth/refresh');
-    return response;
-  } catch (error) {
-    throw error;
+  const response = await fetch('/api/auth/refresh', {
+    method: 'POST',
+  });
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await response.text());
   }
+
+  const data = await response.json();
+  useAuthStore.getState().setToken(data.token);
+  return data;
 }
