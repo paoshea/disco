@@ -14,6 +14,8 @@ export interface BaseUser {
   name: string;
   lastActive: Date;
   verificationStatus: 'pending' | 'verified' | 'rejected';
+  role: 'user' | 'admin' | 'moderator';
+  streakCount: number;
 }
 
 // Full user type with all optional fields

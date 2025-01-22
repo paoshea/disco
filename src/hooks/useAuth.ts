@@ -86,9 +86,26 @@ const authResponseSchema = z.object({
   expiresIn: z.number().optional(),
 });
 
+// Add axios interceptor to handle token expiration
+apiClient.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.name === 'TokenExpiredError' || 
+        (error.response?.status === 401 && error.response?.data?.message === 'Token expired')) {
+      const auth = useAuth.getState();
+      auth.set({
+        user: null,
+        token: null,
+        error: 'Session expired. Please log in again.',
+      });
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const useAuth = create<AuthState>()(
   persist(
-    set => ({
+    (set) => ({
       user: null,
       token: null,
       isLoading: false,
@@ -134,10 +151,25 @@ export const useAuth = create<AuthState>()(
         }
       },
       async logout() {
+        set({ isLoading: true });
         try {
-          await apiClient.post('/api/auth/logout');
+          const token = useAuth.getState().token;
+          if (token) {
+            await apiClient.delete('/api/auth/logout', {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+          }
+        } catch (error) {
+          console.error('Logout error:', error);
         } finally {
-          set({ user: null, token: null });
+          set({
+            user: null,
+            token: null,
+            isLoading: false,
+            error: null,
+          });
         }
       },
       async register(data: RegisterData) {

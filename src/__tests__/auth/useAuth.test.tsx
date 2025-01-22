@@ -7,8 +7,13 @@ import { apiClient } from '@/services/api/api.client';
 jest.mock('@/services/api/api.client', () => ({
   apiClient: {
     post: jest.fn(),
-    delete: jest.fn(),
+    get: jest.fn(),
     patch: jest.fn(),
+    delete: jest.fn(),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() },
+    },
   },
 }));
 

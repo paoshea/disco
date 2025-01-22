@@ -9,6 +9,11 @@ jest.mock('@/services/api/api.client', () => ({
     post: jest.fn(),
     get: jest.fn(),
     patch: jest.fn(),
+    delete: jest.fn(),
+    interceptors: {
+      request: { use: jest.fn(), eject: jest.fn() },
+      response: { use: jest.fn(), eject: jest.fn() },
+    },
   },
 }));
 

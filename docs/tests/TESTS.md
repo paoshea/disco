@@ -20,20 +20,20 @@ This document outlines our testing strategy, tools, and goals for the Disco appl
   - Extends Jest with custom DOM element matchers
   - Makes assertions about the state of DOM elements more natural and readable
 
+- **Cypress**
+  - For end-to-end testing
+  - Will help test complete user flows and integration points
+  - Provides excellent debugging tools and visual test execution
+  - Planned implementation: Q2 2025
+
 ### Planned Future Additions
 
-1. **Cypress**
-   - For end-to-end testing
-   - Will help test complete user flows and integration points
-   - Provides excellent debugging tools and visual test execution
-   - Planned implementation: Q2 2025
-
-2. **Mock Service Worker (MSW)**
+1. **Mock Service Worker (MSW)**
    - For API mocking and testing
    - Will provide consistent API mocking across unit tests and development
    - Planned implementation: Q2 2025
 
-3. **Playwright**
+2. **Playwright**
    - For cross-browser testing
    - Will ensure consistent behavior across different browsers
    - Planned implementation: Q3 2025
@@ -170,5 +170,159 @@ When adding new features or modifying existing ones:
 2. Maintain or improve existing test coverage
 3. Document test cases and scenarios
 4. Review test code with the same rigor as production code
+
+## Testing Strategy
+
+### Overview
+The Disco application employs a comprehensive testing strategy that includes both unit tests and end-to-end (E2E) tests to ensure reliability and maintainability.
+
+### Testing Environments
+
+#### Unit Testing Environment
+- **Framework**: Jest + React Testing Library
+- **Location**: `/src/__tests__/`
+- **Mock Strategy**: API calls and external dependencies are mocked
+- **Running Tests**: `npm run test`
+- **Coverage Reports**: `npm run test:coverage`
+
+#### End-to-End Testing Environment
+- **Framework**: Cypress
+- **Prerequisites**:
+  - Go backend running (`go run cmd/main.go`)
+  - Docker for PostgreSQL database
+  - Redis for session management
+- **Location**: `/cypress/`
+- **Running Tests**: `npm run test:e2e`
+
+### Test Structure
+
+#### Unit Tests (`/src/__tests__/`)
+1. **Authentication Tests** (`/auth/`)
+   - User session management
+   - Email verification
+   - Token handling
+   - Login/Logout flows
+   - Registration process
+
+2. **Component Tests** (`/components/`)
+   - UI component rendering
+   - User interactions
+   - State management
+   - Event handling
+   - Accessibility
+
+3. **Hook Tests** (`/hooks/`)
+   - Custom hook behavior
+   - State updates
+   - Side effects
+   - Error handling
+
+4. **Utility Tests** (`/utils/`)
+   - Helper functions
+   - Data transformations
+   - Validation logic
+   - Error handling
+
+#### End-to-End Tests (`/cypress/`)
+1. **Authentication Flows**
+   - User registration
+   - Login/Logout
+   - Password reset
+   - Email verification
+   - Session persistence
+
+2. **User Features**
+   - Profile management
+   - Preferences settings
+   - Location services
+   - Matching system
+   - Chat functionality
+
+3. **Safety Features**
+   - Emergency contacts
+   - Location sharing
+   - Block/Report functionality
+   - Privacy settings
+
+### Testing Goals and Coverage
+
+#### Current Coverage
+- Unit Tests:
+  - [x] Authentication system
+  - [x] Core components
+  - [x] Custom hooks
+  - [x] Utility functions
+
+#### Planned Coverage
+- End-to-End Tests:
+  - [ ] Complete user journeys
+  - [ ] Cross-browser compatibility
+  - [ ] Mobile responsiveness
+  - [ ] Performance metrics
+
+### Best Practices
+
+#### Unit Testing
+1. Test isolated functionality
+2. Mock external dependencies
+3. Focus on behavior, not implementation
+4. Maintain test independence
+5. Use meaningful assertions
+
+#### End-to-End Testing
+1. Test complete user flows
+2. Verify integration points
+3. Test in production-like environment
+4. Monitor performance metrics
+5. Include error scenarios
+
+### Tools and Libraries
+
+#### Unit Testing
+- Jest
+- React Testing Library
+- MSW (Mock Service Worker)
+- jest-dom
+- user-event
+
+#### End-to-End Testing
+- Cypress
+- Cypress Testing Library
+- Cypress Axe (accessibility)
+- Percy (visual testing)
+
+### Continuous Integration
+- GitHub Actions for automated testing
+- Pre-commit hooks for test validation
+- Coverage reports in PRs
+- E2E tests in staging environment
+
+### Future Improvements
+1. Increase test coverage
+2. Add visual regression testing
+3. Implement performance testing
+4. Add load testing for API endpoints
+5. Enhance accessibility testing
+
+### Test Maintenance
+1. Regular updates of test dependencies
+2. Periodic review of test coverage
+3. Documentation updates
+4. Mock data management
+5. Test performance optimization
+
+### Debugging Tests
+1. Jest debugging configuration
+2. Cypress debugging tools
+3. Common issues and solutions
+4. Logging and error tracking
+5. Performance profiling
+
+### Contributing to Tests
+1. Test creation guidelines
+2. Code review process
+3. Documentation requirements
+4. Coverage expectations
+5. Best practices enforcement
 
 This document will be updated as our testing strategy evolves and new tools or practices are adopted.

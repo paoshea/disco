@@ -14,6 +14,12 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum UserRole {
+  user
+  admin
+  moderator
+}
+
 model User {
   id                    String           @id @default(cuid())
   name                  String?
@@ -27,7 +33,7 @@ model User {
   password             String
   firstName            String
   lastName             String
-  role                 String           @default("user")
+  role                 UserRole         @default(user)
   verificationToken    String?
   refreshToken         String?          @unique
   refreshTokenExpiresAt DateTime?

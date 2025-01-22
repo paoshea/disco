@@ -32,6 +32,8 @@ function convertToAppUser(
     name: `${prismaUser.firstName} ${prismaUser.lastName}`,
     verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
     lastActive: prismaUser.updatedAt,
+    role: (prismaUser.role as 'user' | 'admin' | 'moderator') || 'user',
+    streakCount: prismaUser.streakCount || 0,
     location: location
       ? {
           latitude: location.latitude,
