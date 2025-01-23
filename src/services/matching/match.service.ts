@@ -1,32 +1,60 @@
-import {
-  Match,
-  MatchPreferences,
-  MatchScore,
-  MatchStatus,
-} from '@/types/match';
-import type { User as AppUser, UserPreferences } from '@/types/user';
-import { User as PrismaUser, Location as PrismaLocation } from '@prisma/client';
-import { MatchAlgorithm } from './match.algorithm';
+import { User as PrismaUser, Location as PrismaLocation, UserMatch as PrismaMatch, Prisma } from '@prisma/client';
+import { Match, MatchPreferences, MatchScore, MatchLocation } from '@/types/match';
+import { User as AppUser, UserPreferences, NotificationPreferences } from '@/types/user';
+import { AppLocationPrivacyMode, LocationPrivacyMode } from '@/types/location';
+import { convertLocationPrivacyMode, convertToPrismaPrivacyMode } from '@/utils/location';
+
+import { calculateMatchScore } from './match.algorithm';
+import { convertToMatchPreferences, getDefaultMatchPreferences } from './match.preferences';
+
 import { prisma } from '@/lib/prisma';
-import { redis } from '@/lib/redis';
-import { LocationService } from '@/services/location/location.service';
 import { UserService } from '@/services/user/user.service';
-import type { LocationPrivacyMode } from '@/types/location';
 
 const MATCH_SCORE_CACHE_TTL = 3600; // 1 hour
 const NEARBY_USERS_CACHE_TTL = 1800; // 30 minutes
+const MATCH_UPDATE_INTERVAL = 5000; // 5 seconds
 
-const locationService = LocationService.getInstance(); // Use getInstance instead of new
+const userService = UserService.getInstance();
+
+type PrismaUserWithRelations = PrismaUser & {
+  locations?: PrismaLocation[];
+  notificationPreferences?: {
+    id: string;
+    userId: string;
+    pushEnabled: boolean;
+    emailEnabled: boolean;
+    inAppEnabled: boolean;
+    categories: Prisma.JsonValue;
+    quiet_hours: Prisma.JsonValue;
+    createdAt: Date;
+    updatedAt: Date;
+  } | null;
+};
+
+type PrismaMatchWithRelations = PrismaMatch & {
+  user: PrismaUserWithRelations;
+  matchedUser: PrismaUserWithRelations;
+};
+
+const userInclude = {
+  locations: true,
+  notificationPreferences: true,
+} as const;
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  push: true,
+  email: true,
+  inApp: true,
+  matches: true,
+  messages: true,
+  events: true,
+  safety: true,
+};
 
 export class MatchingService {
   private static instance: MatchingService;
-  private algorithm: MatchAlgorithm;
-  private userService: UserService;
 
-  private constructor() {
-    this.algorithm = new MatchAlgorithm();
-    this.userService = UserService.getInstance();
-  }
+  private constructor() {}
 
   public static getInstance(): MatchingService {
     if (!MatchingService.instance) {
@@ -35,432 +63,310 @@ export class MatchingService {
     return MatchingService.instance;
   }
 
-  // Helper function to convert Prisma User to App User
-  private static convertToAppUser(
-    prismaUser: PrismaUser & { locations?: PrismaLocation[] }
-  ): AppUser {
-    const location = prismaUser.locations?.[0];
-    return {
+  async acceptMatch(userId: string, matchId: string): Promise<void> {
+    await this.updateMatchStatus(userId, matchId, 'accepted');
+  }
+
+  async rejectMatch(userId: string, matchId: string): Promise<void> {
+    await this.updateMatchStatus(userId, matchId, 'rejected');
+  }
+
+  async blockMatch(userId: string, matchId: string): Promise<void> {
+    await this.updateMatchStatus(userId, matchId, 'blocked');
+  }
+
+  private static convertToAppUser(prismaUser: PrismaUserWithRelations): AppUser {
+    const mapPrismaUserToUser = (prismaUser: PrismaUserWithRelations): AppUser => ({
       id: prismaUser.id,
       email: prismaUser.email,
       firstName: prismaUser.firstName,
       lastName: prismaUser.lastName,
-      emailVerified: prismaUser.emailVerified !== null,
-      name: `${prismaUser.firstName} ${prismaUser.lastName}`,
-      verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
-      lastActive: prismaUser.updatedAt,
-      role: (prismaUser.role as 'user' | 'admin' | 'moderator') || 'user',
-      streakCount: prismaUser.streakCount || 0,
+      name: prismaUser.name || null,
+      image: prismaUser.image,
+      emailVerified: prismaUser.emailVerified ? true : null,
+      lastLogin: prismaUser.lastLogin,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
+      verificationStatus: prismaUser.emailVerified ? 'verified' as const : 'pending' as const,
+      role: prismaUser.role,
+      streakCount: prismaUser.streakCount,
+      password: prismaUser.password,
+      safetyEnabled: prismaUser.safetyEnabled,
+      notificationPrefs: prismaUser.notificationPreferences ? {
+        push: prismaUser.notificationPreferences.pushEnabled,
+        email: prismaUser.notificationPreferences.emailEnabled,
+        inApp: prismaUser.notificationPreferences.inAppEnabled,
+        matches: true,
+        messages: true,
+        events: true,
+        safety: true,
+        ...(prismaUser.notificationPreferences.categories as Record<string, boolean>),
+      } : DEFAULT_NOTIFICATION_PREFS,
+    });
+
+    const location = prismaUser.locations?.[0];
+    const appUser = mapPrismaUserToUser(prismaUser);
+    return {
+      ...appUser,
       location: location
         ? {
             latitude: location.latitude,
             longitude: location.longitude,
             accuracy: location.accuracy ?? undefined,
-            privacyMode: location.privacyMode as LocationPrivacyMode,
+            privacyMode: convertLocationPrivacyMode(location.privacyMode),
             timestamp: location.timestamp,
           }
         : undefined,
-      createdAt: prismaUser.createdAt,
-      updatedAt: prismaUser.updatedAt,
     };
   }
 
-  /**
-   * Convert UserPreferences to MatchPreferences
-   */
-  private convertToMatchPreferences(prefs: UserPreferences): MatchPreferences {
-    return {
-      maxDistance: prefs.maxDistance,
-      minAge: prefs.ageRange.min,
-      maxAge: prefs.ageRange.max,
-      interests: prefs.interests,
-      verifiedOnly: prefs.safety.requireVerifiedMatch,
-      withPhoto: true, // Default to requiring photos
-      activityType: undefined,
-      timeWindow: undefined,
-      privacyMode: undefined,
-      useBluetoothProximity: false,
-    };
-  }
-
-  /**
-   * Find potential matches for a user based on location and preferences
-   */
   async findMatches(userId: string): Promise<Match[]> {
-    const user = await this.userService.getUserById(userId);
-    if (!user) throw new Error('User not found');
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: userInclude,
+      });
 
-    const userPreferences = await this.userService.getUserPreferences(userId);
-    if (!userPreferences) {
-      throw new Error('User preferences not found');
-    }
-
-    const matchPreferences = this.convertToMatchPreferences(userPreferences);
-
-    // Get cached nearby users or fetch new ones
-    const cacheKey = `nearby:${userId}:${matchPreferences.maxDistance}`;
-    let nearbyUsers: AppUser[] | null = null;
-
-    if (redis) {
-      const cachedUsers = await redis.get(cacheKey);
-      if (cachedUsers) {
-        try {
-          nearbyUsers = JSON.parse(cachedUsers) as AppUser[];
-        } catch (error) {
-          console.error('Error parsing cached users:', error);
-        }
+      if (!user) {
+        throw new Error('User not found');
       }
-    }
 
-    if (!nearbyUsers) {
-      const nearbyPrismaUsers = await this.getNearbyUsers(
-        userId,
-        matchPreferences.maxDistance
-      );
+      const userPrefs = await userService.getUserPreferences(userId);
+      const matchPrefs = userPrefs ? convertToMatchPreferences(userPrefs) : getDefaultMatchPreferences();
 
-      nearbyUsers = await Promise.all(
-        nearbyPrismaUsers.map(async user => {
-          const appUser = MatchingService.convertToAppUser(user);
-          const prefs = await this.userService.getUserPreferences(user.id);
-          return { ...appUser, preferences: prefs || undefined };
-        })
-      );
-
-      // Cache nearby users if Redis is available
-      if (redis) {
-        try {
-          await redis.setex(
-            cacheKey,
-            NEARBY_USERS_CACHE_TTL,
-            JSON.stringify(nearbyUsers)
-          );
-        } catch (error) {
-          console.error('Error caching nearby users:', error);
-        }
-      }
-    }
-
-    // Calculate scores for each potential match
-    const scoredMatches = await Promise.all(
-      nearbyUsers
-        .filter(potentialMatch => potentialMatch.id !== userId)
-        .map(async potentialMatch => {
-          const potentialMatchUser = await this.userService.getUserById(
-            potentialMatch.id
-          );
-          if (!potentialMatchUser) {
-            return null;
-          }
-
-          const userPrefs = await this.userService.getUserPreferences(
-            potentialMatch.id
-          );
-          if (!userPrefs) {
-            return null;
-          }
-          const matchPrefs = this.convertToMatchPreferences(userPrefs);
-
-          // Check if cached score exists
-          let matchScore: MatchScore | null = null;
-
-          if (redis) {
-            const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
-            try {
-              const cachedScore = await redis.get(scoreCacheKey);
-              if (cachedScore) {
-                matchScore = JSON.parse(cachedScore) as MatchScore;
-              }
-            } catch (error) {
-              console.error('Error getting cached score:', error);
-            }
-          }
-
-          if (!matchScore) {
-            const appUser = MatchingService.convertToAppUser(user);
-            const appPotentialMatch =
-              MatchingService.convertToAppUser(potentialMatchUser);
-            matchScore = this.algorithm.calculateMatchScore(
-              appUser,
-              appPotentialMatch,
-              matchPreferences,
-              matchPrefs
-            );
-
-            if (redis) {
-              try {
-                const scoreCacheKey = `match_score:${userId}:${potentialMatch.id}`;
-                await redis.setex(
-                  scoreCacheKey,
-                  MATCH_SCORE_CACHE_TTL,
-                  JSON.stringify(matchScore)
-                );
-              } catch (error) {
-                console.error('Error caching match score:', error);
-              }
-            }
-          }
-
-          return this.createMatchObject(potentialMatchUser, matchScore);
-        })
-    );
-
-    // Filter out null values and sort matches
-    return scoredMatches
-      .filter((match): match is Match => match !== null)
-      .sort((a, b) => b.matchScore.total - a.matchScore.total);
-  }
-
-  /**
-   * Check if a match meets the minimum quality threshold
-   */
-  private isQualifiedMatch(
-    score: MatchScore,
-    preferences: MatchPreferences
-  ): boolean {
-    // Basic qualification checks
-    if (preferences.verifiedOnly && score.criteria.verificationStatus < 1) {
-      return false;
-    }
-
-    // Minimum score thresholds
-    const minTotalScore = 0.6; // 60% overall match
-    const minDistanceScore = 0.4; // Must be within 40% of max distance
-    const minInterestScore = 0.3; // Must have at least 30% interest overlap
-
-    return (
-      score.total >= minTotalScore &&
-      score.criteria.distance >= minDistanceScore &&
-      score.criteria.interests >= minInterestScore
-    );
-  }
-
-  /**
-   * Create a Match object from a user and score
-   */
-  async createMatchObject(user: PrismaUser, score: MatchScore): Promise<Match> {
-    const appUser = MatchingService.convertToAppUser(user);
-    const matchLocation = appUser.location
-      ? {
-          latitude: appUser.location.latitude,
-          longitude: appUser.location.longitude,
-        }
-      : await this.getMatchLocation(user.id);
-
-    return {
-      id: crypto.randomUUID(),
-      name: appUser.name,
-      bio: '',
-      age: 0,
-      profileImage: undefined,
-      distance: score.distance,
-      commonInterests: score.commonInterests,
-      lastActive: appUser.lastActive.toISOString(),
-      location: matchLocation,
-      interests: [],
-      connectionStatus: 'pending',
-      verificationStatus:
-        appUser.verificationStatus === 'verified' ? 'verified' : 'unverified',
-      activityPreferences: {
-        type: 'any',
-        timeWindow: 'anytime',
-      },
-      privacySettings: {
-        mode: 'standard',
-        bluetoothEnabled: false,
-      },
-      matchScore: score,
-    };
-  }
-
-  /**
-   * Get the status of a match
-   */
-  async getMatchStatus(userId: string, matchId: string): Promise<MatchStatus> {
-    const cacheKey = `match_status:${userId}:${matchId}`;
-    let status: MatchStatus | null = null;
-
-    if (redis) {
-      try {
-        const cachedStatus = await redis.get(cacheKey);
-        if (cachedStatus) {
-          status = JSON.parse(cachedStatus) as MatchStatus;
-        }
-      } catch (error) {
-        console.error('Error getting cached match status:', error);
-      }
-    }
-
-    if (!status) {
-      // Fetch status from database
-      const match = await prisma.userMatch.findFirst({
+      const potentialMatches = await prisma.user.findMany({
         where: {
-          OR: [
-            { userId: userId, matchedUserId: matchId },
-            { userId: matchId, matchedUserId: userId },
+          AND: [
+            { id: { not: userId } },
+            { emailVerified: { not: null } },
+            matchPrefs.verifiedOnly ? { emailVerified: { not: null } } : {},
+            matchPrefs.withPhoto ? { image: { not: null } } : {},
           ],
+        },
+        include: userInclude,
+      });
+
+      const matches: Match[] = [];
+
+      for (const match of potentialMatches) {
+        const matchPrefs = await userService.getUserPreferences(match.id);
+        if (!matchPrefs) continue;
+
+        const appUser = MatchingService.convertToAppUser(user as PrismaUserWithRelations);
+        const appMatch = MatchingService.convertToAppUser(match as PrismaUserWithRelations);
+
+        const matchScore = await calculateMatchScore(appUser, appMatch);
+        if (!matchScore) continue;
+
+        const matchLocation: MatchLocation | undefined = match.locations?.[0] ? {
+          latitude: match.locations[0].latitude,
+          longitude: match.locations[0].longitude,
+          privacyMode: convertLocationPrivacyMode(match.locations[0].privacyMode),
+          timestamp: match.locations[0].timestamp.toISOString(),
+        } : undefined;
+
+        matches.push({
+          id: match.id,
+          userId: match.id,
+          name: match.name || '',
+          image: match.image,
+          distance: matchScore.criteria.distance,
+          matchScore: {
+            total: matchScore.total,
+            criteria: {
+              distance: matchScore.criteria.distance,
+              interests: matchScore.criteria.interests,
+              verification: matchScore.criteria.verification,
+              availability: matchScore.criteria.availability,
+              preferences: matchScore.criteria.preferences,
+              age: 0,
+              photo: match.image ? 1 : 0,
+            },
+          },
+          lastActive: match.updatedAt.toISOString(),
+          verificationStatus: match.emailVerified ? 'verified' as const : 'pending' as const,
+          interests: matchPrefs.activityTypes || [],
+          bio: '',
+          location: matchLocation,
+          preferences: convertToMatchPreferences(matchPrefs),
+          connectionStatus: await this.getMatchStatus(userId, match.id),
+          activityPreferences: {
+            type: 'any',
+            timeWindow: 'anytime',
+            location: '',
+            mode: 'standard' as AppLocationPrivacyMode,
+            bluetoothEnabled: false,
+          },
+        });
+      }
+
+      return matches.sort((a, b) => b.matchScore.total - a.matchScore.total);
+    } catch (error) {
+      console.error('Error finding matches:', error);
+      throw error;
+    }
+  }
+
+  async getMatchStatus(userId: string, matchId: string): Promise<'pending' | 'accepted' | 'rejected' | 'blocked'> {
+    const match = await prisma.userMatch.findFirst({
+      where: {
+        OR: [
+          { userId, matchedUserId: matchId },
+          { userId: matchId, matchedUserId: userId },
+        ],
+      },
+    });
+
+    return (match?.status.toLowerCase() as 'pending' | 'accepted' | 'rejected' | 'blocked') || 'pending';
+  }
+
+  async updateMatchStatus(userId: string, matchId: string, status: 'accepted' | 'rejected' | 'blocked'): Promise<void> {
+    const match = await prisma.userMatch.findFirst({
+      where: {
+        OR: [
+          { userId, matchedUserId: matchId },
+          { userId: matchId, matchedUserId: userId },
+        ],
+      },
+    });
+
+    if (match) {
+      await prisma.userMatch.update({
+        where: { id: match.id },
+        data: { status: status.toUpperCase() },
+      });
+    } else {
+      await prisma.userMatch.create({
+        data: {
+          userId,
+          matchedUserId: matchId,
+          status: status.toUpperCase(),
+          score: 0,
+        },
+      });
+    }
+
+    // If both users accept, create a chat room
+    if (status === 'accepted') {
+      const otherMatch = await prisma.userMatch.findFirst({
+        where: {
+          userId: matchId,
+          matchedUserId: userId,
+          status: 'ACCEPTED',
         },
       });
 
-      status = (match?.status as MatchStatus) || 'pending';
-
-      // Cache the status if Redis is available
-      if (redis) {
-        try {
-          await redis.setex(cacheKey, 3600, JSON.stringify(status));
-        } catch (error) {
-          console.error('Error caching match status:', error);
-        }
+      if (otherMatch) {
+        await prisma.chatRoom.create({
+          data: {
+            creatorId: userId,
+            participantId: matchId,
+          },
+        });
       }
     }
-
-    return status;
   }
 
-  /**
-   * Accept a match
-   */
-  async acceptMatch(userId: string, matchId: string): Promise<void> {
-    await prisma.$executeRaw`
-      UPDATE "UserMatch"
-      SET status = 'ACCEPTED'
-      WHERE id = ${matchId}
-      AND (user_id = ${userId} OR matched_user_id = ${userId})
-    `;
-  }
-
-  /**
-   * Reject a match
-   */
-  async rejectMatch(userId: string, matchId: string): Promise<void> {
-    await prisma.$executeRaw`
-      UPDATE "UserMatch"
-      SET status = 'REJECTED'
-      WHERE id = ${matchId}
-      AND (user_id = ${userId} OR matched_user_id = ${userId})
-    `;
-  }
-
-  /**
-   * Block a match
-   */
-  async blockMatch(userId: string, matchId: string): Promise<void> {
-    await prisma.$executeRaw`
-      UPDATE "UserMatch"
-      SET status = 'BLOCKED'
-      WHERE id = ${matchId}
-      AND (user_id = ${userId} OR matched_user_id = ${userId})
-    `;
-  }
-
-  /**
-   * Report a match
-   */
-  async reportMatch(
-    userId: string,
-    matchId: string,
-    reason: string
-  ): Promise<void> {
-    await prisma.$executeRaw`
-      UPDATE "UserMatch"
-      SET status = 'REPORTED',
-          report_reason = ${reason}
-      WHERE id = ${matchId}
-      AND (user_id = ${userId} OR matched_user_id = ${userId})
-    `;
-  }
-
-  private async getNearbyUsers(
-    userId: string,
-    maxDistance: number
-  ): Promise<PrismaUser[]> {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-    });
-
-    if (!user) throw new Error('User not found');
-
-    const userLocation = await locationService.getLocation(userId);
-    if (!userLocation?.latitude || !userLocation?.longitude) {
-      return [];
-    }
-
-    const nearbyUsers = await prisma.user.findMany({
+  async getMatchId(userId: string, matchId: string): Promise<string> {
+    const match = await prisma.userMatch.findFirst({
       where: {
-        NOT: {
-          id: userId,
-        },
-        locations: {
-          some: {
-            latitude: {
-              gte: userLocation.latitude - maxDistance / 111000,
-              lte: userLocation.latitude + maxDistance / 111000,
+        OR: [
+          { userId, matchedUserId: matchId },
+          { userId: matchId, matchedUserId: userId },
+        ],
+      },
+      select: { id: true },
+    });
+    return match?.id || `${userId}_${matchId}`;
+  }
+
+  async sendMatchRequest(userId: string, matchId: string): Promise<void> {
+    await prisma.userMatch.create({
+      data: {
+        userId,
+        matchedUserId: matchId,
+        status: 'PENDING',
+        score: 0,
+      },
+    });
+  }
+
+  async getMatchUpdates(userId: string, callback: (match: Match) => void): Promise<() => void> {
+    const checkForUpdates = async () => {
+      try {
+        const recentMatches = await prisma.userMatch.findMany({
+          where: {
+            OR: [
+              { userId },
+              { matchedUserId: userId },
+            ],
+            updatedAt: {
+              gt: new Date(Date.now() - 30000), // Last 30 seconds
             },
-            longitude: {
-              gte:
-                userLocation.longitude -
-                maxDistance /
-                  (111000 * Math.cos((userLocation.latitude * Math.PI) / 180)),
-              lte:
-                userLocation.longitude +
-                maxDistance /
-                  (111000 * Math.cos((userLocation.latitude * Math.PI) / 180)),
-            },
-            sharingEnabled: true,
           },
-        },
-      },
-    });
+          include: {
+            user: {
+              include: userInclude,
+            },
+            matchedUser: {
+              include: userInclude,
+            },
+          },
+        }) as PrismaMatchWithRelations[];
 
-    return nearbyUsers;
-  }
+        // Process updates
+        for (const match of recentMatches) {
+          const otherUser = match.userId === userId ? match.matchedUser : match.user;
+          if (!otherUser) continue;
 
-  /**
-   * Set user preferences for matching
-   */
-  async setPreferences(
-    userId: string,
-    preferences: UserPreferences
-  ): Promise<void> {
-    await this.userService.updateUserPreferences(userId, preferences);
+          const matchPrefs = await userService.getUserPreferences(otherUser.id);
+          if (!matchPrefs) continue;
 
-    // Clear any cached match scores for this user
-    const cacheKey = `match_scores:${userId}`;
-    if (redis) {
-      await redis.del(cacheKey);
-    }
-  }
-
-  private async getMatchLocation(
-    userId: string
-  ): Promise<{ latitude: number; longitude: number }> {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { locations: true },
-    });
-
-    const location = user?.locations?.[0];
-    if (!location) {
-      throw new Error('User location not found');
-    }
-
-    return {
-      latitude: location.latitude,
-      longitude: location.longitude,
+          callback({
+            id: otherUser.id,
+            userId: otherUser.id,
+            name: otherUser.name || '',
+            image: otherUser.image,
+            distance: 0, // Would need to calculate
+            matchScore: {
+              total: match.score,
+              criteria: {
+                distance: 0,
+                interests: 0,
+                verification: otherUser.emailVerified ? 1 : 0,
+                availability: 0,
+                preferences: 0,
+                age: 0,
+                photo: otherUser.image ? 1 : 0,
+              },
+            },
+            lastActive: otherUser.updatedAt.toISOString(),
+            verificationStatus: otherUser.emailVerified ? 'verified' as const : 'pending' as const,
+            interests: matchPrefs.activityTypes || [],
+            bio: '',
+            location: otherUser.locations?.[0] ? {
+              latitude: otherUser.locations[0].latitude,
+              longitude: otherUser.locations[0].longitude,
+              privacyMode: convertLocationPrivacyMode(otherUser.locations[0].privacyMode),
+              timestamp: otherUser.locations[0].timestamp.toISOString(),
+            } : undefined,
+            preferences: convertToMatchPreferences(matchPrefs),
+            connectionStatus: match.status.toLowerCase() as 'pending' | 'accepted' | 'rejected' | 'blocked',
+            activityPreferences: {
+              type: 'any',
+              timeWindow: 'anytime',
+              location: '',
+              mode: 'standard' as AppLocationPrivacyMode,
+              bluetoothEnabled: false,
+            },
+          });
+        }
+      } catch (error) {
+        console.error('Error checking for match updates:', error);
+      }
     };
-  }
 
-  private async buildLocationWhereInput(userId: string, maxDistance: number) {
-    const location = await this.getMatchLocation(userId);
-    return {
-      locations: {
-        some: {
-          latitude: location.latitude,
-          longitude: location.longitude,
-          maxDistance,
-        },
-      },
-    };
+    const interval = setInterval(checkForUpdates, MATCH_UPDATE_INTERVAL);
+    return () => clearInterval(interval);
   }
 }
-
-export const matchingService = MatchingService.getInstance();

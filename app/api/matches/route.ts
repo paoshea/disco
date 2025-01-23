@@ -4,6 +4,8 @@ import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
 import { prisma } from '@/lib/prisma';
+import type { UserPreferences } from '@/types/user';
+import { authOptions } from '@/lib/auth';
 
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
@@ -41,99 +43,39 @@ const userPreferencesSchema = z.object({
   }),
 });
 
+const matchingService = MatchingService.getInstance();
+
 // GET /api/matches - Get potential matches
-export async function GET(req: NextRequest): Promise<NextResponse> {
+export async function GET() {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Rate limiting
-    const identifier = session.user.id;
-    const isLimited = await rateLimiter.isRateLimited(identifier);
-    if (isLimited) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-    }
-
-    // Parse query parameters
-    const searchParams = req.nextUrl.searchParams;
-    const validatedPreferences = userPreferencesSchema.safeParse(
-      Object.fromEntries(searchParams)
-    );
-
-    if (!validatedPreferences.success) {
-      return NextResponse.json(
-        { error: 'Invalid search parameters' },
-        { status: 400 }
-      );
-    }
-
-    // Get matches
-    const userId = session.user.id;
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: {
-        locations: true,
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    const matchingService = MatchingService.getInstance();
-    // Update user preferences before finding matches
-    await matchingService.setPreferences(userId, validatedPreferences.data);
-    const matches = await matchingService.findMatches(userId);
-
-    return NextResponse.json({ matches });
+    const matches = await matchingService.findMatches(session.user.id);
+    return NextResponse.json(matches);
   } catch (error) {
-    console.error('Error in GET /api/matches:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error finding matches:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }
 
 // POST /api/matches/preferences - Update match preferences
 export async function POST(req: NextRequest): Promise<NextResponse> {
+  const session = await getServerSession(authOptions);
+
+  if (!session?.user) {
+    return new NextResponse('Unauthorized', { status: 401 });
+  }
+
   try {
-    const session = await getServerSession();
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Rate limiting
-    const isLimited = await rateLimiter.isRateLimited(session.user.id);
-    if (isLimited) {
-      return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
-    }
-
-    // Parse and validate request body
-    const rawBody = (await req.json()) as unknown;
-    const result = userPreferencesSchema.safeParse(rawBody);
-
-    if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid preferences' },
-        { status: 400 }
-      );
-    }
-
-    const preferences = result.data;
-
-    // Update preferences
-    const matchingService = MatchingService.getInstance();
-    await matchingService.setPreferences(session.user.id, preferences);
-
-    return NextResponse.json({ success: true });
+    const preferences = await req.json() as UserPreferences;
+    await matchingService.updatePreferences(session.user.id, preferences);
+    return new NextResponse('Preferences updated', { status: 200 });
   } catch (error) {
-    console.error('Error in POST /api/matches/preferences:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error('Error updating preferences:', error);
+    return new NextResponse('Internal Server Error', { status: 500 });
   }
 }

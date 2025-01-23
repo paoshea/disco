@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import type { LocationPrivacyMode } from '@/types/location';
+import type { LocationPrivacyMode, AppLocationPrivacyMode } from '@/types/location';
 
 export interface LocationData {
   id: string;
@@ -48,6 +48,30 @@ export function calculateDistance(
 
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return EARTH_RADIUS_KM * c;
+}
+
+export function convertLocationPrivacyMode(mode: string): AppLocationPrivacyMode {
+  switch (mode.toLowerCase()) {
+    case 'precise':
+      return 'standard';
+    case 'approximate':
+      return 'strict';
+    case 'zone':
+      return 'strict';
+    default:
+      return 'standard';
+  }
+}
+
+export function convertToPrismaPrivacyMode(mode: AppLocationPrivacyMode): LocationPrivacyMode {
+  switch (mode) {
+    case 'standard':
+      return 'precise';
+    case 'strict':
+      return 'approximate';
+    default:
+      return 'precise';
+  }
 }
 
 export async function createLocation(data: LocationData) {
@@ -110,7 +134,7 @@ export async function getNearbyLocations(
     .map(loc => ({
       ...loc,
       accuracy: loc.accuracy ?? undefined,
-      privacyMode: loc.privacyMode as LocationPrivacyMode,
+      privacyMode: convertLocationPrivacyMode(loc.privacyMode),
     }))
     .filter(
       loc =>
@@ -139,4 +163,6 @@ export const locationUtils = {
   isLocationInPrivacyZone,
   getNearbyLocations,
   deletePrivacyZone,
+  convertLocationPrivacyMode,
+  convertToPrismaPrivacyMode,
 };

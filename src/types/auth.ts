@@ -11,6 +11,7 @@ declare module 'next-auth' {
       name: string | null;
       role: string;
     };
+    expires: string;
   }
 
   interface User {
@@ -48,31 +49,10 @@ export interface Session extends NextAuthSession {
   user: AuthUser & {
     name: string | null; // Required by NextAuth
   };
+  expires: string;
 }
 
 export type AuthStatus = 'authenticated' | 'loading' | 'unauthenticated';
-
-export interface JWTPayload {
-  id: string;
-  email: string;
-  role: string;
-  firstName: string;
-  lastName: string;
-  sub: string; // Add sub to match JWT interface
-  emailVerified: boolean;
-  streakCount: number;
-}
-
-export interface JoseJWTPayload {
-  [key: string]: unknown;
-}
-
-export interface LoginResult {
-  user: User;
-  token: string;
-  refreshToken: string;
-  expiresIn: number;
-}
 
 export interface LoginCredentials {
   email: string;
@@ -90,12 +70,35 @@ export interface User {
   email: string;
   name: string;
   emailVerified: boolean;
+  role: string;
+  streakCount?: number;
   bio?: string;
   location?: string;
   createdAt: string;
   updatedAt: string;
-  role?: string;
-  streakCount?: number;
+  lastActive?: string;
+  verificationStatus?: 'pending' | 'verified';
+  preferences?: UserPreferences;
+}
+
+export interface UserPreferences {
+  notifications: {
+    matches: boolean;
+    messages: boolean;
+    events: boolean;
+    safety: boolean;
+    email?: boolean;
+  };
+  privacy: {
+    profileVisibility: 'public' | 'private' | 'friends';
+    showLocation: boolean;
+    showActivity: boolean;
+  };
+  safety: {
+    blockUnverifiedUsers: boolean;
+    enableSafetyCheck: boolean;
+    reportThreshold: number;
+  };
 }
 
 export interface AuthState {
@@ -108,6 +111,38 @@ export interface AuthState {
 export interface AuthResponse {
   success: boolean;
   error?: Error;
+  message?: string;
+  needsVerification?: boolean;
+  token?: string;
+  refreshToken?: string;
+  expiresIn?: number;
+  user?: User;
+}
+
+export interface LoginResponse extends AuthResponse {
+  user: User;
+  token: string;
+}
+
+export interface LoginResult {
+  success: boolean;
+  error?: string;
+  needsVerification?: boolean;
+}
+
+export interface JWTPayload {
+  sub: string;
+  email: string;
+  role: string;
+  iat: number;
+  exp: number;
+}
+
+export interface RefreshTokenPayload {
+  sub: string;
+  jti: string;
+  iat: number;
+  exp: number;
 }
 
 export interface SignupInput {
@@ -136,15 +171,6 @@ export interface VerifyEmailInput {
   email: string;
   token: string;
 }
-
-export interface LoginResponse {
-  user?: User;
-  error?: string;
-  needsVerification?: boolean;
-  token?: string;
-}
-
-export type RegisterResponse = AuthResponse;
 
 export interface UpdateProfileResponse {
   success: boolean;

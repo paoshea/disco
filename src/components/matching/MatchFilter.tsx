@@ -1,26 +1,51 @@
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
-import { MatchPreferences } from '@/types/match';
+import type { MatchPreferences } from '@/types/match';
 import { matchService } from '@/services/api/match.service';
 
 interface MatchFilterProps {
   initialPreferences: MatchPreferences;
-  onUpdate: (preferences: MatchPreferences) => void;
+  onFilterChange: (preferences: MatchPreferences) => void;
 }
 
-export const MatchFilter: React.FC<MatchFilterProps> = ({
+export function MatchFilter({
   initialPreferences,
-  onUpdate,
-}) => {
+  onFilterChange,
+}: MatchFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [preferences, setPreferences] =
-    useState<MatchPreferences>(initialPreferences);
+  const [preferences, setPreferences] = useState<MatchPreferences>(initialPreferences);
+
+  const handleChange = (
+    field: keyof MatchPreferences,
+    value: any
+  ) => {
+    const updatedPreferences = {
+      ...preferences,
+      [field]: value,
+    };
+    setPreferences(updatedPreferences);
+    onFilterChange(updatedPreferences);
+  };
+
+  const handleAgeRangeChange = (
+    field: 'min' | 'max',
+    value: string
+  ) => {
+    const updatedPreferences = {
+      ...preferences,
+      ageRange: {
+        ...preferences.ageRange,
+        [field]: parseInt(value),
+      },
+    };
+    setPreferences(updatedPreferences);
+    onFilterChange(updatedPreferences);
+  };
 
   const handleSave = async () => {
     try {
       await matchService.updatePreferences(preferences);
-      onUpdate(preferences);
       setIsOpen(false);
     } catch (error) {
       console.error('Failed to update preferences:', error);
@@ -55,23 +80,18 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({
             <div className="mt-4 space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Distance Range (km)
+                  Distance (miles)
                 </label>
                 <input
                   type="range"
                   min="1"
                   max="100"
                   value={preferences.maxDistance}
-                  onChange={e =>
-                    setPreferences({
-                      ...preferences,
-                      maxDistance: parseInt(e.target.value),
-                    })
-                  }
-                  className="mt-1 w-full"
+                  onChange={(e) => handleChange('maxDistance', parseInt(e.target.value))}
+                  className="w-full"
                 />
-                <div className="mt-1 text-sm text-gray-500 text-right">
-                  {preferences.maxDistance} km
+                <div className="text-sm text-gray-500 text-right">
+                  {preferences.maxDistance} miles
                 </div>
               </div>
 
@@ -79,40 +99,27 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({
                 <label className="block text-sm font-medium text-gray-700">
                   Age Range
                 </label>
-                <div className="mt-2 grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm text-gray-500">
-                      Min Age
-                    </label>
+                    <label className="block text-sm text-gray-500">Min</label>
                     <input
                       type="number"
                       min="18"
-                      max={preferences.maxAge}
-                      value={preferences.minAge}
-                      onChange={e =>
-                        setPreferences({
-                          ...preferences,
-                          minAge: parseInt(e.target.value),
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      max={preferences.ageRange.max}
+                      value={preferences.ageRange.min}
+                      onChange={(e) => handleAgeRangeChange('min', e.target.value)}
+                      className="w-full rounded-md border-gray-300"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-500">
-                      Max Age
-                    </label>
+                    <label className="block text-sm text-gray-500">Max</label>
                     <input
                       type="number"
-                      min={preferences.minAge}
-                      value={preferences.maxAge}
-                      onChange={e =>
-                        setPreferences({
-                          ...preferences,
-                          maxAge: parseInt(e.target.value),
-                        })
-                      }
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+                      min={preferences.ageRange.min}
+                      max="100"
+                      value={preferences.ageRange.max}
+                      onChange={(e) => handleAgeRangeChange('max', e.target.value)}
+                      className="w-full rounded-md border-gray-300"
                     />
                   </div>
                 </div>
@@ -120,92 +127,45 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({
 
               <div>
                 <label className="block text-sm font-medium text-gray-700">
-                  Interests
+                  Time Window
                 </label>
-                <div className="mt-2 space-y-2">
-                  {[
-                    'Music',
-                    'Sports',
-                    'Art',
-                    'Technology',
-                    'Travel',
-                    'Food',
-                    'Movies',
-                    'Books',
-                  ].map((interest: string) => (
-                    <div key={interest} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        id={`interest-${interest}`}
-                        checked={preferences.interests.includes(interest)}
-                        onChange={e =>
-                          setPreferences({
-                            ...preferences,
-                            interests: e.target.checked
-                              ? [...preferences.interests, interest]
-                              : preferences.interests.filter(
-                                  item => item !== interest
-                                ),
-                          })
-                        }
-                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <label
-                        htmlFor={`interest-${interest}`}
-                        className="ml-2 block text-sm text-gray-700"
-                      >
-                        {interest}
-                      </label>
-                    </div>
-                  ))}
-                </div>
+                <select
+                  value={preferences.timeWindow}
+                  onChange={(e) => handleChange('timeWindow', e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300"
+                >
+                  <option value="anytime">Anytime</option>
+                  <option value="now">Right Now</option>
+                  <option value="15min">Next 15 Minutes</option>
+                  <option value="30min">Next 30 Minutes</option>
+                  <option value="1hour">Next Hour</option>
+                  <option value="today">Today</option>
+                </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Match Requirements
-                </label>
-                <div className="mt-2 space-y-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="verifiedOnly"
-                      checked={preferences.verifiedOnly}
-                      onChange={e =>
-                        setPreferences({
-                          ...preferences,
-                          verifiedOnly: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <label
-                      htmlFor="verifiedOnly"
-                      className="ml-2 block text-sm text-gray-700"
-                    >
-                      Only show verified profiles
-                    </label>
-                  </div>
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="withPhoto"
-                      checked={preferences.withPhoto}
-                      onChange={e =>
-                        setPreferences({
-                          ...preferences,
-                          withPhoto: e.target.checked,
-                        })
-                      }
-                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                    />
-                    <label
-                      htmlFor="withPhoto"
-                      className="ml-2 block text-sm text-gray-700"
-                    >
-                      Only show profiles with photos
-                    </label>
-                  </div>
+              <div className="space-y-2">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={preferences.verifiedOnly}
+                    onChange={(e) => handleChange('verifiedOnly', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label className="ml-2 text-sm text-gray-700">
+                    Verified Users Only
+                  </label>
+                </div>
+
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={preferences.withPhoto}
+                    onChange={(e) => handleChange('withPhoto', e.target.checked)}
+                    className="rounded border-gray-300"
+                  />
+                  <label className="ml-2 text-sm text-gray-700">
+                    Users with Photos Only
+                  </label>
                 </div>
               </div>
             </div>
@@ -231,4 +191,4 @@ export const MatchFilter: React.FC<MatchFilterProps> = ({
       </Dialog>
     </>
   );
-};
+}

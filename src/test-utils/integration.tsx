@@ -1,6 +1,7 @@
-import { render as rtlRender } from '@testing-library/react';
+import React, { ReactElement, ReactNode } from 'react';
+import { render as rtlRender, RenderOptions } from '@testing-library/react';
 import { SessionProvider } from 'next-auth/react';
-import { ReactElement } from 'react';
+import { UserRole } from '@prisma/client';
 import { mockGeolocation } from '@/__tests__/__mocks__/geolocation';
 import { mockPushNotification } from '@/__tests__/__mocks__/notifications';
 
@@ -8,21 +9,26 @@ import { mockPushNotification } from '@/__tests__/__mocks__/notifications';
 const mockSession = {
   expires: new Date(Date.now() + 2 * 86400).toISOString(),
   user: {
-    id: 'user123',
+    id: 'test-user-id',
     email: 'test@example.com',
     name: 'Test User',
+    role: UserRole.user,
   },
 };
 
 // Custom render function that includes providers
+interface WrapperProps {
+  children: ReactNode;
+}
+
+const Wrapper = ({ children }: WrapperProps) => {
+  return <SessionProvider session={mockSession}>{children}</SessionProvider>;
+};
+
 function render(
   ui: ReactElement,
-  { session = mockSession, router = {}, ...options } = {}
+  options: Omit<RenderOptions, 'wrapper'> = {}
 ) {
-  function Wrapper({ children }: { children: ReactElement }) {
-    return <SessionProvider session={session}>{children}</SessionProvider>;
-  }
-
   return {
     ...rtlRender(ui, { wrapper: Wrapper, ...options }),
     // Add custom utilities here

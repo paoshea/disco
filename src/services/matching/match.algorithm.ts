@@ -1,183 +1,119 @@
-import { MatchPreferences, MatchScore } from '@/types/match';
 import { User } from '@/types/user';
+import { WeightedCriteria, MatchScore } from '@/types/match';
 import { calculateDistance } from '@/utils/location';
 
-interface WeightedCriteria {
-  distance: number;
-  interests: number;
-  activityPreference: number;
-  timeWindow: number;
-  verificationStatus: number;
-  responseRate: number;
-  meetupSuccess: number;
-}
-
-const DEFAULT_WEIGHTS: WeightedCriteria = {
+const WEIGHTS: WeightedCriteria = {
   distance: 0.3,
-  interests: 0.25,
-  activityPreference: 0.15,
-  timeWindow: 0.1,
-  verificationStatus: 0.1,
-  responseRate: 0.05,
-  meetupSuccess: 0.05,
+  interests: 0.2,
+  verification: 0.1,
+  availability: 0.15,
+  preferences: 0.15,
+  age: 0.05,
+  photo: 0.05,
 };
 
-export class MatchAlgorithm {
-  private weights: WeightedCriteria;
-
-  constructor(weights: Partial<WeightedCriteria> = {}) {
-    this.weights = { ...DEFAULT_WEIGHTS, ...weights };
+export async function calculateMatchScore(user: User, potentialMatch: User): Promise<MatchScore | null> {
+  if (!user.location || !potentialMatch.location) {
+    return null;
   }
 
-  /**
-   * Calculate match score between a user and potential match
-   */
-  calculateMatchScore(
-    user: User,
-    potentialMatch: User,
-    userPrefs: MatchPreferences,
-    matchPrefs: MatchPreferences
-  ): MatchScore {
-    const scores: Partial<Record<keyof WeightedCriteria, number>> = {};
-    let distance: number | null = null;
+  // Calculate distance score
+  const distance = calculateDistance(
+    user.location.latitude,
+    user.location.longitude,
+    potentialMatch.location.latitude,
+    potentialMatch.location.longitude
+  );
 
-    // Distance score (inverse relationship - closer is better)
-    if (
-      user.location?.latitude != null &&
-      user.location?.longitude != null &&
-      potentialMatch.location?.latitude != null &&
-      potentialMatch.location?.longitude != null
-    ) {
-      distance = calculateDistance(
-        user.location.latitude,
-        user.location.longitude,
-        potentialMatch.location.latitude,
-        potentialMatch.location.longitude
-      );
-      const maxDistance = Math.max(
-        userPrefs.maxDistance,
-        matchPrefs.maxDistance
-      );
-      scores.distance = 1 - Math.min(distance / maxDistance, 1);
-    } else {
-      scores.distance = 0; // No location match if either user lacks location
-    }
+  const maxDistance = user.preferences?.maxDistance || 50;
+  const distanceScore = Math.max(0, 1 - distance / maxDistance);
 
-    // Interest overlap score
-    const userInterests = new Set(user.interests || []);
-    const matchInterests = new Set(potentialMatch.interests || []);
-    const commonInterests = Array.from(userInterests).filter(x =>
-      matchInterests.has(x)
-    );
-    scores.interests =
-      commonInterests.length /
-      Math.max(userInterests.size, matchInterests.size);
+  // Calculate verification score
+  const verificationScore = potentialMatch.emailVerified ? 1 : 0;
 
-    // Activity preference match
-    scores.activityPreference = this.calculateActivityScore(
-      userPrefs.activityType,
-      matchPrefs.activityType
-    );
+  // Calculate photo score
+  const photoScore = potentialMatch.image ? 1 : 0;
 
-    // Time window compatibility
-    scores.timeWindow = this.calculateTimeWindowScore(
-      userPrefs.timeWindow,
-      matchPrefs.timeWindow
-    );
+  // Calculate availability score
+  const userAvailability = user.preferences?.availability || [];
+  const matchAvailability = potentialMatch.preferences?.availability || [];
+  const commonAvailability = matchAvailability.filter(time => 
+    userAvailability.includes(time)
+  );
+  const availabilityScore = userAvailability.length > 0 
+    ? commonAvailability.length / userAvailability.length 
+    : 0;
 
-    // Verification status
-    scores.verificationStatus = this.calculateVerificationScore(
-      user.verificationStatus,
-      potentialMatch.verificationStatus,
-      userPrefs.verifiedOnly
-    );
+  // Calculate activity preferences score
+  const userActivities = user.preferences?.activityTypes || [];
+  const matchActivities = potentialMatch.preferences?.activityTypes || [];
+  const commonActivities = matchActivities.filter(activity => 
+    userActivities.includes(activity)
+  );
+  const activityScore = userActivities.length > 0 
+    ? commonActivities.length / userActivities.length 
+    : 0;
 
-    // Response rate score
-    scores.responseRate = potentialMatch.stats?.responseRate ?? 0.5;
+  // Calculate preferences match score
+  const preferencesScore = calculatePreferencesScore(user, potentialMatch);
 
-    // Meetup success score
-    scores.meetupSuccess = potentialMatch.stats?.meetupSuccessRate ?? 0.5;
+  // Calculate age score (placeholder since age is not used)
+  const ageScore = 0;
 
-    // Calculate weighted average
-    const totalScore = Object.entries(scores).reduce((sum, [key, score]) => {
-      const weight = this.weights[key as keyof WeightedCriteria];
-      return sum + score * weight;
-    }, 0);
+  // Calculate weighted scores
+  const weightedScores: WeightedCriteria = {
+    distance: distanceScore,
+    interests: activityScore,
+    verification: verificationScore,
+    availability: availabilityScore,
+    preferences: preferencesScore,
+    age: ageScore,
+    photo: photoScore,
+  };
 
-    return {
-      total: totalScore,
-      criteria: scores as Record<keyof WeightedCriteria, number>,
-      commonInterests: Array.from(commonInterests),
-      distance,
-    };
+  // Calculate total score
+  const total = Object.entries(WEIGHTS).reduce(
+    (sum, [key, weight]) => sum + weightedScores[key as keyof WeightedCriteria] * weight,
+    0
+  );
+
+  return {
+    total,
+    criteria: weightedScores,
+  };
+}
+
+function calculatePreferencesScore(user: User, potentialMatch: User): number {
+  const userPrefs = user.preferences;
+  const matchPrefs = potentialMatch.preferences;
+
+  if (!userPrefs || !matchPrefs) {
+    return 0;
   }
 
-  /**
-   * Calculate compatibility score for activity preferences
-   */
-  private calculateActivityScore(
-    userActivity?: string,
-    matchActivity?: string
-  ): number {
-    if (!userActivity || !matchActivity) return 0.5;
-    if (userActivity === matchActivity) return 1;
+  let score = 0;
+  let totalCriteria = 0;
 
-    // Define activity compatibility groups
-    const socialActivities = new Set(['coffee', 'lunch', 'dinner']);
-    const professionalActivities = new Set([
-      'networking',
-      'coworking',
-      'mentoring',
-    ]);
-    const leisureActivities = new Set(['sports', 'games', 'entertainment']);
-
-    const activityGroups = [
-      socialActivities,
-      professionalActivities,
-      leisureActivities,
-    ];
-
-    // Check if activities are in the same group
-    const inSameGroup = activityGroups.some(
-      group => group.has(userActivity) && group.has(matchActivity)
-    );
-
-    return inSameGroup ? 0.7 : 0.3;
+  // Gender preferences
+  if (userPrefs.gender.length > 0 && matchPrefs.gender.length > 0) {
+    const genderMatch = userPrefs.gender.some(g => matchPrefs.gender.includes(g));
+    if (genderMatch) score++;
+    totalCriteria++;
   }
 
-  /**
-   * Calculate compatibility score for time windows
-   */
-  private calculateTimeWindowScore(
-    userWindow?: string,
-    matchWindow?: string
-  ): number {
-    if (!userWindow || !matchWindow) return 0.5;
-    if (userWindow === matchWindow) return 1;
-    if (userWindow === 'anytime' || matchWindow === 'anytime') return 0.8;
-
-    const timeWindows = ['now', '15min', '30min', '1hour', 'today'];
-    const userIdx = timeWindows.indexOf(userWindow);
-    const matchIdx = timeWindows.indexOf(matchWindow);
-
-    if (userIdx === -1 || matchIdx === -1) return 0.5;
-
-    // Calculate score based on how far apart the time windows are
-    const difference = Math.abs(userIdx - matchIdx);
-    return 1 - difference * 0.2;
+  // Looking for preferences
+  if (userPrefs.lookingFor.length > 0 && matchPrefs.lookingFor.length > 0) {
+    const lookingForMatch = userPrefs.lookingFor.some(l => matchPrefs.lookingFor.includes(l));
+    if (lookingForMatch) score++;
+    totalCriteria++;
   }
 
-  /**
-   * Calculate verification status compatibility
-   */
-  private calculateVerificationScore(
-    userStatus: string,
-    matchStatus: string,
-    verifiedOnly: boolean
-  ): number {
-    if (verifiedOnly && matchStatus !== 'verified') return 0;
-    if (userStatus === matchStatus) return 1;
-    if (matchStatus === 'verified') return 0.8;
-    return 0.4;
+  // Relationship type preferences
+  if (userPrefs.relationshipType.length > 0 && matchPrefs.relationshipType.length > 0) {
+    const relationshipMatch = userPrefs.relationshipType.some(r => matchPrefs.relationshipType.includes(r));
+    if (relationshipMatch) score++;
+    totalCriteria++;
   }
+
+  return totalCriteria > 0 ? score / totalCriteria : 0;
 }

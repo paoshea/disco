@@ -27,7 +27,6 @@ npm run build
 
 npx tsc --noEmit
 
-
 ## Frontend Implementation
 
 ### Configuration Files

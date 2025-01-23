@@ -477,25 +477,26 @@ export class LocationService {
       },
     });
 
-    return nearbyUsers.map(
-      user =>
-        ({
-          id: user.id,
-          name: `${user.firstName} ${user.lastName}`,
-          lastActive: user.updatedAt,
-          verificationStatus: user.emailVerified ? 'verified' : 'pending',
-          location: user.locations[0]
-            ? {
-                latitude: user.locations[0].latitude,
-                longitude: user.locations[0].longitude,
-                accuracy: user.locations[0].accuracy ?? undefined,
-                timestamp: user.locations[0].timestamp,
-                privacyMode: user.locations[0]
-                  .privacyMode as LocationPrivacyMode,
-              }
-            : undefined,
-        }) as User
-    );
+    const mapUserToLocationUser = (user: any): User => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      name: user.name,
+      image: user.image,
+      emailVerified: user.emailVerified,
+      lastLogin: user.lastLogin,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+      verificationStatus: user.emailVerified ? 'verified' : 'pending',
+      role: user.role,
+      streakCount: user.streakCount,
+      password: user.password,
+      notificationPrefs: user.notificationPrefs,
+      preferences: user.preferences,
+    });
+
+    return nearbyUsers.map(mapUserToLocationUser);
   }
 
   private calculateDistance(

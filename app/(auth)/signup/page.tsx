@@ -13,24 +13,26 @@ import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Logo } from '@/components/ui/Logo';
 
-const signupSchema = z.object({
-  email: z.string().email('Invalid email address'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
-      'Password must contain at least one uppercase letter, one lowercase letter, and one number'
-    ),
-  confirmPassword: z.string(),
-  name: z.string().min(2, 'Name must be at least 2 characters'),
-  acceptTerms: z.boolean().refine(val => val === true, {
-    message: 'You must accept the terms and conditions',
-  }),
-}).refine(data => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const signupSchema = z
+  .object({
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[a-zA-Z\d]{8,}$/,
+        'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+      ),
+    confirmPassword: z.string(),
+    name: z.string().min(2, 'Name must be at least 2 characters'),
+    acceptTerms: z.boolean().refine(val => val === true, {
+      message: 'You must accept the terms and conditions',
+    }),
+  })
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ['confirmPassword'],
+  });
 
 type SignupFormData = z.infer<typeof signupSchema>;
 
@@ -59,7 +61,9 @@ export default function SignupPage() {
       });
 
       if (result.success) {
-        toast.success('Registration successful! Please check your email to verify your account.');
+        toast.success(
+          'Registration successful! Please check your email to verify your account.'
+        );
         router.push('/login');
       } else {
         console.log('Signup failed:', result.error);
@@ -85,7 +89,10 @@ export default function SignupPage() {
               Create your account
             </h2>
           </div>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-6">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="mt-8 space-y-6"
+          >
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <label htmlFor="email" className="sr-only">
@@ -187,11 +194,7 @@ export default function SignupPage() {
                 disabled={isLoading}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
               >
-                {isLoading ? (
-                  <LoadingSpinner className="w-5 h-5" />
-                ) : (
-                  'Sign up'
-                )}
+                {isLoading ? <LoadingSpinner className="w-5 h-5" /> : 'Sign up'}
               </Button>
             </div>
           </form>

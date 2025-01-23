@@ -1,61 +1,88 @@
+import type { UserPreferences } from './user';
+import type { Location, AppLocationPrivacyMode } from './location';
+
 export interface WeightedCriteria {
   distance: number;
   interests: number;
-  activityPreference: number;
-  timeWindow: number;
-  verificationStatus: number;
-  responseRate: number;
-  meetupSuccess: number;
-}
-
-export interface MatchPreview {
-  id: string;
-  name: string;
-  profileImage?: string;
-  distance: number | null;
-  commonInterests: string[];
-  lastActive: string;
+  verification: number;
+  availability: number;
+  preferences: number;
+  age: number;
+  photo: number;
 }
 
 export interface MatchScore {
   total: number;
-  criteria: Record<keyof WeightedCriteria, number>;
-  commonInterests: string[];
-  distance: number | null;
+  criteria: {
+    distance: number;
+    interests: number;
+    verification: number;
+    availability: number;
+    preferences: number;
+    age: number;
+    photo: number;
+  };
 }
 
-export interface Match extends MatchPreview {
-  bio: string;
-  age: number;
-  location: {
-    latitude: number;
-    longitude: number;
-  };
-  interests: string[];
-  connectionStatus: 'pending' | 'accepted' | 'declined';
-  verificationStatus: 'verified' | 'unverified';
-  activityPreferences?: {
-    type: string;
-    timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
-  };
-  privacySettings?: {
-    mode: 'standard' | 'strict';
-    bluetoothEnabled: boolean;
-  };
-  matchScore: MatchScore;
+export interface MatchLocation {
+  latitude: number;
+  longitude: number;
+  privacyMode: AppLocationPrivacyMode;
+  timestamp: string;
 }
-
-export type MatchStatus = 'pending' | 'accepted' | 'declined' | 'blocked';
 
 export interface MatchPreferences {
   maxDistance: number;
-  minAge: number;
-  maxAge: number;
-  interests: string[];
+  ageRange: {
+    min: number;
+    max: number;
+  };
+  activityTypes: string[];
+  availability: string[];
+  gender: string[];
+  lookingFor: string[];
+  relationshipType: string[];
   verifiedOnly: boolean;
   withPhoto: boolean;
-  activityType?: string;
-  timeWindow?: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
-  privacyMode?: 'standard' | 'strict';
-  useBluetoothProximity?: boolean;
+  privacyMode: AppLocationPrivacyMode;
+  timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  useBluetoothProximity: boolean;
+}
+
+export interface Match {
+  id: string;
+  userId: string;
+  name: string;
+  image: string | null;
+  bio: string;
+  distance: number;
+  matchScore: MatchScore;
+  lastActive: string;
+  verificationStatus: 'verified' | 'pending' | 'rejected';
+  interests: string[];
+  location?: MatchLocation;
+  preferences: MatchPreferences;
+  connectionStatus: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  activityPreferences: {
+    type: string;
+    timeWindow: string;
+    location: string;
+    mode: AppLocationPrivacyMode;
+    bluetoothEnabled: boolean;
+  };
+}
+
+export interface MatchPreview extends Match {
+  preview: true;
+}
+
+export type MatchStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';
+
+export interface MatchRequest {
+  id: string;
+  matchId: string;
+  userId: string;
+  status: MatchStatus;
+  createdAt: Date;
+  updatedAt: Date;
 }

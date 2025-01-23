@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { preferencesService } from '@/services/preferences/preferences.service';
-import type { MatchPreferences } from '@/types/matching';
+import type { MatchPreferences } from '@/types/match';
 
 const ACTIVITY_TYPES = [
   'Running',
@@ -35,15 +37,43 @@ const AVAILABILITY = [
   'Weekend Evenings',
 ];
 
+const matchPreferencesSchema = z.object({
+  maxDistance: z.number().min(1).max(100),
+  ageRange: z.object({
+    min: z.number().min(18).max(99),
+    max: z.number().min(18).max(99),
+  }),
+  interests: z.array(z.string()),
+  activityTypes: z.array(z.string()),
+  availability: z.array(z.string()),
+  verifiedOnly: z.boolean(),
+  withPhoto: z.boolean(),
+});
+
 export default function MatchPreferencesPage() {
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
-  } = useForm<MatchPreferences>();
+  } = useForm<MatchPreferences>({
+    resolver: zodResolver(matchPreferencesSchema),
+    defaultValues: {
+      maxDistance: 50,
+      ageRange: {
+        min: 18,
+        max: 99,
+      },
+      interests: [],
+      activityTypes: [],
+      availability: [],
+      verifiedOnly: false,
+      withPhoto: true,
+    },
+  });
 
   useEffect(() => {
     const loadPreferences = async () => {
@@ -63,10 +93,11 @@ export default function MatchPreferencesPage() {
     };
 
     void loadPreferences();
-  }, [setValue]);
+  }, []);
 
   const onSubmit = async (data: MatchPreferences) => {
     try {
+      setLoading(true);
       setError(null);
       setSuccess(false);
       const result = await preferencesService.updateMatchPreferences(data);
@@ -76,16 +107,16 @@ export default function MatchPreferencesPage() {
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error updating preferences:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to update preferences'
-      );
+      setError('Failed to update preferences');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">Match Preferences</h1>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Match Preferences</h1>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -100,6 +131,68 @@ export default function MatchPreferencesPage() {
       )}
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Max Distance (km)
+            </label>
+            <input
+              type="number"
+              {...register('maxDistance', {
+                valueAsNumber: true,
+                min: 1,
+                max: 100,
+              })}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+            />
+            {errors.maxDistance && (
+              <p className="mt-1 text-sm text-red-600">
+                {errors.maxDistance.message}
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-medium mb-4">Age Range</h2>
+          <div className="flex gap-4">
+            <div>
+              <label className="block text-xs text-gray-500">Minimum</label>
+              <input
+                type="number"
+                {...register('ageRange.min', {
+                  valueAsNumber: true,
+                  min: 18,
+                  max: 99,
+                })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+              {errors.ageRange?.min && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.ageRange.min.message}
+                </p>
+              )}
+            </div>
+            <div>
+              <label className="block text-xs text-gray-500">Maximum</label>
+              <input
+                type="number"
+                {...register('ageRange.max', {
+                  valueAsNumber: true,
+                  min: 18,
+                  max: 99,
+                })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
+              />
+              {errors.ageRange?.max && (
+                <p className="mt-1 text-sm text-red-600">
+                  {errors.ageRange.max.message}
+                </p>
+              )}
+            </div>
+          </div>
+        </div>
+
         <div>
           <h2 className="text-lg font-medium mb-4">Activity Types</h2>
           <div className="grid grid-cols-2 gap-4">
@@ -115,83 +208,6 @@ export default function MatchPreferencesPage() {
               </div>
             ))}
           </div>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-medium mb-4">Distance & Age</h2>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Maximum Distance (km)
-              </label>
-              <input
-                type="number"
-                {...register('maxDistance', {
-                  required: 'Maximum distance is required',
-                  min: { value: 1, message: 'Distance must be at least 1km' },
-                })}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-              />
-              {errors.maxDistance && (
-                <p className="mt-1 text-sm text-red-600">
-                  {errors.maxDistance.message}
-                </p>
-              )}
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Age Range
-              </label>
-              <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  {...register('ageRange.0', {
-                    required: 'Min age is required',
-                    min: { value: 18, message: 'Must be at least 18' },
-                  })}
-                  placeholder="Min"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-                <input
-                  type="number"
-                  {...register('ageRange.1', {
-                    required: 'Max age is required',
-                    min: { value: 18, message: 'Must be at least 18' },
-                  })}
-                  placeholder="Max"
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
-              {(errors.ageRange?.[0] || errors.ageRange?.[1]) && (
-                <p className="mt-1 text-sm text-red-600">
-                  Please enter a valid age range
-                </p>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <h2 className="text-lg font-medium mb-4">Experience Level</h2>
-          <select
-            {...register('experienceLevel', {
-              required: 'Experience level is required',
-            })}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-          >
-            <option value="">Select level</option>
-            {EXPERIENCE_LEVELS.map(level => (
-              <option key={level} value={level}>
-                {level}
-              </option>
-            ))}
-          </select>
-          {errors.experienceLevel && (
-            <p className="mt-1 text-sm text-red-600">
-              {errors.experienceLevel.message}
-            </p>
-          )}
         </div>
 
         <div>
@@ -211,12 +227,31 @@ export default function MatchPreferencesPage() {
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium">Verified Users Only</label>
+          <input
+            type="checkbox"
+            {...register('verifiedOnly')}
+            className="mt-1 rounded border-gray-300 text-indigo-600"
+          />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">With Photo Only</label>
+          <input
+            type="checkbox"
+            {...register('withPhoto')}
+            className="mt-1 rounded border-gray-300 text-indigo-600"
+          />
+        </div>
+
         <div className="flex justify-end">
           <button
             type="submit"
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+            disabled={loading}
+            className="rounded-md bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700 disabled:opacity-50"
           >
-            Save Preferences
+            {loading ? 'Saving...' : 'Save Preferences'}
           </button>
         </div>
       </form>

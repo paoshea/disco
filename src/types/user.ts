@@ -1,58 +1,35 @@
 import type { EmergencyContact } from './safety';
-import type { LocationPrivacyMode } from './location';
+import type { AppLocationPrivacyMode } from './location';
+import type { MatchPreferences } from './match';
+import type { UserRole } from '@prisma/client';
 
 // Core user fields that are always required
 export interface BaseUser {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  emailVerified: boolean;
+  firstName: string | null;
+  lastName: string | null;
+  name: string | null;
+  image: string | null;
+  emailVerified: boolean | null;
+  lastLogin: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  avatar?: string;
-  name: string;
-  lastActive: Date;
-  verificationStatus: 'pending' | 'verified' | 'rejected';
-  role: 'user' | 'admin' | 'moderator';
+  verificationStatus: 'verified' | 'pending' | 'rejected';
+  role: UserRole;
   streakCount: number;
+  password: string | null;
 }
 
 // Full user type with all optional fields
-export interface User extends BaseUser {
-  bio?: string;
-  interests?: string[];
-  phoneNumber?: string;
-  emergencyContacts?: EmergencyContact[];
-  notifications?: {
-    matches: boolean;
-    messages: boolean;
-    events: boolean;
-    safety: boolean;
-  };
-  preferences?: UserPreferences;
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-    privacyMode: LocationPrivacyMode;
-    timestamp: Date;
-  };
-  stats?: {
-    responseRate: number;
-    meetupSuccessRate: number;
-    matchRate: number;
-    lastActive: Date;
-  };
-  age?: number;
-  activityPreferences?: {
-    type: string;
-    timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
-  };
-  privacySettings?: {
-    mode: 'standard' | 'strict';
-    bluetoothEnabled: boolean;
-  };
+export interface NotificationPreferences {
+  push: boolean;
+  email: boolean;
+  inApp: boolean;
+  matches: boolean;
+  messages: boolean;
+  events: boolean;
+  safety: boolean;
 }
 
 export interface UserPreferences {
@@ -61,53 +38,90 @@ export interface UserPreferences {
     min: number;
     max: number;
   };
-  interests: string[];
   gender: string[];
   lookingFor: string[];
   relationshipType: string[];
-  notifications: {
-    matches: boolean;
-    messages: boolean;
-    events: boolean;
-    safety: boolean;
-  };
+  activityTypes: string[];
+  availability: string[];
+  verifiedOnly: boolean;
+  withPhoto: boolean;
+  notifications: NotificationPreferences;
   privacy: {
-    showOnlineStatus: boolean;
-    showLastSeen: boolean;
-    showLocation: boolean;
-    showAge: boolean;
+    location: AppLocationPrivacyMode;
+    profile: 'public' | 'private';
   };
   safety: {
-    requireVerifiedMatch: boolean;
-    meetupCheckins: boolean;
-    emergencyContactAlerts: boolean;
+    blockedUsers: string[];
+    reportedUsers: string[];
+  };
+  language: string;
+  timezone: string;
+}
+
+export interface User extends BaseUser {
+  bio?: string;
+  phoneNumber?: string;
+  emergencyContacts?: {
+    id: string;
+    name: string;
+    phoneNumber: string;
+    relationship: string;
+    notifyOn?: {
+      sosAlert: boolean;
+      meetupStart: boolean;
+      meetupEnd: boolean;
+      lowBattery: boolean;
+      enterPrivacyZone: boolean;
+      exitPrivacyZone: boolean;
+    };
+  }[];
+  notificationPrefs?: NotificationPreferences;
+  preferences?: UserPreferences;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    privacyMode: AppLocationPrivacyMode;
+    timestamp: Date;
+  };
+  stats?: {
+    responseRate: number;
+    meetupSuccessRate: number;
+    reportCount: number;
+    lastActive: Date;
+  };
+  safetyEnabled: boolean;
+}
+
+export interface UserLocation {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  privacyMode: AppLocationPrivacyMode;
+  timestamp: Date;
+}
+
+export interface UserSettings {
+  theme: string;
+  language: string;
+  notifications: {
+    email: boolean;
+    push: boolean;
+    matches: boolean;
+    messages: boolean;
+  };
+  privacy: {
+    profileVisibility: 'public' | 'private' | 'friends';
+    locationSharing: boolean;
+    activityVisibility: 'public' | 'private' | 'friends';
+  };
+  safety: {
+    twoFactorEnabled: boolean;
+    loginNotifications: boolean;
+    blockUnverifiedUsers: boolean;
   };
 }
 
-// Minimal user type for components that only need basic info
-export type MinimalUser = Pick<User, 'id' | 'email' | 'firstName' | 'lastName'>;
-
-export interface UserSettings {
-  discoveryRadius: number;
-  ageRange: {
-    min: number;
-    max: number;
-  };
-  privacy: {
-    showOnlineStatus: boolean;
-    showLastSeen: boolean;
-    showLocation: boolean;
-    showAge: boolean;
-  };
-  notifications: {
-    matches: boolean;
-    messages: boolean;
-    meetupReminders: boolean;
-    safetyAlerts: boolean;
-  };
-  safety: {
-    requireVerifiedMatch: boolean;
-    meetupCheckins: boolean;
-    emergencyContactAlerts: boolean;
-  };
+export interface UserProfile extends Omit<User, 'email' | 'emailVerified' | 'role'> {
+  preview: true;
 }

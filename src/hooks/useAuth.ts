@@ -29,14 +29,17 @@ export function useAuth() {
     }
   }, []);
 
-  const register = useCallback(async (credentials: RegisterCredentials): Promise<AuthResponse> => {
-    try {
-      // TODO: Implement registration
-      return { success: true };
-    } catch (error) {
-      return { success: false, error: error as Error };
-    }
-  }, []);
+  const register = useCallback(
+    async (credentials: RegisterCredentials): Promise<AuthResponse> => {
+      try {
+        // TODO: Implement registration
+        return { success: true };
+      } catch (error) {
+        return { success: false, error: error as Error };
+      }
+    },
+    []
+  );
 
   const updateProfile = useCallback(
     async (data: Partial<User>): Promise<AuthResponse> => {

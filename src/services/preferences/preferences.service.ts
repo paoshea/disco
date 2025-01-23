@@ -4,7 +4,7 @@ import {
   PreferencesServiceInterface,
 } from '@/types/preferences';
 import { apiClient } from '@/lib/api/client';
-import { MatchPreferences } from '@/types/matching';
+import { MatchPreferences } from '@/types/match';
 
 interface ApiResponse<T> {
   data: T;

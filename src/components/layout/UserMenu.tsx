@@ -13,23 +13,24 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
   return (
     <Menu as="div" className="relative inline-block text-left">
       <Menu.Button className="flex items-center gap-2">
-        {user.avatar ? (
+        {user.image ? (
           <Image
             className="h-8 w-8 rounded-full"
             width={32}
             height={32}
-            src={user.avatar}
-            alt={`${user.firstName} ${user.lastName}'s profile`}
+            src={user.image}
+            alt={user.name || ''}
           />
         ) : (
-          <div
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-200 text-sm font-medium text-gray-600"
-            aria-hidden="true"
-          >
-            {user.firstName?.charAt(0)}
+          <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center">
+            <span className="text-sm font-medium text-gray-600">
+              {user.firstName?.[0] || user.email[0].toUpperCase()}
+            </span>
           </div>
         )}
-        <span className="text-sm font-medium text-gray-700">{`${user.firstName || ''} ${user.lastName || ''}`}</span>
+        <span className="text-sm font-medium">
+          {user.name || `${user.firstName} ${user.lastName}`}
+        </span>
       </Menu.Button>
 
       <Menu.Items className="absolute right-0 mt-2 w-48 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
@@ -38,7 +39,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <Link
                 href="/profile"
-                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
+                className={`${
+                  active ? 'bg-gray-100' : ''
+                } block px-4 py-2 text-sm text-gray-700`}
               >
                 Profile
               </Link>
@@ -48,7 +51,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <Link
                 href="/settings"
-                className={`${active ? 'bg-gray-100' : ''} block px-4 py-2 text-sm text-gray-700`}
+                className={`${
+                  active ? 'bg-gray-100' : ''
+                } block px-4 py-2 text-sm text-gray-700`}
               >
                 Settings
               </Link>
@@ -58,7 +63,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({ user, onLogout }) => {
             {({ active }) => (
               <button
                 onClick={onLogout}
-                className={`${active ? 'bg-gray-100' : ''} block w-full text-left px-4 py-2 text-sm text-gray-700`}
+                className={`${
+                  active ? 'bg-gray-100' : ''
+                } block w-full px-4 py-2 text-left text-sm text-gray-700`}
               >
                 Sign out
               </button>

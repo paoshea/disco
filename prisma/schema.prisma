@@ -58,6 +58,12 @@ model User {
   matchedBy            UserMatch[]      @relation("MatchedUsers")
   reportedBy           Report[]         @relation("ReportedBy")
   reportedUsers        Report[]         @relation("ReportedUsers")
+  notifications        Notification[]
+  notificationPrefs    NotificationPreferences?
+  notificationQueue    NotificationQueue[]
+  pushSubscription     PushSubscription?
+
+  @@index([id])
 }
 
 model Account {
@@ -300,4 +306,57 @@ model Report {
 
   @@index([reporterId])
   @@index([reportedUserId])
+}
+
+model Notification {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id])
+  type        String    // match_request, message, event_invitation, event_reminder, system_update, safety, like
+  title       String
+  message     String
+  read        Boolean   @default(false)
+  actionUrl   String?
+  data        Json?
+  timestamp   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model NotificationPreferences {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  user          User     @relation(fields: [userId], references: [id])
+  pushEnabled   Boolean  @default(false)
+  emailEnabled  Boolean  @default(true)
+  categories    Json     // { matches: boolean, messages: boolean, events: boolean, system: boolean, safety: boolean }
+  quiet_hours   Json?    // { enabled: boolean, start: string, end: string }
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model NotificationQueue {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id])
+  type         String
+  title        String
+  message      String
+  scheduledFor DateTime
+  processed    Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId, scheduledFor])
+  @@index([processed])
+}
+
+model PushSubscription {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  subscription String   // JSON stringified subscription data
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }

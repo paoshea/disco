@@ -11,7 +11,7 @@ interface MatchCardProps {
   match: MatchPreview;
   onAccept: (matchId: string) => Promise<void>;
   onDecline: (matchId: string) => Promise<void>;
-  onClick?: () => void;
+  onMatchClick?: (matchId: string) => void;
   isProcessing?: boolean;
   exitDirection?: 'left' | 'right';
 }
@@ -25,7 +25,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   match,
   onAccept,
   onDecline,
-  onClick,
+  onMatchClick,
   isProcessing = false,
   exitDirection,
 }) => {
@@ -88,10 +88,10 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           }
         }}
       >
-        <div className="relative h-64" onClick={onClick}>
-          {match.profileImage ? (
+        <div className="relative h-64" onClick={() => onMatchClick?.(match.id)}>
+          {match.image ? (
             <Image
-              src={match.profileImage}
+              src={match.image}
               alt={match.name}
               layout="fill"
               objectFit="cover"
@@ -135,7 +135,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
           transition={{ delay: 0.3 }}
         >
           <div className="flex flex-wrap gap-2">
-            {match.commonInterests.map(interest => (
+            {match.interests.map(interest => (
               <Badge key={interest} variant="secondary">
                 {interest}
               </Badge>

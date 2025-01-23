@@ -1,14 +1,47 @@
-import type { User } from '@prisma/client';
+import { PrismaClient, User as PrismaUser, UserRole, Prisma } from '@prisma/client';
+import { User, UserPreferences, NotificationPreferences } from '@/types/user';
+import { AppLocationPrivacyMode, LocationPrivacyMode } from '@/types/location';
+import { convertToAppPrivacyMode } from '@/utils/location';
 import { prisma } from '@/lib/prisma';
-import { redis } from '@/lib/redis';
-import type { UserPreferences } from '@/types/user';
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  maxDistance: 50,
+  ageRange: {
+    min: 18,
+    max: 99,
+  },
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  activityTypes: [],
+  availability: [],
+  verifiedOnly: false,
+  withPhoto: true,
+  notifications: {
+    push: true,
+    email: true,
+    inApp: true,
+    matches: true,
+    messages: true,
+    events: true,
+    safety: true,
+  },
+  privacy: {
+    location: 'standard' as AppLocationPrivacyMode,
+    profile: 'public',
+  },
+  safety: {
+    blockedUsers: [],
+    reportedUsers: [],
+  },
+  language: 'en',
+  timezone: 'UTC',
+};
 
 export class UserService {
   private static instance: UserService;
 
-  private constructor() {
-    // Private constructor for singleton pattern
-  }
+  private constructor() {}
 
   public static getInstance(): UserService {
     if (!UserService.instance) {
@@ -17,162 +50,249 @@ export class UserService {
     return UserService.instance;
   }
 
-  async getUserById(id: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { id },
+  private convertPrismaUserToUser(prismaUser: PrismaUser & { 
+    locations?: { 
+      latitude: number;
+      longitude: number;
+      accuracy: number | null;
+      privacyMode: string;
+      timestamp: Date;
+    }[];
+    notificationPrefs?: {
+      pushEnabled: boolean;
+      emailEnabled: boolean;
+      inAppEnabled: boolean;
+    } | null;
+  }): User {
+    const notificationPrefs: NotificationPreferences = prismaUser.notificationPrefs ? {
+      push: prismaUser.notificationPrefs.pushEnabled,
+      email: prismaUser.notificationPrefs.emailEnabled,
+      inApp: prismaUser.notificationPrefs.inAppEnabled,
+      matches: true,
+      messages: true,
+      events: true,
+      safety: true,
+    } : {
+      push: true,
+      email: true,
+      inApp: true,
+      matches: true,
+      messages: true,
+      events: true,
+      safety: true,
+    };
+
+    return {
+      id: prismaUser.id,
+      email: prismaUser.email,
+      firstName: prismaUser.firstName,
+      lastName: prismaUser.lastName,
+      name: prismaUser.name,
+      image: prismaUser.image,
+      emailVerified: prismaUser.emailVerified ? true : null,
+      verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
+      role: prismaUser.role,
+      streakCount: prismaUser.streakCount,
+      lastLogin: prismaUser.lastLogin,
+      createdAt: prismaUser.createdAt,
+      updatedAt: prismaUser.updatedAt,
+      preferences: DEFAULT_PREFERENCES,
+      notificationPrefs,
+      location: prismaUser.locations?.[0] ? {
+        latitude: prismaUser.locations[0].latitude,
+        longitude: prismaUser.locations[0].longitude,
+        accuracy: prismaUser.locations[0].accuracy ?? undefined,
+        privacyMode: convertToAppPrivacyMode(prismaUser.locations[0].privacyMode as LocationPrivacyMode),
+        timestamp: prismaUser.locations[0].timestamp,
+      } : undefined,
+      safetyEnabled: prismaUser.safetyEnabled,
+    };
+  }
+
+  async getCurrentUser(): Promise<User | null> {
+    const session = await prisma.session.findFirst({
+      where: {
+        expires: {
+          gt: new Date(),
+        },
+      },
       include: {
-        locations: true,
-        emergencyContacts: true,
-        safetyChecks: true,
-        achievements: true,
-        participatingRooms: true,
-        messages: true,
-        events: true,
-        eventParticipants: true,
-        privacyZones: true,
+        user: {
+          include: {
+            notificationPrefs: true,
+          },
+        },
+      },
+      orderBy: {
+        expires: 'desc',
       },
     });
+
+    if (!session?.user) return null;
+    return this.convertPrismaUserToUser(session.user);
+  }
+
+  async getUserById(id: string): Promise<User | null> {
+    try {
+      const user = await prisma.user.findUnique({
+        where: { id },
+        include: {
+          notificationPrefs: true,
+          locations: true,
+        },
+      });
+
+      if (!user) return null;
+
+      return this.convertPrismaUserToUser(user);
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw new Error('Failed to fetch user');
+    }
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    return prisma.user.findUnique({
-      where: { email },
-      include: {
-        locations: true,
-        emergencyContacts: true,
-        safetyChecks: true,
-        achievements: true,
-        participatingRooms: true,
-        messages: true,
-        events: true,
-        eventParticipants: true,
-        privacyZones: true,
-      },
-    });
+    try {
+      const user = await prisma.user.findUnique({
+        where: { email },
+        include: {
+          notificationPrefs: true,
+          locations: true,
+        },
+      });
+
+      if (!user) return null;
+
+      return this.convertPrismaUserToUser(user);
+    } catch (error) {
+      console.error('Error fetching user by email:', error);
+      throw new Error('Failed to fetch user by email');
+    }
   }
 
   async deleteUserById(id: string): Promise<User> {
-    // Invalidate cache
-    const cacheKey = `user:${id}`;
-    if (redis) {
-      try {
-        await redis.del(cacheKey);
-      } catch (error) {
-        console.error('Error deleting user cache:', error);
-      }
-    }
-    return prisma.user.delete({
+    const user = await prisma.user.delete({
       where: { id },
+      include: {
+        notificationPrefs: true,
+      },
     });
+
+    return this.convertPrismaUserToUser(user);
   }
 
   async getUserPreferences(userId: string): Promise<UserPreferences | null> {
-    let preferences: UserPreferences | null = null;
-
-    if (redis) {
-      try {
-        const cachedPrefs = await redis.get(`user:${userId}:preferences`);
-        if (cachedPrefs) {
-          preferences = JSON.parse(cachedPrefs) as UserPreferences;
-        }
-      } catch (error) {
-        console.error('Error getting cached preferences:', error);
+    try {
+      const cacheKey = `user:${userId}:preferences`;
+      const cachedPrefs = await prisma.redis.get(cacheKey);
+      
+      if (cachedPrefs) {
+        return JSON.parse(cachedPrefs) as UserPreferences;
       }
-    }
 
-    if (!preferences) {
-      const user = await this.getUserById(userId);
+      const user = await prisma.user.findUnique({
+        where: { id: userId },
+        include: {
+          notificationPrefs: true,
+        },
+      });
+
       if (!user) return null;
 
-      preferences = {
-        maxDistance: 10,
-        ageRange: { min: 18, max: 99 },
-        interests: [],
-        gender: ['any'],
-        lookingFor: ['any'],
-        relationshipType: ['friendship'],
-        notifications: {
-          matches: true,
-          messages: true,
-          events: true,
-          safety: true,
-        },
-        privacy: {
-          showOnlineStatus: true,
-          showLastSeen: true,
-          showLocation: true,
-          showAge: true,
-        },
-        safety: {
-          requireVerifiedMatch: true,
-          meetupCheckins: true,
-          emergencyContactAlerts: true,
-        },
-      };
-
-      // Cache the preferences if Redis is available
-      if (redis) {
-        try {
-          await redis.setex(
-            `user:${userId}:preferences`,
-            3600, // 1 hour
-            JSON.stringify(preferences)
-          );
-        } catch (error) {
-          console.error('Error caching preferences:', error);
-        }
-      }
+      const preferences = user.notificationPrefs?.preferences as UserPreferences || DEFAULT_PREFERENCES;
+      await prisma.redis.set(cacheKey, JSON.stringify(preferences), 'EX', 3600);
+      
+      return preferences;
+    } catch (error) {
+      console.error('Error getting user preferences:', error);
+      return null;
     }
-
-    return preferences;
   }
 
   async updateUserPreferences(
     userId: string,
-    preferences: UserPreferences
-  ): Promise<void> {
-    // Validate user exists
-    const user = await this.getUserById(userId);
-    if (!user) throw new Error('User not found');
+    preferences: Partial<UserPreferences>
+  ): Promise<User> {
+    const user = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        notificationPrefs: {
+          upsert: {
+            create: {
+              preferences: preferences as any,
+              pushEnabled: preferences.notifications?.push ?? true,
+              emailEnabled: preferences.notifications?.email ?? true,
+              inAppEnabled: preferences.notifications?.inApp ?? true,
+              categories: [],
+              quiet_hours: [],
+            },
+            update: {
+              preferences: preferences as any,
+              pushEnabled: preferences.notifications?.push,
+              emailEnabled: preferences.notifications?.email,
+              inAppEnabled: preferences.notifications?.inApp,
+            },
+          },
+        },
+      },
+      include: {
+        notificationPrefs: true,
+        locations: true,
+      },
+    });
 
-    // Update cache if Redis is available
-    if (redis) {
-      try {
-        await redis.setex(
-          `user:${userId}:preferences`,
-          3600,
-          JSON.stringify(preferences)
-        );
-      } catch (error) {
-        console.error('Error updating preferences cache:', error);
-      }
-    }
+    return this.convertPrismaUserToUser(user);
   }
 
-  async updateUser(
-    userId: string,
-    data: Partial<{
-      firstName: string;
-      lastName: string;
-      email: string;
-      emailVerified: Date | null;
-      role: string;
-      streakCount: number;
-      lastLogin: Date;
-      safetyEnabled: boolean;
-    }>
-  ): Promise<User> {
-    const updateData = {
-      ...data,
-      emailVerified:
-        data.emailVerified === undefined ? undefined : data.emailVerified,
-      lastLogin:
-        data.lastLogin === undefined ? undefined : new Date(data.lastLogin),
-    };
+  async updateUser(userId: string, data: Partial<User>): Promise<User> {
+    try {
+      const { preferences, location, ...userData } = data;
+      
+      const user = await prisma.user.update({
+        where: { id: userId },
+        data: {
+          ...userData,
+          notificationPrefs: preferences ? {
+            upsert: {
+              create: {
+                preferences: preferences as any,
+                pushEnabled: preferences.notifications?.push ?? true,
+                emailEnabled: preferences.notifications?.email ?? true,
+                inAppEnabled: preferences.notifications?.inApp ?? true,
+                categories: [],
+                quiet_hours: [],
+              },
+              update: {
+                preferences: preferences as any,
+                pushEnabled: preferences.notifications?.push,
+                emailEnabled: preferences.notifications?.email,
+                inAppEnabled: preferences.notifications?.inApp,
+              },
+            },
+          } : undefined,
+          locations: location ? {
+            upsert: {
+              create: {
+                ...location,
+                timestamp: new Date(),
+              },
+              update: {
+                ...location,
+                timestamp: new Date(),
+              },
+            },
+          } : undefined,
+        },
+        include: {
+          notificationPrefs: true,
+          locations: true,
+        },
+      });
 
-    return prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-    });
+      return this.convertPrismaUserToUser(user);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw new Error('Failed to update user');
+    }
   }
 }

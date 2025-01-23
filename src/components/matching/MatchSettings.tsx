@@ -1,42 +1,19 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { UserSettings } from '@/types/user';
 import { userService } from '@/services/api/user.service';
+import type { UserPreferences } from '@/types/user';
 
 interface MatchSettingsProps {
-  initialSettings: UserSettings;
   userId: string;
-  onUpdate: (settings: UserSettings) => void;
+  initialSettings?: UserPreferences;
+  onUpdate: (settings: UserPreferences) => void;
 }
 
-type MatchSettingsFormData = {
-  discoveryRadius: number;
-  ageRange: {
-    min: number;
-    max: number;
-  };
-  privacy: {
-    showOnlineStatus: boolean;
-    showLastSeen: boolean;
-    showLocation: boolean;
-    showAge: boolean;
-  };
-  notifications: {
-    matches: boolean;
-    messages: boolean;
-    meetupReminders: boolean;
-    safetyAlerts: boolean;
-  };
-  safety: {
-    requireVerifiedMatch: boolean;
-    meetupCheckins: boolean;
-    emergencyContactAlerts: boolean;
-  };
-};
+type MatchSettingsFormData = UserPreferences;
 
 export const MatchSettings: React.FC<MatchSettingsProps> = ({
-  initialSettings,
   userId,
+  initialSettings,
   onUpdate,
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -46,16 +23,42 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<MatchSettingsFormData>({
-    defaultValues: initialSettings,
+  } = useForm<UserPreferences>({
+    defaultValues: initialSettings || {
+      maxDistance: 50,
+      ageRange: { min: 18, max: 100 },
+      interests: [],
+      gender: [],
+      lookingFor: [],
+      relationshipType: [],
+      notifications: {
+        matches: true,
+        messages: true,
+        events: true,
+        safety: true,
+      },
+      privacy: {
+        showOnlineStatus: true,
+        showLastSeen: true,
+        showLocation: true,
+        showAge: true,
+      },
+      safety: {
+        requireVerifiedMatch: true,
+        meetupCheckins: true,
+        emergencyContactAlerts: true,
+      },
+      language: 'en',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    },
   });
 
-  const onSubmit = async (data: MatchSettingsFormData) => {
+  const onSubmit = async (data: UserPreferences) => {
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await userService.updateSettings(userId, data);
+      await userService.updateUserPreferences(userId, data);
       onUpdate(data);
     } catch (error) {
       setError('Failed to update settings. Please try again.');
@@ -85,15 +88,15 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
         <div className="mt-4 space-y-4">
           <div>
             <label
-              htmlFor="discoveryRadius"
+              htmlFor="maxDistance"
               className="block text-sm font-medium text-gray-700"
             >
               Discovery Radius (km)
             </label>
             <input
               type="number"
-              id="discoveryRadius"
-              {...register('discoveryRadius', {
+              id="maxDistance"
+              {...register('maxDistance', {
                 valueAsNumber: true,
                 min: { value: 1, message: 'Radius must be at least 1km' },
                 max: { value: 100, message: 'Radius cannot exceed 100km' },
@@ -101,9 +104,9 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
               disabled={isSubmitting}
             />
-            {errors.discoveryRadius && (
+            {errors.maxDistance && (
               <p className="mt-1 text-sm text-red-600">
-                {errors.discoveryRadius.message}
+                {errors.maxDistance.message}
               </p>
             )}
           </div>
@@ -279,7 +282,7 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
             <input
               type="checkbox"
               id="notifyMeetups"
-              {...register('notifications.meetupReminders')}
+              {...register('notifications.events')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />
@@ -294,7 +297,7 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
             <input
               type="checkbox"
               id="notifySafety"
-              {...register('notifications.safetyAlerts')}
+              {...register('notifications.safety')}
               className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               disabled={isSubmitting}
             />

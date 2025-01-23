@@ -1,43 +1,49 @@
-import { jest } from '@jest/globals';
-import type { UserPreferences } from '@/types/preferences';
+import type { UserPreferences } from '@/types/user';
 
 const mockPreferences: UserPreferences = {
-  theme: 'light',
-  notifications: true,
+  maxDistance: 50,
+  ageRange: {
+    min: 18,
+    max: 100,
+  },
+  interests: [],
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  notifications: {
+    matches: true,
+    messages: true,
+    events: true,
+    safety: true,
+  },
+  privacy: {
+    showOnlineStatus: true,
+    showLastSeen: true,
+    showLocation: true,
+    showAge: true,
+  },
+  safety: {
+    requireVerifiedMatch: true,
+    meetupCheckins: true,
+    emergencyContactAlerts: true,
+  },
   language: 'en',
+  timezone: 'UTC',
 };
 
-export const mockPreferencesService = {
+const mockPreferencesService = {
   getPreferences: jest.fn().mockResolvedValue(mockPreferences),
-  updatePreferences: jest.fn().mockResolvedValue(mockPreferences),
+  updatePreferences: jest.fn().mockImplementation((prefs: Partial<UserPreferences>) => 
+    Promise.resolve({ ...mockPreferences, ...prefs })),
   resetPreferences: jest.fn().mockResolvedValue(mockPreferences),
 };
 
-jest.mock('@/services/preferences/preferences.service', () => ({
-  preferencesService: mockPreferencesService,
-}));
+export const setMockPreferences = (newPrefs: Partial<UserPreferences>) => {
+  const updatedPrefs = { ...mockPreferences, ...newPrefs };
+  mockPreferencesService.getPreferences.mockResolvedValueOnce(updatedPrefs);
+  mockPreferencesService.updatePreferences.mockResolvedValueOnce(updatedPrefs);
+  mockPreferencesService.resetPreferences.mockResolvedValueOnce(updatedPrefs);
+};
 
-describe('Preferences Service Mock', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
-
-  it('should mock getPreferences', async () => {
-    const prefs = await mockPreferencesService.getPreferences();
-    expect(prefs).toEqual(mockPreferences);
-    expect(mockPreferencesService.getPreferences).toHaveBeenCalled();
-  });
-
-  it('should mock updatePreferences', async () => {
-    const newPrefs = { ...mockPreferences, theme: 'dark' };
-    mockPreferencesService.updatePreferences.mockResolvedValueOnce(newPrefs);
-
-    const prefs = await mockPreferencesService.updatePreferences(newPrefs);
-    expect(prefs).toEqual(newPrefs);
-    expect(mockPreferencesService.updatePreferences).toHaveBeenCalledWith(
-      newPrefs
-    );
-  });
-});
-
-export { mockPreferences, mockPreferencesService };
+export { mockPreferences };
+export default mockPreferencesService;

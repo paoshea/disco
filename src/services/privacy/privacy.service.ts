@@ -1,33 +1,76 @@
 import { prisma } from '@/lib/prisma';
-import type { PrivacyZone, PrivacySettings } from '@/types/privacy';
+import type { PrivacySettings } from '@/types/privacy';
+
+interface PrivacyZone {
+  id: string;
+  userId: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  radius: number;
+  center: {
+    latitude: number;
+    longitude: number;
+  };
+}
 
 export const privacyService = {
   async getPrivacyZones(userId: string): Promise<PrivacyZone[]> {
-    return prisma.privacyZone.findMany({
+    const zones = await prisma.privacyZone.findMany({
       where: { userId },
     });
+
+    return zones.map(zone => ({
+      ...zone,
+      center: {
+        latitude: zone.latitude,
+        longitude: zone.longitude,
+      },
+    }));
   },
 
   async createPrivacyZone(
     userId: string,
-    zone: Omit<PrivacyZone, 'id'>
+    name: string,
+    latitude: number,
+    longitude: number,
+    radius: number
   ): Promise<PrivacyZone> {
-    return prisma.privacyZone.create({
+    const zone = await prisma.privacyZone.create({
       data: {
-        ...zone,
         userId,
+        name,
+        latitude,
+        longitude,
+        radius,
       },
     });
+
+    return {
+      ...zone,
+      center: {
+        latitude: zone.latitude,
+        longitude: zone.longitude,
+      },
+    };
   },
 
   async updatePrivacyZone(
     id: string,
-    zone: Partial<PrivacyZone>
+    updates: Partial<Omit<PrivacyZone, 'id' | 'userId' | 'center'>>
   ): Promise<PrivacyZone> {
-    return prisma.privacyZone.update({
+    const zone = await prisma.privacyZone.update({
       where: { id },
-      data: zone,
+      data: updates,
     });
+
+    return {
+      ...zone,
+      center: {
+        latitude: zone.latitude,
+        longitude: zone.longitude,
+      },
+    };
   },
 
   async deletePrivacyZone(id: string): Promise<void> {
@@ -36,21 +79,7 @@ export const privacyService = {
     });
   },
 
-  async checkZoneOverlap(
-    userId: string,
-    center: { latitude: number; longitude: number },
-    radius: number,
-    excludeId?: string
-  ): Promise<boolean> {
-    const zones = await this.getPrivacyZones(userId);
-    return zones.some(
-      zone =>
-        zone.id !== excludeId &&
-        this._calculateDistance(center, zone.center) < radius + zone.radius
-    );
-  },
-
-  _calculateDistance(
+  calculateDistance(
     point1: { latitude: number; longitude: number },
     point2: { latitude: number; longitude: number }
   ): number {
@@ -62,9 +91,21 @@ export const privacyService = {
 
     const a =
       Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      Math.cos(φ1) *
+        Math.cos(φ2) *
+        Math.sin(Δλ / 2) *
+        Math.sin(Δλ / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return R * c;
+  },
+
+  isPointInPrivacyZone(
+    point: { latitude: number; longitude: number },
+    zones: PrivacyZone[]
+  ): boolean {
+    return zones.some(zone =>
+      this.calculateDistance(point, zone.center) < zone.radius
+    );
   },
 };

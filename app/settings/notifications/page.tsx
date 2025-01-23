@@ -1,65 +1,118 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { notificationService } from '@/services/notification/notification.service';
 import { useAuth } from '@/hooks/useAuth';
+import { notificationService } from '@/services/notification/notification.service';
 import type { NotificationPreferences } from '@/types/notifications';
 
-export default function NotificationsPage() {
+export default function NotificationSettingsPage() {
+  const { user } = useAuth();
+  const [preferences, setPreferences] =
+    useState<NotificationPreferences | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const { user } = useAuth();
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<NotificationPreferences>();
 
   useEffect(() => {
-    const loadPreferences = async () => {
-      if (!user?.id) return;
+    if (!user) return;
 
+    const loadPreferences = async () => {
       try {
         const prefs = await notificationService.getSettings(user.id);
-        if (prefs) {
-          Object.entries(prefs).forEach(([key, value]) => {
-            setValue(key as keyof NotificationPreferences, value);
-          });
-        }
+        setPreferences(prefs);
       } catch (err) {
-        console.error('Error loading notification preferences:', err);
         setError('Failed to load notification preferences');
+        console.error(err);
       }
     };
 
     void loadPreferences();
-  }, [setValue, user?.id]);
+  }, [user]);
 
-  const onSubmit = async (data: NotificationPreferences) => {
-    if (!user?.id) {
-      setError('User not authenticated');
-      return;
-    }
+  const handleToggle = async (
+    key: string,
+    section: 'categories' | 'delivery' | 'quiet_hours' = 'categories'
+  ) => {
+    if (!preferences || !user) return;
 
     try {
       setError(null);
       setSuccess(false);
-      await notificationService.updateSettings(user.id, data);
+
+      const updatedPreferences = { ...preferences };
+
+      if (section === 'categories') {
+        updatedPreferences.categories = {
+          ...preferences.categories,
+          [key]:
+            !preferences.categories[key as keyof typeof preferences.categories],
+        };
+      } else if (section === 'delivery') {
+        updatedPreferences[key as 'pushEnabled' | 'emailEnabled'] =
+          !preferences[key as 'pushEnabled' | 'emailEnabled'];
+      } else if (section === 'quiet_hours') {
+        updatedPreferences.quiet_hours = {
+          enabled: !preferences.quiet_hours.enabled,
+          start: preferences.quiet_hours.start,
+          end: preferences.quiet_hours.end,
+        };
+      }
+
+      await notificationService.updateSettings(user.id, updatedPreferences);
+      setPreferences(updatedPreferences);
       setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
     } catch (err) {
-      console.error('Error updating notification preferences:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to update preferences'
-      );
+      setError('Failed to update notification preferences');
+      console.error(err);
     }
   };
 
+  const handleQuietHoursChange = async (
+    field: 'start' | 'end',
+    value: string
+  ) => {
+    if (!preferences || !user) return;
+
+    try {
+      setError(null);
+      setSuccess(false);
+
+      const updatedPreferences = {
+        ...preferences,
+        quiet_hours: {
+          enabled: preferences.quiet_hours.enabled,
+          start: field === 'start' ? value : preferences.quiet_hours.start,
+          end: field === 'end' ? value : preferences.quiet_hours.end,
+        },
+      };
+
+      await notificationService.updateSettings(user.id, updatedPreferences);
+      setPreferences(updatedPreferences);
+      setSuccess(true);
+    } catch (err) {
+      setError('Failed to update quiet hours');
+      console.error(err);
+    }
+  };
+
+  if (!user) {
+    return (
+      <div className="p-4">
+        <p>Please sign in to manage your notification preferences.</p>
+      </div>
+    );
+  }
+
+  if (!preferences) {
+    return (
+      <div className="p-4">
+        <p>Loading preferences...</p>
+      </div>
+    );
+  }
+
   return (
-    <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-4">Notification Settings</h1>
+    <div className="max-w-4xl mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-6">Notification Settings</h1>
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
@@ -73,129 +126,104 @@ export default function NotificationsPage() {
         </div>
       )}
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              Push Notifications
-            </label>
-            <input
-              type="checkbox"
-              {...register('pushEnabled')}
-              className="h-4 w-4 text-blue-600 rounded"
-            />
-          </div>
-
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium text-gray-700">
-              Email Notifications
-            </label>
-            <input
-              type="checkbox"
-              {...register('emailEnabled')}
-              className="h-4 w-4 text-blue-600 rounded"
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-gray-200 pt-4">
+      <div className="space-y-6">
+        <div>
           <h2 className="text-lg font-medium mb-4">Notification Categories</h2>
           <div className="space-y-4">
+            {Object.entries(preferences.categories).map(([key, enabled]) => (
+              <div key={key} className="flex items-center justify-between">
+                <label className="flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={enabled}
+                    onChange={() => void handleToggle(key)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <span className="ml-2 text-gray-700 capitalize">{key}</span>
+                </label>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <h2 className="text-lg font-medium mb-4">Delivery Preferences</h2>
+          <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Matches
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={preferences.emailEnabled}
+                  onChange={() => void handleToggle('emailEnabled', 'delivery')}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">Email Notifications</span>
               </label>
-              <input
-                type="checkbox"
-                {...register('categories.matches')}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Messages
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={preferences.pushEnabled}
+                  onChange={() => void handleToggle('pushEnabled', 'delivery')}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">Push Notifications</span>
               </label>
-              <input
-                type="checkbox"
-                {...register('categories.messages')}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Events
-              </label>
-              <input
-                type="checkbox"
-                {...register('categories.events')}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
-            </div>
-
-            <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                System Updates
-              </label>
-              <input
-                type="checkbox"
-                {...register('categories.system')}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
             </div>
           </div>
         </div>
 
-        <div className="border-t border-gray-200 pt-4">
+        <div>
           <h2 className="text-lg font-medium mb-4">Quiet Hours</h2>
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-700">
-                Enable Quiet Hours
+              <label className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={preferences.quiet_hours.enabled}
+                  onChange={() => void handleToggle('enabled', 'quiet_hours')}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <span className="ml-2 text-gray-700">Enable Quiet Hours</span>
               </label>
-              <input
-                type="checkbox"
-                {...register('quiet_hours.enabled')}
-                className="h-4 w-4 text-blue-600 rounded"
-              />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  Start Time
-                </label>
-                <input
-                  type="time"
-                  {...register('quiet_hours.start')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
-              </div>
+            {preferences.quiet_hours.enabled && (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    Start Time
+                  </label>
+                  <input
+                    type="time"
+                    value={preferences.quiet_hours.start}
+                    onChange={e =>
+                      void handleQuietHoursChange('start', e.target.value)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  End Time
-                </label>
-                <input
-                  type="time"
-                  {...register('quiet_hours.end')}
-                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm"
-                />
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    End Time
+                  </label>
+                  <input
+                    type="time"
+                    value={preferences.quiet_hours.end}
+                    onChange={e =>
+                      void handleQuietHoursChange('end', e.target.value)
+                    }
+                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                  />
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </div>
-
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
-          >
-            Save Changes
-          </button>
-        </div>
-      </form>
+      </div>
     </div>
   );
 }

@@ -4,17 +4,13 @@ import { MatchCard } from './MatchCard';
 import { Loader2 } from 'lucide-react';
 import { matchService } from '@/services/api/match.service';
 
-export interface MatchListProps {
+interface MatchListProps {
   matches: Match[];
   onMatchClick: (matchId: string) => void;
   loading?: boolean;
 }
 
-export const MatchList: React.FC<MatchListProps> = ({
-  matches,
-  onMatchClick,
-  loading = false,
-}) => {
+export function MatchList({ matches, onMatchClick, loading = false }: MatchListProps) {
   const [error, setError] = useState<string | null>(null);
   const [processingMatchIds, setProcessingMatchIds] = useState<Set<string>>(
     new Set()
@@ -78,14 +74,17 @@ export const MatchList: React.FC<MatchListProps> = ({
 
   if (matches.length === 0) {
     return (
-      <div className="text-gray-500 text-center py-8">
-        No matches found. Keep exploring!
+      <div className="text-center py-8">
+        <h3 className="text-lg font-medium text-gray-900">No matches found</h3>
+        <p className="mt-1 text-sm text-gray-500">
+          Try adjusting your preferences to see more matches
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
       {matches.map(match => (
         <MatchCard
           key={match.id}
@@ -98,4 +97,4 @@ export const MatchList: React.FC<MatchListProps> = ({
       ))}
     </div>
   );
-};
+}

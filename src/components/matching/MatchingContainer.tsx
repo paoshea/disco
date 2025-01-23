@@ -1,230 +1,117 @@
-import { useEffect, useState, useCallback, useMemo } from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import type { Match, MatchPreferences } from '@/types/match';
-import { MatchSocketService } from '@/services/websocket/match.socket';
-import { useToast } from '@/hooks/use-toast';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { Match } from '@/types/match';
 import { MatchList } from './MatchList';
 import { MatchMapView } from './MatchMapView';
-import { MatchPreferencesPanel } from './MatchPreferencesPanel';
-
-interface MatchUpdate {
-  type: 'new' | 'update' | 'remove';
-  match: Match;
-}
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/router';
+import { matchingService } from '@/services/matching/match.service';
 
 interface MatchingContainerProps {
   userId: string;
 }
 
 export function MatchingContainer({ userId }: MatchingContainerProps) {
-  const { user } = useAuth();
+  const router = useRouter();
   const [matches, setMatches] = useState<Match[]>([]);
   const [loading, setLoading] = useState(true);
-  const [view, setView] = useState<'list' | 'map'>('list');
-  const { toast: createToast } = useToast();
-  const socketService = MatchSocketService.getInstance();
+  const [error, setError] = useState<string | null>(null);
+  const [sortBy, setSortBy] = useState<'distance' | 'score'>('score');
+  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
+  const { toast } = useToast();
 
-  const fetchMatches = useCallback(
-    async (preferences?: MatchPreferences) => {
+  useEffect(() => {
+    loadMatches();
+  }, []);
+
+  const loadMatches = async () => {
+    try {
       setLoading(true);
-      try {
-        const params = new URLSearchParams({ userId });
-        if (preferences) {
-          Object.entries(preferences).forEach(([key, value]) => {
-            if (value !== undefined) {
-              params.append(key, String(value));
-            }
-          });
-        }
-
-        const response = await fetch(`/api/matches?${params.toString()}`);
-        if (!response.ok) throw new Error('Failed to fetch matches');
-
-        const data = (await response.json()) as { matches: Match[] };
-        setMatches(data.matches);
-      } catch (error) {
-        console.error('Failed to fetch matches:', error);
-        createToast({
-          title: 'Error',
-          description: 'Failed to fetch matches. Please try again.',
-          variant: 'error',
-        });
-      } finally {
-        setLoading(false);
-      }
-    },
-    [userId, createToast]
-  );
-
-  const handleMatchAction = useCallback(
-    async (
-      matchId: string,
-      action: 'accept' | 'decline' | 'block',
-      reason?: string
-    ) => {
-      try {
-        const response = await fetch(`/api/matches/${matchId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, reason }),
-        });
-
-        if (!response.ok) throw new Error('Failed to perform action');
-
-        if (action === 'accept') {
-          createToast({
-            title: 'Match Accepted!',
-            description: 'You can now start chatting.',
-            variant: 'success',
-          });
-        }
-
-        // Remove match from list for decline/block actions
-        if (action === 'decline' || action === 'block') {
-          setMatches(prev => prev.filter(m => m.id !== matchId));
-        }
-      } catch (error) {
-        console.error('Error performing match action:', error);
-        createToast({
-          title: 'Error',
-          description: 'Failed to perform action. Please try again.',
-          variant: 'error',
-        });
-      }
-    },
-    [createToast]
-  );
-
-  const handlePreferencesUpdate = useCallback(
-    async (preferences: MatchPreferences) => {
-      try {
-        const response = await fetch('/api/matches/preferences', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId,
-            preferences,
-          }),
-        });
-
-        if (!response.ok) throw new Error('Failed to update preferences');
-
-        createToast({
-          title: 'Preferences Updated',
-          description: 'Your matching preferences have been updated.',
-          variant: 'success',
-        });
-
-        // Refresh matches with new preferences
-        await fetchMatches(preferences);
-      } catch (error) {
-        console.error('Error updating preferences:', error);
-        createToast({
-          title: 'Error',
-          description: 'Failed to update preferences. Please try again.',
-          variant: 'error',
-        });
-      }
-    },
-    [userId, fetchMatches, createToast]
-  );
-
-  const sortedMatches = useMemo(() => {
-    return [...matches].sort((a, b) => {
-      // Sort by distance if available
-      if (a.distance !== null && b.distance !== null) {
-        return a.distance - b.distance;
-      }
-      // If one has distance and other doesn't, prioritize the one with distance
-      if (a.distance !== null) return -1;
-      if (b.distance !== null) return 1;
-      // If neither has distance, sort by match score
-      return (b.matchScore?.total || 0) - (a.matchScore?.total || 0);
-    });
-  }, [matches]);
-
-  useEffect(() => {
-    void fetchMatches();
-  }, [fetchMatches]);
-
-  useEffect(() => {
-    if (!userId) return;
-
-    const handleMatchUpdate = (update: MatchUpdate) => {
-      setMatches(prevMatches => {
-        switch (update.type) {
-          case 'new':
-            return [...prevMatches, update.match];
-          case 'update':
-            return prevMatches.map(m =>
-              m.id === update.match.id ? update.match : m
-            );
-          case 'remove':
-            return prevMatches.filter(m => m.id !== update.match.id);
-          default:
-            return prevMatches;
-        }
-      });
-    };
-
-    socketService.connect(userId);
-    const unsubscribe = socketService.subscribeToMatches(handleMatchUpdate);
-
-    return () => {
-      unsubscribe();
-      socketService.disconnect();
-    };
-  }, [userId, socketService]);
-
-  useEffect(() => {
-    if (!user) {
-      createToast({
-        title: 'Error',
-        description: 'You must be logged in to view matches',
-        variant: 'error',
-      });
-      return;
+      setError(null);
+      const matchService = matchingService.getInstance();
+      const matches = await matchService.findMatches(userId); 
+      setMatches(matches);
+    } catch (err) {
+      setError('Failed to load matches');
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
-  }, [user, createToast]);
+  };
+
+  const handleMatchClick = (matchId: string) => {
+    router.push(`/matches/${matchId}`);
+  };
+
+  const sortedMatches = [...matches].sort((a, b) => {
+    if (sortBy === 'distance') {
+      return a.distance - b.distance;
+    }
+    return b.matchScore.total - a.matchScore.total;
+  });
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <h3 className="text-lg font-medium text-red-800">Error</h3>
+        <p className="mt-1 text-sm text-red-600">{error}</p>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="text-center py-8">
+        <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
+        <p className="mt-2 text-gray-500">Loading matches...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-6">
-      <MatchPreferencesPanel
-        onSubmit={prefs => {
-          void handlePreferencesUpdate(prefs);
-        }}
-      />
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <h1 className="text-2xl font-bold">Your Matches</h1>
+        <select
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value as 'distance' | 'score')}
+          className="rounded-md border-gray-300"
+        >
+          <option value="score">Sort by Match Score</option>
+          <option value="distance">Sort by Distance</option>
+        </select>
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setViewMode('list')}
+            className={`rounded-md px-4 py-2 ${
+              viewMode === 'list'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            List View
+          </button>
+          <button
+            onClick={() => setViewMode('map')}
+            className={`rounded-md px-4 py-2 ${
+              viewMode === 'map'
+                ? 'bg-primary-600 text-white'
+                : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            Map View
+          </button>
+        </div>
+      </div>
 
-      <Tabs
-        value={view}
-        onValueChange={(v: string) => setView(v as 'list' | 'map')}
-        className="mt-6"
-      >
-        <TabsList>
-          <TabsTrigger value="list">List View</TabsTrigger>
-          <TabsTrigger value="map">Map View</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="list">
-          <MatchList
-            matches={sortedMatches}
-            onMatchClick={(matchId: string) => {
-              void handleMatchAction(matchId, 'accept');
-            }}
-            loading={loading}
-          />
-        </TabsContent>
-
-        <TabsContent value="map">
-          <MatchMapView
-            matches={sortedMatches}
-            onMarkerClick={match => {
-              void handleMatchAction(match.id, 'accept');
-            }}
-          />
-        </TabsContent>
-      </Tabs>
+      {viewMode === 'list' ? (
+        <MatchList
+          matches={sortedMatches}
+          onMatchClick={handleMatchClick}
+        />
+      ) : (
+        <MatchMapView matches={sortedMatches} />
+      )}
     </div>
   );
 }

@@ -1,138 +1,233 @@
 import { prisma } from '@/lib/prisma';
-import { webSocketService } from '../websocket/websocket.service';
 import type {
   Notification,
   NotificationPreferences,
+  PushSubscriptionData,
 } from '@/types/notifications';
+import { webpush } from '@/lib/webpush';
+import { Prisma } from '@prisma/client';
 
-export const notificationService = {
+class NotificationService {
   async getNotifications(userId: string): Promise<Notification[]> {
-    return prisma.notification.findMany({
+    const notifications = await prisma.notification.findMany({
       where: { userId },
-      orderBy: { timestamp: 'desc' },
+      orderBy: [{ timestamp: 'desc' }],
     });
-  },
+
+    return notifications.map(notification => ({
+      id: notification.id,
+      userId: notification.userId,
+      type: notification.type,
+      title: notification.title,
+      message: notification.message,
+      read: notification.read,
+      actionUrl: notification.actionUrl || undefined,
+      data: notification.data as Record<string, any> | undefined,
+      createdAt: notification.timestamp,
+      updatedAt: notification.updatedAt,
+    }));
+  }
 
   async getSettings(userId: string): Promise<NotificationPreferences> {
-    return prisma.notificationPreferences.findUnique({
+    const preferences = await prisma.notificationPreferences.findUnique({
       where: { userId },
     });
-  },
+
+    if (!preferences) {
+      // Return default preferences if none exist
+      const defaultPrefs: NotificationPreferences = {
+        userId,
+        pushEnabled: true,
+        emailEnabled: true,
+        categories: {
+          matches: true,
+          messages: true,
+          events: true,
+          system: true,
+          safety: true,
+        },
+        quiet_hours: {
+          enabled: false,
+          start: '22:00',
+          end: '07:00',
+        },
+      };
+
+      // Create default preferences in database
+      await prisma.notificationPreferences.create({
+        data: {
+          userId,
+          pushEnabled: defaultPrefs.pushEnabled,
+          emailEnabled: defaultPrefs.emailEnabled,
+          categories: defaultPrefs.categories as Prisma.InputJsonValue,
+          quiet_hours: defaultPrefs.quiet_hours as Prisma.InputJsonValue,
+        },
+      });
+
+      return defaultPrefs;
+    }
+
+    return {
+      userId: preferences.userId,
+      pushEnabled: preferences.pushEnabled,
+      emailEnabled: preferences.emailEnabled,
+      categories:
+        preferences.categories as NotificationPreferences['categories'],
+      quiet_hours:
+        preferences.quiet_hours as NotificationPreferences['quiet_hours'],
+    };
+  }
 
   async updateSettings(
     userId: string,
-    settings: NotificationPreferences
+    preferences: Partial<NotificationPreferences>
   ): Promise<NotificationPreferences> {
-    return prisma.notificationPreferences.upsert({
+    const updatedPreferences = await prisma.notificationPreferences.upsert({
       where: { userId },
-      update: settings,
-      create: { ...settings, userId },
+      create: {
+        userId,
+        pushEnabled: preferences.pushEnabled ?? true,
+        emailEnabled: preferences.emailEnabled ?? true,
+        categories: {
+          matches: preferences.categories?.matches ?? true,
+          messages: preferences.categories?.messages ?? true,
+          events: preferences.categories?.events ?? true,
+          system: preferences.categories?.system ?? true,
+          safety: preferences.categories?.safety ?? true,
+        } as Prisma.InputJsonValue,
+        quiet_hours: {
+          enabled: preferences.quiet_hours?.enabled ?? false,
+          start: preferences.quiet_hours?.start ?? '22:00',
+          end: preferences.quiet_hours?.end ?? '07:00',
+        } as Prisma.InputJsonValue,
+      },
+      update: {
+        pushEnabled: preferences.pushEnabled,
+        emailEnabled: preferences.emailEnabled,
+        categories: preferences.categories as Prisma.InputJsonValue,
+        quiet_hours: preferences.quiet_hours as Prisma.InputJsonValue,
+      },
     });
-  },
 
-  async markAsRead(notificationId: string): Promise<void> {
+    return {
+      userId: updatedPreferences.userId,
+      pushEnabled: updatedPreferences.pushEnabled,
+      emailEnabled: updatedPreferences.emailEnabled,
+      categories:
+        updatedPreferences.categories as NotificationPreferences['categories'],
+      quiet_hours:
+        updatedPreferences.quiet_hours as NotificationPreferences['quiet_hours'],
+    };
+  }
+
+  async markAsRead(userId: string, notificationId: string): Promise<void> {
     await prisma.notification.update({
-      where: { id: notificationId },
-      data: { read: true },
+      where: {
+        id: notificationId,
+        userId,
+      },
+      data: {
+        read: true,
+      },
     });
-  },
+  }
 
-  async sendNotification(
+  async queueNotification(
     userId: string,
-    notification: Omit<Notification, 'id' | 'timestamp' | 'read'>
+    notification: Pick<Notification, 'type' | 'title' | 'message'>
   ): Promise<void> {
-    const userSettings = await this.getSettings(userId);
-    const isQuietHours = this._isInQuietHours(userSettings?.quiet_hours);
+    const createdNotification = await prisma.notification.create({
+      data: {
+        userId,
+        type: notification.type,
+        title: notification.title,
+        message: notification.message,
+        read: false,
+        timestamp: new Date(),
+      },
+    });
 
-    if (isQuietHours) {
-      await this.queueNotification(notification);
+    // Get user's notification preferences
+    const preferences = await this.getSettings(userId);
+
+    // Check if notifications are enabled for this type
+    if (
+      !preferences.categories[
+        notification.type as keyof typeof preferences.categories
+      ]
+    ) {
       return;
     }
 
-    const createdNotification = await prisma.notification.create({
-      data: {
-        ...notification,
-        userId,
-        timestamp: new Date(),
-        read: false,
-      },
-    });
+    // Check quiet hours
+    if (preferences.quiet_hours.enabled) {
+      const now = new Date();
+      const currentTime = now.getHours() * 60 + now.getMinutes();
+      const startTime = this._parseTime(preferences.quiet_hours.start);
+      const endTime = this._parseTime(preferences.quiet_hours.end);
 
-    webSocketService.emit('notification', createdNotification);
-  },
+      if (this._isInQuietHours(currentTime, startTime, endTime)) {
+        return;
+      }
+    }
 
-  async registerPushSubscription(
-    userId: string,
-    subscription: PushSubscription
-  ): Promise<void> {
-    await prisma.pushSubscription.upsert({
-      where: { userId },
-      update: { subscription: JSON.stringify(subscription) },
-      create: {
-        userId,
-        subscription: JSON.stringify(subscription),
-      },
-    });
-  },
-
-  async queueNotification(notification: any): Promise<void> {
-    await prisma.notificationQueue.create({
-      data: {
-        notification: JSON.stringify(notification),
-        processAfter: this._getQuietHoursEnd(),
-      },
-    });
-  },
-
-  async processOfflineQueue(): Promise<void> {
-    const queuedNotifications = await prisma.notificationQueue.findMany({
-      where: {
-        processAfter: {
-          lte: new Date(),
-        },
-      },
-    });
-
-    for (const queued of queuedNotifications) {
-      const notification = JSON.parse(queued.notification);
-      await this.sendNotification(notification.userId, notification);
-      await prisma.notificationQueue.delete({
-        where: { id: queued.id },
+    // Send push notification if enabled
+    if (preferences.pushEnabled) {
+      const subscription = await prisma.pushSubscription.findFirst({
+        where: { userId },
       });
+
+      if (subscription) {
+        const subscriptionData = JSON.parse(
+          subscription.subscription
+        ) as PushSubscriptionData;
+
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: subscriptionData.endpoint,
+              keys: {
+                p256dh: subscriptionData.keys.p256dh,
+                auth: subscriptionData.keys.auth,
+              },
+            },
+            JSON.stringify({
+              title: notification.title,
+              body: notification.message,
+              data: {
+                notificationId: createdNotification.id,
+              },
+            })
+          );
+        } catch (error) {
+          console.error('Failed to send push notification:', error);
+        }
+      }
     }
-  },
 
-  _isInQuietHours(quietHours?: {
-    enabled: boolean;
-    start: string;
-    end: string;
-  }): boolean {
-    if (!quietHours?.enabled) return false;
-
-    const now = new Date();
-    const [startHour, startMinute] = quietHours.start.split(':').map(Number);
-    const [endHour, endMinute] = quietHours.end.split(':').map(Number);
-
-    const start = new Date(now);
-    start.setHours(startHour, startMinute, 0);
-
-    const end = new Date(now);
-    end.setHours(endHour, endMinute, 0);
-
-    if (end < start) {
-      end.setDate(end.getDate() + 1);
+    // Send email notification if enabled
+    if (preferences.emailEnabled) {
+      // TODO: Implement email notification sending
     }
+  }
 
-    return now >= start && now <= end;
-  },
+  private _parseTime(timeString: string): number {
+    const [hours, minutes] = timeString.split(':').map(Number);
+    return hours * 60 + minutes;
+  }
 
-  _getQuietHoursEnd(): Date {
-    // Implementation depends on your quiet hours logic
-    const end = new Date();
-    end.setHours(7, 0, 0, 0); // Default to 7 AM
-    if (end < new Date()) {
-      end.setDate(end.getDate() + 1);
+  private _isInQuietHours(
+    currentTime: number,
+    startTime: number,
+    endTime: number
+  ): boolean {
+    if (startTime <= endTime) {
+      return currentTime >= startTime && currentTime <= endTime;
+    } else {
+      // Handle case where quiet hours span midnight
+      return currentTime >= startTime || currentTime <= endTime;
     }
-    return end;
-  },
-};
+  }
+}
+
+export const notificationService = new NotificationService();
