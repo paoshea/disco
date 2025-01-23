@@ -1,25 +1,25 @@
 import React, { useState } from 'react';
 import { Dialog } from '@headlessui/react';
 import { AdjustmentsHorizontalIcon } from '@heroicons/react/24/outline';
-import type { MatchPreferences } from '@/types/match';
-import { matchService } from '@/services/api/match.service';
+import { MatchPreferences } from '@/types/match';
+import { MatchService } from '@/services/match/match.service';
 
 interface MatchFilterProps {
   initialPreferences: MatchPreferences;
   onFilterChange: (preferences: MatchPreferences) => void;
+  userId: string;
 }
 
 export function MatchFilter({
   initialPreferences,
   onFilterChange,
+  userId,
 }: MatchFilterProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [preferences, setPreferences] = useState<MatchPreferences>(initialPreferences);
+  const [preferences, setPreferences] =
+    useState<MatchPreferences>(initialPreferences);
 
-  const handleChange = (
-    field: keyof MatchPreferences,
-    value: any
-  ) => {
+  const handleChange = (field: keyof MatchPreferences, value: any) => {
     const updatedPreferences = {
       ...preferences,
       [field]: value,
@@ -28,10 +28,7 @@ export function MatchFilter({
     onFilterChange(updatedPreferences);
   };
 
-  const handleAgeRangeChange = (
-    field: 'min' | 'max',
-    value: string
-  ) => {
+  const handleAgeRangeChange = (field: 'min' | 'max', value: string) => {
     const updatedPreferences = {
       ...preferences,
       ageRange: {
@@ -45,7 +42,8 @@ export function MatchFilter({
 
   const handleSave = async () => {
     try {
-      await matchService.updatePreferences(preferences);
+      const matchService = MatchService.getInstance();
+      await matchService.updatePreferences(userId, preferences);
       setIsOpen(false);
     } catch (error) {
       console.error('Failed to update preferences:', error);
@@ -87,7 +85,9 @@ export function MatchFilter({
                   min="1"
                   max="100"
                   value={preferences.maxDistance}
-                  onChange={(e) => handleChange('maxDistance', parseInt(e.target.value))}
+                  onChange={e =>
+                    handleChange('maxDistance', parseInt(e.target.value))
+                  }
                   className="w-full"
                 />
                 <div className="text-sm text-gray-500 text-right">
@@ -107,7 +107,9 @@ export function MatchFilter({
                       min="18"
                       max={preferences.ageRange.max}
                       value={preferences.ageRange.min}
-                      onChange={(e) => handleAgeRangeChange('min', e.target.value)}
+                      onChange={e =>
+                        handleAgeRangeChange('min', e.target.value)
+                      }
                       className="w-full rounded-md border-gray-300"
                     />
                   </div>
@@ -118,7 +120,9 @@ export function MatchFilter({
                       min={preferences.ageRange.min}
                       max="100"
                       value={preferences.ageRange.max}
-                      onChange={(e) => handleAgeRangeChange('max', e.target.value)}
+                      onChange={e =>
+                        handleAgeRangeChange('max', e.target.value)
+                      }
                       className="w-full rounded-md border-gray-300"
                     />
                   </div>
@@ -131,7 +135,7 @@ export function MatchFilter({
                 </label>
                 <select
                   value={preferences.timeWindow}
-                  onChange={(e) => handleChange('timeWindow', e.target.value)}
+                  onChange={e => handleChange('timeWindow', e.target.value)}
                   className="mt-1 block w-full rounded-md border-gray-300"
                 >
                   <option value="anytime">Anytime</option>
@@ -148,7 +152,9 @@ export function MatchFilter({
                   <input
                     type="checkbox"
                     checked={preferences.verifiedOnly}
-                    onChange={(e) => handleChange('verifiedOnly', e.target.checked)}
+                    onChange={e =>
+                      handleChange('verifiedOnly', e.target.checked)
+                    }
                     className="rounded border-gray-300"
                   />
                   <label className="ml-2 text-sm text-gray-700">
@@ -160,7 +166,7 @@ export function MatchFilter({
                   <input
                     type="checkbox"
                     checked={preferences.withPhoto}
-                    onChange={(e) => handleChange('withPhoto', e.target.checked)}
+                    onChange={e => handleChange('withPhoto', e.target.checked)}
                     className="rounded border-gray-300"
                   />
                   <label className="ml-2 text-sm text-gray-700">

@@ -4,14 +4,15 @@ import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
 import { z } from 'zod';
 import type { MatchStatus } from '@/types/match';
+import { authOptions } from '@/lib/auth';
 
 // Configuration
 export const dynamic = 'force-dynamic'; // Disable static optimization
-export const runtime = 'nodejs'; // Use Node.js runtime
+export const runtime = 'edge'; // Use Edge runtime for better performance
 
 // Types
 type RouteContext = {
-  params: Promise<Record<string, string>>;
+  params: { id: string };
 };
 
 // Validation schema
@@ -28,14 +29,13 @@ const rateLimiter = new RateLimiter({
 // GET /api/matches/[id] - Get specific match details
 export async function GET(
   req: NextRequest,
-  context: RouteContext
+  { params }: RouteContext
 ): Promise<NextResponse> {
   try {
-    const params = await context.params;
     const { id } = params;
 
     // Check authentication
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -57,14 +57,13 @@ export async function GET(
 // POST /api/matches/[id] - Update match status (accept/reject/block)
 export async function POST(
   req: NextRequest,
-  context: RouteContext
+  { params }: RouteContext
 ): Promise<NextResponse> {
   try {
-    const params = await context.params;
     const { id } = params;
 
     // Check authentication
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -76,7 +75,7 @@ export async function POST(
     }
 
     // Parse and validate request body
-    const rawBody = (await req.json()) as unknown;
+    const rawBody = await req.json();
     const result = matchActionSchema.safeParse(rawBody);
 
     if (!result.success) {
@@ -118,20 +117,19 @@ export async function POST(
 // PATCH /api/matches/[id] - Update match status (accept/reject/block)
 export async function PATCH(
   req: NextRequest,
-  context: RouteContext
+  { params }: RouteContext
 ): Promise<NextResponse> {
   try {
-    const params = await context.params;
     const { id } = params;
 
     // Check authentication
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Parse and validate request body
-    const rawBody = (await req.json()) as unknown;
+    const rawBody = await req.json();
     const result = matchActionSchema.safeParse(rawBody);
 
     if (!result.success) {

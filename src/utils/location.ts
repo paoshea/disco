@@ -1,5 +1,8 @@
 import { prisma } from '@/lib/prisma';
-import type { LocationPrivacyMode, AppLocationPrivacyMode } from '@/types/location';
+import type {
+  LocationPrivacyMode,
+  AppLocationPrivacyMode,
+} from '@/types/location';
 
 export interface LocationData {
   id: string;
@@ -50,20 +53,22 @@ export function calculateDistance(
   return EARTH_RADIUS_KM * c;
 }
 
-export function convertLocationPrivacyMode(mode: string): AppLocationPrivacyMode {
+export function convertLocationPrivacyMode(mode: string): LocationPrivacyMode {
   switch (mode.toLowerCase()) {
     case 'precise':
-      return 'standard';
+      return 'precise';
     case 'approximate':
-      return 'strict';
+      return 'approximate';
     case 'zone':
-      return 'strict';
+      return 'zone';
     default:
-      return 'standard';
+      return 'precise';
   }
 }
 
-export function convertToPrismaPrivacyMode(mode: AppLocationPrivacyMode): LocationPrivacyMode {
+export function convertToPrismaPrivacyMode(
+  mode: AppLocationPrivacyMode
+): LocationPrivacyMode {
   switch (mode) {
     case 'standard':
       return 'precise';

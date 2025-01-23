@@ -33,8 +33,11 @@ const mockPreferences: UserPreferences = {
 
 const mockPreferencesService = {
   getPreferences: jest.fn().mockResolvedValue(mockPreferences),
-  updatePreferences: jest.fn().mockImplementation((prefs: Partial<UserPreferences>) => 
-    Promise.resolve({ ...mockPreferences, ...prefs })),
+  updatePreferences: jest
+    .fn()
+    .mockImplementation((prefs: Partial<UserPreferences>) =>
+      Promise.resolve({ ...mockPreferences, ...prefs })
+    ),
   resetPreferences: jest.fn().mockResolvedValue(mockPreferences),
 };
 

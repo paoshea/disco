@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/Button';
 import { Badge } from '@/components/ui/Badge';
 import { formatDistanceToNow } from 'date-fns';
 import { MapPin } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 
 interface MatchCardProps {
   match: MatchPreview;
-  onAccept: (matchId: string) => Promise<void>;
-  onDecline: (matchId: string) => Promise<void>;
+  onAccept: (matchId: string) => void;
+  onDecline: (matchId: string) => void;
   onMatchClick?: (matchId: string) => void;
-  isProcessing?: boolean;
-  exitDirection?: 'left' | 'right';
+  isProcessing: boolean;
 }
 
 const swipeConfidenceThreshold = 10000;
@@ -26,153 +26,89 @@ export const MatchCard: React.FC<MatchCardProps> = ({
   onAccept,
   onDecline,
   onMatchClick,
-  isProcessing = false,
-  exitDirection,
+  isProcessing,
 }) => {
-  const handleMatchAction = async (action: 'accept' | 'decline') => {
-    try {
-      if (action === 'accept') {
-        await onAccept(match.id);
-      } else if (action === 'decline') {
-        await onDecline(match.id);
-      }
-    } catch (error) {
-      console.error('Error handling match action:', error);
+  const handleMatchAction = (action: 'accept' | 'decline') => {
+    if (action === 'accept') {
+      onAccept(match.id);
+    } else if (action === 'decline') {
+      onDecline(match.id);
     }
   };
 
-  const cardVariants = {
-    enter: (direction: 'left' | 'right') => ({
-      x: direction === 'right' ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.5,
-    }),
-    center: {
-      zIndex: 1,
-      x: 0,
-      opacity: 1,
-      scale: 1,
-    },
-    exit: (direction: 'left' | 'right') => ({
-      zIndex: 0,
-      x: direction === 'right' ? 1000 : -1000,
-      opacity: 0,
-      scale: 0.5,
-    }),
-  };
-
   return (
-    <AnimatePresence initial={false} mode="wait" custom={exitDirection}>
+    <AnimatePresence initial={false} mode="wait">
       <motion.div
         key={match.id}
-        className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer"
-        initial="enter"
-        animate="center"
-        exit="exit"
-        variants={cardVariants}
-        custom={exitDirection}
-        transition={{
-          x: { type: 'spring', stiffness: 300, damping: 30 },
-          opacity: { duration: 0.2 },
-        }}
-        drag="x"
-        dragConstraints={{ left: 0, right: 0 }}
-        dragElastic={1}
-        onDragEnd={(e, { offset, velocity }) => {
-          const swipe = swipePower(offset.x, velocity.x);
-
-          if (swipe < -swipeConfidenceThreshold) {
-            void handleMatchAction('decline');
-          } else if (swipe > swipeConfidenceThreshold) {
-            void handleMatchAction('accept');
-          }
-        }}
+        className="relative bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
       >
-        <div className="relative h-64" onClick={() => onMatchClick?.(match.id)}>
-          {match.image ? (
+        {match.image && (
+          <div className="aspect-w-3 aspect-h-4">
             <Image
               src={match.image}
               alt={match.name}
               layout="fill"
               objectFit="cover"
-              className="rounded-t-lg"
             />
-          ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No photo</span>
+          </div>
+        )}
+        <div className="p-4">
+          <div className="flex justify-between items-start">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">{match.name}</h3>
+              {match.distance !== null && (
+                <p className="text-sm text-gray-500">
+                  {Math.round(match.distance)}km away
+                </p>
+              )}
             </div>
-          )}
-          <motion.div
-            className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-          >
-            <h3 className="text-xl font-semibold text-white mb-1">
-              {match.name}
-            </h3>
-            <div className="flex items-center space-x-2 text-sm text-gray-500">
-              <MapPin className="h-4 w-4" />
-              <span>
-                {match.distance !== null
-                  ? `${match.distance}km away`
-                  : 'Distance unknown'}
-              </span>
+            <div className="text-sm text-gray-500">
+              {match.lastActive &&
+                `Active ${formatDistanceToNow(new Date(match.lastActive))} ago`}
             </div>
-            <p className="text-white/80 text-sm">
-              Active{' '}
-              {formatDistanceToNow(new Date(match.lastActive), {
-                addSuffix: true,
-              })}
-            </p>
-          </motion.div>
-        </div>
-
-        <motion.div
-          className="p-4 space-y-4"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className="flex flex-wrap gap-2">
-            {match.interests.map(interest => (
-              <Badge key={interest} variant="secondary">
-                {interest}
-              </Badge>
-            ))}
           </div>
 
-          <div className="flex justify-between gap-4">
+          {match.interests && match.interests.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-1">
+              {match.interests.map((interest, index) => (
+                <Badge key={index} variant="secondary">
+                  {interest}
+                </Badge>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-4 flex justify-between space-x-2">
             <Button
               variant="outline"
-              onClick={() => {
-                void handleMatchAction('decline');
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMatchAction('decline');
               }}
               disabled={isProcessing}
             >
-              Decline
+              Pass
             </Button>
             <Button
               variant="secondary"
-              onClick={() => {
-                void handleMatchAction('accept');
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMatchAction('accept');
               }}
               disabled={isProcessing}
             >
-              Accept
+              {isProcessing ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                'Connect'
+              )}
             </Button>
           </div>
-        </motion.div>
-
-        {isProcessing && (
-          <motion.div
-            className="absolute inset-0 bg-black/50 flex items-center justify-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="w-8 h-8 border-4 border-white border-t-transparent rounded-full animate-spin" />
-          </motion.div>
-        )}
+        </div>
       </motion.div>
     </AnimatePresence>
   );

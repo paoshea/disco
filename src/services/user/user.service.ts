@@ -1,31 +1,36 @@
-import { PrismaClient, User as PrismaUser, UserRole, Prisma } from '@prisma/client';
+import {
+  PrismaClient,
+  User as PrismaUser,
+  UserRole,
+  Prisma,
+} from '@prisma/client';
 import { User, UserPreferences, NotificationPreferences } from '@/types/user';
-import { AppLocationPrivacyMode, LocationPrivacyMode } from '@/types/location';
-import { convertToAppPrivacyMode } from '@/utils/location';
-import { prisma } from '@/lib/prisma';
+import { AppLocationPrivacyMode } from '@/types/location';
+import { convertLocationPrivacyMode } from '@/utils/location';
+
+const prisma = new PrismaClient();
+
+const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  push: true,
+  email: true,
+  inApp: true,
+  matches: true,
+  messages: true,
+  events: true,
+  safety: true,
+};
 
 const DEFAULT_PREFERENCES: UserPreferences = {
   maxDistance: 50,
-  ageRange: {
-    min: 18,
-    max: 99,
-  },
+  ageRange: { min: 18, max: 100 },
+  activityTypes: [],
   gender: [],
   lookingFor: [],
   relationshipType: [],
-  activityTypes: [],
   availability: [],
   verifiedOnly: false,
   withPhoto: true,
-  notifications: {
-    push: true,
-    email: true,
-    inApp: true,
-    matches: true,
-    messages: true,
-    events: true,
-    safety: true,
-  },
+  notifications: DEFAULT_NOTIFICATION_PREFS,
   privacy: {
     location: 'standard' as AppLocationPrivacyMode,
     profile: 'public',
@@ -35,8 +40,15 @@ const DEFAULT_PREFERENCES: UserPreferences = {
     reportedUsers: [],
   },
   language: 'en',
-  timezone: 'UTC',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
+
+type PrismaUserWithRelations = Prisma.UserGetPayload<{
+  include: {
+    notificationPrefs: true;
+    locations: true;
+  };
+}>;
 
 export class UserService {
   private static instance: UserService;
@@ -50,131 +62,127 @@ export class UserService {
     return UserService.instance;
   }
 
-  private convertPrismaUserToUser(prismaUser: PrismaUser & { 
-    locations?: { 
-      latitude: number;
-      longitude: number;
-      accuracy: number | null;
-      privacyMode: string;
-      timestamp: Date;
-    }[];
-    notificationPrefs?: {
-      pushEnabled: boolean;
-      emailEnabled: boolean;
-      inAppEnabled: boolean;
-    } | null;
-  }): User {
-    const notificationPrefs: NotificationPreferences = prismaUser.notificationPrefs ? {
-      push: prismaUser.notificationPrefs.pushEnabled,
-      email: prismaUser.notificationPrefs.emailEnabled,
-      inApp: prismaUser.notificationPrefs.inAppEnabled,
-      matches: true,
-      messages: true,
-      events: true,
-      safety: true,
-    } : {
-      push: true,
-      email: true,
-      inApp: true,
-      matches: true,
-      messages: true,
-      events: true,
-      safety: true,
-    };
+  private convertPrismaUserToUser(
+    prismaUser: PrismaUser & {
+      locations?: {
+        latitude: number;
+        longitude: number;
+        accuracy: number | null;
+        privacyMode: string;
+        timestamp: Date;
+      }[];
+      notificationPrefs?: {
+        id: string;
+        userId: string;
+        pushEnabled: boolean;
+        emailEnabled: boolean;
+        categories: Prisma.JsonValue;
+        quiet_hours: Prisma.JsonValue | null;
+        createdAt: Date;
+        updatedAt: Date;
+      } | null;
+    }
+  ): User {
+    const notificationPrefs: NotificationPreferences =
+      prismaUser.notificationPrefs
+        ? {
+            ...DEFAULT_NOTIFICATION_PREFS,
+            push: prismaUser.notificationPrefs.pushEnabled,
+            email: prismaUser.notificationPrefs.emailEnabled,
+            ...(prismaUser.notificationPrefs.categories as Record<
+              string,
+              boolean
+            >),
+          }
+        : DEFAULT_NOTIFICATION_PREFS;
+
+    const userPrefs = prismaUser as unknown as { preferences?: UserPreferences };
 
     return {
       id: prismaUser.id,
       email: prismaUser.email,
       firstName: prismaUser.firstName,
       lastName: prismaUser.lastName,
-      name: prismaUser.name,
-      image: prismaUser.image,
+      name: prismaUser.name || '',
+      image: prismaUser.image || null,
       emailVerified: prismaUser.emailVerified ? true : null,
-      verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
-      role: prismaUser.role,
-      streakCount: prismaUser.streakCount,
       lastLogin: prismaUser.lastLogin,
       createdAt: prismaUser.createdAt,
       updatedAt: prismaUser.updatedAt,
-      preferences: DEFAULT_PREFERENCES,
+      verificationStatus: prismaUser.emailVerified ? 'verified' : 'pending',
+      role: prismaUser.role,
+      streakCount: prismaUser.streakCount,
+      password: prismaUser.password,
+      safetyEnabled: prismaUser.safetyEnabled || false,
+      preferences: userPrefs.preferences || DEFAULT_PREFERENCES,
       notificationPrefs,
-      location: prismaUser.locations?.[0] ? {
-        latitude: prismaUser.locations[0].latitude,
-        longitude: prismaUser.locations[0].longitude,
-        accuracy: prismaUser.locations[0].accuracy ?? undefined,
-        privacyMode: convertToAppPrivacyMode(prismaUser.locations[0].privacyMode as LocationPrivacyMode),
-        timestamp: prismaUser.locations[0].timestamp,
-      } : undefined,
-      safetyEnabled: prismaUser.safetyEnabled,
+      location: prismaUser.locations?.[0]
+        ? {
+            latitude: prismaUser.locations[0].latitude,
+            longitude: prismaUser.locations[0].longitude,
+            accuracy: prismaUser.locations[0].accuracy ?? undefined,
+            privacyMode: convertLocationPrivacyMode(
+              prismaUser.locations[0].privacyMode
+            ),
+            timestamp: prismaUser.locations[0].timestamp,
+          }
+        : undefined,
     };
   }
 
   async getCurrentUser(): Promise<User | null> {
-    const session = await prisma.session.findFirst({
-      where: {
-        expires: {
-          gt: new Date(),
-        },
-      },
+    const user = await prisma.user.findFirst({
+      orderBy: { lastLogin: 'desc' },
       include: {
-        user: {
-          include: {
-            notificationPrefs: true,
-          },
+        notificationPrefs: true,
+        locations: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
         },
-      },
-      orderBy: {
-        expires: 'desc',
       },
     });
 
-    if (!session?.user) return null;
-    return this.convertPrismaUserToUser(session.user);
+    if (!user) return null;
+    return this.convertPrismaUserToUser(user);
   }
 
   async getUserById(id: string): Promise<User | null> {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { id },
-        include: {
-          notificationPrefs: true,
-          locations: true,
-        },
-      });
-
-      if (!user) return null;
-
-      return this.convertPrismaUserToUser(user);
-    } catch (error) {
-      console.error('Error fetching user:', error);
-      throw new Error('Failed to fetch user');
-    }
-  }
-
-  async getUserByEmail(email: string): Promise<User | null> {
-    try {
-      const user = await prisma.user.findUnique({
-        where: { email },
-        include: {
-          notificationPrefs: true,
-          locations: true,
-        },
-      });
-
-      if (!user) return null;
-
-      return this.convertPrismaUserToUser(user);
-    } catch (error) {
-      console.error('Error fetching user by email:', error);
-      throw new Error('Failed to fetch user by email');
-    }
-  }
-
-  async deleteUserById(id: string): Promise<User> {
-    const user = await prisma.user.delete({
+    const user = await prisma.user.findUnique({
       where: { id },
       include: {
         notificationPrefs: true,
+        locations: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    if (!user) return null;
+    return this.convertPrismaUserToUser(user);
+  }
+
+  async updateUser(
+    id: string,
+    updateData: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      role?: UserRole;
+      streakCount?: number;
+      emailVerified?: Date | null;
+      lastLogin?: Date;
+    }
+  ): Promise<User> {
+    const user = await prisma.user.update({
+      where: { id },
+      data: updateData,
+      include: {
+        notificationPrefs: true,
+        locations: {
+          orderBy: { timestamp: 'desc' },
+          take: 1,
+        },
       },
     });
 
@@ -182,55 +190,82 @@ export class UserService {
   }
 
   async getUserPreferences(userId: string): Promise<UserPreferences | null> {
-    try {
-      const cacheKey = `user:${userId}:preferences`;
-      const cachedPrefs = await prisma.redis.get(cacheKey);
-      
-      if (cachedPrefs) {
-        return JSON.parse(cachedPrefs) as UserPreferences;
-      }
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
 
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: {
-          notificationPrefs: true,
-        },
-      });
+    if (!user) return null;
 
-      if (!user) return null;
-
-      const preferences = user.notificationPrefs?.preferences as UserPreferences || DEFAULT_PREFERENCES;
-      await prisma.redis.set(cacheKey, JSON.stringify(preferences), 'EX', 3600);
-      
-      return preferences;
-    } catch (error) {
-      console.error('Error getting user preferences:', error);
-      return null;
-    }
+    const userWithPrefs = user as unknown as { preferences?: UserPreferences };
+    return userWithPrefs.preferences || DEFAULT_PREFERENCES;
   }
 
   async updateUserPreferences(
     userId: string,
     preferences: Partial<UserPreferences>
-  ): Promise<User> {
-    const user = await prisma.user.update({
+  ): Promise<void> {
+    const user = await prisma.user.findUnique({
       where: { id: userId },
-      data: {
-        notificationPrefs: {
-          upsert: {
-            create: {
-              preferences: preferences as any,
-              pushEnabled: preferences.notifications?.push ?? true,
-              emailEnabled: preferences.notifications?.email ?? true,
-              inAppEnabled: preferences.notifications?.inApp ?? true,
-              categories: [],
-              quiet_hours: [],
+      include: {
+        notificationPrefs: true,
+      },
+    });
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const userWithPrefs = user as unknown as { preferences?: UserPreferences };
+    const currentPrefs = userWithPrefs.preferences || DEFAULT_PREFERENCES;
+    const updatedPrefs = {
+      ...currentPrefs,
+      ...preferences,
+    };
+
+    // Update notification preferences if provided
+    if (preferences.notifications) {
+      const notificationData: Prisma.NotificationPreferencesUpdateInput = {
+        pushEnabled: preferences.notifications.push,
+        emailEnabled: preferences.notifications.email,
+        categories: preferences.notifications as unknown as Prisma.InputJsonValue,
+      };
+
+      if (user.notificationPrefs) {
+        await prisma.notificationPreferences.update({
+          where: { userId },
+          data: notificationData,
+        });
+      } else {
+        await prisma.notificationPreferences.create({
+          data: {
+            userId,
+            ...notificationData,
+          },
+        });
+      }
+    }
+
+    // Update user preferences as a JSON field
+    await prisma.$executeRaw`UPDATE "User" SET preferences = ${updatedPrefs}::jsonb WHERE id = ${userId}`;
+  }
+
+  async findNearbyUsers(
+    userId: string,
+    userLocation: { latitude: number; longitude: number },
+    maxDistance: number
+  ): Promise<User[]> {
+    const users = await prisma.user.findMany({
+      where: {
+        id: { not: userId },
+        locations: {
+          some: {
+            latitude: {
+              gte: userLocation.latitude - maxDistance / 111,
+              lte: userLocation.latitude + maxDistance / 111,
             },
-            update: {
-              preferences: preferences as any,
-              pushEnabled: preferences.notifications?.push,
-              emailEnabled: preferences.notifications?.email,
-              inAppEnabled: preferences.notifications?.inApp,
+            longitude: {
+              gte: userLocation.longitude - maxDistance / (111 * Math.cos(userLocation.latitude * Math.PI / 180)),
+              lte: userLocation.longitude + maxDistance / (111 * Math.cos(userLocation.latitude * Math.PI / 180)),
             },
           },
         },
@@ -241,58 +276,6 @@ export class UserService {
       },
     });
 
-    return this.convertPrismaUserToUser(user);
-  }
-
-  async updateUser(userId: string, data: Partial<User>): Promise<User> {
-    try {
-      const { preferences, location, ...userData } = data;
-      
-      const user = await prisma.user.update({
-        where: { id: userId },
-        data: {
-          ...userData,
-          notificationPrefs: preferences ? {
-            upsert: {
-              create: {
-                preferences: preferences as any,
-                pushEnabled: preferences.notifications?.push ?? true,
-                emailEnabled: preferences.notifications?.email ?? true,
-                inAppEnabled: preferences.notifications?.inApp ?? true,
-                categories: [],
-                quiet_hours: [],
-              },
-              update: {
-                preferences: preferences as any,
-                pushEnabled: preferences.notifications?.push,
-                emailEnabled: preferences.notifications?.email,
-                inAppEnabled: preferences.notifications?.inApp,
-              },
-            },
-          } : undefined,
-          locations: location ? {
-            upsert: {
-              create: {
-                ...location,
-                timestamp: new Date(),
-              },
-              update: {
-                ...location,
-                timestamp: new Date(),
-              },
-            },
-          } : undefined,
-        },
-        include: {
-          notificationPrefs: true,
-          locations: true,
-        },
-      });
-
-      return this.convertPrismaUserToUser(user);
-    } catch (error) {
-      console.error('Error updating user:', error);
-      throw new Error('Failed to update user');
-    }
+    return users.map(user => this.convertPrismaUserToUser(user));
   }
 }

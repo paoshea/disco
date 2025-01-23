@@ -1,363 +1,272 @@
 import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { userService } from '@/services/api/user.service';
-import type { UserPreferences } from '@/types/user';
+import { useUser } from '@/hooks/useUser';
+import { UserPreferences } from '@/types/user';
+import { MatchPreferences } from '@/types/match';
+import { MatchService } from '@/services/match/match.service';
+import { useToast } from '@/hooks/use-toast';
+import { AppLocationPrivacyMode } from '@/types/location';
 
 interface MatchSettingsProps {
   userId: string;
-  initialSettings?: UserPreferences;
-  onUpdate: (settings: UserPreferences) => void;
+  initialSettings?: MatchPreferences;
+  onUpdate: (settings: MatchPreferences) => void;
 }
 
-type MatchSettingsFormData = UserPreferences;
+type MatchSettingsFormData = MatchPreferences;
 
-export const MatchSettings: React.FC<MatchSettingsProps> = ({
+const DEFAULT_PREFERENCES: MatchPreferences = {
+  maxDistance: 50,
+  ageRange: { min: 18, max: 100 },
+  activityTypes: [],
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  availability: [],
+  verifiedOnly: false,
+  withPhoto: true,
+  privacyMode: AppLocationPrivacyMode.PUBLIC,
+  timeWindow: 'anytime',
+  useBluetoothProximity: false,
+};
+
+export function MatchSettings({
   userId,
-  initialSettings,
+  initialSettings = DEFAULT_PREFERENCES,
   onUpdate,
-}) => {
+}: MatchSettingsProps) {
+  const { user } = useUser();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+  const matchService = MatchService.getInstance();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-  } = useForm<UserPreferences>({
-    defaultValues: initialSettings || {
-      maxDistance: 50,
-      ageRange: { min: 18, max: 100 },
-      interests: [],
-      gender: [],
-      lookingFor: [],
-      relationshipType: [],
-      notifications: {
-        matches: true,
-        messages: true,
-        events: true,
-        safety: true,
-      },
-      privacy: {
-        showOnlineStatus: true,
-        showLastSeen: true,
-        showLocation: true,
-        showAge: true,
-      },
-      safety: {
-        requireVerifiedMatch: true,
-        meetupCheckins: true,
-        emergencyContactAlerts: true,
-      },
-      language: 'en',
-      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    },
+  const { register, handleSubmit, formState: { errors } } = useForm<MatchSettingsFormData>({
+    defaultValues: initialSettings,
   });
 
-  const onSubmit = async (data: UserPreferences) => {
+  const onSubmit = async (data: MatchSettingsFormData) => {
+    if (!user) return;
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      await userService.updateUserPreferences(userId, data);
-      onUpdate(data);
+      const updatedPreferences = {
+        ...DEFAULT_PREFERENCES,
+        ...data,
+      };
+
+      await matchService.updatePreferences(user.id, updatedPreferences);
+      onUpdate(updatedPreferences);
+      toast({
+        title: 'Success',
+        description: 'Match preferences updated successfully.',
+      });
     } catch (error) {
-      setError('Failed to update settings. Please try again.');
+      const errorMessage = 'Failed to update settings. Please try again.';
+      setError(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'error',
+      });
       console.error('Failed to update match settings:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  if (!user) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
   return (
-    <form
-      onSubmit={e => {
-        void handleSubmit(onSubmit)(e);
-      }}
-      className="space-y-6"
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {error && (
-        <div className="rounded-md bg-red-50 p-4">
-          <p className="text-sm text-red-700">{error}</p>
+        <div className="rounded-md bg-destructive/10 p-4">
+          <p className="text-sm text-destructive">{error}</p>
         </div>
       )}
 
       <div>
-        <h3 className="text-lg font-medium text-gray-900">
-          Discovery Settings
-        </h3>
+        <h3 className="text-lg font-medium">Discovery Settings</h3>
         <div className="mt-4 space-y-4">
           <div>
             <label
               htmlFor="maxDistance"
-              className="block text-sm font-medium text-gray-700"
+              className="block text-sm font-medium"
             >
               Discovery Radius (km)
             </label>
             <input
               type="number"
               id="maxDistance"
-              {...register('maxDistance', {
-                valueAsNumber: true,
-                min: { value: 1, message: 'Radius must be at least 1km' },
-                max: { value: 100, message: 'Radius cannot exceed 100km' },
+              {...register('maxDistance', { 
+                min: { value: 1, message: 'Must be at least 1km' },
+                max: { value: 500, message: 'Must be less than 500km' },
               })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              className="mt-1 block w-full rounded-md border-input"
               disabled={isSubmitting}
             />
             {errors.maxDistance && (
-              <p className="mt-1 text-sm text-red-600">
+              <p className="mt-1 text-sm text-destructive">
                 {errors.maxDistance.message}
               </p>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">
-              Age Range
-            </label>
-            <div className="mt-2 grid grid-cols-2 gap-4">
+            <label className="block text-sm font-medium">Age Range</label>
+            <div className="mt-1 grid grid-cols-2 gap-4">
               <div>
-                <label htmlFor="ageRangeMin" className="sr-only">
+                <label htmlFor="ageRange.min" className="sr-only">
                   Minimum Age
                 </label>
                 <input
                   type="number"
-                  id="ageRangeMin"
+                  id="ageRange.min"
                   {...register('ageRange.min', {
-                    valueAsNumber: true,
-                    min: {
-                      value: 18,
-                      message: 'Must be at least 18 years old',
-                    },
-                    max: {
-                      value: 100,
-                      message: 'Must be less than 100 years old',
-                    },
+                    min: { value: 18, message: 'Must be at least 18' },
+                    max: { value: 100, message: 'Must be less than 100' },
                   })}
-                  placeholder="Min age"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  placeholder="Min Age"
+                  className="block w-full rounded-md border-input"
                   disabled={isSubmitting}
                 />
-                {errors.ageRange?.min && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.ageRange.min.message}
-                  </p>
-                )}
               </div>
               <div>
-                <label htmlFor="ageRangeMax" className="sr-only">
+                <label htmlFor="ageRange.max" className="sr-only">
                   Maximum Age
                 </label>
                 <input
                   type="number"
-                  id="ageRangeMax"
+                  id="ageRange.max"
                   {...register('ageRange.max', {
-                    valueAsNumber: true,
-                    min: {
-                      value: 18,
-                      message: 'Must be at least 18 years old',
-                    },
-                    max: {
-                      value: 100,
-                      message: 'Must be less than 100 years old',
-                    },
+                    min: { value: 18, message: 'Must be at least 18' },
+                    max: { value: 100, message: 'Must be less than 100' },
                   })}
-                  placeholder="Max age"
-                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                  placeholder="Max Age"
+                  className="block w-full rounded-md border-input"
                   disabled={isSubmitting}
                 />
-                {errors.ageRange?.max && (
-                  <p className="mt-1 text-sm text-red-600">
-                    {errors.ageRange.max.message}
-                  </p>
-                )}
               </div>
             </div>
+            {(errors.ageRange?.min || errors.ageRange?.max) && (
+              <p className="mt-1 text-sm text-destructive">
+                {errors.ageRange?.min?.message || errors.ageRange?.max?.message}
+              </p>
+            )}
           </div>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-900">Privacy Settings</h3>
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="showOnlineStatus"
-              {...register('privacy.showOnlineStatus')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="showOnlineStatus"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Show my online status
+          <div>
+            <label className="block text-sm font-medium">
+              Activity Types
             </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="showLastSeen"
-              {...register('privacy.showLastSeen')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            <select
+              multiple
+              {...register('activityTypes')}
+              className="mt-1 block w-full rounded-md border-input"
               disabled={isSubmitting}
-            />
-            <label
-              htmlFor="showLastSeen"
-              className="ml-2 block text-sm text-gray-700"
             >
-              Show when I was last seen
-            </label>
+              <option value="sports">Sports</option>
+              <option value="music">Music</option>
+              <option value="art">Art</option>
+              <option value="food">Food</option>
+              <option value="travel">Travel</option>
+              <option value="gaming">Gaming</option>
+              <option value="reading">Reading</option>
+              <option value="movies">Movies</option>
+            </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="showLocation"
-              {...register('privacy.showLocation')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="showLocation"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Show my location
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="showAge"
-              {...register('privacy.showAge')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="showAge"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Show my age
-            </label>
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-900">
-          Notification Settings
-        </h3>
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="notifyMatches"
-              {...register('notifications.matches')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="notifyMatches"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Notify me about new matches
+          <div>
+            <label className="block text-sm font-medium">
+              Availability
             </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="notifyMessages"
-              {...register('notifications.messages')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+            <select
+              multiple
+              {...register('availability')}
+              className="mt-1 block w-full rounded-md border-input"
               disabled={isSubmitting}
-            />
-            <label
-              htmlFor="notifyMessages"
-              className="ml-2 block text-sm text-gray-700"
             >
-              Notify me about new messages
-            </label>
+              <option value="weekday_morning">Weekday Mornings</option>
+              <option value="weekday_afternoon">Weekday Afternoons</option>
+              <option value="weekday_evening">Weekday Evenings</option>
+              <option value="weekend_morning">Weekend Mornings</option>
+              <option value="weekend_afternoon">Weekend Afternoons</option>
+              <option value="weekend_evening">Weekend Evenings</option>
+            </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="notifyMeetups"
-              {...register('notifications.events')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="notifyMeetups"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Send me meetup reminders
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="notifySafety"
-              {...register('notifications.safety')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="notifySafety"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Send me safety alerts
-            </label>
-          </div>
-        </div>
-      </div>
 
-      <div>
-        <h3 className="text-lg font-medium text-gray-900">Safety Settings</h3>
-        <div className="mt-4 space-y-4">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="requireVerified"
-              {...register('safety.requireVerifiedMatch')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="requireVerified"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Only match with verified users
+          <div>
+            <label className="block text-sm font-medium">
+              Time Window
             </label>
+            <select
+              {...register('timeWindow')}
+              className="mt-1 block w-full rounded-md border-input"
+              disabled={isSubmitting}
+            >
+              <option value="anytime">Anytime</option>
+              <option value="today">Today</option>
+              <option value="thisWeek">This Week</option>
+              <option value="thisMonth">This Month</option>
+            </select>
           </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="enableCheckins"
-              {...register('safety.meetupCheckins')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="enableCheckins"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Enable meetup check-ins
-            </label>
-          </div>
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="notifyEmergencyContacts"
-              {...register('safety.emergencyContactAlerts')}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-              disabled={isSubmitting}
-            />
-            <label
-              htmlFor="notifyEmergencyContacts"
-              className="ml-2 block text-sm text-gray-700"
-            >
-              Notify emergency contacts during alerts
-            </label>
+
+          <div className="space-y-2">
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="verifiedOnly"
+                {...register('verifiedOnly')}
+                className="h-4 w-4 rounded border-input"
+                disabled={isSubmitting}
+              />
+              <label
+                htmlFor="verifiedOnly"
+                className="ml-2 block text-sm"
+              >
+                Show verified users only
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="withPhoto"
+                {...register('withPhoto')}
+                className="h-4 w-4 rounded border-input"
+                disabled={isSubmitting}
+              />
+              <label
+                htmlFor="withPhoto"
+                className="ml-2 block text-sm"
+              >
+                Show users with photos only
+              </label>
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="useBluetoothProximity"
+                {...register('useBluetoothProximity')}
+                className="h-4 w-4 rounded border-input"
+                disabled={isSubmitting}
+              />
+              <label
+                htmlFor="useBluetoothProximity"
+                className="ml-2 block text-sm"
+              >
+                Use Bluetooth for nearby matches
+              </label>
+            </div>
           </div>
         </div>
       </div>
@@ -365,12 +274,12 @@ export const MatchSettings: React.FC<MatchSettingsProps> = ({
       <div className="flex justify-end">
         <button
           type="submit"
-          className="inline-flex justify-center rounded-md border border-transparent bg-primary-600 py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
           disabled={isSubmitting}
+          className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 disabled:opacity-50"
         >
-          {isSubmitting ? 'Saving...' : 'Save Settings'}
+          {isSubmitting ? 'Saving...' : 'Save Changes'}
         </button>
       </div>
     </form>
   );
-};
+}

@@ -1,6 +1,16 @@
 import { User } from '@/types/user';
-import { WeightedCriteria, MatchScore } from '@/types/match';
+import { MatchScore } from '@/types/match';
 import { calculateDistance } from '@/utils/location';
+
+interface WeightedCriteria {
+  distance: number;
+  interests: number;
+  verification: number;
+  availability: number;
+  preferences: number;
+  age: number;
+  photo: number;
+}
 
 const WEIGHTS: WeightedCriteria = {
   distance: 0.3,
@@ -12,7 +22,10 @@ const WEIGHTS: WeightedCriteria = {
   photo: 0.05,
 };
 
-export async function calculateMatchScore(user: User, potentialMatch: User): Promise<MatchScore | null> {
+export async function calculateMatchScore(
+  user: User,
+  potentialMatch: User
+): Promise<MatchScore | null> {
   if (!user.location || !potentialMatch.location) {
     return null;
   }
@@ -37,22 +50,24 @@ export async function calculateMatchScore(user: User, potentialMatch: User): Pro
   // Calculate availability score
   const userAvailability = user.preferences?.availability || [];
   const matchAvailability = potentialMatch.preferences?.availability || [];
-  const commonAvailability = matchAvailability.filter(time => 
+  const commonAvailability = matchAvailability.filter(time =>
     userAvailability.includes(time)
   );
-  const availabilityScore = userAvailability.length > 0 
-    ? commonAvailability.length / userAvailability.length 
-    : 0;
+  const availabilityScore =
+    userAvailability.length > 0
+      ? commonAvailability.length / userAvailability.length
+      : 0;
 
   // Calculate activity preferences score
   const userActivities = user.preferences?.activityTypes || [];
   const matchActivities = potentialMatch.preferences?.activityTypes || [];
-  const commonActivities = matchActivities.filter(activity => 
+  const commonActivities = matchActivities.filter(activity =>
     userActivities.includes(activity)
   );
-  const activityScore = userActivities.length > 0 
-    ? commonActivities.length / userActivities.length 
-    : 0;
+  const activityScore =
+    userActivities.length > 0
+      ? commonActivities.length / userActivities.length
+      : 0;
 
   // Calculate preferences match score
   const preferencesScore = calculatePreferencesScore(user, potentialMatch);
@@ -61,25 +76,25 @@ export async function calculateMatchScore(user: User, potentialMatch: User): Pro
   const ageScore = 0;
 
   // Calculate weighted scores
-  const weightedScores: WeightedCriteria = {
-    distance: distanceScore,
-    interests: activityScore,
-    verification: verificationScore,
-    availability: availabilityScore,
-    preferences: preferencesScore,
-    age: ageScore,
-    photo: photoScore,
+  const weightedScores = {
+    distance: distanceScore * WEIGHTS.distance,
+    interests: activityScore * WEIGHTS.interests,
+    verification: verificationScore * WEIGHTS.verification,
+    availability: availabilityScore * WEIGHTS.availability,
+    preferences: preferencesScore * WEIGHTS.preferences,
+    age: ageScore * WEIGHTS.age,
+    photo: photoScore * WEIGHTS.photo,
   };
 
   // Calculate total score
-  const total = Object.entries(WEIGHTS).reduce(
-    (sum, [key, weight]) => sum + weightedScores[key as keyof WeightedCriteria] * weight,
-    0
-  );
+  const total = Object.values(weightedScores).reduce((sum, score) => sum + score, 0);
 
   return {
-    total,
-    criteria: weightedScores,
+    total: Math.round(total * 100),
+    distance: Math.round(weightedScores.distance * 100),
+    interests: Math.round(weightedScores.interests * 100),
+    availability: Math.round(weightedScores.availability * 100),
+    activityTypes: Math.round(weightedScores.interests * 100),
   };
 }
 
@@ -94,25 +109,39 @@ function calculatePreferencesScore(user: User, potentialMatch: User): number {
   let score = 0;
   let totalCriteria = 0;
 
-  // Gender preferences
-  if (userPrefs.gender.length > 0 && matchPrefs.gender.length > 0) {
-    const genderMatch = userPrefs.gender.some(g => matchPrefs.gender.includes(g));
-    if (genderMatch) score++;
+  // Check gender preferences
+  if (userPrefs.gender.length > 0) {
     totalCriteria++;
+    if (userPrefs.gender.includes(matchPrefs.gender[0] || '')) {
+      score++;
+    }
   }
 
-  // Looking for preferences
-  if (userPrefs.lookingFor.length > 0 && matchPrefs.lookingFor.length > 0) {
-    const lookingForMatch = userPrefs.lookingFor.some(l => matchPrefs.lookingFor.includes(l));
-    if (lookingForMatch) score++;
+  // Check relationship type preferences
+  if (userPrefs.relationshipType.length > 0) {
     totalCriteria++;
+    const commonTypes = matchPrefs.relationshipType.filter(type =>
+      userPrefs.relationshipType.includes(type)
+    );
+    if (commonTypes.length > 0) {
+      score++;
+    }
   }
 
-  // Relationship type preferences
-  if (userPrefs.relationshipType.length > 0 && matchPrefs.relationshipType.length > 0) {
-    const relationshipMatch = userPrefs.relationshipType.some(r => matchPrefs.relationshipType.includes(r));
-    if (relationshipMatch) score++;
+  // Check verification preference
+  if (userPrefs.verifiedOnly) {
     totalCriteria++;
+    if (potentialMatch.emailVerified) {
+      score++;
+    }
+  }
+
+  // Check photo preference
+  if (userPrefs.withPhoto) {
+    totalCriteria++;
+    if (potentialMatch.image) {
+      score++;
+    }
   }
 
   return totalCriteria > 0 ? score / totalCriteria : 0;

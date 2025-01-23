@@ -3,9 +3,14 @@ import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
 import { RateLimiter } from '@/lib/rateLimit';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/db/client';
 import type { UserPreferences } from '@/types/user';
 import { authOptions } from '@/lib/auth';
+import { AppLocationPrivacyMode } from '@/types/location';
+
+// Configuration
+export const dynamic = 'force-dynamic';
+export const runtime = 'edge';
 
 // Rate limiter for match operations
 const rateLimiter = new RateLimiter({
@@ -23,7 +28,11 @@ const userPreferencesSchema = z.object({
   gender: z.array(z.string()),
   lookingFor: z.array(z.string()),
   relationshipType: z.array(z.string()),
+  activityTypes: z.array(z.string()),
+  availability: z.array(z.string()),
   interests: z.array(z.string()),
+  verifiedOnly: z.boolean(),
+  withPhoto: z.boolean(),
   notifications: z.object({
     matches: z.boolean(),
     messages: z.boolean(),
@@ -41,16 +50,21 @@ const userPreferencesSchema = z.object({
     meetupCheckins: z.boolean(),
     emergencyContactAlerts: z.boolean(),
   }),
+  timeWindow: z.string().optional(),
+  useBluetoothProximity: z.boolean().optional(),
+  privacyMode: z.nativeEnum(AppLocationPrivacyMode).optional(),
 });
 
 const matchingService = MatchingService.getInstance();
 
 // GET /api/matches - Get potential matches
-export async function GET() {
+export async function GET(
+  req: NextRequest
+): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -58,24 +72,66 @@ export async function GET() {
     return NextResponse.json(matches);
   } catch (error) {
     console.error('Error finding matches:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }
 
 // POST /api/matches/preferences - Update match preferences
-export async function POST(req: NextRequest): Promise<NextResponse> {
+export async function POST(
+  req: NextRequest
+): Promise<NextResponse> {
   const session = await getServerSession(authOptions);
 
   if (!session?.user) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
-    const preferences = await req.json() as UserPreferences;
-    await matchingService.updatePreferences(session.user.id, preferences);
-    return new NextResponse('Preferences updated', { status: 200 });
+    const rawBody = await req.json();
+    const result = userPreferencesSchema.safeParse(rawBody);
+
+    if (!result.success) {
+      return NextResponse.json(
+        { error: 'Invalid preferences format' },
+        { status: 400 }
+      );
+    }
+
+    const preferences = result.data;
+    const userId = session.user.id;
+
+    try {
+      const timeWindow = preferences.timeWindow || 'anytime';
+      if (!['anytime', 'today', 'thisWeek', 'thisMonth'].includes(timeWindow)) {
+        return NextResponse.json(
+          { error: 'Invalid timeWindow value' },
+          { status: 400 }
+        );
+      }
+
+      await matchingService.updatePreferences(userId, {
+        ...preferences,
+        privacyMode: preferences.privacyMode || AppLocationPrivacyMode.PUBLIC,
+        timeWindow: timeWindow as 'anytime' | 'today' | 'thisWeek' | 'thisMonth',
+        useBluetoothProximity: preferences.useBluetoothProximity ?? false,
+      });
+
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Error updating preferences:', error);
+      return NextResponse.json(
+        { error: 'Internal Server Error' },
+        { status: 500 }
+      );
+    }
   } catch (error) {
     console.error('Error updating preferences:', error);
-    return new NextResponse('Internal Server Error', { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' },
+      { status: 500 }
+    );
   }
 }

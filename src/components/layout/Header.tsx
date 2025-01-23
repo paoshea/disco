@@ -4,13 +4,44 @@ import Image from 'next/image';
 import { useAuth } from '@/hooks/useAuth';
 import { UserMenu } from '@/components/layout/UserMenu';
 import { UserRole } from '@prisma/client';
-import { User, NotificationPreferences } from '@/types/user';
+import { User, NotificationPreferences, UserPreferences } from '@/types/user';
+import { AppLocationPrivacyMode } from '@/types/location';
 
 const DEFAULT_NOTIFICATION_PREFS: NotificationPreferences = {
+  push: true,
+  email: true,
+  inApp: true,
   matches: true,
   messages: true,
   events: true,
   safety: true,
+};
+
+const DEFAULT_PREFERENCES: UserPreferences = {
+  maxDistance: 50,
+  ageRange: { min: 18, max: 100 },
+  interests: [],
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  notifications: DEFAULT_NOTIFICATION_PREFS,
+  privacy: {
+    showOnlineStatus: true,
+    showLastSeen: true,
+    showLocation: true,
+    showAge: true,
+    location: 'standard' as AppLocationPrivacyMode,
+    profile: 'public',
+  },
+  safety: {
+    requireVerifiedMatch: true,
+    meetupCheckins: true,
+    emergencyContactAlerts: true,
+    blockedUsers: [],
+    reportedUsers: [],
+  },
+  language: 'en',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
 };
 
 interface HeaderProps {
@@ -20,50 +51,54 @@ interface HeaderProps {
 const defaultUser: User = {
   id: '',
   email: '',
-  name: '',
   firstName: '',
   lastName: '',
+  name: '',
   image: null,
   emailVerified: null,
   lastLogin: null,
   createdAt: new Date(),
   updatedAt: new Date(),
   verificationStatus: 'pending',
-  role: UserRole.user,
+  role: 'user',
   streakCount: 0,
   password: '',
-  notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
+  safetyEnabled: false,
   preferences: {
     maxDistance: 50,
     ageRange: { min: 18, max: 100 },
-    interests: [],
+    activityTypes: [],
     gender: [],
     lookingFor: [],
     relationshipType: [],
-    notifications: {
-      matches: true,
-      messages: true,
-      events: true,
-      safety: true,
-    },
+    availability: [],
+    verifiedOnly: false,
+    withPhoto: true,
+    notifications: DEFAULT_NOTIFICATION_PREFS,
     privacy: {
-      showOnlineStatus: true,
-      showLastSeen: true,
-      showLocation: true,
-      showAge: true,
+      location: 'standard',
+      profile: 'public',
     },
     safety: {
-      requireVerifiedMatch: true,
-      meetupCheckins: true,
-      emergencyContactAlerts: true,
+      blockedUsers: [],
+      reportedUsers: [],
     },
     language: 'en',
     timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   },
+  notificationPrefs: DEFAULT_NOTIFICATION_PREFS,
 };
 
 export function Header() {
   const { user, isLoading, logout } = useAuth();
+
+  const [preferences, setPreferences] = React.useState<UserPreferences>(DEFAULT_PREFERENCES);
+
+  React.useEffect(() => {
+    if (user?.preferences) {
+      setPreferences((prev) => ({ ...prev, ...user.preferences }));
+    }
+  }, [user?.preferences]);
 
   const handleLogout = async () => {
     try {
@@ -73,11 +108,16 @@ export function Header() {
     }
   };
 
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
   if (!user) return null;
 
   const mergedUser: User = {
     ...user,
     notificationPrefs: user.notificationPrefs || DEFAULT_NOTIFICATION_PREFS,
+    preferences: user.preferences || DEFAULT_PREFERENCES,
   };
 
   return (

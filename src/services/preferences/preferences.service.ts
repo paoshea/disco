@@ -4,7 +4,6 @@ import {
   PreferencesServiceInterface,
 } from '@/types/preferences';
 import { apiClient } from '@/lib/api/client';
-import { MatchPreferences } from '@/types/match';
 
 interface ApiResponse<T> {
   data: T;
@@ -69,9 +68,9 @@ export class PreferencesService implements PreferencesServiceInterface {
     }
   }
 
-  async getMatchPreferences(): Promise<MatchPreferences> {
+  async getMatchPreferences(): Promise<UserPreferences> {
     try {
-      const response = await apiClient.get<ApiResponse<MatchPreferences>>(
+      const response = await apiClient.get<ApiResponse<UserPreferences>>(
         `${this.baseUrl}/match-preferences`
       );
       return response.data.data;
@@ -82,10 +81,10 @@ export class PreferencesService implements PreferencesServiceInterface {
   }
 
   async updateMatchPreferences(
-    preferences: Partial<MatchPreferences>
-  ): Promise<PreferencesUpdateResponse<MatchPreferences>> {
+    preferences: Partial<UserPreferences>
+  ): Promise<PreferencesUpdateResponse<UserPreferences>> {
     try {
-      const response = await apiClient.put<ApiResponse<MatchPreferences>>(
+      const response = await apiClient.put<ApiResponse<UserPreferences>>(
         `${this.baseUrl}/match-preferences`,
         preferences
       );

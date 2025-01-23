@@ -1,11 +1,17 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { userService } from '@/services/user/user.service';
+import { UserService } from '@/services/user/user.service';
 import type { User } from '@/types/user';
+
+const userService = UserService.getInstance();
 
 export function useUser() {
   const queryClient = useQueryClient();
 
-  const { data: user, isLoading, error } = useQuery<User | null>({
+  const {
+    data: user,
+    isLoading,
+    error,
+  } = useQuery<User | null>({
     queryKey: ['user'],
     queryFn: async () => {
       try {

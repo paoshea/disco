@@ -9,6 +9,13 @@ import { Switch } from '@/components/ui/Switch';
 import { Label } from '@/components/ui/label';
 import { createToast } from '@/hooks/use-toast';
 
+interface LocationTrackingOptions {
+  enableHighAccuracy?: boolean;
+  maximumAge?: number;
+  timeout?: number;
+  backgroundTracking?: boolean;
+}
+
 export default function MatchingPage() {
   const router = useRouter();
   const { isLoading, user } = useAuth();
@@ -28,12 +35,12 @@ export default function MatchingPage() {
 
     const startLocationTracking = async () => {
       try {
-        await locationService.startTracking(user.id, {}, backgroundTracking);
+        await locationService.startTracking(user.id, backgroundTracking);
         createToast.success({
           title: 'Location tracking started',
           description: backgroundTracking
-            ? 'Your location will be tracked in the background'
-            : 'Your location will be tracked while you use the app',
+            ? 'Your location will be updated in the background'
+            : 'Your location will be updated while the app is open',
         });
       } catch (error) {
         console.error('Failed to start location tracking:', error);
@@ -47,7 +54,7 @@ export default function MatchingPage() {
     void startLocationTracking();
 
     return () => {
-      if (user) {
+      if (user?.id) {
         void locationService.stopTracking(user.id);
       }
     };

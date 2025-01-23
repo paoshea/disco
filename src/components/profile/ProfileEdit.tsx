@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User } from '@/types/user';
+import { User, UserPreferences } from '@/types/user';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { TextArea } from '@/components/ui/TextArea';
@@ -18,6 +18,39 @@ interface ProfileFormData {
   phoneNumber?: string;
 }
 
+const DEFAULT_PREFERENCES: UserPreferences = {
+  maxDistance: 50,
+  ageRange: { min: 18, max: 100 },
+  activityTypes: [],
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  availability: [],
+  verifiedOnly: false,
+  withPhoto: true,
+  interests: [],
+  bio: '',
+  notifications: {
+    push: true,
+    email: true,
+    inApp: true,
+    matches: true,
+    messages: true,
+    events: true,
+    safety: true,
+  },
+  privacy: {
+    location: 'standard',
+    profile: 'public',
+  },
+  safety: {
+    blockedUsers: [],
+    reportedUsers: [],
+  },
+  language: 'en',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+};
+
 const AVAILABLE_INTERESTS = [
   'Sports',
   'Music',
@@ -35,7 +68,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedInterests, setSelectedInterests] = useState<string[]>(
-    user.interests || []
+    user.preferences?.interests || []
   );
 
   const toggleInterest = (interest: string) => {
@@ -44,7 +77,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       : [...selectedInterests, interest];
 
     setSelectedInterests(newInterests);
-    onUpdate({ interests: newInterests });
+    onUpdate({ preferences: { ...user.preferences, interests: newInterests } });
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -93,7 +126,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       if (lastName !== user.lastName) updates.lastName = lastName;
       if (email !== user.email) updates.email = email;
       if (phoneNumber !== user.phoneNumber) updates.phoneNumber = phoneNumber;
-      if (bio !== user.bio) updates.bio = bio;
+      if (bio !== user.preferences?.bio) updates.preferences = { ...user.preferences, bio };
 
       await onUpdate(updates);
     } catch (err) {
@@ -102,6 +135,10 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
       setIsSubmitting(false);
     }
   };
+
+  if (!user) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
@@ -189,7 +226,7 @@ export const ProfileEdit: React.FC<ProfileEditProps> = ({ user, onUpdate }) => {
             id="bio"
             name="bio"
             rows={4}
-            defaultValue={user.bio}
+            defaultValue={user.preferences?.bio}
             placeholder="Tell us about yourself..."
             className="rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500 min-h-[100px] resize-y"
           />

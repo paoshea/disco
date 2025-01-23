@@ -2,20 +2,22 @@ import { MatchPreferences } from '@/types/match';
 import { UserPreferences } from '@/types/user';
 import { AppLocationPrivacyMode } from '@/types/location';
 
-export function convertToMatchPreferences(userPrefs: UserPreferences): MatchPreferences {
+export function convertToMatchPreferences(
+  userPrefs: UserPreferences
+): MatchPreferences {
   return {
     maxDistance: userPrefs.maxDistance,
     ageRange: userPrefs.ageRange,
-    activityTypes: userPrefs.activityTypes,
-    availability: userPrefs.availability,
-    gender: userPrefs.gender,
-    lookingFor: userPrefs.lookingFor,
-    relationshipType: userPrefs.relationshipType,
-    verifiedOnly: userPrefs.verifiedOnly,
-    withPhoto: userPrefs.withPhoto,
+    activityTypes: userPrefs.activityTypes || [],
+    availability: userPrefs.availability || [],
+    gender: userPrefs.gender || [],
+    lookingFor: userPrefs.lookingFor || [],
+    relationshipType: userPrefs.relationshipType || [],
+    verifiedOnly: userPrefs.verifiedOnly || false,
+    withPhoto: userPrefs.withPhoto || true,
     privacyMode: userPrefs.privacy.location,
-    timeWindow: 'anytime', // Default since not in UserPreferences
-    useBluetoothProximity: false, // Default since not in UserPreferences
+    timeWindow: 'anytime',
+    useBluetoothProximity: false,
   };
 }
 

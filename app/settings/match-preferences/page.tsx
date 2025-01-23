@@ -6,6 +6,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { preferencesService } from '@/services/preferences/preferences.service';
 import type { MatchPreferences } from '@/types/match';
+import { AppLocationPrivacyMode } from '@/types/location';
 
 const ACTIVITY_TYPES = [
   'Running',
@@ -37,17 +38,37 @@ const AVAILABILITY = [
   'Weekend Evenings',
 ];
 
+const DEFAULT_PREFERENCES: MatchPreferences = {
+  maxDistance: 50,
+  ageRange: { min: 18, max: 99 },
+  activityTypes: [],
+  availability: [],
+  gender: [],
+  lookingFor: [],
+  relationshipType: [],
+  verifiedOnly: false,
+  withPhoto: true,
+  privacyMode: AppLocationPrivacyMode.PUBLIC,
+  timeWindow: 'anytime',
+  useBluetoothProximity: false,
+};
+
 const matchPreferencesSchema = z.object({
   maxDistance: z.number().min(1).max(100),
   ageRange: z.object({
     min: z.number().min(18).max(99),
     max: z.number().min(18).max(99),
   }),
-  interests: z.array(z.string()),
   activityTypes: z.array(z.string()),
   availability: z.array(z.string()),
   verifiedOnly: z.boolean(),
   withPhoto: z.boolean(),
+  gender: z.array(z.string()),
+  lookingFor: z.array(z.string()),
+  relationshipType: z.array(z.string()),
+  privacyMode: z.nativeEnum(AppLocationPrivacyMode),
+  timeWindow: z.enum(['anytime', 'today', 'thisWeek', 'thisMonth']),
+  useBluetoothProximity: z.boolean(),
 });
 
 export default function MatchPreferencesPage() {
@@ -58,21 +79,11 @@ export default function MatchPreferencesPage() {
   const {
     register,
     handleSubmit,
+    setValue: setFormValue,
     formState: { errors },
   } = useForm<MatchPreferences>({
     resolver: zodResolver(matchPreferencesSchema),
-    defaultValues: {
-      maxDistance: 50,
-      ageRange: {
-        min: 18,
-        max: 99,
-      },
-      interests: [],
-      activityTypes: [],
-      availability: [],
-      verifiedOnly: false,
-      withPhoto: true,
-    },
+    defaultValues: DEFAULT_PREFERENCES,
   });
 
   useEffect(() => {
@@ -81,7 +92,7 @@ export default function MatchPreferencesPage() {
         const prefs = await preferencesService.getMatchPreferences();
         if (prefs) {
           Object.entries(prefs).forEach(([key, value]) => {
-            setValue(key as keyof MatchPreferences, value);
+            setFormValue(key as keyof MatchPreferences, value);
           });
         }
       } catch (err) {
@@ -112,6 +123,10 @@ export default function MatchPreferencesPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePreferenceChange = (key: keyof MatchPreferences, value: any) => {
+    setFormValue(key, value);
   };
 
   return (
@@ -228,7 +243,9 @@ export default function MatchPreferencesPage() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium">Verified Users Only</label>
+          <label className="block text-sm font-medium">
+            Verified Users Only
+          </label>
           <input
             type="checkbox"
             {...register('verifiedOnly')}
@@ -243,6 +260,18 @@ export default function MatchPreferencesPage() {
             {...register('withPhoto')}
             className="mt-1 rounded border-gray-300 text-indigo-600"
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium">Location Privacy Mode</label>
+          <select
+            value={DEFAULT_PREFERENCES.privacyMode}
+            onChange={(e) => handlePreferenceChange('privacyMode', e.target.value as AppLocationPrivacyMode)}
+          >
+            <option value={AppLocationPrivacyMode.PUBLIC}>Public</option>
+            <option value={AppLocationPrivacyMode.FRIENDS}>Friends Only</option>
+            <option value={AppLocationPrivacyMode.PRIVATE}>Private</option>
+          </select>
         </div>
 
         <div className="flex justify-end">

@@ -4,7 +4,13 @@ export type LocationPermissionStatus = 'granted' | 'denied' | 'prompt';
 export type LocationPrivacyMode = 'precise' | 'approximate' | 'zone';
 
 // This is what our app uses internally
-export type AppLocationPrivacyMode = 'standard' | 'strict';
+export const AppLocationPrivacyMode = {
+  PUBLIC: 'public',
+  FRIENDS: 'friends',
+  PRIVATE: 'private'
+} as const;
+
+export type AppLocationPrivacyMode = typeof AppLocationPrivacyMode[keyof typeof AppLocationPrivacyMode];
 
 export interface Coordinates {
   latitude: number;
@@ -17,10 +23,9 @@ export interface Location {
   userId: string;
   latitude: number;
   longitude: number;
-  accuracy?: number;
+  accuracy: number | null;
   timestamp: Date;
-  privacyMode: LocationPrivacyMode;
-  sharingEnabled: boolean;
+  privacyMode: AppLocationPrivacyMode;
 }
 
 export interface LocationWithAddress extends Location {
@@ -62,23 +67,52 @@ export interface LocationUpdateEvent {
   payload: Location;
 }
 
-export function convertToAppPrivacyMode(mode: LocationPrivacyMode): AppLocationPrivacyMode {
+export interface LocationPreferences {
+  privacyMode: AppLocationPrivacyMode;
+  sharingEnabled: boolean;
+  backgroundTracking: boolean;
+  updateInterval: number;
+  minAccuracy: number;
+}
+
+export interface LocationTrackingOptions {
+  enableHighAccuracy?: boolean;
+  maximumAge?: number;
+  timeout?: number;
+  backgroundTracking?: boolean;
+}
+
+export interface NearbyLocation {
+  latitude: number;
+  longitude: number;
+  distance: number;
+  accuracy?: number;
+  privacyMode: AppLocationPrivacyMode;
+  timestamp: Date;
+  userId: string;
+}
+
+export function convertToAppPrivacyMode(
+  mode: LocationPrivacyMode
+): AppLocationPrivacyMode {
   switch (mode) {
     case 'precise':
     case 'approximate':
-      return 'standard';
+      return 'public';
     case 'zone':
-      return 'strict';
+      return 'private';
     default:
-      return 'standard';
+      return 'public';
   }
 }
 
-export function convertToPrismaPrivacyMode(mode: AppLocationPrivacyMode): LocationPrivacyMode {
+export function convertToPrismaPrivacyMode(
+  mode: AppLocationPrivacyMode
+): LocationPrivacyMode {
   switch (mode) {
-    case 'standard':
+    case 'public':
       return 'precise';
-    case 'strict':
+    case 'private':
       return 'zone';
   }
 }

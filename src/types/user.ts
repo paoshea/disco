@@ -7,29 +7,53 @@ import type { UserRole } from '@prisma/client';
 export interface BaseUser {
   id: string;
   email: string;
-  firstName: string | null;
-  lastName: string | null;
-  name: string | null;
+  firstName: string;
+  lastName: string;
+  name: string;
   image: string | null;
   emailVerified: boolean | null;
   lastLogin: Date | null;
   createdAt: Date;
   updatedAt: Date;
-  verificationStatus: 'verified' | 'pending' | 'rejected';
+  verificationStatus: VerificationStatus;
   role: UserRole;
   streakCount: number;
   password: string | null;
 }
 
 // Full user type with all optional fields
+export type VerificationStatus = 'unverified' | 'pending' | 'verified';
+
 export interface NotificationPreferences {
-  push: boolean;
-  email: boolean;
-  inApp: boolean;
   matches: boolean;
   messages: boolean;
   events: boolean;
   safety: boolean;
+  push: boolean;
+  email: boolean;
+  inApp: boolean;
+  marketing: boolean;
+  friendRequests: boolean;
+  comments: boolean;
+  likes: boolean;
+  visits: boolean;
+}
+
+export interface PrivacyPreferences {
+  location: AppLocationPrivacyMode;
+  profile: 'public' | 'private';
+  showOnlineStatus: boolean;
+  showLastSeen: boolean;
+  showLocation: boolean;
+  showAge: boolean;
+}
+
+export interface SafetyPreferences {
+  blockedUsers: string[];
+  reportedUsers: string[];
+  requireVerifiedMatch: boolean;
+  meetupCheckins: boolean;
+  emergencyContactAlerts: boolean;
 }
 
 export interface UserPreferences {
@@ -46,14 +70,8 @@ export interface UserPreferences {
   verifiedOnly: boolean;
   withPhoto: boolean;
   notifications: NotificationPreferences;
-  privacy: {
-    location: AppLocationPrivacyMode;
-    profile: 'public' | 'private';
-  };
-  safety: {
-    blockedUsers: string[];
-    reportedUsers: string[];
-  };
+  privacy: PrivacyPreferences;
+  safety: SafetyPreferences;
   language: string;
   timezone: string;
 }
@@ -61,22 +79,9 @@ export interface UserPreferences {
 export interface User extends BaseUser {
   bio?: string;
   phoneNumber?: string;
-  emergencyContacts?: {
-    id: string;
-    name: string;
-    phoneNumber: string;
-    relationship: string;
-    notifyOn?: {
-      sosAlert: boolean;
-      meetupStart: boolean;
-      meetupEnd: boolean;
-      lowBattery: boolean;
-      enterPrivacyZone: boolean;
-      exitPrivacyZone: boolean;
-    };
-  }[];
-  notificationPrefs?: NotificationPreferences;
-  preferences?: UserPreferences;
+  emergencyContacts?: EmergencyContact[];
+  notificationPrefs: NotificationPreferences;
+  preferences: UserPreferences;
   location?: {
     latitude: number;
     longitude: number;
@@ -122,6 +127,7 @@ export interface UserSettings {
   };
 }
 
-export interface UserProfile extends Omit<User, 'email' | 'emailVerified' | 'role'> {
+export interface UserProfile
+  extends Omit<User, 'email' | 'emailVerified' | 'role'> {
   preview: true;
 }

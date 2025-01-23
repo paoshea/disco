@@ -1,34 +1,20 @@
-import type { UserPreferences } from './user';
-import type { Location, AppLocationPrivacyMode } from './location';
-
-export interface WeightedCriteria {
-  distance: number;
-  interests: number;
-  verification: number;
-  availability: number;
-  preferences: number;
-  age: number;
-  photo: number;
-}
-
-export interface MatchScore {
-  total: number;
-  criteria: {
-    distance: number;
-    interests: number;
-    verification: number;
-    availability: number;
-    preferences: number;
-    age: number;
-    photo: number;
-  };
-}
+import { User, UserPreferences } from './user';
+import { AppLocationPrivacyMode } from './location';
 
 export interface MatchLocation {
   latitude: number;
   longitude: number;
+  accuracy?: number;
   privacyMode: AppLocationPrivacyMode;
-  timestamp: string;
+  timestamp: Date;
+}
+
+export interface MatchScore {
+  total: number;
+  distance: number;
+  interests: number;
+  availability: number;
+  activityTypes: number;
 }
 
 export interface MatchPreferences {
@@ -45,35 +31,41 @@ export interface MatchPreferences {
   verifiedOnly: boolean;
   withPhoto: boolean;
   privacyMode: AppLocationPrivacyMode;
-  timeWindow: 'anytime' | 'now' | '15min' | '30min' | '1hour' | 'today';
+  timeWindow: 'anytime' | 'today' | 'thisWeek' | 'thisMonth';
   useBluetoothProximity: boolean;
 }
 
 export interface Match {
   id: string;
   userId: string;
-  name: string;
-  image: string | null;
-  bio: string;
-  distance: number;
-  matchScore: MatchScore;
-  lastActive: string;
-  verificationStatus: 'verified' | 'pending' | 'rejected';
-  interests: string[];
+  matchedUserId: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  score: MatchScore;
+  createdAt: Date;
+  updatedAt: Date;
+  user?: User;
+  matchedUser?: User;
   location?: MatchLocation;
-  preferences: MatchPreferences;
-  connectionStatus: 'pending' | 'accepted' | 'rejected' | 'blocked';
-  activityPreferences: {
-    type: string;
-    timeWindow: string;
-    location: string;
-    mode: AppLocationPrivacyMode;
-    bluetoothEnabled: boolean;
-  };
+  preferences?: MatchPreferences;
 }
 
-export interface MatchPreview extends Match {
+export interface MatchPreview {
+  id: string;
+  userId: string;
+  matchedUserId: string;
+  status: 'pending' | 'accepted' | 'rejected' | 'blocked';
+  score: MatchScore;
+  createdAt: Date;
+  updatedAt: Date;
   preview: true;
+  // User preview fields
+  name: string;
+  image: string | null;
+  distance: number | null;
+  lastActive: Date;
+  interests: string[];
+  location?: MatchLocation;
+  preferences?: MatchPreferences;
 }
 
 export type MatchStatus = 'pending' | 'accepted' | 'rejected' | 'blocked';

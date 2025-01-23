@@ -1,116 +1,176 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Match } from '@/types/match';
+import { Match, MatchPreview } from '@/types/match';
 import { MatchList } from './MatchList';
 import { MatchMapView } from './MatchMapView';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/router';
-import { matchingService } from '@/services/matching/match.service';
+import { MatchService } from '@/services/match/match.service';
+import { calculateDistance } from '@/utils/location';
 
 interface MatchingContainerProps {
   userId: string;
 }
 
+type ViewMode = 'list' | 'map';
+
 export function MatchingContainer({ userId }: MatchingContainerProps) {
   const router = useRouter();
-  const [matches, setMatches] = useState<Match[]>([]);
+  const [matches, setMatches] = useState<MatchPreview[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [sortBy, setSortBy] = useState<'distance' | 'score'>('score');
-  const [viewMode, setViewMode] = useState<'list' | 'map'>('list');
   const { toast } = useToast();
+  const matchService = MatchService.getInstance();
+
+  const sortMatches = (matches: MatchPreview[]): MatchPreview[] => {
+    return [...matches].sort((a: MatchPreview, b: MatchPreview) => {
+      if (sortBy === 'distance') {
+        const distanceA = a.distance ?? Infinity;
+        const distanceB = b.distance ?? Infinity;
+        return distanceA - distanceB;
+      }
+      return b.score.total - a.score.total;
+    });
+  };
 
   useEffect(() => {
-    loadMatches();
-  }, []);
-
-  const loadMatches = async () => {
-    try {
+    const loadMatches = async () => {
+      if (!userId) return;
+      
       setLoading(true);
-      setError(null);
-      const matchService = matchingService.getInstance();
-      const matches = await matchService.findMatches(userId); 
-      setMatches(matches);
-    } catch (err) {
-      setError('Failed to load matches');
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+      try {
+        const matches = await matchService.findMatches(userId);
+        const previews = matches.map(match => {
+          if (!match.user || !match.matchedUser) {
+            throw new Error('Match missing user data');
+          }
+
+          const distance = match.location?.latitude && match.location?.longitude && 
+            match.user.location?.latitude && match.user.location?.longitude
+            ? calculateDistance(
+                match.location.latitude,
+                match.location.longitude,
+                match.user.location.latitude,
+                match.user.location.longitude
+              )
+            : 0;
+          
+          return {
+            id: match.id,
+            userId: match.userId,
+            matchedUserId: match.matchedUserId,
+            status: match.status,
+            preview: true as const,
+            name: match.user.name || 'Unknown User',
+            image: match.user.image || '',
+            interests: match.user.preferences?.activityTypes || [],
+            distance,
+            lastActive: match.user.lastLogin || match.createdAt,
+            score: match.score,
+            createdAt: match.createdAt,
+            updatedAt: match.updatedAt,
+            reportReason: null
+          };
+        });
+        setMatches(sortMatches(previews));
+        setError(null);
+      } catch (error) {
+        console.error('Failed to load matches:', error);
+        setError('Failed to load matches. Please try again.');
+        toast({
+          title: 'Error',
+          description: 'Failed to load matches. Please try again.',
+          variant: 'error',
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadMatches();
+  }, [userId, toast]);
 
   const handleMatchClick = (matchId: string) => {
     router.push(`/matches/${matchId}`);
   };
 
-  const sortedMatches = [...matches].sort((a, b) => {
-    if (sortBy === 'distance') {
-      return a.distance - b.distance;
-    }
-    return b.matchScore.total - a.matchScore.total;
-  });
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode);
+  };
+
+  const handleSortChange = (sort: 'distance' | 'score') => {
+    setSortBy(sort);
+    setMatches(sortMatches(matches));
+  };
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <h3 className="text-lg font-medium text-red-800">Error</h3>
-        <p className="mt-1 text-sm text-red-600">{error}</p>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return (
-      <div className="text-center py-8">
-        <div className="animate-spin h-8 w-8 border-4 border-indigo-500 border-t-transparent rounded-full mx-auto" />
-        <p className="mt-2 text-gray-500">Loading matches...</p>
+      <div className="p-4 text-center">
+        <p className="text-red-500">{error}</p>
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-primary text-white rounded hover:bg-primary/90"
+        >
+          Retry
+        </button>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold">Your Matches</h1>
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as 'distance' | 'score')}
-          className="rounded-md border-gray-300"
-        >
-          <option value="score">Sort by Match Score</option>
-          <option value="distance">Sort by Distance</option>
-        </select>
-        <div className="flex items-center space-x-4">
+    <div className="container mx-auto p-4">
+      <div className="mb-4 flex justify-between items-center">
+        <div className="space-x-2">
           <button
-            onClick={() => setViewMode('list')}
-            className={`rounded-md px-4 py-2 ${
-              viewMode === 'list'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => handleViewModeChange('list')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'list' ? 'bg-primary text-white' : 'bg-gray-200'
             }`}
           >
             List View
           </button>
           <button
-            onClick={() => setViewMode('map')}
-            className={`rounded-md px-4 py-2 ${
-              viewMode === 'map'
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-200 text-gray-700'
+            onClick={() => handleViewModeChange('map')}
+            className={`px-4 py-2 rounded ${
+              viewMode === 'map' ? 'bg-primary text-white' : 'bg-gray-200'
             }`}
           >
             Map View
+          </button>
+        </div>
+        <div className="space-x-2">
+          <button
+            onClick={() => handleSortChange('score')}
+            className={`px-4 py-2 rounded ${
+              sortBy === 'score' ? 'bg-primary text-white' : 'bg-gray-200'
+            }`}
+          >
+            Sort by Score
+          </button>
+          <button
+            onClick={() => handleSortChange('distance')}
+            className={`px-4 py-2 rounded ${
+              sortBy === 'distance' ? 'bg-primary text-white' : 'bg-gray-200'
+            }`}
+          >
+            Sort by Distance
           </button>
         </div>
       </div>
 
       {viewMode === 'list' ? (
         <MatchList
-          matches={sortedMatches}
+          matches={matches}
+          loading={loading}
           onMatchClick={handleMatchClick}
         />
       ) : (
-        <MatchMapView matches={sortedMatches} />
+        <MatchMapView
+          matches={matches}
+          loading={loading}
+          onMatchClick={handleMatchClick}
+        />
       )}
     </div>
   );

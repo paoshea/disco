@@ -2,6 +2,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import type { MatchPreferences } from '@/types/match';
+import { AppLocationPrivacyMode } from '@/types/location';
 
 const matchPreferencesSchema = z.object({
   maxDistance: z.number().min(1).max(100),
@@ -29,13 +30,12 @@ export function MatchPreferencesPanel({
   initialPreferences?: MatchPreferences;
   onSubmit: (preferences: MatchPreferences) => void;
 }) {
-  const defaultValues = {
+  const defaultValues: MatchPreferences = {
     maxDistance: 50,
     ageRange: {
       min: 18,
-      max: 100,
+      max: 99,
     },
-    interests: [],
     gender: [],
     lookingFor: [],
     relationshipType: [],
@@ -43,8 +43,8 @@ export function MatchPreferencesPanel({
     availability: [],
     verifiedOnly: false,
     withPhoto: true,
-    privacyMode: 'standard' as const,
-    timeWindow: 'anytime' as const,
+    privacyMode: AppLocationPrivacyMode.PUBLIC,
+    timeWindow: 'anytime',
     useBluetoothProximity: false,
   };
 
@@ -125,9 +125,7 @@ export function MatchPreferencesPanel({
               className="rounded border-gray-300"
               {...register('verifiedOnly')}
             />
-            <label className="ml-2 text-sm">
-              Only show verified users
-            </label>
+            <label className="ml-2 text-sm">Only show verified users</label>
           </div>
           <div className="flex items-center">
             <input
@@ -135,9 +133,7 @@ export function MatchPreferencesPanel({
               className="rounded border-gray-300"
               {...register('withPhoto')}
             />
-            <label className="ml-2 text-sm">
-              Only show users with photos
-            </label>
+            <label className="ml-2 text-sm">Only show users with photos</label>
           </div>
         </div>
 

@@ -2,12 +2,9 @@ import { prisma } from '@/lib/prisma';
 import type {
   Location as PrismaLocation,
   User as PrismaUser,
+  Prisma,
 } from '@prisma/client';
-import type {
-  Location,
-  LocationPrivacyMode,
-  GeolocationOptions,
-} from '@/types/location';
+import type { Location, LocationPrivacyMode } from '@/types/location';
 import type { ServiceResponse } from '@/types/api';
 import type { User } from '@/types/user';
 
@@ -48,6 +45,12 @@ interface NavigatorWithWakeLock {
 
 type WakeLockType = 'screen';
 
+type PrismaLocationWithUser = Prisma.LocationGetPayload<{
+  include: {
+    user: true;
+  };
+}>;
+
 export class LocationService {
   private static instance: LocationService;
   private prisma: typeof prisma.location;
@@ -56,11 +59,6 @@ export class LocationService {
   private locationQueue: Map<string, GeolocationPosition[]> = new Map();
   private readonly SYNC_INTERVAL = 5 * 60 * 1000; // 5 minutes
   private readonly QUEUE_SIZE_LIMIT = 100;
-  private readonly defaultOptions: GeolocationOptions = {
-    enableHighAccuracy: true,
-    timeout: 10000,
-    maximumAge: 0,
-  };
   private wakeLock: WakeLockSentinel | null = null;
 
   private constructor() {
@@ -171,18 +169,19 @@ export class LocationService {
     return user;
   }
 
-  private mapPrismaLocationToLocation(
-    location: PrismaLocation & { user?: PrismaUser }
+  private convertPrismaLocationToLocation(
+    prismaLocation: PrismaLocation & {
+      user?: PrismaUser;
+    }
   ): Location {
     return {
-      id: location.id,
-      userId: location.userId,
-      latitude: location.latitude,
-      longitude: location.longitude,
-      accuracy: location.accuracy ?? undefined,
-      privacyMode: location.privacyMode as LocationPrivacyMode,
-      sharingEnabled: location.sharingEnabled,
-      timestamp: location.timestamp,
+      id: prismaLocation.id,
+      latitude: prismaLocation.latitude,
+      longitude: prismaLocation.longitude,
+      accuracy: prismaLocation.accuracy,
+      privacyMode: convertLocationPrivacyMode(prismaLocation.privacyMode),
+      timestamp: prismaLocation.timestamp,
+      userId: prismaLocation.userId,
     };
   }
 
@@ -215,7 +214,7 @@ export class LocationService {
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(location),
+        data: this.convertPrismaLocationToLocation(location),
       };
     } catch (error) {
       return {
@@ -241,7 +240,7 @@ export class LocationService {
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(prismaLocation),
+        data: this.convertPrismaLocationToLocation(prismaLocation),
       };
     } catch (error) {
       console.error('Error getting location state:', error);
@@ -282,7 +281,7 @@ export class LocationService {
 
       return {
         success: true,
-        data: this.mapPrismaLocationToLocation(prismaLocation),
+        data: this.convertPrismaLocationToLocation(prismaLocation),
       };
     } catch (error) {
       console.error('Error updating location state:', error);
@@ -301,7 +300,7 @@ export class LocationService {
       });
 
       return prismaLocation
-        ? this.mapPrismaLocationToLocation(prismaLocation)
+        ? this.convertPrismaLocationToLocation(prismaLocation)
         : null;
     } catch (error) {
       console.error('Error getting latest location:', error);
@@ -320,7 +319,7 @@ export class LocationService {
     });
 
     return prismaLocation
-      ? this.mapPrismaLocationToLocation(prismaLocation)
+      ? this.convertPrismaLocationToLocation(prismaLocation)
       : null;
   }
 
@@ -339,14 +338,10 @@ export class LocationService {
       },
     });
 
-    return this.mapPrismaLocationToLocation(prismaLocation);
+    return this.convertPrismaLocationToLocation(prismaLocation);
   }
 
-  async startTracking(
-    userId: string,
-    options: GeolocationOptions = {},
-    background = false
-  ): Promise<void> {
+  async startTracking(userId: string, background = false): Promise<void> {
     if (this.trackingIntervals.has(userId)) {
       console.warn('Location tracking already active for user:', userId);
       return;
@@ -371,16 +366,15 @@ export class LocationService {
       }
     };
 
-    const watchOptions = {
-      ...this.defaultOptions,
-      ...options,
-    };
-
     // Start watching position
     const watchId = navigator.geolocation.watchPosition(
       updateLocation,
       handleError,
-      watchOptions
+      {
+        enableHighAccuracy: true,
+        timeout: 10000,
+        maximumAge: 0,
+      }
     );
 
     // Store the watch ID for cleanup
@@ -436,7 +430,7 @@ export class LocationService {
       },
     });
 
-    return this.mapPrismaLocationToLocation(prismaLocation);
+    return this.convertPrismaLocationToLocation(prismaLocation);
   }
 
   async getNearbyUsers(
@@ -477,13 +471,13 @@ export class LocationService {
       },
     });
 
-    const mapUserToLocationUser = (user: any): User => ({
+    const mapUserToLocationUser = (user: PrismaUser): User => ({
       id: user.id,
       email: user.email,
       firstName: user.firstName,
       lastName: user.lastName,
-      name: user.name,
-      image: user.image,
+      name: user.name || '',
+      image: user.image || null,
       emailVerified: user.emailVerified,
       lastLogin: user.lastLogin,
       createdAt: user.createdAt,
@@ -492,8 +486,46 @@ export class LocationService {
       role: user.role,
       streakCount: user.streakCount,
       password: user.password,
-      notificationPrefs: user.notificationPrefs,
-      preferences: user.preferences,
+      safetyEnabled: user.safetyEnabled,
+      notificationPrefs: {
+        push: true,
+        email: true,
+        inApp: true,
+        matches: true,
+        messages: true,
+        events: true,
+        safety: true,
+      },
+      preferences: {
+        maxDistance: 50,
+        ageRange: { min: 18, max: 100 },
+        activityTypes: [],
+        gender: [],
+        lookingFor: [],
+        relationshipType: [],
+        availability: [],
+        verifiedOnly: false,
+        withPhoto: true,
+        notifications: {
+          push: true,
+          email: true,
+          inApp: true,
+          matches: true,
+          messages: true,
+          events: true,
+          safety: true,
+        },
+        privacy: {
+          location: 'standard' as AppLocationPrivacyMode,
+          profile: 'public',
+        },
+        safety: {
+          blockedUsers: [],
+          reportedUsers: [],
+        },
+        language: 'en',
+        timezone: 'UTC',
+      },
     });
 
     return nearbyUsers.map(mapUserToLocationUser);

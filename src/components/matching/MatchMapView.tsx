@@ -1,85 +1,113 @@
-import React, { useEffect, useState } from 'react';
-import { GoogleMap, useLoadScript, MarkerF } from '@react-google-maps/api';
-import type { Match } from '@/types/match';
+import React, { useState, useEffect } from 'react';
+import { MatchPreview } from '@/types/match';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import 'leaflet/dist/leaflet.css';
+import { Icon } from 'leaflet';
+import { MatchService } from '@/services/match/match.service';
 
-interface MatchMapViewProps {
-  matches: Match[];
+export interface MatchMapViewProps {
+  matches: MatchPreview[];
+  loading: boolean;
+  onMatchClick: (matchId: string) => void;
 }
 
-const mapContainerStyle = {
-  width: '100%',
-  height: '600px',
-};
+// Custom marker icon
+const customIcon = new Icon({
+  iconUrl: '/images/marker-icon.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+});
 
-const defaultCenter = {
-  lat: 37.7749,
-  lng: -122.4194,
-};
-
-const mapOptions = {
-  disableDefaultUI: true,
-  zoomControl: true,
-};
-
-export function MatchMapView({ matches }: MatchMapViewProps) {
-  const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-  });
-
-  const [userLocation, setUserLocation] = useState(defaultCenter);
+export function MatchMapView({ matches, loading, onMatchClick }: MatchMapViewProps) {
+  const [center, setCenter] = useState<[number, number]>([0, 0]);
+  const [error, setError] = useState<string | null>(null);
+  const matchService = MatchService.getInstance();
 
   useEffect(() => {
-    if (navigator.geolocation) {
+    // Get user's location
+    if ('geolocation' in navigator) {
       navigator.geolocation.getCurrentPosition(
-        position => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
+        (position) => {
+          setCenter([position.coords.latitude, position.coords.longitude]);
         },
-        error => {
-          console.error('Error getting user location:', error);
+        () => {
+          // Fallback: calculate center from matches
+          if (matches.length > 0) {
+            const validLocations = matches.filter(m => m.location);
+            if (validLocations.length > 0) {
+              const avgLat = validLocations.reduce((sum, m) => sum + (m.location?.latitude || 0), 0) / validLocations.length;
+              const avgLng = validLocations.reduce((sum, m) => sum + (m.location?.longitude || 0), 0) / validLocations.length;
+              setCenter([avgLat, avgLng]);
+            }
+          }
         }
       );
     }
-  }, []);
+  }, [matches]);
 
-  if (loadError) {
-    return <div>Error loading maps</div>;
+  if (loading) {
+    return (
+      <div className="h-[600px] bg-gray-200 rounded-lg animate-pulse" />
+    );
   }
 
-  if (!isLoaded) {
-    return <div>Loading maps...</div>;
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
   }
 
   return (
-    <GoogleMap
-      mapContainerStyle={mapContainerStyle}
-      zoom={11}
-      center={userLocation}
-      options={mapOptions}
-    >
-      {matches.map(match => {
-        if (!match.location) return null;
-
-        return (
-          <MarkerF
-            key={match.id}
-            position={{
-              lat: match.location.latitude,
-              lng: match.location.longitude,
-            }}
-            title={match.name}
-          />
-        );
-      })}
-      <MarkerF
-        position={userLocation}
-        icon={{
-          url: '/images/user-marker.png',
-          scaledSize: new window.google.maps.Size(40, 40),
-        }}
-      />
-    </GoogleMap>
+    <div className="h-[600px] rounded-lg overflow-hidden">
+      <MapContainer
+        center={center}
+        zoom={13}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        />
+        {matches.map((match) => (
+          match.location && (
+            <Marker
+              key={match.id}
+              position={[match.location.latitude, match.location.longitude]}
+              icon={customIcon}
+              eventHandlers={{
+                click: () => onMatchClick(match.id),
+              }}
+            >
+              <Popup>
+                <div className="p-2">
+                  <h3 className="font-semibold">{match.name}</h3>
+                  <p className="text-sm text-gray-600">
+                    {match.distance ? `${Math.round(match.distance)}km away` : 'Distance unknown'}
+                  </p>
+                  {match.interests.length > 0 && (
+                    <div className="mt-2">
+                      <p className="text-xs text-gray-500">Interests:</p>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {match.interests.slice(0, 3).map((interest, i) => (
+                          <span
+                            key={i}
+                            className="px-2 py-1 text-xs bg-primary/10 text-primary rounded-full"
+                          >
+                            {interest}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Popup>
+            </Marker>
+          )
+        ))}
+      </MapContainer>
+    </div>
   );
 }

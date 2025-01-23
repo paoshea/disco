@@ -21,49 +21,68 @@ enum UserRole {
 }
 
 model User {
-  id                    String           @id @default(cuid())
-  name                  String?
-  email                 String           @unique
+  id                   String                 @id @default(cuid())
+  name                 String?
+  email                String                 @unique
+  password             String
+  role                 UserRole               @default(user)
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
   emailVerified        DateTime?
   image                String?
+  lastLogin            DateTime?
+  safetyEnabled        Boolean                @default(false)
+  
+  // Relations
   accounts             Account[]
   sessions             Session[]
-  safetyAlerts         SafetyAlert[]
-  safetyChecks         SafetyCheck[]
-  password             String
-  firstName            String
-  lastName             String
-  role                 UserRole         @default(user)
-  verificationToken    String?
-  refreshToken         String?          @unique
-  refreshTokenExpiresAt DateTime?
-  lastLogin            DateTime?
-  streakCount          Int              @default(0)
-  lastStreak           DateTime?
-  safetyEnabled        Boolean          @default(false)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
+  preferences          UserPreferences?
   passwordResets       PasswordReset[]
   emergencyContacts    EmergencyContact[]
+  safetyAlerts         SafetyAlert[]
+  safetyChecks         SafetyCheck[]
   achievements         Achievement[]
   rateLimitAttempts    RateLimitAttempt[]
-  createdRooms         ChatRoom[]       @relation("CreatedRooms")
-  participatingRooms   ChatRoom[]       @relation("ParticipatingRooms")
+  createdRooms         ChatRoom[]            @relation("CreatedRooms")
+  participatingRooms   ChatRoom[]            @relation("ParticipatingRooms")
   messages             Message[]
   locations            Location[]
   privacyZones         PrivacyZone[]
   events               Event[]
   eventParticipants    EventParticipant[]
-  matches              UserMatch[]      @relation("UserMatches")
-  matchedBy            UserMatch[]      @relation("MatchedUsers")
-  reportedBy           Report[]         @relation("ReportedBy")
-  reportedUsers        Report[]         @relation("ReportedUsers")
+  matches              UserMatch[]           @relation("UserMatches")
+  matchedBy            UserMatch[]           @relation("MatchedUsers")
+  reportedBy           Report[]              @relation("ReportedBy")
+  reportedUsers        Report[]              @relation("ReportedUsers")
   notifications        Notification[]
   notificationPrefs    NotificationPreferences?
   notificationQueue    NotificationQueue[]
   pushSubscription     PushSubscription?
 
-  @@index([id])
+  @@map("users")
+}
+
+model UserPreferences {
+  id                    String   @id @default(cuid())
+  userId                String   @unique
+  user                  User     @relation(fields: [userId], references: [id])
+  maxDistance           Int      @default(50)
+  ageRange             Json     // { min: number, max: number }
+  activityTypes        String[] @default([])
+  availability         String[] @default([])
+  gender               String[] @default([])
+  lookingFor           String[] @default([])
+  relationshipType     String[] @default([])
+  verifiedOnly         Boolean  @default(false)
+  withPhoto            Boolean  @default(true)
+  privacyMode          String   @default("public")
+  timeWindow           String   @default("anytime")
+  useBluetoothProximity Boolean @default(false)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+
+  @@map("user_preferences")
+  @@index([userId])
 }
 
 model Account {
@@ -325,15 +344,15 @@ model Notification {
 }
 
 model NotificationPreferences {
-  id            String   @id @default(cuid())
-  userId        String   @unique
-  user          User     @relation(fields: [userId], references: [id])
-  pushEnabled   Boolean  @default(false)
-  emailEnabled  Boolean  @default(true)
-  categories    Json     // { matches: boolean, messages: boolean, events: boolean, system: boolean, safety: boolean }
-  quiet_hours   Json?    // { enabled: boolean, start: string, end: string }
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String  @id @default(cuid())
+  userId       String  @unique
+  user         User    @relation(fields: [userId], references: [id])
+  pushEnabled  Boolean @default(true)
+  emailEnabled Boolean @default(true)
+  categories   Json    // Stores { inApp, matches, messages, events, safety, friendRequests, comments, likes, visits }
+  quiet_hours  Json?   // { enabled: boolean, start: string, end: string }
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 }
 
 model NotificationQueue {
