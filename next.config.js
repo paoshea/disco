@@ -1,37 +1,23 @@
+// @ts-check
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   env: {
     JWT_SECRET: process.env.JWT_SECRET,
-    PORT: process.env.PORT || '3000',
+    PORT: process.env.PORT || '3001',
   },
   productionBrowserSourceMaps: true,
   experimental: {
     serverActions: {
-      allowedOrigins: ['*'],
+      allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
   },
-  async rewrites() {
-    return {
-      beforeFiles: [
-        {
-          source: '/:path*',
-          has: [
-            {
-              type: 'host',
-              value: '(?!.*\\.repl\\.co).*',
-            },
-          ],
-          destination: '/:path*',
-        },
-      ],
-    };
-  },
   webpack: (
-    config,
-    { isServer }
+    config /** @type {import('webpack').Configuration} */,
+    { isServer /** @type {boolean} */ }
   ) => {
     if (!isServer) {
+      // Don't include these packages on the client side
       config.resolve.fallback = {
         ...config.resolve.fallback,
         bcrypt: false,
@@ -41,6 +27,7 @@ const nextConfig = {
         '@mapbox/node-pre-gyp': false,
       };
     }
+    // Resolve path aliases
     const path = require('path');
     config.resolve = {
       ...config.resolve,
@@ -49,14 +36,15 @@ const nextConfig = {
         '@': path.resolve(__dirname, './src'),
       },
     };
+
     return config;
   },
   async headers() {
     return [
       {
-        source: '/:path*',
+        source: '/:path*', // This applies to all routes.  Consider more specific routes.
         headers: [
-          { key: 'Set-Cookie', value: 'SameSite=None; Secure' },
+          { key: 'Set-Cookie', value: 'SameSite=None; Secure' }, //Consider more specific cookies.
         ],
       },
     ];

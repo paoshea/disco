@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -31,7 +30,7 @@ const features = [
   },
 ];
 
-export default function Page() {
+export default function LandingPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
 
@@ -98,6 +97,7 @@ export default function Page() {
       </header>
 
       <main>
+        {/* Hero Section */}
         <div className="relative">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-24">
             <div className="text-center">
@@ -131,6 +131,7 @@ export default function Page() {
           </div>
         </div>
 
+        {/* Feature Section */}
         <div className="py-12 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center">
