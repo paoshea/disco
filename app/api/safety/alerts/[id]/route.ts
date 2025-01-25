@@ -27,7 +27,7 @@ export const runtime = 'nodejs';
 // GET /api/safety/alerts/[id]
 export async function GET(
   request: NextRequest,
-  context: RouteContext
+  context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
