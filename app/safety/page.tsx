@@ -102,17 +102,16 @@ export default function SafetyPage() {
                           );
                           createToast.error({
                             title: 'Error',
-                            description: 'Failed to update settings. Please try again.',
+                            description:
+                              'Failed to update settings. Please try again.',
                           });
                         });
                     } catch (error) {
-                      console.error(
-                        'Failed to update safety settings:',
-                        error
-                      );
+                      console.error('Failed to update safety settings:', error);
                       createToast.error({
                         title: 'Error',
-                        description: 'Failed to update settings. Please try again.',
+                        description:
+                          'Failed to update settings. Please try again.',
                       });
                     }
                   }}
@@ -139,37 +138,39 @@ export default function SafetyPage() {
                 Emergency Contacts
               </h4>
               <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map((contact: {
-                  id: string;
-                  name: string;
-                  email: string;
-                  phone: string;
-                  priority: string;
-                }) => (
-                  <div
-                    key={contact.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {contact.name}
-                      </p>
-                      <p className="text-sm text-gray-500">{contact.email}</p>
-                      <p className="text-sm text-gray-500">{contact.phone}</p>
+                {settings.emergencyContacts.map(
+                  (contact: {
+                    id: string;
+                    name: string;
+                    email: string;
+                    phone: string;
+                    priority: string;
+                  }) => (
+                    <div
+                      key={contact.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {contact.name}
+                        </p>
+                        <p className="text-sm text-gray-500">{contact.email}</p>
+                        <p className="text-sm text-gray-500">{contact.phone}</p>
+                      </div>
+                      <div>
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            contact.priority === 'primary'
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-800'
+                          }`}
+                        >
+                          {contact.priority}
+                        </span>
+                      </div>
                     </div>
-                    <div>
-                      <span
-                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          contact.priority === 'primary'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-gray-100 text-gray-800'
-                        }`}
-                      >
-                        {contact.priority}
-                      </span>
-                    </div>
-                  </div>
-                ))}
+                  )
+                )}
                 {settings.emergencyContacts.length === 0 && (
                   <p className="text-sm text-gray-500">
                     No emergency contacts added yet.
