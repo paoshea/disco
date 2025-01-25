@@ -9,9 +9,9 @@ const ActionSchema = z.object({
 });
 
 interface Context {
- params: {
+ params: Promise<{
    id: string 
- }
+ }>
 }
 
 async function validateRequest() {
@@ -31,7 +31,8 @@ export async function GET(
 ): Promise<NextResponse> {
  try {
    const userId = await validateRequest();
-   const alert = await safetyService.getSafetyAlert(context.params.id);
+   const params = await context.params;
+   const alert = await safetyService.getSafetyAlert(params.id);
 
    if (!alert) {
      return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -59,6 +60,7 @@ export async function PUT(
 ): Promise<NextResponse> {
  try {
    const userId = await validateRequest();
+   const params = await context.params;
    const body = await request.json();
    const result = ActionSchema.safeParse(body);
 
