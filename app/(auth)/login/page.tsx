@@ -68,7 +68,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
         <div className="flex flex-col items-center">
-          <Logo />
+          <Link href="/" className="mb-4 hover:opacity-80 transition-opacity">
+            <Logo />
+          </Link>
           <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Sign in to your account
           </h2>
@@ -77,7 +79,7 @@ export default function LoginPage() {
               href="/"
               className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
             >
-              Home
+              Back to Home
             </Link>
             <span>·</span>
             <Link
