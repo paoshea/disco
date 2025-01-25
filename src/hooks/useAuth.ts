@@ -142,7 +142,7 @@ export const useAuth = create<AuthState>()(
           set({ user: null, token: null, refreshToken: null }); // Clear refreshToken
         }
       },
-      async refreshToken() {
+      async refreshTokens() {
         try {
           const response = await apiClient.post('/api/auth/refresh');
           const { token, refreshToken } = response.data;
