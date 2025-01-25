@@ -49,7 +49,9 @@ export async function middleware(request: NextRequest) {
 
   // Get token from Authorization header or cookie
   const authHeader = request.headers.get('Authorization');
-  const token = authHeader?.replace('Bearer ', '') || request.cookies.get('accessToken')?.value;
+  const token =
+    authHeader?.replace('Bearer ', '') ||
+    request.cookies.get('accessToken')?.value;
 
   // No token found
   if (!token) {
@@ -123,7 +125,10 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error('Auth middleware error:', error);
     if (request.nextUrl.pathname.startsWith('/api/')) {
-      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
+      return NextResponse.json(
+        { error: 'Authentication failed' },
+        { status: 401 }
+      );
     }
     return redirectToLogin(request);
   }
@@ -137,7 +142,5 @@ function redirectToLogin(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next/|_static/|favicon.ico|sitemap.xml).*)',
-  ],
+  matcher: ['/((?!_next/|_static/|favicon.ico|sitemap.xml).*)'],
 };

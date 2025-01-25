@@ -283,6 +283,7 @@ This technical architecture is designed to be both scalable and maintainable whi
 This project could be adapted into a Flutter app. Here's why:
 
 The project's architecture is already modular and service-oriented, with clear separation of:
+
 - Authentication flows
 - Real-time location services
 - Chat functionality
@@ -290,18 +291,21 @@ The project's architecture is already modular and service-oriented, with clear s
 - User matching
 
 Key components that would translate well to Flutter:
+
 - WebSocket infrastructure for real-time updates
 - JWT authentication system
 - Location services
 - State management patterns
 
 Existing API services (referenced in docs/TECH_STACK.md) could be reused with Flutter by:
+
 - Keeping the backend services (Go, Node.js)
 - Maintaining the same REST API endpoints
 - Reusing WebSocket protocols
 - Keeping the PostgreSQL/Redis infrastructure
 
 However, consider these challenges:
+
 - Need to reimplement all frontend UI components in Flutter
 - Mobile-specific features like push notifications need native implementation
 - Location services need to be adapted for mobile platforms
@@ -310,11 +314,12 @@ However, consider these challenges:
 ## Progressive Web App (PWA) Alternative
 
 Reasons to consider a Progressive Web App (PWA) for mobile users:
+
 - Maintain single codebase
 - Work across all platforms
 - Keep deployment simple on Replit
 - Leverage existing Next.js infrastructure
-There's no current implementation of Rust or Elixir/Phoenix in the codebase.
+  There's no current implementation of Rust or Elixir/Phoenix in the codebase.
 
 # Currently using:
 

@@ -138,6 +138,7 @@ Redis connection may show `NOAUTH Authentication required` or connection refused
 **Solution:**
 
 1. Environment Configuration:
+
 ```bash
 # Redis Configuration
 REDIS_URL=redis://0.0.0.0:6379
@@ -145,6 +146,7 @@ REDIS_PASSWORD=  # Empty for non-auth mode
 ```
 
 2. Redis Client Configuration:
+
 ```typescript
 const redisConfig = {
   host: '0.0.0.0',
@@ -304,6 +306,7 @@ export default function Page() {
 Pages using `useSession` from `next-auth/react` may encounter undefined errors during static generation or server-side rendering.
 
 **Solution:**
+
 - Replace `useSession` with custom `useAuth` hook
 - Update component structure to handle loading and authentication states
 - Ensure proper redirection for unauthenticated users
@@ -327,6 +330,7 @@ React.useEffect(() => {
 ```
 
 **Affected Pages:**
+
 - `/about`
 - `/blog`
 - `/careers`
@@ -342,45 +346,51 @@ React.useEffect(() => {
 Pages with authentication may fail during static generation due to missing session context.
 
 **Solution:**
+
 - Add proper loading states
 - Handle null/undefined user states
 - Use dynamic imports for authenticated content when necessary
 - Implement proper client-side navigation
-
 
 ## Deployment Issues
 
 ### 1. Build Errors
 
 **Error:**
+
 ```
 Error: Cannot find module '@prisma/client'
 ```
 
 **Solution:**
+
 - Run Prisma generate before build
 - Ensure Prisma client is properly installed
 - Check database URL configuration
 
 Example:
+
 ```typescript
 // Update DATABASE_URL in .env
-DATABASE_URL="postgresql://user:password@0.0.0.0:5432/disco"
+DATABASE_URL = 'postgresql://user:password@0.0.0.0:5432/disco';
 ```
 
 ### 2. WebSocket Connection Issues
 
 **Error:**
+
 ```
 WebSocket connection failed
 ```
 
 **Solution:**
+
 - Update WebSocket URL to use correct hostname
 - Ensure proper SSL configuration
 - Add error handling and reconnection logic
 
 Example:
+
 ```typescript
 const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://0.0.0.0:4000';
 ```
@@ -388,16 +398,19 @@ const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://0.0.0.0:4000';
 ### 3. Environment Variables
 
 **Error:**
+
 ```
 Error: Missing required environment variables
 ```
 
 **Solution:**
+
 - Verify all required environment variables are set
 - Use proper deployment secrets management
 - Add validation for required variables
 
 Example:
+
 ```typescript
 if (!process.env.NEXTAUTH_URL || !process.env.DATABASE_URL) {
   throw new Error('Missing required environment variables');
@@ -452,12 +465,14 @@ Remember to always:
 ## Best Practices
 
 1. **Authentication:**
+
    - Use `useAuth` hook consistently across all authenticated pages
    - Always handle loading states
    - Implement proper redirection
    - Add appropriate error boundaries
 
 2. **Redis:**
+
    - Never commit Redis passwords to version control
    - Use different configurations for development and production
    - Implement proper error handling
