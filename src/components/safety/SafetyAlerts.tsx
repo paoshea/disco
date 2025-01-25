@@ -28,7 +28,7 @@ export const SafetyAlerts: React.FC = () => {
           location: alertLocation || {
             latitude: 0,
             longitude: 0,
-            accuracy: null,
+            accuracy: undefined,
             timestamp: new Date()
           }
         };

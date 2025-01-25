@@ -236,9 +236,23 @@ function SafetyPage() {
             user={{
               id: user?.id || '',
               preferences: {
-                notifications: { safety: true },
-                privacy: {},
-                safety: {},
+                notifications: { 
+                  matches: true,
+                  messages: true,
+                  events: true,
+                  safety: true 
+                },
+                privacy: {
+                  showOnlineStatus: true,
+                  showLastSeen: true,
+                  showLocation: true,
+                  showAge: true
+                },
+                safety: {
+                  requireVerifiedMatch: true,
+                  meetupCheckins: true,
+                  emergencyContactAlerts: true
+                },
               },
             }}
             settings={settings}
