@@ -91,13 +91,16 @@ export default function SafetyCenter({
   );
 }
 
-// SafetyPage component moved to app/safety/page.tsx
-    sosAlertEnabled: false,
-    emergencyContacts: [],
-    autoShareLocation: false,
-    meetupCheckins: false,
-    requireVerifiedMatch: false,
-  });
+// Initial settings configuration
+const initialSettings: SafetySettingsNew = {
+  sosAlertEnabled: false,
+  emergencyContacts: [],
+  autoShareLocation: false,
+  meetupCheckins: false,
+  requireVerifiedMatch: false
+};
+
+const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
 
   const updateSafetySettings = async (
     newSettings: Partial<SafetySettingsNew>
