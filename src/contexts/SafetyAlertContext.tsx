@@ -1,3 +1,4 @@
+
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -5,14 +6,13 @@ import {
   getSafetyAlerts,
   createSafetyAlert,
 } from '@/services/api/safety.service';
-// Add any other required imports
 import type { SafetyAlert, Prisma } from '@prisma/client';
-import type { Location } from '@/types/location';
+import type { SafetyAlertNew } from '@/types/safety';
 
 type JsonObject = Prisma.JsonObject;
 
 interface SafetyAlertContextType {
-  alerts: SafetyAlert[];
+  alerts: SafetyAlertNew[];
   loading: boolean;
   isLoading: boolean;
   error: string | null;
@@ -28,7 +28,7 @@ export function SafetyAlertProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
+  const [alerts, setAlerts] = useState<SafetyAlertNew[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +39,7 @@ export function SafetyAlertProvider({
         if (userId) {
           const response = await getSafetyAlerts(userId);
           const safetyAlerts = Array.isArray(response) ? response : [];
-          setAlerts(safetyAlerts as SafetyAlert[]);
+          setAlerts(safetyAlerts.map(alert => alert as SafetyAlertNew));
         }
       } catch (error) {
         console.error(
@@ -55,7 +55,7 @@ export function SafetyAlertProvider({
 
   const createAlert = async (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => {
     const newAlert = await createSafetyAlert(data);
-    setAlerts(prev => [newAlert, ...prev]);
+    setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
   };
 
   const addAlert = async (alert: Partial<SafetyAlert>) => {
@@ -74,7 +74,7 @@ export function SafetyAlertProvider({
         privacyMode: 'precise' as const,
         sharingEnabled: true,
         id: alert.id || crypto.randomUUID(),
-        userId: alert.userId || userId, // Fallback to current userId if not provided
+        userId: alert.userId || userId,
       };
 
       const locationForPrisma = {
@@ -101,7 +101,7 @@ export function SafetyAlertProvider({
       };
 
       const newAlert = await createSafetyAlert(fullAlert);
-      setAlerts(prev => [newAlert, ...prev]);
+      setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add alert');
       throw err;
@@ -110,7 +110,11 @@ export function SafetyAlertProvider({
 
   const dismissAlert = async (alertId: string) => {
     try {
-      // Implement API call if needed
+      await fetch(`/api/safety/alerts/${alertId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'dismiss' }),
+      });
       setAlerts(prev => prev.filter(alert => alert.id !== alertId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to dismiss alert');
