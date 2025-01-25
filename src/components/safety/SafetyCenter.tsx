@@ -28,9 +28,14 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
       if (alert.type === 'sos') {
         try {
           await addAlert({
-            ...alert,
+            type: 'emergency',
             description: alert.description || 'Emergency alert triggered',
             status: 'active',
+            priority: 'high',
+            location: alert.location,
+            message: alert.message || 'SOS Alert',
+            dismissed: false,
+            resolved: false
           });
         } catch (err) {
           console.error('Failed to add emergency alert:', err);
@@ -87,7 +92,10 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
             {alerts.map(alert => (
               <SafetyAlertNotification
                 key={alert.id}
-                alert={alert}
+                alert={{
+                  ...alert,
+                  status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active'
+                }}
                 onDismiss={async () => {
                   try {
                     await dismissAlert(alert.id);
