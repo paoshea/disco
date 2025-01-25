@@ -1,4 +1,3 @@
-
 import React from 'react';
 import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 import type { Location } from '@/types/location';
@@ -30,19 +29,25 @@ export const SafetyAlerts: React.FC = () => {
           accuracy: locationData?.accuracy,
           timestamp: new Date(locationData?.timestamp ?? Date.now()),
           privacyMode: 'precise',
-          sharingEnabled: true
+          sharingEnabled: true,
         };
 
         const safetyAlert: SafetyAlertNew = {
           ...alert,
           type: alert.type as SafetyAlertType,
-          status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active',
+          status: alert.dismissed
+            ? 'dismissed'
+            : alert.resolved
+              ? 'resolved'
+              : 'active',
           location: alertLocation,
           description: alert.description || undefined,
           message: alert.message || undefined,
-          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined,
+          resolvedAt: alert.resolvedAt
+            ? new Date(alert.resolvedAt).toISOString()
+            : undefined,
           createdAt: new Date(alert.createdAt).toISOString(),
-          updatedAt: new Date(alert.updatedAt).toISOString()
+          updatedAt: new Date(alert.updatedAt).toISOString(),
         };
 
         return (

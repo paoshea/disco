@@ -74,7 +74,7 @@ export function SafetyAlertProvider({
         privacyMode: 'precise' as const,
         sharingEnabled: true,
         id: alert.id || crypto.randomUUID(),
-        userId: alert.userId || userId // Fallback to current userId if not provided
+        userId: alert.userId || userId, // Fallback to current userId if not provided
       };
 
       const locationForPrisma = {

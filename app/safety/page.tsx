@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -121,9 +120,14 @@ export default function SafetyPage() {
                 <Switch
                   checked={settings.sosAlertEnabled}
                   onChange={enabled => {
-                    updateSafetySettings({ sosAlertEnabled: enabled }).catch(error => {
-                      console.error('Failed to update SOS alert setting:', error);
-                    });
+                    updateSafetySettings({ sosAlertEnabled: enabled }).catch(
+                      error => {
+                        console.error(
+                          'Failed to update SOS alert setting:',
+                          error
+                        );
+                      }
+                    );
                   }}
                   className={`${
                     settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
