@@ -2,6 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
+import type { SafetyAlertNew } from '@/types/safety';
 import { z } from 'zod';
 
 const ActionSchema = z.object({

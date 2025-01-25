@@ -22,7 +22,7 @@ interface AuthState {
   refreshTokens: () => Promise<boolean>;
 }
 
-interface LoginResult {
+export interface LoginResult {
   success?: boolean;
   error?: string;
   needsVerification?: boolean;
