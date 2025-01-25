@@ -1,5 +1,5 @@
 import React from 'react';
-import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
+import type { SafetyAlertNew } from '@/types/safety';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 
 export const SafetyAlerts: React.FC = () => {

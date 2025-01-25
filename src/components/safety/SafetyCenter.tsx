@@ -30,6 +30,7 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
           await addAlert({
             ...alert,
             description: alert.description || 'Emergency alert triggered',
+            status: 'active',
           });
         } catch (err) {
           console.error('Failed to add emergency alert:', err);
