@@ -36,8 +36,30 @@ The safety system in Disco provides real-time safety monitoring, emergency alert
 
 ### Core Types
 
-#### SafetyAlertNew
+For type safety and database consistency, use Prisma's generated types instead of manually defining interfaces. Import these from @prisma/client:
 
+```typescript
+import { SafetyAlert, Location, User } from '@prisma/client';
+
+// Example usage with Prisma types
+type SafetyAlertResponse = SafetyAlert & {
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp: Date;
+  } | null;
+  user: User;
+};
+```
+
+This ensures:
+- Type definitions stay in sync with your database schema
+- Automatic updates when your schema changes
+- Proper typing for all database operations
+- Elimination of type mismatches between database and application
+
+Legacy manual type (for reference only):
 ```typescript
 interface SafetyAlertNew {
   id: string;
@@ -377,14 +399,20 @@ status: dbStatus.toLowerCase() as 'pending' | 'reviewing' | 'resolved' | 'dismis
 
 ### 1. Type Safety
 
-- Always use strict types, avoid `any`
-- Use type assertions with runtime checks
-- Define proper interfaces for all data structures
-- Ensure TypeScript interfaces match Prisma models
-- Use proper Prisma types for JSON fields:
-  - InputJsonValue for write operations
-  - JsonValue for read operations
-  - JsonNull for null values
+- Use Prisma's generated types from @prisma/client instead of manual interfaces
+- Leverage Prisma's type system for database operations
+- For custom types, extend Prisma's base types
+- Handle JSON fields properly:
+  - Use Prisma.JsonValue for read operations
+  - Use Prisma.InputJsonValue for write operations
+  - Use Prisma.JsonNull for null values
+- Create type-safe response types by combining Prisma types:
+  ```typescript
+  type SafetyResponse = SafetyAlert & {
+    user: Pick<User, 'id' | 'name'>;
+    location: Location | null;
+  };
+  ```
 
 ### 2. Error Handling
 
