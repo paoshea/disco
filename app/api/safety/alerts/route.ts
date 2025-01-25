@@ -1,4 +1,3 @@
-
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -70,15 +69,15 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         timestamp: now.toISOString()
       }
     };
-    
+
     const alert = await safetyService.createSafetyAlert(userId, {
-  ...alertData,
-  updatedAt: new Date(),
-  location: {
-    ...alertData.location,
-    timestamp: new Date(alertData.location.timestamp).toISOString()
-  }
-});
+      ...alertData,
+      updatedAt: new Date(),
+      location: {
+        ...alertData.location,
+        timestamp: new Date(alertData.location.timestamp).toISOString()
+      }
+    });
     return NextResponse.json(alert);
   } catch (error) {
     console.error('Failed to create alert:', error);

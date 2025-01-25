@@ -377,9 +377,9 @@ export interface SafetyAlertNew {
   };
   dismissed: boolean;
   resolved: boolean;
-  updatedAt?: Date;
-  dismissedAt?: Date | null;
-  resolvedAt?: Date | null;
+  updatedAt: Date;
+  dismissedAt: Date | null;
+  resolvedAt: Date | null;
 }
 
 export interface EmergencyContact {

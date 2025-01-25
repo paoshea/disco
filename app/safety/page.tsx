@@ -15,7 +15,12 @@ export default function SafetyPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettings>({
     sosAlertEnabled: false,
-    emergencyContacts: [] as EmergencyContact[],
+    emergencyContacts: [] as Array<{
+      id: string;
+      name: string;
+      phoneNumber: string;
+      email: string;
+    }>,
     autoShareLocation: false,
     meetupCheckins: false,
     requireVerifiedMatch: false,
