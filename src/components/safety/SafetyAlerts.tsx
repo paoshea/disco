@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SafetyAlertNew } from '@/types/safety';
+import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
 
@@ -31,7 +31,9 @@ export const SafetyAlerts: React.FC = () => {
             longitude: 0,
             accuracy: undefined,
             timestamp: new Date()
-          }
+          },
+          message: alert.message || undefined,
+          resolvedAt: alert.resolvedAt || undefined
         };
 
         return (
