@@ -1,8 +1,10 @@
-import axios, {
-  type AxiosInstance,
-  type AxiosError,
-  type AxiosResponse,
-  type InternalAxiosRequestConfig,
+
+import axios from 'axios';
+import type { 
+  AxiosInstance, 
+  AxiosError, 
+  AxiosResponse, 
+  InternalAxiosRequestConfig 
 } from 'axios';
 import type { AuthResponse } from '@/types/auth';
 
@@ -15,10 +17,9 @@ const apiClient: AxiosInstance = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // Timeout to prevent hanging requests
+  timeout: 10000,
 });
 
-// Initialize auth token in the headers if available
 if (typeof window !== 'undefined') {
   const token = localStorage.getItem('token');
   if (token) {
@@ -26,7 +27,6 @@ if (typeof window !== 'undefined') {
   }
 }
 
-// Intercept requests to include the latest token from localStorage
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
     const token = localStorage.getItem('token');
@@ -38,7 +38,6 @@ apiClient.interceptors.request.use(
   (error: AxiosError) => Promise.reject(error)
 );
 
-// Handle token refresh and retry failed requests
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
@@ -60,11 +59,11 @@ apiClient.interceptors.response.use(
         const { token } = response.data;
         localStorage.setItem('token', token);
 
-        // Update the default and request headers
         apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
-        originalRequest.headers.Authorization = `Bearer ${token}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+        }
 
-        // Retry the failed request
         return apiClient(originalRequest);
       } catch (refreshError) {
         localStorage.removeItem('token');
@@ -78,6 +77,5 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Export the client and its types
 export { apiClient };
 export type { AuthResponse };
