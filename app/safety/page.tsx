@@ -1,32 +1,19 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { SafetyService } from '@/services/safety/safety.service';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
 import { SafetyCenter } from '@/components/safety/SafetyCenter';
 
-interface SafetySettings {
-  enabled: boolean;
-  emergencyContacts: {
-    id: string;
-    name: string;
-    phone: string;
-    email: string;
-    priority: 'primary' | 'secondary';
-  }[];
-}
-
 export default function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
-  const [settings, setSettings] = useState<SafetySettings>({
+  const [settings, setSettings] = useState({
     enabled: false,
-    emergencyContacts: [],
+    emergencyContacts: []
   });
   const [loading, setLoading] = useState(true);
 
@@ -40,19 +27,10 @@ export default function SafetyPage() {
 
     const fetchSettings = async () => {
       try {
-        const safetyService = SafetyService.getInstance();
-        const contacts = await safetyService.getEmergencyContacts(user.id);
-
-        setSettings({
-          enabled: true, // TODO: Get from settings when implemented
-          emergencyContacts: contacts.map(c => ({
-            id: c.id,
-            name: `${c.firstName} ${c.lastName}`,
-            phone: c.phoneNumber || '',
-            email: c.email || '',
-            priority: 'primary' as const,
-          })),
-        });
+        const response = await fetch('/api/safety/settings');
+        if (!response.ok) throw new Error('Failed to fetch safety settings');
+        const data = await response.json();
+        setSettings(data);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
         createToast.error({
@@ -97,12 +75,27 @@ export default function SafetyPage() {
                 settings help ensure your safety while using our service.
               </p>
             </div>
-
             <div className="mt-5">
               <div className="flex items-center">
                 <Switch
                   checked={settings.enabled}
-                  onChange={enabled => setSettings({ ...settings, enabled })}
+                  onChange={async (enabled) => {
+                    try {
+                      const response = await fetch('/api/safety/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled })
+                      });
+                      if (!response.ok) throw new Error('Failed to update settings');
+                      setSettings(prev => ({ ...prev, enabled }));
+                    } catch (error) {
+                      console.error('Failed to update safety settings:', error);
+                      createToast.error({
+                        title: 'Error',
+                        description: 'Failed to update settings. Please try again.',
+                      });
+                    }
+                  }}
                   className={`${
                     settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
                   } relative inline-flex h-6 w-11 items-center rounded-full`}
@@ -121,7 +114,6 @@ export default function SafetyPage() {
                 </span>
               </div>
             </div>
-
             <div className="mt-6">
               <h4 className="text-base font-medium text-gray-900">
                 Emergency Contacts
@@ -152,7 +144,6 @@ export default function SafetyPage() {
                     </div>
                   </div>
                 ))}
-
                 {settings.emergencyContacts.length === 0 && (
                   <p className="text-sm text-gray-500">
                     No emergency contacts added yet.
