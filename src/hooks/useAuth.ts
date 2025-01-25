@@ -169,15 +169,18 @@ export const useAuth = create<AuthState>()(
 
           const { token, user, refreshToken, needsVerification } = result.data; // Extract refreshToken
 
-          if (token && user) { // Check if token and user exist
+          if (token && user) {
+            // Check if token and user exist
             set({ user, token, refreshToken }); // Set refreshToken
             // Set cookies for middleware -  Consider more secure cookie handling
             document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
           } else {
             set({ error: 'Registration failed: Missing token or user data' });
-            return { success: false, error: 'Registration failed: Missing token or user data' };
+            return {
+              success: false,
+              error: 'Registration failed: Missing token or user data',
+            };
           }
-
 
           return {
             success: true,

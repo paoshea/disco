@@ -12,16 +12,19 @@ export const SafetyAlerts: React.FC = () => {
 
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-4">
-      {alerts.map((alert) => {
+      {alerts.map(alert => {
         const alertLocation =
-          alert.location && typeof alert.location === 'object' && 'timestamp' in alert.location
+          alert.location &&
+          typeof alert.location === 'object' &&
+          'timestamp' in alert.location
             ? {
                 latitude: Number((alert.location as any).latitude),
                 longitude: Number((alert.location as any).longitude),
                 accuracy: Number((alert.location as any).accuracy),
-                timestamp: typeof (alert.location as any).timestamp === 'string'
-                  ? new Date((alert.location as any).timestamp)
-                  : new Date(),
+                timestamp:
+                  typeof (alert.location as any).timestamp === 'string'
+                    ? new Date((alert.location as any).timestamp)
+                    : new Date(),
               }
             : {
                 latitude: 0,
@@ -36,14 +39,16 @@ export const SafetyAlerts: React.FC = () => {
           status: alert.dismissed
             ? 'dismissed'
             : alert.resolved
-            ? 'resolved'
-            : 'active',
+              ? 'resolved'
+              : 'active',
           location: alertLocation,
           description: alert.description || undefined,
           message: alert.message || undefined,
-          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined,
+          resolvedAt: alert.resolvedAt
+            ? new Date(alert.resolvedAt).toISOString()
+            : undefined,
           createdAt: new Date(alert.createdAt).toISOString(),
-          updatedAt: new Date(alert.updatedAt).toISOString()
+          updatedAt: new Date(alert.updatedAt).toISOString(),
         };
 
         return (

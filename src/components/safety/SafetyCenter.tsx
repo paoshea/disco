@@ -15,7 +15,11 @@ interface SafetyCenterProps {
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
-export default function SafetyCenter({ userId, safetySettings, onSettingsChange }: SafetyCenterProps) {
+export default function SafetyCenter({
+  userId,
+  safetySettings,
+  onSettingsChange,
+}: SafetyCenterProps) {
   const { user } = useAuth();
 
   return (
@@ -25,12 +29,18 @@ export default function SafetyCenter({ userId, safetySettings, onSettingsChange 
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-medium text-gray-900">Safety Features</h3>
-            <p className="text-sm text-gray-500">Configure your safety preferences</p>
+            <h3 className="text-lg font-medium text-gray-900">
+              Safety Features
+            </h3>
+            <p className="text-sm text-gray-500">
+              Configure your safety preferences
+            </p>
           </div>
           <Switch
             checked={safetySettings.sosAlertEnabled}
-            onChange={(enabled) => onSettingsChange?.({ sosAlertEnabled: enabled })}
+            onChange={enabled =>
+              onSettingsChange?.({ sosAlertEnabled: enabled })
+            }
             className={`${
               safetySettings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
             } relative inline-flex h-6 w-11 items-center rounded-full`}
@@ -38,7 +48,9 @@ export default function SafetyCenter({ userId, safetySettings, onSettingsChange 
             <span className="sr-only">Enable safety features</span>
             <span
               className={`${
-                safetySettings.sosAlertEnabled ? 'translate-x-6' : 'translate-x-1'
+                safetySettings.sosAlertEnabled
+                  ? 'translate-x-6'
+                  : 'translate-x-1'
               } inline-block h-4 w-4 transform rounded-full bg-white transition`}
             />
           </Switch>
@@ -48,20 +60,30 @@ export default function SafetyCenter({ userId, safetySettings, onSettingsChange 
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h4 className="text-base font-medium text-gray-900">Auto-share Location</h4>
-                <p className="text-sm text-gray-500">Share location during meetups</p>
+                <h4 className="text-base font-medium text-gray-900">
+                  Auto-share Location
+                </h4>
+                <p className="text-sm text-gray-500">
+                  Share location during meetups
+                </p>
               </div>
               <Switch
                 checked={safetySettings.autoShareLocation}
-                onChange={(enabled) => onSettingsChange?.({ autoShareLocation: enabled })}
+                onChange={enabled =>
+                  onSettingsChange?.({ autoShareLocation: enabled })
+                }
                 className={`${
-                  safetySettings.autoShareLocation ? 'bg-blue-600' : 'bg-gray-200'
+                  safetySettings.autoShareLocation
+                    ? 'bg-blue-600'
+                    : 'bg-gray-200'
                 } relative inline-flex h-6 w-11 items-center rounded-full`}
               >
                 <span className="sr-only">Enable auto location sharing</span>
                 <span
                   className={`${
-                    safetySettings.autoShareLocation ? 'translate-x-6' : 'translate-x-1'
+                    safetySettings.autoShareLocation
+                      ? 'translate-x-6'
+                      : 'translate-x-1'
                   } inline-block h-4 w-4 transform rounded-full bg-white transition`}
                 />
               </Switch>
@@ -84,7 +106,9 @@ function SafetyPage() {
     requireVerifiedMatch: false,
   });
 
-  const updateSafetySettings = async (newSettings: Partial<SafetySettingsNew>) => {
+  const updateSafetySettings = async (
+    newSettings: Partial<SafetySettingsNew>
+  ) => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -185,7 +209,9 @@ function SafetyPage() {
                   <span className="sr-only">Enable safety features</span>
                   <span
                     className={`${
-                      settings.sosAlertEnabled ? 'translate-x-6' : 'translate-x-1'
+                      settings.sosAlertEnabled
+                        ? 'translate-x-6'
+                        : 'translate-x-1'
                     } inline-block h-4 w-4 transform rounded-full bg-white transition`}
                   />
                 </Switch>
@@ -202,9 +228,10 @@ function SafetyPage() {
               </h4>
               <div className="mt-4 space-y-4">
                 {settings.emergencyContacts.map(contact => {
-                  const contactData: EmergencyContact = typeof contact === 'string'
-                    ? { id: contact, email: '', phoneNumber: '' }
-                    : contact;
+                  const contactData: EmergencyContact =
+                    typeof contact === 'string'
+                      ? { id: contact, email: '', phoneNumber: '' }
+                      : contact;
 
                   return (
                     <div
@@ -215,8 +242,12 @@ function SafetyPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {contactData.id || 'Unknown Contact'}
                         </p>
-                        <p className="text-sm text-gray-500">{contactData.email}</p>
-                        <p className="text-sm text-gray-500">{contactData.phoneNumber}</p>
+                        <p className="text-sm text-gray-500">
+                          {contactData.email}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {contactData.phoneNumber}
+                        </p>
                       </div>
                     </div>
                   );
@@ -248,28 +279,28 @@ function SafetyPage() {
                 maxDistance: 50,
                 ageRange: {
                   min: 18,
-                  max: 99
+                  max: 99,
                 },
                 interests: [],
                 gender: [],
                 lookingFor: [],
                 relationshipType: [],
-                notifications: { 
+                notifications: {
                   matches: true,
                   messages: true,
                   events: true,
-                  safety: true 
+                  safety: true,
                 },
                 privacy: {
                   showOnlineStatus: true,
                   showLastSeen: true,
                   showLocation: true,
-                  showAge: true
+                  showAge: true,
                 },
                 safety: {
                   requireVerifiedMatch: true,
                   meetupCheckins: true,
-                  emergencyContactAlerts: true
+                  emergencyContactAlerts: true,
                 },
               },
             }}

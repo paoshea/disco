@@ -4,7 +4,7 @@ export const LocationSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   accuracy: z.number().optional(),
-  timestamp: z.date()
+  timestamp: z.date(),
 });
 
 export const SafetyAlertSchema = z.object({
@@ -12,7 +12,7 @@ export const SafetyAlertSchema = z.object({
   location: LocationSchema,
   message: z.string().optional(),
   contacts: z.array(z.string()).optional(),
-  description: z.string().optional()
+  description: z.string().optional(),
 });
 
 export type SafetyAlertInput = z.infer<typeof SafetyAlertSchema>;

@@ -110,23 +110,26 @@ export const safetyService = {
     data: Omit<SafetyAlert, 'id' | 'createdAt' | 'userId'>
   ): Promise<SafetyAlertNew> {
     // Convert location to Prisma-compatible JSON format
-    const locationJson = data.location && isLocationData(data.location)
-      ? {
-          type: 'Point',
-          coordinates: [
-            (data.location as { latitude: number }).latitude,
-            (data.location as { longitude: number }).longitude,
-          ],
-          accuracy: (data.location as { accuracy?: number }).accuracy,
-          timestamp: new Date().toISOString(),
-        }
-      : null;
+    const locationJson =
+      data.location && isLocationData(data.location)
+        ? {
+            type: 'Point',
+            coordinates: [
+              (data.location as { latitude: number }).latitude,
+              (data.location as { longitude: number }).longitude,
+            ],
+            accuracy: (data.location as { accuracy?: number }).accuracy,
+            timestamp: new Date().toISOString(),
+          }
+        : null;
 
     const alert = await prisma.safetyAlert.create({
       data: {
         ...data,
         userId,
-        location: locationJson ? (locationJson as Prisma.InputJsonValue) : Prisma.JsonNull,
+        location: locationJson
+          ? (locationJson as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
 

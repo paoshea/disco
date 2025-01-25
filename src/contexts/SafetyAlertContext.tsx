@@ -62,19 +62,20 @@ export function SafetyAlertProvider({
         throw new Error('User ID is required');
       }
 
-      const locationData = alert.location && typeof alert.location === 'object' 
-        ? {
-            latitude: Number((alert.location as any).latitude) || 0,
-            longitude: Number((alert.location as any).longitude) || 0,
-            accuracy: Number((alert.location as any).accuracy) || null,
-            timestamp: new Date().toISOString()
-          }
-        : {
-            latitude: 0,
-            longitude: 0,
-            accuracy: null,
-            timestamp: new Date().toISOString()
-          };
+      const locationData =
+        alert.location && typeof alert.location === 'object'
+          ? {
+              latitude: Number((alert.location as any).latitude) || 0,
+              longitude: Number((alert.location as any).longitude) || 0,
+              accuracy: Number((alert.location as any).accuracy) || null,
+              timestamp: new Date().toISOString(),
+            }
+          : {
+              latitude: 0,
+              longitude: 0,
+              accuracy: null,
+              timestamp: new Date().toISOString(),
+            };
 
       const fullAlert = {
         type: alert.type || 'warning',
@@ -89,7 +90,7 @@ export function SafetyAlertProvider({
         resolvedAt: null,
         updatedAt: new Date(),
         userId,
-        ...alert
+        ...alert,
       };
 
       const newAlert = await createSafetyAlert(fullAlert);
@@ -111,15 +112,15 @@ export function SafetyAlertProvider({
   };
 
   return (
-    <SafetyAlertContext.Provider 
-      value={{ 
-        alerts, 
-        loading, 
-        isLoading: loading, 
-        error, 
-        createAlert, 
-        addAlert, 
-        dismissAlert 
+    <SafetyAlertContext.Provider
+      value={{
+        alerts,
+        loading,
+        isLoading: loading,
+        error,
+        createAlert,
+        addAlert,
+        dismissAlert,
       }}
     >
       {children}

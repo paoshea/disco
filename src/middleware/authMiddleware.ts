@@ -8,7 +8,7 @@ export async function withAuth(
   try {
     const session = await getSession(request);
     const token = request.cookies.get('accessToken')?.value;
-    
+
     if (!session || !token) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
@@ -20,7 +20,10 @@ export async function withAuth(
         return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
       }
     } catch (error) {
-      return NextResponse.json({ message: 'Token validation failed' }, { status: 401 });
+      return NextResponse.json(
+        { message: 'Token validation failed' },
+        { status: 401 }
+      );
     }
 
     return handler(request);

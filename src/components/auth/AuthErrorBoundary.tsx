@@ -1,4 +1,3 @@
-
 import { Component, ErrorInfo, ReactNode } from 'react';
 import { toast } from '@/components/ui/toast';
 
@@ -12,7 +11,7 @@ interface State {
 
 export class AuthErrorBoundary extends Component<Props, State> {
   public state: State = {
-    hasError: false
+    hasError: false,
   };
 
   public static getDerivedStateFromError(): State {
@@ -32,7 +31,7 @@ export class AuthErrorBoundary extends Component<Props, State> {
           <p className="mt-2">Please try logging in again</p>
           <button
             className="mt-4 px-4 py-2 bg-sky-500 text-white rounded"
-            onClick={() => window.location.href = '/login'}
+            onClick={() => (window.location.href = '/login')}
           >
             Return to Login
           </button>

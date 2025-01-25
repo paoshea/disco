@@ -1,4 +1,10 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios, {
+  type AxiosInstance,
+  type AxiosRequestConfig,
+  type AxiosResponse,
+  type AxiosError,
+  type InternalAxiosRequestConfig,
+} from 'axios';
 
 export interface ApiErrorResponse {
   message: string;
@@ -71,11 +77,11 @@ class ApiService {
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.post<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
-        url,
-        data,
-        config
-      );
+      return await this.instance.post<
+        ApiResponse<T>,
+        AxiosResponse<ApiResponse<T>>,
+        D
+      >(url, data, config);
     } catch (error) {
       throw this.handleError(error);
     }
@@ -87,11 +93,11 @@ class ApiService {
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.put<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
-        url,
-        data,
-        config
-      );
+      return await this.instance.put<
+        ApiResponse<T>,
+        AxiosResponse<ApiResponse<T>>,
+        D
+      >(url, data, config);
     } catch (error) {
       throw this.handleError(error);
     }
@@ -114,11 +120,11 @@ class ApiService {
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.patch<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
-        url,
-        data,
-        config
-      );
+      return await this.instance.patch<
+        ApiResponse<T>,
+        AxiosResponse<ApiResponse<T>>,
+        D
+      >(url, data, config);
     } catch (error) {
       throw this.handleError(error);
     }
