@@ -66,7 +66,16 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
     }
 
     try {
-      const ws = new WebSocket(url);
+      const token = localStorage.getItem('token');
+      const wsUrl = new URL(url);
+      if (!url) {
+        throw new Error('WebSocket URL not provided');
+      }
+      if (token && user?.id) {
+        wsUrl.searchParams.append('token', token);
+        wsUrl.searchParams.append('userId', user.id);
+      }
+      const ws = new WebSocket(wsUrl.toString());
       setSocket(ws);
 
       return new Promise<void>((resolve, reject) => {

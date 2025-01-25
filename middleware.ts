@@ -134,10 +134,7 @@ export async function middleware(request: NextRequest) {
   } catch (error) {
     console.error('Auth middleware error:', error);
     if (request.nextUrl.pathname.startsWith('/api/')) {
-      return NextResponse.json(
-        { message: 'Authentication failed' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Authentication failed' }, { status: 401 });
     }
     return redirectToLogin(request);
   }
