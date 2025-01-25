@@ -67,8 +67,9 @@ export default function SignupPage() {
         console.log('Signup successful, preparing to redirect...');
         toast({
           title: 'Success!',
-          description: 'Account created successfully! Check your email for verification instructions.',
-          variant: 'success'
+          description:
+            'Account created successfully! Check your email for verification instructions.',
+          variant: 'success',
         });
 
         // Ensure state updates and toast are shown
@@ -83,7 +84,7 @@ export default function SignupPage() {
         toast({
           title: 'Error',
           description: result.error || 'Registration failed. Please try again.',
-          variant: 'destructive'
+          variant: 'destructive',
         });
         // Reset the form on conflict
         if (result.error?.includes('already exists')) {

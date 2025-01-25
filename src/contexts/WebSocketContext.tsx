@@ -222,7 +222,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       const normalizedMessage = {
         ...message,
         payload: message.payload || {},
-        timestamp: message.timestamp || Date.now()
+        timestamp: message.timestamp || Date.now(),
       };
       await new Promise<void>((resolve, reject) => {
         try {

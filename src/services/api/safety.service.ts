@@ -1,4 +1,4 @@
-'use server'
+'use server';
 
 import { prisma } from '@/lib/prisma';
 import type {
@@ -45,7 +45,9 @@ export const getSafetyAlerts = async (userId: string) => {
   return response.json();
 };
 
-export const createSafetyAlert = async (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => {
+export const createSafetyAlert = async (
+  data: Omit<SafetyAlert, 'id' | 'createdAt'>
+) => {
   const response = await fetch('/api/safety/alerts', {
     method: 'POST',
     headers: {
@@ -69,8 +71,8 @@ export const safetyService = {
   async getSafetyAlerts(userId: string) {
     return await prisma.safetyAlert.findMany({
       where: { userId },
-      orderBy: { createdAt: 'desc' }
-    })
+      orderBy: { createdAt: 'desc' },
+    });
   },
 
   async getActiveAlerts(userId: string) {
