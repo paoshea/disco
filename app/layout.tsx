@@ -1,7 +1,6 @@
 import { Suspense } from 'react';
 import { Inter } from 'next/font/google';
 import { Providers } from './providers';
-import { Layout } from '@/components/layout/Layout';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import '@/styles/globals.css';
 
