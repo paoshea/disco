@@ -7,19 +7,19 @@ import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
 import React from 'react';
-import type { SafetySettingsNew, EmergencyContact } from '@/types/safety';
+import type { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
-  safetySettings: SafetySettingsNew;
+  settings?: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
 // Helper function to create async callbacks
-const createAsyncCallback = <T extends (arg: any) => Promise<void>>(
+const createAsyncCallback = <T extends (settings: Partial<SafetySettingsNew>) => Promise<void>>(
   func: T
-): (arg: Parameters<T>[0]) => void => {
-  return (arg: Parameters<T>[0]) => {
-    void func(arg);
+): ((settings: Parameters<T>[0]) => void) => {
+  return (settings: Parameters<T>[0]) => {
+    void func(settings);
   };
 };
 
@@ -82,7 +82,13 @@ export default function SafetyCenter({
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
         const data = await response.json();
-        const typedSettings = data as SafetySettingsNew;
+        const typedSettings: SafetySettingsNew = {
+          sosAlertEnabled: data.sosAlertEnabled ?? false,
+          emergencyContacts: data.emergencyContacts ?? [],
+          autoShareLocation: data.autoShareLocation ?? false,
+          meetupCheckins: data.meetupCheckins ?? false,
+          requireVerifiedMatch: data.requireVerifiedMatch ?? false,
+        };
         setSettings(typedSettings);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
