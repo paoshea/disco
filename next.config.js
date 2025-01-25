@@ -6,6 +6,7 @@ const nextConfig = {
     JWT_SECRET: process.env.JWT_SECRET,
     PORT: process.env.PORT || '3001',
   },
+  productionBrowserSourceMaps: true,
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
