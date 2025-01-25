@@ -149,15 +149,8 @@ export interface SafetyFeature {
 }
 
 export interface SafetySettings {
-  locationSharing: boolean;
-  automaticCheckins: boolean;
-  emergencyContactNotifications: boolean;
-  safetyRadius: number;
-  notificationPreferences: {
-    email: boolean;
-    push: boolean;
-    sms: boolean;
-  };
+  sosAlertEnabled: boolean;
+  emergencyContacts: string[];
 }
 
 export interface SafetyReportOld {
@@ -343,6 +336,7 @@ export interface SafetyAlertContextType {
 
 export interface SafetyCenterProps {
   userId: string;
+  safetySettings: SafetySettings;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 

@@ -13,7 +13,7 @@ export default function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettings>({
-    sosAlertEnabled: false, // Updated property name
+    sosAlertEnabled: false,
     emergencyContacts: [],
   });
   const [loading, setLoading] = useState<boolean>(true);
