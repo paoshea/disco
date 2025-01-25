@@ -270,102 +270,8 @@ export interface EmergencyContactNew {
 }
 
 export interface SafetyAlertNew {
-  id: string;
-  userId: string;
-  user?: User;
-  type: SafetyAlertType;
-  status: 'active' | 'resolved' | 'dismissed';
-  location: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-    timestamp: Date;
-  };
-  message?: string;
-  contacts?: string[];
-  description?: string;
-  evidence?: SafetyEvidence[];
-  createdAt: string;
-  updatedAt: string;
-  resolvedAt?: string;
-}
-
-export interface SafetyEvidence {
-  id: string;
-  alertId: string;
-  type: 'image' | 'video' | 'audio' | 'text';
-  url: string;
-  description?: string;
-  createdAt: string;
-}
-
-export interface SafetyCheckNew {
-  id: string;
-  userId: string;
-  type: 'meetup' | 'location' | 'custom';
-  status: 'pending' | 'completed' | 'missed';
-  scheduledFor: string;
-  completedAt?: string;
-  location?: Location;
-  description?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SafetyReportNew {
-  id: string;
-  reporterId: string;
-  reportedUserId: string;
-  type: 'harassment' | 'inappropriate' | 'spam' | 'scam' | 'other';
-  description: string;
-  evidence?: SafetyEvidence[];
-  status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
-  createdAt: string;
-  updatedAt: string;
-  resolvedAt?: string;
-}
-
-export interface SafetyAlertContextType {
-  alerts: SafetyAlertNew[];
-  loading: boolean;
-  error: string | null;
-  addAlert: (alert: Partial<SafetyAlertNew>) => Promise<void>;
-  dismissAlert: (alertId: string) => Promise<void>;
-  resolveAlert: (alertId: string) => Promise<void>;
-}
-
-export interface SafetyCenterProps {
-  userId: string;
-  safetySettings: SafetySettings;
-  onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
-}
-
-export interface SafetyCheckListProps {
-  checks: SafetyCheckNew[];
-  onCheckComplete?: (checkId: string) => void;
-}
-
-export interface SafetyFeaturesProps {
-  user: User;
-  settings: SafetySettingsNew;
-  onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
-}
-
-export interface EmergencyAlertProps {
-  userId: string;
-  onAlertTriggered?: (alert: SafetyAlertNew) => void;
-}
-
-export interface SafetyReportFormProps {
-  reportedUserId: string;
-  onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
-  onCancel: () => void;
-}
-export type SafetyAlertType = 'emergency' | 'help' | 'location';
-
-export interface SafetyAlertNew {
   id?: string;
-  type: SafetyAlertType;
+  type: 'emergency' | 'help';
   message: string | null;
   description: string | null;
   priority: string;
@@ -373,7 +279,7 @@ export interface SafetyAlertNew {
     latitude: number;
     longitude: number;
     accuracy: number | null;
-    timestamp: string;
+    timestamp: Date;
   };
   dismissed: boolean;
   resolved: boolean;
