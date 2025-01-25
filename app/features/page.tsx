@@ -1,6 +1,5 @@
 'use client';
 
-import { PublicLayout } from '@/components/layout/PublicLayout';
 import { Button } from '@/components/ui/Button';
 import Link from 'next/link';
 import {
@@ -42,8 +41,7 @@ function FeatureSection({ title, description, features, icon }: FeatureProps) {
 
 export default function FeaturesPage() {
   return (
-    <PublicLayout>
-      <div className="py-20 bg-gray-50">
+    <div className="py-20 bg-gray-50">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-20">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
@@ -111,6 +109,5 @@ export default function FeaturesPage() {
           </div>
         </div>
       </div>
-    </PublicLayout>
   );
 }
