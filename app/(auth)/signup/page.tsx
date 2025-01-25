@@ -69,18 +69,12 @@ export default function SignupPage() {
           'Account created successfully! Check your email for verification instructions.'
         );
 
-        // Small delay to ensure state is updated and toast is shown
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Ensure state updates and toast are shown
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
-        // Try programmatic navigation first
-        try {
-          console.log('Redirecting to dashboard...');
-          router.replace('/dashboard');
-        } catch (navError) {
-          console.error('Navigation error:', navError);
-          // Fallback to window.location if router fails
-          window.location.href = '/dashboard';
-        }
+        // Redirect using router.push for more reliable navigation
+        await router.push('/dashboard');
+        router.refresh(); // Refresh to ensure new auth state is reflected
       } else {
         console.log('Signup failed:', result.error);
         // Show the specific error message
