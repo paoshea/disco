@@ -208,7 +208,7 @@ export default function SafetyPage() {
                 onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />
               <SafetyCenter
-                safetySettings={settings}
+                settings={settings}
                 onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />
             </>
