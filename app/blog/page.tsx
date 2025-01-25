@@ -9,7 +9,7 @@ export default function BlogPage() {
     {
       title: 'Building a Safer Community',
       date: '2024-01-20',
-      excerpt: 'How we're using technology to create secure connections.',
+      excerpt: 'How we\'re using technology to create secure connections.',
       author: 'Safety Team',
       category: 'Safety'
     },
