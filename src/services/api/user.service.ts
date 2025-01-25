@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios';
+import type { AxiosResponse } from 'axios/base';
 import { User, UserSettings, UserPreferences } from '@/types/user';
 import { apiClient } from './api.client';
 
