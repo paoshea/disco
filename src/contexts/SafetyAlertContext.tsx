@@ -6,8 +6,10 @@ import {
   createSafetyAlert,
 } from '@/services/api/safety.service';
 // Add any other required imports
-import type { SafetyAlert } from '@prisma/client';
+import type { SafetyAlert, Prisma } from '@prisma/client';
 import type { Location } from '@/types/location';
+
+type JsonObject = Prisma.JsonObject;
 
 interface SafetyAlertContextType {
   alerts: SafetyAlert[];
@@ -63,27 +65,17 @@ export function SafetyAlertProvider({
         throw new Error('User ID is required');
       }
 
-      const jsonLocation: Location = alert.location && typeof alert.location === 'object'
-        ? {
-            latitude: Number(alert.location?.latitude) || 0,
-            longitude: Number(alert.location?.longitude) || 0,
-            accuracy: Number(alert.location?.accuracy),
-            timestamp: new Date(),
-            privacyMode: 'precise' as const,
-            sharingEnabled: true,
-            id: alert.id,
-            userId: alert.userId
-          }
-        : {
-            latitude: 0,
-            longitude: 0,
-            accuracy: undefined,
-            timestamp: new Date(),
-            privacyMode: 'precise' as const,
-            sharingEnabled: true,
-            id: alert.id,
-            userId: alert.userId
-          };
+      const locationJson = alert.location as JsonObject | null;
+      const locationData = {
+        latitude: Number(locationJson?.latitude) || 0,
+        longitude: Number(locationJson?.longitude) || 0,
+        accuracy: Number(locationJson?.accuracy),
+        timestamp: new Date(),
+        privacyMode: 'precise' as const,
+        sharingEnabled: true,
+        id: alert.id || crypto.randomUUID(),
+        userId: alert.userId
+      } satisfies Location;
 
       const fullAlert = {
         type: alert.type || 'warning',
