@@ -13,10 +13,10 @@ export default function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettings>({
-    enabled: false,
+    sosAlertEnabled: false, // Updated property name
     emergencyContacts: [],
   });
-  const [loading, setLoading] = useState<boolean>(true); // Added type specification
+  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (isLoading) return;
@@ -80,20 +80,19 @@ export default function SafetyPage() {
             <div className="mt-5">
               <div className="flex items-center">
                 <Switch
-                  checked={settings.enabled}
+                  checked={settings.sosAlertEnabled} // Updated property name
                   onChange={enabled => {
-                    // Removed unnecessary async/await; direct update is sufficient
                     try {
                       fetch('/api/safety/settings', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ enabled }),
+                        body: JSON.stringify({ sosAlertEnabled: enabled }), // Updated property name
                       })
                         .then(response => {
                           if (!response.ok) {
                             throw new Error('Failed to update settings');
                           }
-                          setSettings(prev => ({ ...prev, enabled }));
+                          setSettings(prev => ({ ...prev, sosAlertEnabled: enabled })); // Updated property name
                         })
                         .catch(error => {
                           console.error(
@@ -116,13 +115,13 @@ export default function SafetyPage() {
                     }
                   }}
                   className={`${
-                    settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                    settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
                   } relative inline-flex h-6 w-11 items-center rounded-full`}
                 >
                   <span className="sr-only">Enable safety features</span>
                   <span
                     className={`${
-                      settings.enabled ? 'translate-x-6' : 'translate-x-1'
+                      settings.sosAlertEnabled ? 'translate-x-6' : 'translate-x-1'
                     } inline-block h-4 w-4 transform rounded-full bg-white transition`}
                   />
                 </Switch>
@@ -182,8 +181,51 @@ export default function SafetyPage() {
         </div>
 
         <div className="mt-8">
-          <SafetyFeatures />
-          <SafetyCenter />
+          <SafetyFeatures 
+            user={{
+              id: user?.id || '',
+              firstName: user?.firstName || '',
+              lastName: user?.lastName || '',
+              email: user?.email || '',
+              emailVerified: user?.emailVerified || false,
+              name: user?.name || '',
+              lastActive: new Date(),
+              verificationStatus: 'pending',
+              createdAt: new Date(),
+              updatedAt: new Date(),
+              preferences: {
+                maxDistance: 50,
+                ageRange: { min: 18, max: 99 },
+                interests: [],
+                gender: [],
+                lookingFor: [],
+                relationshipType: [],
+                notifications: {
+                  matches: true,
+                  messages: true,
+                  events: true,
+                  safety: true,
+                },
+                privacy: {
+                  showOnlineStatus: true,
+                  showLastSeen: true,
+                  showLocation: true,
+                  showAge: true,
+                },
+                safety: {
+                  requireVerifiedMatch: false,
+                  meetupCheckins: true,
+                  emergencyContactAlerts: true,
+                },
+              },
+            }}
+            settings={settings}
+            onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
+          />
+          <SafetyCenter 
+            userId={user?.id || ''}
+            onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
+          />
         </div>
       </div>
     </div>
