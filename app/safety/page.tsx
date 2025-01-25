@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -22,7 +23,7 @@ export default function SafetyPage() {
 
   const updateSafetySettings = async (
     newSettings: Partial<SafetySettingsNew>
-  ) => {
+  ): Promise<void> => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -58,7 +59,9 @@ export default function SafetyPage() {
     if (isLoading) return;
 
     if (!user) {
-      void router.push('/auth/signin');
+      router.push('/auth/signin').catch(error => {
+        console.error('Navigation failed:', error);
+      });
       return;
     }
 
@@ -79,7 +82,10 @@ export default function SafetyPage() {
       }
     };
 
-    void fetchSettings();
+    fetchSettings().catch(error => {
+      console.error('Failed to fetch settings:', error);
+      setLoading(false);
+    });
   }, [isLoading, user, router]);
 
   if (isLoading || loading) {
@@ -117,7 +123,9 @@ export default function SafetyPage() {
                 <Switch
                   checked={settings.sosAlertEnabled}
                   onChange={enabled => {
-                    void updateSafetySettings({ sosAlertEnabled: enabled });
+                    updateSafetySettings({ sosAlertEnabled: enabled }).catch(error => {
+                      console.error('Failed to update SOS alert setting:', error);
+                    });
                   }}
                   className={`${
                     settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
@@ -166,7 +174,7 @@ export default function SafetyPage() {
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {contactData.id || 'Unknown Contact'}
+                          {contactData.firstName} {contactData.lastName}
                         </p>
                         <p className="text-sm text-gray-500">
                           {contactData.email}
@@ -189,16 +197,20 @@ export default function SafetyPage() {
         </div>
 
         <div className="mt-8">
-          <SafetyFeatures
-            user={user!}
-            settings={settings}
-            onSettingsChange={updateSafetySettings}
-          />
-          <SafetyCenter
-            userId={user?.id || ''}
-            safetySettings={settings}
-            onSettingsChange={updateSafetySettings}
-          />
+          {user && (
+            <>
+              <SafetyFeatures
+                user={user}
+                settings={settings}
+                onSettingsChange={updateSafetySettings}
+              />
+              <SafetyCenter
+                userId={user.id}
+                safetySettings={settings}
+                onSettingsChange={updateSafetySettings}
+              />
+            </>
+          )}
         </div>
       </div>
     </div>
