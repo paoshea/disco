@@ -11,19 +11,69 @@ import { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
   userId: string;
+  safetySettings: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
-export default function SafetyCenter({ userId, onSettingsChange }: SafetyCenterProps) {
-  // Add implementation here
+export default function SafetyCenter({ userId, safetySettings, onSettingsChange }: SafetyCenterProps) {
+  const { user } = useAuth();
+
   return (
-    <div>
-      {/* Add safety center UI implementation */}
+    <div className="bg-white shadow rounded-lg p-6">
+      <h2 className="text-2xl font-bold text-gray-900 mb-6">Safety Center</h2>
+
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-medium text-gray-900">Safety Features</h3>
+            <p className="text-sm text-gray-500">Configure your safety preferences</p>
+          </div>
+          <Switch
+            checked={safetySettings.sosAlertEnabled}
+            onChange={(enabled) => onSettingsChange?.({ sosAlertEnabled: enabled })}
+            className={`${
+              safetySettings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
+            } relative inline-flex h-6 w-11 items-center rounded-full`}
+          >
+            <span className="sr-only">Enable safety features</span>
+            <span
+              className={`${
+                safetySettings.sosAlertEnabled ? 'translate-x-6' : 'translate-x-1'
+              } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+            />
+          </Switch>
+        </div>
+
+        {safetySettings.sosAlertEnabled && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="text-base font-medium text-gray-900">Auto-share Location</h4>
+                <p className="text-sm text-gray-500">Share location during meetups</p>
+              </div>
+              <Switch
+                checked={safetySettings.autoShareLocation}
+                onChange={(enabled) => onSettingsChange?.({ autoShareLocation: enabled })}
+                className={`${
+                  safetySettings.autoShareLocation ? 'bg-blue-600' : 'bg-gray-200'
+                } relative inline-flex h-6 w-11 items-center rounded-full`}
+              >
+                <span className="sr-only">Enable auto location sharing</span>
+                <span
+                  className={`${
+                    safetySettings.autoShareLocation ? 'translate-x-6' : 'translate-x-1'
+                  } inline-block h-4 w-4 transform rounded-full bg-white transition`}
+                />
+              </Switch>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-export default function SafetyPage() {
+function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettingsNew>({
@@ -196,6 +246,7 @@ export default function SafetyPage() {
           />
           <SafetyCenter
             userId={user?.id || ''}
+            safetySettings={settings}
             onSettingsChange={updateSafetySettings}
           />
         </div>
@@ -203,3 +254,9 @@ export default function SafetyPage() {
     </div>
   );
 }
+interface EmergencyContact {
+  id: string;
+  email?: string;
+  phoneNumber?: string;
+}
+export default SafetyPage;
