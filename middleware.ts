@@ -77,6 +77,14 @@ export async function middleware(request: NextRequest) {
         return redirectToLogin(request);
       }
 
+      // Check admin routes
+      if (
+        adminRoutes.some(route => pathname.startsWith(route)) &&
+        payload.role !== 'admin'
+      ) {
+        return NextResponse.redirect(new URL('/403', request.url));
+      }
+
       // Add user info to request headers
       const requestHeaders = new Headers(request.headers);
       requestHeaders.set('x-user-id', payload.sub as string);
