@@ -73,9 +73,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const alert = await safetyService.createSafetyAlert(userId, {
       ...alertData,
       updatedAt: new Date(),
+      dismissedAt: null,
+      resolvedAt: null,
       location: {
         ...alertData.location,
-        timestamp: new Date(alertData.location.timestamp).toISOString()
+        timestamp: new Date(alertData.location.timestamp)
       }
     });
     return NextResponse.json(alert);

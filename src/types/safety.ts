@@ -373,7 +373,7 @@ export interface SafetyAlertNew {
     latitude: number;
     longitude: number;
     accuracy: number | null;
-    timestamp: string;
+    timestamp: Date;
   };
   dismissed: boolean;
   resolved: boolean;
