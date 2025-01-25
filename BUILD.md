@@ -447,6 +447,12 @@ npm run dev
 # Type checking
 npm run type-check
 
+# ESLint fix
+npm run lint -- --fix
+
+# Format code with Prettier
+npx prettier --write .
+
 # Build for production
 npm run build
 
