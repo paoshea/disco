@@ -204,12 +204,12 @@ export default function SafetyPage() {
               requireVerifiedMatch: false,
               emergencyContacts: settings.emergencyContacts
             }}
-            onSettingsChange={(newSettings) => {
+            onSettingsChange={newSettings => {
               setSettings(prev => ({
                 ...prev,
                 ...newSettings,
-                emergencyContacts: Array.isArray(newSettings.emergencyContacts) 
-                  ? newSettings.emergencyContacts 
+                emergencyContacts: Array.isArray(newSettings.emergencyContacts)
+                  ? newSettings.emergencyContacts
                   : prev.emergencyContacts
               }));
             }}
@@ -217,7 +217,7 @@ export default function SafetyPage() {
           <SafetyCenter 
             userId={user?.id || ''}
             safetySettings={settings}
-            onSettingsChange={(newSettings) => {
+            onSettingsChange={newSettings => {
               setSettings(prev => ({
                 ...prev,
                 ...newSettings,
