@@ -53,13 +53,21 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       resolved: false,
       description: result.data.description || null,
       message: result.data.message || null,
-      updatedAt: now,
+      updatedAt: now.toISOString(),
       dismissedAt: null,
       resolvedAt: null,
-      location: result.data.location || {
+      location: result.data.location ? {
+        latitude: result.data.location.latitude,
+        longitude: result.data.location.longitude,
+        accuracy: result.data.location.accuracy || null,
+        timestamp: result.data.location.timestamp instanceof Date 
+          ? result.data.location.timestamp.toISOString() 
+          : new Date().toISOString()
+      } : {
         latitude: 0,
         longitude: 0,
-        timestamp: now
+        accuracy: null,
+        timestamp: now.toISOString()
       }
     };
     
