@@ -2,7 +2,7 @@ import { User } from '@/types/user';
 import { apiService } from './api';
 import axios, { AxiosError } from 'axios';
 
-interface RegisterData {
+interface RegisterData extends Record<string, unknown> {
   email: string;
   password: string;
   firstName: string;
@@ -132,7 +132,7 @@ class AuthService {
   }
 
   private isAxiosError(error: unknown): error is AxiosError {
-    return axios.isAxiosError(error);
+    return error instanceof Error && 'isAxiosError' in error;
   }
 }
 
