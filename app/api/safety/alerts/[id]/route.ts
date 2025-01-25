@@ -38,12 +38,12 @@ export async function GET(
       ? {
           ...alertResponse,
           type: alertResponse.type as SafetyAlertType,
-          status: alertResponse.dismissed
+          status: (alertResponse.dismissed
             ? 'dismissed'
             : alertResponse.resolved
-              ? 'resolved'
-              : 'active',
-        }
+            ? 'resolved'
+            : 'active') as 'dismissed' | 'resolved' | 'active',
+        } as SafetyAlertNew
       : null;
 
     if (!alert) {
