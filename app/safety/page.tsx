@@ -16,6 +16,32 @@ export default function SafetyPage() {
     sosAlertEnabled: false,
     emergencyContacts: [],
   });
+
+  const updateSafetySettings = async (newSettings: Partial<SafetySettings>) => {
+    try {
+      const response = await fetch('/api/safety/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newSettings),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update settings');
+      }
+
+      setSettings(prev => ({ ...prev, ...newSettings }));
+      createToast.success({
+        title: 'Settings Updated',
+        description: 'Your safety settings have been saved.',
+      });
+    } catch (error) {
+      console.error('Failed to update safety settings:', error);
+      createToast.error({
+        title: 'Error',
+        description: 'Failed to update settings. Please try again.',
+      });
+    }
+  };
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -80,39 +106,9 @@ export default function SafetyPage() {
             <div className="mt-5">
               <div className="flex items-center">
                 <Switch
-                  checked={settings.sosAlertEnabled} // Updated property name
+                  checked={settings.sosAlertEnabled}
                   onChange={enabled => {
-                    try {
-                      fetch('/api/safety/settings', {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ sosAlertEnabled: enabled }), // Updated property name
-                      })
-                        .then(response => {
-                          if (!response.ok) {
-                            throw new Error('Failed to update settings');
-                          }
-                          setSettings(prev => ({ ...prev, sosAlertEnabled: enabled })); // Updated property name
-                        })
-                        .catch(error => {
-                          console.error(
-                            'Failed to update safety settings:',
-                            error
-                          );
-                          createToast.error({
-                            title: 'Error',
-                            description:
-                              'Failed to update settings. Please try again.',
-                          });
-                        });
-                    } catch (error) {
-                      console.error('Failed to update safety settings:', error);
-                      createToast.error({
-                        title: 'Error',
-                        description:
-                          'Failed to update settings. Please try again.',
-                      });
-                    }
+                    void updateSafetySettings({ sosAlertEnabled: enabled });
                   }}
                   className={`${
                     settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
