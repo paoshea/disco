@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -7,14 +8,14 @@ import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
 import { SafetyCenter } from '@/components/safety/SafetyCenter';
-import type { SafetySettings } from '@/types/safety';
+import type { SafetySettings, EmergencyContact } from '@/types/safety';
 
 export default function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettings>({
     sosAlertEnabled: false,
-    emergencyContacts: [],
+    emergencyContacts: [] as EmergencyContact[],
   });
 
   const updateSafetySettings = async (newSettings: Partial<SafetySettings>) => {
@@ -133,39 +134,20 @@ export default function SafetyPage() {
                 Emergency Contacts
               </h4>
               <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map(
-                  (contact: {
-                    id: string;
-                    name: string;
-                    email: string;
-                    phone: string;
-                    priority: string;
-                  }) => (
-                    <div
-                      key={contact.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {contact.name}
-                        </p>
-                        <p className="text-sm text-gray-500">{contact.email}</p>
-                        <p className="text-sm text-gray-500">{contact.phone}</p>
-                      </div>
-                      <div>
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            contact.priority === 'primary'
-                              ? 'bg-blue-100 text-blue-800'
-                              : 'bg-gray-100 text-gray-800'
-                          }`}
-                        >
-                          {contact.priority}
-                        </span>
-                      </div>
+                {settings.emergencyContacts.map((contact: EmergencyContact) => (
+                  <div
+                    key={contact.id}
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                  >
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {contact.firstName} {contact.lastName}
+                      </p>
+                      <p className="text-sm text-gray-500">{contact.email}</p>
+                      <p className="text-sm text-gray-500">{contact.phoneNumber}</p>
                     </div>
-                  )
-                )}
+                  </div>
+                ))}
                 {settings.emergencyContacts.length === 0 && (
                   <p className="text-sm text-gray-500">
                     No emergency contacts added yet.
@@ -222,17 +204,27 @@ export default function SafetyPage() {
               requireVerifiedMatch: false,
               emergencyContacts: settings.emergencyContacts
             }}
-            onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
+            onSettingsChange={(newSettings) => {
+              setSettings(prev => ({
+                ...prev,
+                ...newSettings,
+                emergencyContacts: Array.isArray(newSettings.emergencyContacts) 
+                  ? newSettings.emergencyContacts 
+                  : prev.emergencyContacts
+              }));
+            }}
           />
           <SafetyCenter 
             userId={user?.id || ''}
-            onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
-            safetySettings={{
-              autoShareLocation: settings.sosAlertEnabled,
-              meetupCheckins: true,
-              sosAlertEnabled: settings.sosAlertEnabled,
-              requireVerifiedMatch: false,
-              emergencyContacts: settings.emergencyContacts
+            safetySettings={settings}
+            onSettingsChange={(newSettings) => {
+              setSettings(prev => ({
+                ...prev,
+                ...newSettings,
+                emergencyContacts: Array.isArray(newSettings.emergencyContacts)
+                  ? newSettings.emergencyContacts
+                  : prev.emergencyContacts
+              }));
             }}
           />
         </div>
