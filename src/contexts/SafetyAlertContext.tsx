@@ -74,7 +74,7 @@ export function SafetyAlertProvider({
         privacyMode: 'precise' as const,
         sharingEnabled: true,
         id: alert.id || crypto.randomUUID(),
-        userId: alert.userId
+        userId: alert.userId || userId // Fallback to current userId if not provided
       } satisfies Location;
 
       const fullAlert = {
@@ -82,7 +82,7 @@ export function SafetyAlertProvider({
         priority: alert.priority || 'medium',
         description: alert.description || '',
         message: alert.message || '',
-        location: jsonLocation,
+        location: locationData,
         status: 'active' as const,
         dismissed: false,
         dismissedAt: null,
