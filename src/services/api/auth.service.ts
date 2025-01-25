@@ -1,5 +1,5 @@
 import { User } from '@/types/user';
-import { apiClient, type AuthResponse } from './api.client';
+import { apiService } from './api';
 import axios, { AxiosError } from 'axios';
 
 interface RegisterData {
@@ -15,25 +15,20 @@ interface ErrorResponse {
   statusCode?: number;
 }
 
+interface AuthResponse {
+  token: string;
+  refreshToken?: string;
+  user: User;
+}
+
 class AuthService {
   private readonly baseUrl = '/api/auth';
 
   private handleError(error: unknown): never {
     if (this.isAxiosError(error)) {
-      if (error.code === 'ERR_NETWORK') {
-        throw new Error(
-          'Unable to connect to the server. Please check your internet connection.'
-        );
-      }
       if (error.response?.status === 401) {
-        // Clear tokens on unauthorized
         this.clearTokens();
-        throw new Error('Invalid email or password');
-      }
-      if (error.response?.status === 404) {
-        throw new Error(
-          'Login service is not available. Please try again later.'
-        );
+        throw new Error('Unauthorized access. Please login again.');
       }
       const errorData = error.response?.data as ErrorResponse | undefined;
       throw new Error(
@@ -43,35 +38,26 @@ class AuthService {
     throw error;
   }
 
-  private setTokens(token: string, refreshToken?: string, expiresIn: number = 900) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-        // Schedule refresh 1 minute before expiry
-        setTimeout(() => this.refreshToken(), (expiresIn - 60) * 1000);
-      }
+  private setTokens(token: string, refreshToken?: string): void {
+    localStorage.setItem('token', token);
+    if (refreshToken) {
+      localStorage.setItem('refreshToken', refreshToken);
     }
   }
 
-  private clearTokens() {
+  private clearTokens(): void {
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
   }
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(
-        `${this.baseUrl}/login`,
-        {
-          email,
-          password,
-        }
-      );
-
+      const response = await apiService.post<AuthResponse>(`${this.baseUrl}/login`, {
+        email,
+        password,
+      });
       const { token, refreshToken } = response.data;
       this.setTokens(token, refreshToken);
-
       return response.data;
     } catch (error) {
       throw this.handleError(error);
@@ -80,8 +66,8 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await apiClient.post<AuthResponse>(
-        `${this.baseUrl}/signup`,
+      const response = await apiService.post<AuthResponse>(
+        `${this.baseUrl}/register`,
         data
       );
       const { token, refreshToken } = response.data;
@@ -94,28 +80,8 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await apiClient.get<{ user: User }>(
+      const response = await apiService.get<{ user: User }>(
         `${this.baseUrl}/me`
-      );
-      return response.data.user;
-    } catch (error) {
-      if (this.isAxiosError(error) && error.response?.status === 401) {
-        this.clearTokens();
-      }
-      throw this.handleError(error);
-    }
-  }
-
-  async updateProfile(updates: Partial<User>): Promise<User> {
-    try {
-      const response = await apiClient.patch<{ user: User }>(
-        `${this.baseUrl}/profile`,
-        updates
       );
       return response.data.user;
     } catch (error) {
@@ -125,7 +91,7 @@ class AuthService {
 
   async requestPasswordReset(email: string): Promise<void> {
     try {
-      await apiClient.post(`${this.baseUrl}/password-reset/request`, { email });
+      await apiService.post(`${this.baseUrl}/password-reset/request`, { email });
     } catch (error) {
       throw this.handleError(error);
     }
@@ -133,7 +99,7 @@ class AuthService {
 
   async resetPassword(token: string, password: string): Promise<void> {
     try {
-      await apiClient.post(`${this.baseUrl}/password-reset/reset`, {
+      await apiService.post(`${this.baseUrl}/password-reset/reset`, {
         token,
         password,
       });
@@ -142,28 +108,18 @@ class AuthService {
     }
   }
 
-  async refreshToken(): Promise<{ token: string }> {
+  async refreshToken(): Promise<void> {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
-      if (!refreshToken) {
-        throw new Error('No refresh token found');
-      }
+      if (!refreshToken) throw new Error('No refresh token found');
 
-      const response = await apiClient.post<{
-        token: string;
-        refreshToken: string;
-      }>(
+      const response = await apiService.post<{ token: string; refreshToken: string }>(
         `${this.baseUrl}/refresh`,
-        {},
-        {
-          headers: {
-            Authorization: `Bearer ${refreshToken}`,
-          },
-        }
+        { refreshToken }
       );
 
-      this.setTokens(response.data.token, response.data.refreshToken);
-      return response.data;
+      const { token } = response.data;
+      this.setTokens(token, response.data.refreshToken);
     } catch (error) {
       this.clearTokens();
       throw this.handleError(error);

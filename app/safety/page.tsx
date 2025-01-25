@@ -6,13 +6,13 @@ import { useAuth } from '@/hooks/useAuth';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
-import { SafetyCenter } from '@/components/safety/SafetyCenter';
-import type { SafetySettings, EmergencyContact } from '@/types/safety';
+import SafetyCenter from '@/components/safety/SafetyCenter'; // Import as default
+import type { SafetySettingsNew, EmergencyContact } from '@/types/safety';
 
 export default function SafetyPage() {
   const { isLoading, user } = useAuth();
   const router = useRouter();
-  const [settings, setSettings] = useState<SafetySettings>({
+  const [settings, setSettings] = useState<SafetySettingsNew>({
     sosAlertEnabled: false,
     emergencyContacts: [],
     autoShareLocation: false,
@@ -20,7 +20,7 @@ export default function SafetyPage() {
     requireVerifiedMatch: false,
   });
 
-  const updateSafetySettings = async (newSettings: Partial<SafetySettings>) => {
+  const updateSafetySettings = async (newSettings: Partial<SafetySettingsNew>) => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -35,10 +35,8 @@ export default function SafetyPage() {
       setSettings((prev) => ({
         ...prev,
         ...newSettings,
-        emergencyContacts: Array.isArray(newSettings.emergencyContacts)
-          ? newSettings.emergencyContacts
-          : prev.emergencyContacts,
       }));
+
       createToast.success({
         title: 'Settings Updated',
         description: 'Your safety settings have been saved.',
@@ -66,9 +64,8 @@ export default function SafetyPage() {
       try {
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
-        const data = await response.json();
-        const typedSettings = data as SafetySettings;
-        setSettings(typedSettings);
+        const data = (await response.json()) as SafetySettingsNew;
+        setSettings(data);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
         createToast.error({
@@ -146,7 +143,7 @@ export default function SafetyPage() {
                 {settings.emergencyContacts.map((contact) => {
                   const contactData: EmergencyContact =
                     typeof contact === 'string'
-                      ? { id: contact, name: contact, email: '', phoneNumber: '' }
+                      ? { id: contact, email: '', phoneNumber: '' }
                       : contact;
 
                   return (
@@ -156,7 +153,7 @@ export default function SafetyPage() {
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {contactData.name || 'Unknown Contact'}
+                          {contactData.id || 'Unknown Contact'}
                         </p>
                         <p className="text-sm text-gray-500">{contactData.email}</p>
                         <p className="text-sm text-gray-500">{contactData.phoneNumber}</p>

@@ -22,20 +22,11 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface ApiConfig extends AxiosRequestConfig {
-  baseURL: string;
-  timeout: number;
-  headers: {
-    'Content-Type': string;
-    Authorization?: string;
-  };
-}
-
 class ApiService {
   private instance: AxiosInstance;
 
   constructor() {
-    const config: ApiConfig = {
+    const config: AxiosRequestConfig = {
       baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api',
       timeout: 15000,
       headers: {
@@ -46,22 +37,18 @@ class ApiService {
     this.instance = axios.create(config);
 
     this.instance.interceptors.request.use(
-      config => {
+      (config) => {
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      error => {
-        return Promise.reject(error);
-      }
+      (error) => Promise.reject(error)
     );
 
     this.instance.interceptors.response.use(
-      response => {
-        return response;
-      },
+      (response) => response,
       (error: AxiosError<ApiErrorResponse>) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
@@ -89,11 +76,11 @@ class ApiService {
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.post<
-        ApiResponse<T>,
-        AxiosResponse<ApiResponse<T>>,
-        D
-      >(url, data, config);
+      return await this.instance.post<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
+        url,
+        data,
+        config
+      );
     } catch (error) {
       throw this.handleError(error);
     }
@@ -105,11 +92,11 @@ class ApiService {
     config?: AxiosRequestConfig
   ): Promise<AxiosResponse<ApiResponse<T>>> {
     try {
-      return await this.instance.put<
-        ApiResponse<T>,
-        AxiosResponse<ApiResponse<T>>,
-        D
-      >(url, data, config);
+      return await this.instance.put<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
+        url,
+        data,
+        config
+      );
     } catch (error) {
       throw this.handleError(error);
     }
@@ -126,11 +113,27 @@ class ApiService {
     }
   }
 
+  async patch<T, D = Record<string, unknown>>(
+    url: string,
+    data?: D,
+    config?: AxiosRequestConfig
+  ): Promise<AxiosResponse<ApiResponse<T>>> {
+    try {
+      return await this.instance.patch<ApiResponse<T>, AxiosResponse<ApiResponse<T>>, D>(
+        url,
+        data,
+        config
+      );
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   private handleError(error: unknown): ApiError {
     if (axios.isAxiosError(error)) {
       const response = error.response?.data as ApiErrorResponse | undefined;
       return {
-        message: response?.message ?? 'An unexpected error occurred',
+        message: response?.message || 'An unexpected error occurred',
         code: response?.code,
         status: error.response?.status ?? 500,
       };
