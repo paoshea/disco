@@ -54,9 +54,9 @@ export function EmergencyAlert({
       };
 
       await safetyService.createSafetyAlert(userId, {
-        type: 'emergency_sos',
+        type: 'emergency',
         description: 'User triggered emergency alert',
-        severity: 'high',
+        priority: 'high',
         message: 'Emergency SOS Alert',
         location: {
           latitude: location.latitude,
