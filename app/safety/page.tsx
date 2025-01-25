@@ -119,7 +119,7 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.sosAlertEnabled}
-                  onChange={enabled => {
+                  onChange={createAsyncCallback(enabled =>
                     updateSafetySettings({ sosAlertEnabled: enabled }).catch(
                       error => {
                         console.error(
@@ -127,8 +127,8 @@ export default function SafetyPage() {
                           error
                         );
                       }
-                    );
-                  }}
+                    )
+                  )}
                   className={`${
                     settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
                   } relative inline-flex h-6 w-11 items-center rounded-full`}
@@ -204,12 +204,12 @@ export default function SafetyPage() {
               <SafetyFeatures
                 user={user}
                 settings={settings}
-                onSettingsChange={updateSafetySettings}
+                onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />
               <SafetyCenter
                 userId={user.id}
                 safetySettings={settings}
-                onSettingsChange={updateSafetySettings}
+                onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />
             </>
           )}
