@@ -142,6 +142,16 @@ export const useAuth = create<AuthState>()(
           set({ user: null, token: null, refreshToken: null }); // Clear refreshToken
         }
       },
+      async refreshToken() {
+        try {
+          const response = await apiClient.post('/api/auth/refresh');
+          const { token, refreshToken } = response.data;
+          set({ token, refreshToken });
+          return true;
+        } catch (error) {
+          return false;
+        }
+      },
       async register(data: RegisterData) {
         set({ isLoading: true, error: null });
         try {

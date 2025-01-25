@@ -63,13 +63,17 @@ export default function SignupPage() {
       const result = signUp(registerData);
       console.log('Signup result:', result);
 
+      if (!result) {
+        throw new Error('No response from signup service');
+      }
+
       const signupResult = await Promise.resolve(result);
-      if (signupResult && typeof signupResult === 'object' && 'success' in signupResult) {
+      
+      if (signupResult.success) {
         console.log('Signup successful, preparing to redirect...');
         toast({
           title: 'Success!',
-          description:
-            'Account created successfully! Check your email for verification instructions.',
+          description: 'Account created successfully! Check your email for verification instructions.',
           variant: 'success',
         });
 

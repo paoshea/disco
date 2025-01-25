@@ -22,6 +22,7 @@ const apiClient = axios.create({
   headers: {
     'Content-Type': 'application/json',
   },
+  timeout: 10000, // Added timeout
 });
 
 // Initialize auth header from localStorage if token exists
@@ -54,7 +55,7 @@ interface ExtendedInternalAxiosRequestConfig
   _retry?: boolean;
 }
 
-// Handle refresh token
+// Handle refresh token and improved 401 handling
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
