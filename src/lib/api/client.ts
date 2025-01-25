@@ -1,4 +1,6 @@
-import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError, type InternalAxiosRequestConfig } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios/base';
+import type { InternalAxiosRequestConfig } from 'axios/base/internal-axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
 
