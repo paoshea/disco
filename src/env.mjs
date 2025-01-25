@@ -6,7 +6,11 @@ const portSchema = z.preprocess(val => {
   return processed.success ? parseInt(processed.data, 10) : 3001;
 }, z.number().min(1).max(65535));
 
-export const env = createEnv({
+export const env = createEnv<{
+  REDIS_HOST: string;
+  REDIS_PORT: string;
+  REDIS_PASSWORD?: string;
+}>({
   server: {
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PORT: portSchema,

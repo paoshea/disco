@@ -1,12 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
-import React from 'react';
 import type { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
@@ -32,13 +31,19 @@ export default function SafetyCenter({
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
-  const [settings, setSettings] = useState<SafetySettingsNew>({
+  const [settings, setSettings] = useState<SafetySettingsNew>(safetySettings || {
     sosAlertEnabled: false,
     emergencyContacts: [],
     autoShareLocation: false,
     meetupCheckins: false,
     requireVerifiedMatch: false,
   });
+
+  const handleSettingsChange = useCallback((newSettings: Partial<SafetySettingsNew>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+    onSettingsChange?.(newSettings);
+  }, [onSettingsChange]);
+
 
   const updateSafetySettings = async (
     newSettings: Partial<SafetySettingsNew>
@@ -143,7 +148,7 @@ export default function SafetyCenter({
                 <Switch
                   checked={settings.sosAlertEnabled}
                   onChange={enabled => {
-                    void updateSafetySettings({ sosAlertEnabled: enabled });
+                    handleSettingsChange({ sosAlertEnabled: enabled });
                   }}
                   className={`${
                     settings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
@@ -173,7 +178,7 @@ export default function SafetyCenter({
             <SafetyFeatures
               user={user}
               settings={settings}
-              onSettingsChange={createAsyncCallback(updateSafetySettings)}
+              onSettingsChange={handleSettingsChange}
             />
           )}
         </div>

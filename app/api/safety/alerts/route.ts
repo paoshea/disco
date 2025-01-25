@@ -17,7 +17,7 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 // GET /api/safety/alerts
-export async function GET(): Promise<NextResponse> {
+export async function GET(): Promise<NextResponse<{ alerts: SafetyAlertNew[] } | { error: string }>> {
   try {
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);

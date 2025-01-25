@@ -8,7 +8,7 @@ import {
 import type { SafetyAlert, Prisma } from '@prisma/client';
 import type { SafetyAlertNew } from '@/types/safety';
 
-type JsonObject = Prisma.JsonObject;
+//type JsonObject = Prisma.JsonObject; // Removed unused type
 
 interface SafetyAlertContextType {
   alerts: SafetyAlertNew[];
@@ -28,22 +28,22 @@ export function SafetyAlertProvider({
   children: React.ReactNode;
 }) {
   const [alerts, setAlerts] = useState<SafetyAlertNew[]>([]);
-  const transformAlert = (data: unknown): SafetyAlertNew => {
-    const alert = data as Partial<SafetyAlertNew>;
-    return {
-      id: String(alert.id ?? ''),
-      userId: String(alert.userId ?? ''),
-      type: alert.type ?? 'custom',
-      status: alert.status ?? 'active',
-      location: alert.location ?? {
-        latitude: 0,
-        longitude: 0,
-        timestamp: new Date(),
-      },
-      createdAt: alert.createdAt ?? new Date().toISOString(),
-      updatedAt: alert.updatedAt ?? new Date().toISOString(),
-    };
-  };
+  //const transformAlert = (data: unknown): SafetyAlertNew => { //Removed unused function
+  //  const alert = data as Partial<SafetyAlertNew>;
+  //  return {
+  //    id: String(alert.id ?? ''),
+  //    userId: String(alert.userId ?? ''),
+  //    type: alert.type ?? 'custom',
+  //    status: alert.status ?? 'active',
+  //    location: alert.location ?? {
+  //      latitude: 0,
+  //      longitude: 0,
+  //      timestamp: new Date(),
+  //    },
+  //    createdAt: alert.createdAt ?? new Date().toISOString(),
+  //    updatedAt: alert.updatedAt ?? new Date().toISOString(),
+  //  };
+  //};
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -80,7 +80,7 @@ export function SafetyAlertProvider({
         throw new Error('User ID is required');
       }
 
-      const locationJson = alert.location as JsonObject | null;
+      const locationJson = alert.location as Prisma.JsonObject | null;
       const locationData = {
         latitude: Number(locationJson?.latitude) || 0,
         longitude: Number(locationJson?.longitude) || 0,
@@ -117,9 +117,9 @@ export function SafetyAlertProvider({
 
       const newAlert = await createSafetyAlert(fullAlert);
       setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add alert');
-      throw err;
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to add alert');
+      throw error;
     }
   };
 

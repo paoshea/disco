@@ -29,7 +29,7 @@ export const runtime = 'nodejs';
 export async function GET(
   request: NextRequest,
   context: Context
-): Promise<NextResponse> {
+): Promise<NextResponse<SafetyAlertNew | { error: string }>> {
   try {
     const userId = await validateRequest();
     const params = await context.params;
