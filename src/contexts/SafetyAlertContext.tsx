@@ -7,6 +7,7 @@ import {
 } from '@/services/api/safety.service';
 // Add any other required imports
 import type { SafetyAlert } from '@prisma/client';
+import type { Location } from '@/types/location';
 
 interface SafetyAlertContextType {
   alerts: SafetyAlert[];
@@ -62,20 +63,27 @@ export function SafetyAlertProvider({
         throw new Error('User ID is required');
       }
 
-      const locationData =
-        alert.location && typeof alert.location === 'object'
-          ? {
-              latitude: Number((alert.location as any).latitude) || 0,
-              longitude: Number((alert.location as any).longitude) || 0,
-              accuracy: Number((alert.location as any).accuracy) || null,
-              timestamp: new Date().toISOString(),
-            }
-          : {
-              latitude: 0,
-              longitude: 0,
-              accuracy: null,
-              timestamp: new Date().toISOString(),
-            };
+      const locationData = alert.location && typeof alert.location === 'object'
+  ? {
+      latitude: Number(alert.location?.latitude) || 0,
+      longitude: Number(alert.location?.longitude) || 0,
+      accuracy: Number(alert.location?.accuracy),
+      timestamp: new Date(),
+      privacyMode: 'precise' as const,
+      sharingEnabled: true,
+      id: alert.id,
+      userId: alert.userId
+    }
+  : {
+      latitude: 0,
+      longitude: 0,
+      accuracy: undefined,
+      timestamp: new Date(),
+      privacyMode: 'precise' as const,
+      sharingEnabled: true,
+      id: alert.id,
+      userId: alert.userId
+    };
 
       const fullAlert = {
         type: alert.type || 'warning',
