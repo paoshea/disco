@@ -70,19 +70,26 @@ export function SafetyAlertProvider({
         latitude: Number(locationJson?.latitude) || 0,
         longitude: Number(locationJson?.longitude) || 0,
         accuracy: Number(locationJson?.accuracy),
-        timestamp: new Date(),
+        timestamp: new Date().toISOString(),
         privacyMode: 'precise' as const,
         sharingEnabled: true,
         id: alert.id || crypto.randomUUID(),
         userId: alert.userId || userId // Fallback to current userId if not provided
-      } satisfies Location;
+      };
+
+      const locationForPrisma = {
+        type: 'Point',
+        coordinates: [locationData.latitude, locationData.longitude],
+        accuracy: locationData.accuracy,
+        timestamp: locationData.timestamp,
+      };
 
       const fullAlert = {
         type: alert.type || 'warning',
         priority: alert.priority || 'medium',
         description: alert.description || '',
         message: alert.message || '',
-        location: locationData,
+        location: locationForPrisma,
         status: 'active' as const,
         dismissed: false,
         dismissedAt: null,
