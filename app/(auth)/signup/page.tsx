@@ -71,8 +71,9 @@ export default function SignupPage() {
         console.log('Signup successful, preparing to redirect...');
         
         // Show success toast
-        toast.success('Account created successfully! Check your email for verification instructions.', {
-          duration: 3000,
+        toast.success({
+          title: 'Account created successfully!',
+          description: 'Check your email for verification instructions.',
         });
 
         // Ensure state is updated before redirect
@@ -84,7 +85,10 @@ export default function SignupPage() {
       } else {
         console.log('Signup failed:', result.error);
         // Show the specific error message
-        toast.error(result.error || 'Registration failed. Please try again.');
+        toast.error({
+          title: 'Registration failed',
+          description: result.error || 'Please try again.',
+        });
         
         // Reset the form on conflict
         if (result.error?.includes('already exists')) {
@@ -108,7 +112,10 @@ export default function SignupPage() {
         }
       }
 
-      toast.error(errorMessage);
+      toast.error({
+        title: 'Error',
+        description: errorMessage,
+      });
     } finally {
       setIsLoading(false);
     }
