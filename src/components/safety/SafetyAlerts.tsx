@@ -24,6 +24,7 @@ export const SafetyAlerts: React.FC = () => {
 
         const safetyAlert: SafetyAlertNew = {
           ...alert,
+          type: alert.type as SafetyAlertType,
           status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active',
           location: alertLocation || {
             latitude: 0,
