@@ -34,11 +34,17 @@ export async function GET(
     const userId = await validateRequest();
     const params = await context.params;
     const alertResponse = await safetyService.getSafetyAlert(params.id);
-    const alert = alertResponse ? {
-      ...alertResponse,
-      type: alertResponse.type as SafetyAlertType,
-      status: alertResponse.dismissed ? 'dismissed' : alertResponse.resolved ? 'resolved' : 'active'
-    } : null;
+    const alert = alertResponse
+      ? {
+          ...alertResponse,
+          type: alertResponse.type as SafetyAlertType,
+          status: alertResponse.dismissed
+            ? 'dismissed'
+            : alertResponse.resolved
+              ? 'resolved'
+              : 'active',
+        }
+      : null;
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });

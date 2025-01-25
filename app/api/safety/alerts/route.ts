@@ -25,7 +25,11 @@ export async function GET(): Promise<NextResponse> {
       ? alertsResponse.map(alert => ({
           ...alert,
           type: alert.type as SafetyAlertType,
-          status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active'
+          status: alert.dismissed
+            ? 'dismissed'
+            : alert.resolved
+              ? 'resolved'
+              : 'active',
         }))
       : [];
     return NextResponse.json({ alerts });

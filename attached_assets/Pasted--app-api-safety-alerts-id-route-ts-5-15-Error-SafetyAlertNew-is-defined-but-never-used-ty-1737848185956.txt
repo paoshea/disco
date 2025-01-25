@@ -1,0 +1,36 @@
+
+./app/api/safety/alerts/[id]/route.ts
+5:15  Error: 'SafetyAlertNew' is defined but never used.  @typescript-eslint/no-unused-vars
+72:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./app/api/safety/alerts/route.ts
+6:15  Error: 'SafetyAlertNew' is defined but never used.  @typescript-eslint/no-unused-vars
+51:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/components/safety/SafetyCenter.tsx
+29:3  Error: 'safetySettings' is defined but never used.  @typescript-eslint/no-unused-vars
+30:3  Error: 'onSettingsChange' is defined but never used.  @typescript-eslint/no-unused-vars
+86:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/contexts/SafetyAlertContext.tsx
+31:9  Error: 'transformAlert' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+55:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+72:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+118:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/env.mjs
+9:14  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+9:20  Warning: Unsafe call of an `any` typed value.  @typescript-eslint/no-unsafe-call
+
+./src/hooks/useAuth.ts
+5:15  Error: 'RegisterResponse' is defined but never used.  @typescript-eslint/no-unused-vars
+5:33  Error: 'UpdateProfileResponse' is defined but never used.  @typescript-eslint/no-unused-vars
+
+./src/lib/redis.ts
+12:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+12:9  Warning: Unsafe member access .REDIS_HOST on an `any` value.  @typescript-eslint/no-unsafe-member-access
+13:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+13:9  Warning: Unsafe member access .REDIS_PORT on an `any` value.  @typescript-eslint/no-unsafe-member-access
+14:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+14:13  Warning: Unsafe member access .REDIS_PASSWORD on an `any` value.  @typescript-eslint/no-unsafe-member-access
+24:3  Error: Unexpected var, use let or const instead.  no-var
