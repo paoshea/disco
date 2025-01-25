@@ -4,7 +4,17 @@
 const nextConfig = {
   env: {
     JWT_SECRET: process.env.JWT_SECRET,
-    PORT: process.env.PORT || '3001',
+    PORT: process.env.PORT || '3000',
+  },
+  webSocketURL: {
+    hostname: "0.0.0.0",
+    pathname: "/",
+    port: process.env.PORT || '3000'
+  },
+  devServer: {
+    host: '0.0.0.0',
+    port: process.env.PORT || 3000,
+    allowedHosts: 'all'
   },
   productionBrowserSourceMaps: true,
   experimental: {
