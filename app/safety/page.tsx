@@ -219,12 +219,25 @@ export default function SafetyPage() {
                 },
               },
             }}
-            settings={settings}
+            settings={{
+              autoShareLocation: settings.sosAlertEnabled,
+              meetupCheckins: true,
+              sosAlertEnabled: settings.sosAlertEnabled,
+              requireVerifiedMatch: false,
+              emergencyContacts: settings.emergencyContacts
+            }}
             onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
           />
           <SafetyCenter 
             userId={user?.id || ''}
             onSettingsChange={(newSettings) => setSettings(prev => ({ ...prev, ...newSettings }))}
+            safetySettings={{
+              autoShareLocation: settings.sosAlertEnabled,
+              meetupCheckins: true,
+              sosAlertEnabled: settings.sosAlertEnabled,
+              requireVerifiedMatch: false,
+              emergencyContacts: settings.emergencyContacts
+            }}
           />
         </div>
       </div>
