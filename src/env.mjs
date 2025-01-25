@@ -1,8 +1,7 @@
-
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const portSchema = z.preprocess((val) => {
+const portSchema = z.preprocess(val => {
   const processed = z.string().safeParse(val);
   return processed.success ? parseInt(processed.data, 10) : 3001;
 }, z.number().min(1).max(65535));
@@ -17,7 +16,10 @@ export const env = createEnv({
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_WEBSOCKET_URL: z.string().url().default(`ws://0.0.0.0:${process.env.PORT ?? '3001'}/ws`),
+    NEXT_PUBLIC_WEBSOCKET_URL: z
+      .string()
+      .url()
+      .default(`ws://0.0.0.0:${process.env.PORT ?? '3001'}/ws`),
   },
   runtimeEnv: process.env,
 });
