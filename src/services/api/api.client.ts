@@ -1,7 +1,6 @@
 // import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios';
 //import type { InternalAxiosRequestConfig } from 'axios/base/internal-axios';
-import axios from 'axios';
-import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios/index';
+import axios, { type AxiosInstance, type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { User } from '@/types/user';
 
 interface AuthResponse {
