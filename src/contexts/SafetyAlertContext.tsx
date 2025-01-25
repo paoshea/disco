@@ -57,6 +57,11 @@ export function SafetyAlertProvider({
 
   const addAlert = async (alert: Partial<SafetyAlert>) => {
     try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) {
+        throw new Error('User ID is required');
+      }
+
       const locationData = alert.location && typeof alert.location === 'object' 
         ? {
             latitude: Number((alert.location as any).latitude) || 0,
@@ -81,6 +86,7 @@ export function SafetyAlertProvider({
         dismissed: false,
         resolved: false,
         updatedAt: new Date(),
+        userId,
         ...alert
       };
 
