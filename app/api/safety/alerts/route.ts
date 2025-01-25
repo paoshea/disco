@@ -45,6 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
+    const now = new Date();
     const alertData = {
       ...result.data,
       priority: 'medium',
@@ -52,6 +53,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       resolved: false,
       description: result.data.description || null,
       message: result.data.message || null,
+      updatedAt: now,
+      dismissedAt: null,
+      resolvedAt: null,
+      location: result.data.location || {
+        latitude: 0,
+        longitude: 0,
+        timestamp: now
+      }
     };
     
     const alert = await safetyService.createSafetyAlert(userId, alertData);
