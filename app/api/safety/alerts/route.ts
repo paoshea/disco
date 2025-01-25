@@ -19,7 +19,8 @@ export const runtime = 'nodejs';
 export async function GET(): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
-    const alerts = await safetyService.getActiveAlerts(userId);
+    const alertsResponse = await safetyService.getActiveAlerts(userId);
+    const alerts = Array.isArray(alertsResponse) ? alertsResponse as SafetyAlertNew[] : [];
     return NextResponse.json({ alerts });
   } catch (error: unknown) {
     const errorMessage =
