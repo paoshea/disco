@@ -91,10 +91,7 @@ export default function SafetyCenter({
   );
 }
 
-function SafetyPage() {
-  const { isLoading, user } = useAuth();
-  const router = useRouter();
-  const [settings, setSettings] = useState<SafetySettingsNew>({
+// SafetyPage component moved to app/safety/page.tsx
     sosAlertEnabled: false,
     emergencyContacts: [],
     autoShareLocation: false,
@@ -281,9 +278,11 @@ interface EmergencyContact {
   phoneNumber?: string;
 }
 
-// Assuming createAsyncCallback is defined elsewhere,  add it here if needed.  This is a placeholder.
-const createAsyncCallback =
-  (func: any) =>
-  (...args: any[]) => {
+// Helper function to create async callbacks
+const createAsyncCallback = <T extends (...args: unknown[]) => Promise<void>>(
+  func: T
+) => {
+  return (...args: Parameters<T>) => {
     void func(...args);
   };
+};
