@@ -10,17 +10,14 @@ import React from 'react';
 import type { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
-  userId: string;
   safetySettings: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
 export default function SafetyCenter({
-  userId,
   safetySettings,
   onSettingsChange,
 }: SafetyCenterProps) {
-  const { user } = useAuth();
 
   return (
     <div className="bg-white shadow rounded-lg p-6">

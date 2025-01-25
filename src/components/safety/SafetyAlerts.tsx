@@ -1,5 +1,5 @@
 import React from 'react';
-import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
+import type { SafetyAlertNew } from '@/types/safety';
 import type { Location } from '@/types/location';
 import { useSafetyAlerts } from '@/contexts/SafetyAlertContext';
 import { SafetyAlertNotification } from './SafetyAlertNotification';
