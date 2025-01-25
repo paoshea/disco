@@ -43,11 +43,13 @@ class AuthService {
     throw error;
   }
 
-  private setTokens(token: string, refreshToken?: string) {
+  private setTokens(token: string, refreshToken?: string, expiresIn: number = 900) {
     if (typeof window !== 'undefined') {
       localStorage.setItem('token', token);
       if (refreshToken) {
         localStorage.setItem('refreshToken', refreshToken);
+        // Schedule refresh 1 minute before expiry
+        setTimeout(() => this.refreshToken(), (expiresIn - 60) * 1000);
       }
     }
   }
