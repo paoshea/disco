@@ -236,6 +236,15 @@ function SafetyPage() {
             user={{
               id: user?.id || '',
               preferences: {
+                maxDistance: 50,
+                ageRange: {
+                  min: 18,
+                  max: 99
+                },
+                interests: [],
+                gender: [],
+                lookingFor: [],
+                relationshipType: [],
                 notifications: { 
                   matches: true,
                   messages: true,
