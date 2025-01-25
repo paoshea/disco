@@ -1,4 +1,3 @@
-
 import { User } from '@/types/user';
 import { apiService } from './api';
 import type { AxiosError } from 'axios';
@@ -134,7 +133,7 @@ class AuthService {
         `${this.baseUrl}/refresh`,
         { refreshToken }
       );
-      
+
       const { token, refreshToken: newRefreshToken } = response.data.data;
       this.setTokens(token, newRefreshToken);
     } catch (error) {
