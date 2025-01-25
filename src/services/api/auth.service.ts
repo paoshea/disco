@@ -44,9 +44,11 @@ class AuthService {
   }
 
   private setTokens(token: string, refreshToken?: string) {
-    localStorage.setItem('token', token);
-    if (refreshToken) {
-      localStorage.setItem('refreshToken', refreshToken);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('token', token);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
     }
   }
 

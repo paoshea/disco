@@ -63,16 +63,32 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    // Verify token
-    const payload = await getToken({
-      req: request,
-      secret: process.env.NEXTAUTH_SECRET,
-    });
+    try {
+      // Verify token
+      const payload = await getToken({
+        req: request,
+        secret: process.env.NEXTAUTH_SECRET,
+      });
 
-    if (!payload) {
-      if (request.nextUrl.pathname.startsWith('/api/')) {
-        return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+      if (!payload) {
+        if (request.nextUrl.pathname.startsWith('/api/')) {
+          return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
+        }
+        return redirectToLogin(request);
       }
+
+      // Add user info to request headers
+      const requestHeaders = new Headers(request.headers);
+      requestHeaders.set('x-user-id', payload.sub as string);
+      requestHeaders.set('x-user-role', payload.role as string);
+
+      return NextResponse.next({
+        request: {
+          headers: requestHeaders,
+        },
+      });
+    } catch (error) {
+      console.error('Auth middleware error:', error);
       return redirectToLogin(request);
     }
 
