@@ -72,7 +72,6 @@ export async function PUT(
    }
 
    const { action } = result.data;
-   const params = await context.params;
    if (action === 'dismiss') {
      const updatedAlert = await safetyService.dismissAlert(params.id, userId);
      return NextResponse.json(updatedAlert);
