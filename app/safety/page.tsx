@@ -88,7 +88,8 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.enabled}
-                  onChange={async enabled => {
+                  onChange={enabled => {
+                    void (async () => {
                     try {
                       const response = await fetch('/api/safety/settings', {
                         method: 'PUT',
@@ -105,6 +106,7 @@ export default function SafetyPage() {
                         description:
                           'Failed to update settings. Please try again.',
                       });
+                    })();
                     }
                   }}
                   className={`${
