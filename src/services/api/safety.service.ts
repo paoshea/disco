@@ -37,6 +37,28 @@ interface SafetyAlertInput {
   message?: string;
 }
 
+export const getSafetyAlerts = async (userId: string) => {
+  const response = await fetch(`/api/safety/alerts?userId=${userId}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch safety alerts');
+  }
+  return response.json();
+};
+
+export const createSafetyAlert = async (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => {
+  const response = await fetch('/api/safety/alerts', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(data),
+  });
+  if (!response.ok) {
+    throw new Error('Failed to create safety alert');
+  }
+  return response.json();
+};
+
 export const safetyService = {
   async getSafetyAlert(id: string) {
     return prisma.safetyAlert.findUnique({

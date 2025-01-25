@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { getSafetyAlerts, createSafetyAlert } from '@/services/api/safety.service'
+// Add any other required imports
 import type { SafetyAlert } from '@prisma/client'
 
 interface SafetyAlertContextType {
