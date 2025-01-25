@@ -15,7 +15,9 @@ interface SafetyCenterProps {
 }
 
 // Helper function to create async callbacks
-const createAsyncCallback = <T extends (settings: Partial<SafetySettingsNew>) => Promise<void>>(
+const createAsyncCallback = <
+  T extends (settings: Partial<SafetySettingsNew>) => Promise<void>,
+>(
   func: T
 ): ((settings: Parameters<T>[0]) => void) => {
   return (settings: Parameters<T>[0]) => {
