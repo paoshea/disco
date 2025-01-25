@@ -1,0 +1,71 @@
+Failed to compile.
+
+
+./app/(auth)/signup/page.tsx
+70:23  Error: Insert `⏎···········`  prettier/prettier
+71:29  Error: Insert `,`  prettier/prettier
+78:9  Error: Unexpected `await` of a non-Promise (non-"Thenable") value.  @typescript-eslint/await-thenable
+86:33  Error: Insert `,`  prettier/prettier
+
+./app/blog/page.tsx
+1:1  Error: Delete `⏎`  prettier/prettier
+14:25  Error: Insert `,`  prettier/prettier
+21:26  Error: Insert `,`  prettier/prettier
+26:15  Error: Insert `⏎·······`  prettier/prettier
+28:26  Error: Insert `,`  prettier/prettier
+29:6  Error: Insert `,`  prettier/prettier
+
+./app/safety/page.tsx
+32:22  Error: Replace `await·response.json()·as·{·enabled:·boolean;·emergencyContacts:·Array<{·id:·string;·name:·string;·email:·string;·phone:·string;·priority:·string·}>` with `(await·response.json())·as·{⏎··········enabled:·boolean;⏎··········emergencyContacts:·Array<{⏎············id:·string;⏎············name:·string;⏎············email:·string;⏎············phone:·string;⏎············priority:·string;⏎··········}>;⏎·······`  prettier/prettier
+82:28  Error: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+126:26  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/components/layout/Footer.tsx
+1:1  Error: Delete `⏎`  prettier/prettier
+
+./src/components/ui/Logo.tsx
+59:2  Error: Insert `⏎`  prettier/prettier
+
+./src/contexts/SafetyAlertContext.tsx
+1:13  Error: Insert `;`  prettier/prettier
+3:78  Error: Insert `;`  prettier/prettier
+4:9  Error: Replace `·getSafetyAlerts,·createSafetyAlert·}·from·'@/services/api/safety.service'` with `⏎··getSafetyAlerts,⏎··createSafetyAlert,⏎}·from·'@/services/api/safety.service';`  prettier/prettier
+6:50  Error: Insert `;`  prettier/prettier
+9:24  Error: Insert `;`  prettier/prettier
+10:19  Error: Insert `;`  prettier/prettier
+11:78  Error: Insert `;`  prettier/prettier
+14:78  Error: Insert `;`  prettier/prettier
+16:38  Error: Replace `·children·}:·{·children:·React.ReactNode·` with `⏎··children,⏎}:·{⏎··children:·React.ReactNode;⏎`  prettier/prettier
+17:58  Error: Insert `;`  prettier/prettier
+18:47  Error: Insert `;`  prettier/prettier
+23:54  Error: Insert `;`  prettier/prettier
+25:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+25:53  Error: Insert `;`  prettier/prettier
+26:21  Error: Unsafe argument of type `any` assigned to a parameter of type `SetStateAction<{ id: string; message: string | null; type: string; createdAt: Date; updatedAt: Date; description: string | null; location: JsonValue; priority: string; userId: string; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }[]>`.  @typescript-eslint/no-unsafe-argument
+26:26  Error: Insert `;`  prettier/prettier
+29:62  Error: Insert `;`  prettier/prettier
+31:26  Error: Insert `;`  prettier/prettier
+34:5  Error: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+34:17  Error: Insert `;`  prettier/prettier
+35:9  Error: Insert `;`  prettier/prettier
+38:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+38:51  Error: Insert `;`  prettier/prettier
+39:23  Warning: Unsafe return of an `any[]` typed value.  @typescript-eslint/no-unsafe-return
+39:43  Error: Insert `;`  prettier/prettier
+40:4  Error: Insert `;`  prettier/prettier
+46:4  Error: Insert `;`  prettier/prettier
+50:49  Error: Insert `;`  prettier/prettier
+52:21  Error: Replace `'useSafetyAlerts·must·be·used·within·a·SafetyAlertProvider')` with `⏎······'useSafetyAlerts·must·be·used·within·a·SafetyAlertProvider'⏎····);`  prettier/prettier
+54:17  Error: Insert `;`  prettier/prettier
+55:2  Error: Insert `⏎`  prettier/prettier
+
+./src/contexts/WebSocketContext.tsx
+222:13  Error: 'normalizedMessage' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+225:51  Error: Insert `,`  prettier/prettier
+260:3  Error: I
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.0.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.0.0
+npm notice To update run: npm install -g npm@11.0.0
+npm notice
+
