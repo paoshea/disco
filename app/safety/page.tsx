@@ -16,9 +16,12 @@ export default function SafetyPage() {
   const [settings, setSettings] = useState<SafetySettings>({
     sosAlertEnabled: false,
     emergencyContacts: [] as EmergencyContact[],
+    autoShareLocation: false,
+    meetupCheckins: false,
+    requireVerifiedMatch: false,
   });
 
-  const updateSafetySettings = async (newSettings: Partial<SafetySettings>) => {
+  const updateSafetySettings = async (newSettings: Partial<SafetySettingsNew>) => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -134,20 +137,26 @@ export default function SafetyPage() {
                 Emergency Contacts
               </h4>
               <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map((contact: EmergencyContact) => (
-                  <div
-                    key={contact.id}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                  >
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {contact.firstName} {contact.lastName}
-                      </p>
-                      <p className="text-sm text-gray-500">{contact.email}</p>
-                      <p className="text-sm text-gray-500">{contact.phoneNumber}</p>
+                {settings.emergencyContacts.map((contact) => {
+                  const contactData = typeof contact === 'string' 
+                    ? { id: contact, name: contact, email: '', phoneNumber: '' }
+                    : contact;
+                    
+                  return (
+                    <div
+                      key={contactData.id}
+                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    >
+                      <div>
+                        <p className="text-sm font-medium text-gray-900">
+                          {contactData.name || `${contactData.firstName} ${contactData.lastName}`}
+                        </p>
+                        <p className="text-sm text-gray-500">{contactData.email}</p>
+                        <p className="text-sm text-gray-500">{contactData.phoneNumber}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
                 {settings.emergencyContacts.length === 0 && (
                   <p className="text-sm text-gray-500">
                     No emergency contacts added yet.
