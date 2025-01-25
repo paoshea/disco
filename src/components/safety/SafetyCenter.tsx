@@ -28,11 +28,16 @@ export const SafetyCenter: React.FC<SafetyCenterProps> = ({
       if (alert.type === 'sos') {
         try {
           await addAlert({
-            type: 'emergency',
+            type: 'emergency' as SafetyAlertType,
             description: alert.description || 'Emergency alert triggered',
             status: 'active',
             priority: 'high',
-            location: alert.location,
+            location: alert.location ? {
+              latitude: alert.location.latitude,
+              longitude: alert.location.longitude,
+              accuracy: alert.location.accuracy,
+              timestamp: new Date().toISOString()
+            } : undefined,
             message: alert.message || 'SOS Alert',
             dismissed: false,
             resolved: false
