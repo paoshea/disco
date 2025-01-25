@@ -21,10 +21,9 @@ export class AuthErrorBoundary extends Component<Props, State> {
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Auth error:', error, errorInfo);
-    toast({
+    toast.error({
       title: 'Authentication Error',
-      description: 'Please try logging in again',
-      variant: 'destructive',
+      description: 'Please try logging in again'
     });
   }
 
