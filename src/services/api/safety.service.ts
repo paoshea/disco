@@ -53,6 +53,23 @@ export const createSafetyAlert = async (
   return response.json();
 };
 
+interface LocationData {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+}
+
+function isLocationData(data: unknown): data is LocationData {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'latitude' in data &&
+    'longitude' in data &&
+    typeof (data as LocationData).latitude === 'number' &&
+    typeof (data as LocationData).longitude === 'number'
+  );
+}
+
 export const safetyService = {
   async getSafetyAlert(id: string) {
     return prisma.safetyAlert.findUnique({
@@ -93,11 +110,14 @@ export const safetyService = {
     data: Omit<SafetyAlert, 'id' | 'createdAt' | 'userId'>
   ): Promise<SafetyAlertNew> {
     // Convert location to Prisma-compatible JSON format
-    const locationJson = data.location
+    const locationJson = data.location && isLocationData(data.location)
       ? {
           type: 'Point',
-          coordinates: [data.location.latitude, data.location.longitude],
-          accuracy: data.location.accuracy,
+          coordinates: [
+            (data.location as { latitude: number }).latitude,
+            (data.location as { longitude: number }).longitude,
+          ],
+          accuracy: (data.location as { accuracy?: number }).accuracy,
           timestamp: new Date().toISOString(),
         }
       : null;
