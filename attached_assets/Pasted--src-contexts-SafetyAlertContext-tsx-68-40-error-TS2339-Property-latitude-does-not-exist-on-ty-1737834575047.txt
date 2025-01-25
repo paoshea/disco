@@ -1,0 +1,32 @@
+
+
+src/contexts/SafetyAlertContext.tsx:68:40 - error TS2339: Property 'latitude' does not exist on type 'JsonObject | JsonArray'.
+  Property 'latitude' does not exist on type 'JsonArray'.
+
+68       latitude: Number(alert.location?.latitude) || 0,
+                                          ~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:69:41 - error TS2339: Property 'longitude' does not exist on type 'JsonObject | JsonArray'.
+  Property 'longitude' does not exist on type 'JsonArray'.
+
+69       longitude: Number(alert.location?.longitude) || 0,
+                                           ~~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:70:40 - error TS2339: Property 'accuracy' does not exist on type 'JsonObject | JsonArray'.
+  Property 'accuracy' does not exist on type 'JsonArray'.
+
+70       accuracy: Number(alert.location?.accuracy),
+                                          ~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:104:48 - error TS2345: Argument of type '{ id?: string | undefined; createdAt?: Date | undefined; updatedAt: Date; userId: string; type: string; priority: string; message: string | null; description: string | null; ... 5 more ...; status: "active"; }' is not assignable to parameter of type 'Omit<{ id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; message: string | null; description: string | null; location: JsonValue; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }, "id" | "createdAt">'.
+  Types of property 'location' are incompatible.
+    Type 'JsonValue | { latitude: number; longitude: number; accuracy: number; timestamp: Date; privacyMode: "precise"; sharingEnabled: boolean; id: string | undefined; userId: string | undefined; } | { ...; }' is not assignable to type 'JsonValue'.
+      Type '{ latitude: number; longitude: number; accuracy: number; timestamp: Date; privacyMode: "precise"; sharingEnabled: boolean; id: string | undefined; userId: string | undefined; }' is not assignable to type 'JsonValue'.
+        Type '{ latitude: number; longitude: number; accuracy: number; timestamp: Date; privacyMode: "precise"; sharingEnabled: boolean; id: string | undefined; userId: string | undefined; }' is not assignable to type 'JsonObject'.
+          Property 'timestamp' is incompatible with index signature.
+            Type 'Date' is not assignable to type 'JsonValue | undefined'.
+              Type 'Date' is not assignable to type 'JsonObject'.
+                Index signature for type 'string' is missing in type 'Date'.
+
+104       const newAlert = await createSafetyAlert(fullAlert);
+                                                   ~~~~~~~~~
