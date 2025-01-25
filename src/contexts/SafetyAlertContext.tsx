@@ -67,13 +67,13 @@ export function SafetyAlertProvider({
             latitude: Number((alert.location as any).latitude) || 0,
             longitude: Number((alert.location as any).longitude) || 0,
             accuracy: Number((alert.location as any).accuracy) || null,
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
           }
         : {
             latitude: 0,
             longitude: 0,
             accuracy: null,
-            timestamp: new Date()
+            timestamp: new Date().toISOString()
           };
 
       const fullAlert = {
