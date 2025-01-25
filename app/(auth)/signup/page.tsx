@@ -60,10 +60,10 @@ export default function SignupPage() {
       };
 
       console.log('Starting signup...');
-      const result = await Promise.resolve(signUp(registerData));
+      const result = signUp(registerData);
       console.log('Signup result:', result);
 
-      if (result && 'success' in result) {
+      if (result && typeof result === 'object' && 'success' in result) {
         console.log('Signup successful, preparing to redirect...');
         toast({
           title: 'Success!',

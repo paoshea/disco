@@ -16,7 +16,7 @@ export default function SafetyPage() {
     enabled: false,
     emergencyContacts: [],
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true); // Added type specification
 
   useEffect(() => {
     if (isLoading) return;
@@ -81,29 +81,40 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.enabled}
-                  onChange={(enabled) => {
-                    void (async () => {
-                      try {
-                        const response = await fetch('/api/safety/settings', {
-                          method: 'PUT',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ enabled }),
+                  onChange={enabled => {
+                    // Removed unnecessary async/await; direct update is sufficient
+                    try {
+                      fetch('/api/safety/settings', {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ enabled }),
+                      })
+                        .then(response => {
+                          if (!response.ok) {
+                            throw new Error('Failed to update settings');
+                          }
+                          setSettings(prev => ({ ...prev, enabled }));
+                        })
+                        .catch(error => {
+                          console.error(
+                            'Failed to update safety settings:',
+                            error
+                          );
+                          createToast.error({
+                            title: 'Error',
+                            description: 'Failed to update settings. Please try again.',
+                          });
                         });
-                        if (!response.ok) {
-                          throw new Error('Failed to update settings');
-                        }
-                        setSettings((prev) => ({ ...prev, enabled }));
-                      } catch (error) {
-                        console.error(
-                          'Failed to update safety settings:',
-                          error
-                        );
-                        createToast.error({
-                          title: 'Error',
-                          description: 'Failed to update settings. Please try again.',
-                        });
-                      }
-                    })();
+                    } catch (error) {
+                      console.error(
+                        'Failed to update safety settings:',
+                        error
+                      );
+                      createToast.error({
+                        title: 'Error',
+                        description: 'Failed to update settings. Please try again.',
+                      });
+                    }
                   }}
                   className={`${
                     settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
