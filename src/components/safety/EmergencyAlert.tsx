@@ -53,11 +53,17 @@ export function EmergencyAlert({
         updatedAt: new Date().toISOString(),
       };
 
+      const now = new Date();
       await safetyService.createSafetyAlert(userId, {
         type: 'emergency',
         description: 'User triggered emergency alert',
         priority: 'high',
         message: 'Emergency SOS Alert',
+        resolved: false,
+        dismissed: false,
+        updatedAt: now,
+        dismissedAt: null,
+        resolvedAt: null,
         location: {
           latitude: location.latitude,
           longitude: location.longitude,
