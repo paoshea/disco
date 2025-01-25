@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,6 +7,8 @@ import { useAuth } from '@/hooks/useAuth';
 import { SafetyService } from '@/services/safety/safety.service';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
+import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
+import { SafetyCenter } from '@/components/safety/SafetyCenter';
 
 interface SafetySettings {
   enabled: boolean;
@@ -174,27 +177,11 @@ export default function SafetyPage() {
             </div>
           </div>
         </div>
-      </div>
-    </div>
-  );
-}
-'use client';
 
-import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
-import { SafetyCenter } from '@/components/safety/SafetyCenter';
-
-export default function SafetyPage() {
-  return (
-    <div className="bg-white py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="lg:text-center mb-12">
-          <h2 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">Safety & Security</h2>
-          <p className="mt-4 max-w-2xl text-xl text-gray-500 lg:mx-auto">
-            Your safety is our top priority. Learn about our comprehensive safety features and guidelines.
-          </p>
+        <div className="mt-8">
+          <SafetyFeatures />
+          <SafetyCenter />
         </div>
-        <SafetyFeatures />
-        <SafetyCenter />
       </div>
     </div>
   );
