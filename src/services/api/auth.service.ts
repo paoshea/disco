@@ -108,6 +108,18 @@ class AuthService {
     }
   }
 
+  async updateProfile(updates: Partial<User>): Promise<User> {
+    try {
+      const response = await apiService.patch<{ user: User }>(
+        `${this.baseUrl}/profile`,
+        updates
+      );
+      return response.data.user;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async refreshToken(): Promise<void> {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
