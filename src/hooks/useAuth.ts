@@ -3,7 +3,6 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { apiClient } from '@/services/api/api.client';
 import { z } from 'zod';
 import type {
-  LoginResponse,
   RegisterResponse,
   UpdateProfileResponse,
 } from '@/types/auth';
@@ -114,7 +113,8 @@ export const useAuth = create<AuthState>()(
             }
           );
 
-          const result = authResponseSchema.safeParse(response.data);
+          const parsedData = response.data as LoginApiResponse;
+          const result = authResponseSchema.safeParse(parsedData);
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
             set({ error: 'Invalid response from server' });
