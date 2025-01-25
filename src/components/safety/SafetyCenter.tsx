@@ -31,19 +31,23 @@ export default function SafetyCenter({
   const { isLoading, user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState<boolean>(true);
-  const [settings, setSettings] = useState<SafetySettingsNew>(safetySettings || {
-    sosAlertEnabled: false,
-    emergencyContacts: [],
-    autoShareLocation: false,
-    meetupCheckins: false,
-    requireVerifiedMatch: false,
-  });
+  const [settings, setSettings] = useState<SafetySettingsNew>(
+    safetySettings || {
+      sosAlertEnabled: false,
+      emergencyContacts: [],
+      autoShareLocation: false,
+      meetupCheckins: false,
+      requireVerifiedMatch: false,
+    }
+  );
 
-  const handleSettingsChange = useCallback((newSettings: Partial<SafetySettingsNew>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-    onSettingsChange?.(newSettings);
-  }, [onSettingsChange]);
-
+  const handleSettingsChange = useCallback(
+    (newSettings: Partial<SafetySettingsNew>) => {
+      setSettings(prev => ({ ...prev, ...newSettings }));
+      onSettingsChange?.(newSettings);
+    },
+    [onSettingsChange]
+  );
 
   const updateSafetySettings = async (
     newSettings: Partial<SafetySettingsNew>

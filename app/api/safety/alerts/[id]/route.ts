@@ -35,27 +35,32 @@ export async function GET(
     const params = await context.params;
     const alertResponse = await safetyService.getSafetyAlert(params.id);
     const alert = alertResponse
-      ? {
+      ? ({
           ...alertResponse,
           type: alertResponse.type as SafetyAlertType,
-          status: (alertResponse.dismissed
+          status: alertResponse.dismissed
             ? 'dismissed'
             : alertResponse.resolved
-            ? 'resolved'
-            : 'active') as 'dismissed' | 'resolved' | 'active',
-          location: typeof alertResponse.location === 'object' && alertResponse.location
-            ? {
-                latitude: Number((alertResponse.location as any).latitude),
-                longitude: Number((alertResponse.location as any).longitude),
-                accuracy: (alertResponse.location as any).accuracy ? Number((alertResponse.location as any).accuracy) : undefined,
-                timestamp: new Date((alertResponse.location as any).timestamp)
-              }
-            : {
-                latitude: 0,
-                longitude: 0,
-                timestamp: new Date()
-              }
-        } as SafetyAlertNew
+              ? 'resolved'
+              : 'active',
+          location:
+            typeof alertResponse.location === 'object' && alertResponse.location
+              ? {
+                  latitude: Number((alertResponse.location as any).latitude),
+                  longitude: Number((alertResponse.location as any).longitude),
+                  accuracy: (alertResponse.location as any).accuracy
+                    ? Number((alertResponse.location as any).accuracy)
+                    : undefined,
+                  timestamp: new Date(
+                    (alertResponse.location as any).timestamp
+                  ),
+                }
+              : {
+                  latitude: 0,
+                  longitude: 0,
+                  timestamp: new Date(),
+                },
+        } as SafetyAlertNew)
       : null;
 
     if (!alert) {
