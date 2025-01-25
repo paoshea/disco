@@ -4,7 +4,7 @@ import type { User } from '@/types/user';
 import { authService } from '@/services/api/auth.service';
 import { LoginResult } from '@/hooks/useAuth';
 
-export interface RegisterData {
+export interface RegisterData extends Record<string, unknown> {
   email: string;
   password: string;
   firstName: string;
