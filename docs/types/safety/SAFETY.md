@@ -86,6 +86,15 @@ interface SafetyCheckNew {
 }
 ```
 
+#### SafetyCenterProps
+
+```typescript
+interface SafetyCenterProps {
+  safetySettings?: SafetySettingsNew; // Should be safetySettings, not settings
+  onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
+}
+```
+
 #### SafetyReport
 
 ```typescript
