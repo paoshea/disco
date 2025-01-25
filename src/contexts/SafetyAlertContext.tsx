@@ -11,7 +11,11 @@ import type { SafetyAlert } from '@prisma/client';
 interface SafetyAlertContextType {
   alerts: SafetyAlert[];
   loading: boolean;
+  isLoading: boolean;
+  error: string | null;
   createAlert: (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => Promise<void>;
+  addAlert: (alert: Partial<SafetyAlert>) => Promise<void>;
+  dismissAlert: (alertId: string) => Promise<void>;
 }
 
 const SafetyAlertContext = createContext<SafetyAlertContextType | null>(null);
@@ -23,6 +27,7 @@ export function SafetyAlertProvider({
 }) {
   const [alerts, setAlerts] = useState<SafetyAlert[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadAlerts() {
@@ -50,8 +55,38 @@ export function SafetyAlertProvider({
     setAlerts(prev => [newAlert, ...prev]);
   };
 
+  const addAlert = async (alert: Partial<SafetyAlert>) => {
+    try {
+      const newAlert = await createSafetyAlert(alert);
+      setAlerts(prev => [newAlert, ...prev]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to add alert');
+      throw err;
+    }
+  };
+
+  const dismissAlert = async (alertId: string) => {
+    try {
+      // Implement API call if needed
+      setAlerts(prev => prev.filter(alert => alert.id !== alertId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to dismiss alert');
+      throw err;
+    }
+  };
+
   return (
-    <SafetyAlertContext.Provider value={{ alerts, loading, createAlert }}>
+    <SafetyAlertContext.Provider 
+      value={{ 
+        alerts, 
+        loading, 
+        isLoading: loading, 
+        error, 
+        createAlert, 
+        addAlert, 
+        dismissAlert 
+      }}
+    >
       {children}
     </SafetyAlertContext.Provider>
   );
