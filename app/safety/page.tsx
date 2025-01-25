@@ -59,9 +59,7 @@ export default function SafetyPage() {
     if (isLoading) return;
 
     if (!user) {
-      router.push('/auth/signin').catch(error => {
-        console.error('Navigation failed:', error);
-      });
+      void router.push('/auth/signin');
       return;
     }
 
