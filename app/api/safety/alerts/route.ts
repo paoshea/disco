@@ -1,3 +1,4 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -20,7 +21,6 @@ export async function GET(): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
     const alerts = await safetyService.getActiveAlerts(userId);
-
     return NextResponse.json({ alerts });
   } catch (error) {
     console.error('Failed to fetch alerts:', error);
@@ -35,7 +35,7 @@ export async function GET(): Promise<NextResponse> {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
-    const body = (await request.json()) as unknown;
+    const body = await request.json();
     const result = SafetyAlertSchema.safeParse(body);
 
     if (!result.success) {
@@ -45,8 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const alert = await safetyService.createSafetyAlert(userId);
-
+    const alert = await safetyService.createSafetyAlert(userId, result.data);
     return NextResponse.json(alert);
   } catch (error) {
     console.error('Failed to create alert:', error);

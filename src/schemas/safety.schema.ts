@@ -4,15 +4,18 @@ export const LocationSchema = z.object({
   latitude: z.number(),
   longitude: z.number(),
   accuracy: z.number().optional(),
+  timestamp: z.date()
 });
 
 export const SafetyAlertSchema = z.object({
-  type: z.string(),
-  description: z.string(),
+  type: z.enum(['emergency', 'help', 'warning']),
+  location: LocationSchema,
   message: z.string().optional(),
-  severity: z.enum(['low', 'medium', 'high']).default('medium'),
-  location: LocationSchema.optional(),
+  contacts: z.array(z.string()).optional(),
+  description: z.string().optional()
 });
+
+export type SafetyAlertInput = z.infer<typeof SafetyAlertSchema>;
 
 export const SafetyCheckSchema = z.object({
   type: z.enum(['meetup', 'location', 'custom']),
