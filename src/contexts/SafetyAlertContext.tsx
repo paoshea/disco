@@ -57,7 +57,22 @@ export function SafetyAlertProvider({
 
   const addAlert = async (alert: Partial<SafetyAlert>) => {
     try {
-      const newAlert = await createSafetyAlert(alert);
+      const fullAlert = {
+        type: alert.type || 'warning',
+        priority: alert.priority || 'medium',
+        description: alert.description || '',
+        message: alert.message || '',
+        location: alert.location || {
+          latitude: 0,
+          longitude: 0,
+          timestamp: new Date()
+        },
+        dismissed: false,
+        resolved: false,
+        ...alert
+      };
+      
+      const newAlert = await createSafetyAlert(fullAlert);
       setAlerts(prev => [newAlert, ...prev]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to add alert');
