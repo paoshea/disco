@@ -1,0 +1,457 @@
+[Warning] 1680 console messages are not shown.
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Log] [Fast Refresh] rebuilding (eruda.js, line 2)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Log] [Fast Refresh] done in 1393ms (eruda.js, line 2)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] WebSocket connection to 'wss://3c183d47-8b4b-4298-b376-3cab1f2e5de8-00-29vdjcmvnaulg.riker.replit.dev/_next/webpack-hmr' failed: The network connection was lost.
+[Error] Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation', 'allow-presentation', 'allow-orientation-lock' are invalid sandbox flags.
+	_ (framework-ecb8c7f8912cf1ea.js:1:72796)
+	(anonymous function) (framework-ecb8c7f8912cf1ea.js:1:172021)
+	uD (framework-ecb8c7f8912cf1ea.js:1:175687)
+	uI (framework-ecb8c7f8912cf1ea.js:1:168634)
+	(anonymous function) (framework-ecb8c7f8912cf1ea.js:1:168441)
+	uM (framework-ecb8c7f8912cf1ea.js:1:168446)
+	uS (framework-ecb8c7f8912cf1ea.js:1:163487)
+	C (framework-ecb8c7f8912cf1ea.js:1:207256)
+	z (framework-ecb8c7f8912cf1ea.js:1:207786)
+[Error] Error while parsing the 'sandbox' attribute: 'allow-downloads-without-user-activation', 'allow-presentation', 'allow-orientation-lock' are invalid sandbox flags. (workspace_iframe.html, line 32)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Log] [Fast Refresh] rebuilding (eruda.js, line 2)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Log] [Fast Refresh] done in 1443ms (eruda.js, line 2)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unhandled Promise Rejection: Error: PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `unknown`).
+If this is unexpected, please open an issue: https://pris.ly/prisma-prisma...
+	get (index-browser.js:398)
+	Eval Code (prisma.ts:29)
+	eval
+	(app-pages-browser)/./src/lib/prisma.ts (page.js:267)
+	(anonymous function) (webpack.js:712)
+	__webpack_require__ (webpack.js:37)
+	Eval Code (safety.service.ts:6:89)
+	eval
+	(app-pages-browser)/./src/services/safety/safety.service.ts (page.js:311)
+	(anonymous function) (webpack.js:712)
+	__webpack_require__ (webpack.js:37)
+	Eval Code (page.tsx:10:109)
+	eval
+	(app-pages-browser)/./app/safety/page.tsx (page.js:113)
+	(anonymous function) (webpack.js:712)
+	__webpack_require__ (webpack.js:37)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Error: PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `unknown`).
+If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report
+
+The above error occurred in the <ClientPageRoot> component. It was handled by the <ErrorBoundaryHandler> error boundary.
+	(anonymous function) (eruda.js:2:135522)
+	onCaughtError (app-router.js:53)
+	logCaughtError (react-dom-client.development.js:7498)
+	runWithFiberInDEV (react-dom-client.development.js:544)
+	(anonymous function) (react-dom-client.development.js:7531)
+	callCallback (react-dom-client.development.js:10686)
+	commitCallbacks (react-dom-client.development.js:10706)
+	runWithFiberInDEV (react-dom-client.development.js:544)
+	commitClassCallbacks (react-dom-client.development.js:10925)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11496)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11424)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11535)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11535)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11424)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11424)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11424)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11424)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11419)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11601)
+	recursivelyTraverseLayoutEffects (react-dom-client.development.js:12428)
+	commitLayoutEffectOnFiber (react-dom-client.development.js:11501)
+	commitLayoutEffects (react-dom-client.development.js:12422)
+	commitRootImpl (react-dom-client.development.js:15375)
+	commitRoot (react-dom-client.development.js:15273)
+	commitRootWhenReady (react-dom-client.development.js:14584)
+	performWorkOnRoot (react-dom-client.development.js:14505)
+	performWorkOnRootViaSchedulerTask (react-dom-client.development.js:15955)
+	performWorkUntilDeadline (scheduler.development.js:44)
+[Error] Error: PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `unknown`).
+If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report
+	(anonymous function) (eruda.js:2:135522)
+	error (intercept-console-error.js:51)
+	Error.useEffect (error.tsx:19)
+	react-stack-bottom-frame (react-dom-client.development.js:23696)
+	runWithFiberInDEV (react-dom-client.development.js:544)
+	commitHookEffectListMount (react-dom-client.development.js:10764)
+	commitHookPassiveMountEffects (react-dom-client.development.js:10884)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12669)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12662)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12771)
+	recursivelyTraversePassiveMountEffects (react-dom-client.development.js:12643)
+	commitPassiveMountOnFiber (react-dom-client.development.js:12673)
+	flushPassiveEffects (react-dom-client.development.js:15483)
+	(anonymous function) (react-dom-client.development.js:15347)
+	performWorkUntilDeadline (scheduler.development.js:44)
+[Error] Error: PrismaClient is unable to run in this browser environment, or has been bundled for the browser (running in `unknown`).
+If this is unexpected, please open an issue: https://pris.ly/prisma-prisma-bug-report
+	(anonymous function) (eruda.js:2:135522)
+	error (intercept-console-error.js:51)
+	Error.useEffect (error.tsx:19)
+	react-stack-bottom-frame (react-dom-client.development.js:23696)
+	runWithFiberInDEV (react-dom-client.development.js:544)
+	commitHookEffectListMount (react-dom-client.development.js:10764)
+	commitHookPassiveMountEffects (react-dom-client.development.js:10884)
+	reconnectPassiveEffects (react-dom-client.development.js:12818)
+	doubleInvokeEffectsOnFiber (react-dom-client.development.js:15719)
+	runWithFiberInDEV (react-dom-client.development.js:544)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15679)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	recursivelyTraverseAndDoubleInvokeEffectsInDEV (react-dom-client.development.js:15686)
+	commitDoubleInvokeEffectsInDEV (react-dom-client.development.js:15728)
+	flushPassiveEffects (react-dom-client.development.js:15493)
+	(anonymous function) (react-dom-client.development.js:15347)
+	performWorkUntilDeadline (scheduler.development.js:44)
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.replit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to https://staging.firewalledreplit.com. Recipient has origin https://replit.com.
+
+[Error] Unable to post message to http://localhost:3000. Recipient has origin https://replit.com.
+
+[Error] Source Map loading errors (x2)
+[Error] Failed to load resource: the server responded with a status of 404 () (1414a9e650b25ced.css.map, line 0)
+[Error] Failed to load resource: the server responded with a status of 404 () (b06fb25ddd44a5a3.css.map, line 0)
