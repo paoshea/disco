@@ -12,6 +12,7 @@ import type { User } from '@/types/user';
 interface AuthState {
   user: User | null;
   token: string | null;
+  refreshToken: string | null; // Added refreshToken to state
   isLoading: boolean;
   error: string | null;
   login: (
@@ -81,6 +82,7 @@ const userSchema = z.object({
 const authResponseSchema = z.object({
   user: userSchema,
   token: z.string(),
+  refreshToken: z.string().optional(), // Added refreshToken to schema
   needsVerification: z.boolean().optional(),
   expiresIn: z.number().optional(),
 });
@@ -90,6 +92,7 @@ export const useAuth = create<AuthState>()(
     set => ({
       user: null,
       token: null,
+      refreshToken: null, // Initialize refreshToken
       isLoading: false,
       error: null,
       async login(email, password) {
@@ -110,14 +113,14 @@ export const useAuth = create<AuthState>()(
             return { error: 'Invalid response from server' };
           }
 
-          const { token, user, needsVerification } = result.data;
+          const { token, user, refreshToken, needsVerification } = result.data;
 
           if (needsVerification) {
             return { needsVerification: true };
           }
 
           if (user && token) {
-            set({ user, token });
+            set({ user, token, refreshToken }); // Set refreshToken
             return { success: true };
           }
 
@@ -136,7 +139,7 @@ export const useAuth = create<AuthState>()(
         try {
           await apiClient.post('/api/auth/logout');
         } finally {
-          set({ user: null, token: null });
+          set({ user: null, token: null, refreshToken: null }); // Clear refreshToken
         }
       },
       async register(data: RegisterData) {
@@ -154,12 +157,17 @@ export const useAuth = create<AuthState>()(
             return { success: false, error: 'Invalid response from server' };
           }
 
-          const { token, user, needsVerification } = result.data;
+          const { token, user, refreshToken, needsVerification } = result.data; // Extract refreshToken
 
-          set({ user, token });
+          if (token && user) { // Check if token and user exist
+            set({ user, token, refreshToken }); // Set refreshToken
+            // Set cookies for middleware -  Consider more secure cookie handling
+            document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
+          } else {
+            set({ error: 'Registration failed: Missing token or user data' });
+            return { success: false, error: 'Registration failed: Missing token or user data' };
+          }
 
-          // Set cookies for middleware
-          document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
 
           return {
             success: true,
