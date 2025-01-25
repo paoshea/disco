@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,7 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
-import SafetyCenter from '@/components/safety/SafetyCenter'; // Import as default
+import SafetyCenter from '@/components/safety/SafetyCenter';
 import type { SafetySettingsNew, EmergencyContact } from '@/types/safety';
 
 export default function SafetyPage() {

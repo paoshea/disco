@@ -7,7 +7,7 @@ import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
 import React from 'react';
-import { SafetySettingsNew } from '@/types/safety';
+import type { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
   userId: string;
@@ -259,4 +259,3 @@ interface EmergencyContact {
   email?: string;
   phoneNumber?: string;
 }
-export default SafetyPage;
