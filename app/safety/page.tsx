@@ -13,7 +13,7 @@ export default function SafetyPage() {
   const router = useRouter();
   const [settings, setSettings] = useState({
     enabled: false,
-    emergencyContacts: []
+    emergencyContacts: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -79,20 +79,22 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.enabled}
-                  onChange={async (enabled) => {
+                  onChange={async enabled => {
                     try {
                       const response = await fetch('/api/safety/settings', {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ enabled })
+                        body: JSON.stringify({ enabled }),
                       });
-                      if (!response.ok) throw new Error('Failed to update settings');
+                      if (!response.ok)
+                        throw new Error('Failed to update settings');
                       setSettings(prev => ({ ...prev, enabled }));
                     } catch (error) {
                       console.error('Failed to update safety settings:', error);
                       createToast.error({
                         title: 'Error',
-                        description: 'Failed to update settings. Please try again.',
+                        description:
+                          'Failed to update settings. Please try again.',
                       });
                     }
                   }}

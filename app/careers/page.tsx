@@ -1,4 +1,3 @@
-
 'use client';
 
 import React from 'react';
@@ -11,40 +10,43 @@ export default function CareersPage() {
       department: 'Engineering',
       location: 'Remote',
       type: 'Full-time',
-      description: 'We are looking for a Senior Frontend Engineer to join our team and help build the next generation of our platform.',
+      description:
+        'We are looking for a Senior Frontend Engineer to join our team and help build the next generation of our platform.',
       requirements: [
         'Proven experience with React and TypeScript',
         'Strong understanding of web performance optimization',
         'Experience with modern frontend tooling',
-        'Excellent communication skills'
-      ]
+        'Excellent communication skills',
+      ],
     },
     {
       title: 'Backend Developer',
       department: 'Engineering',
       location: 'Remote',
       type: 'Full-time',
-      description: 'Join our backend team to help scale our infrastructure and build new features.',
+      description:
+        'Join our backend team to help scale our infrastructure and build new features.',
       requirements: [
         'Experience with Node.js and TypeScript',
         'Knowledge of database design and optimization',
         'Understanding of microservices architecture',
-        'Problem-solving mindset'
-      ]
+        'Problem-solving mindset',
+      ],
     },
     {
       title: 'Product Designer',
       department: 'Design',
       location: 'Remote',
       type: 'Full-time',
-      description: 'Help shape the future of our product through thoughtful and innovative design.',
+      description:
+        'Help shape the future of our product through thoughtful and innovative design.',
       requirements: [
         'Strong portfolio demonstrating UX/UI skills',
         'Experience with design systems',
         'User-centered design approach',
-        'Collaboration skills'
-      ]
-    }
+        'Collaboration skills',
+      ],
+    },
   ];
 
   return (
@@ -72,7 +74,8 @@ export default function CareersPage() {
                       {position.title}
                     </h3>
                     <p className="mt-1 max-w-2xl text-sm text-gray-500">
-                      {position.department} · {position.location} · {position.type}
+                      {position.department} · {position.location} ·{' '}
+                      {position.type}
                     </p>
                   </div>
                   <div className="border-t border-gray-200 px-4 py-5 sm:px-6">

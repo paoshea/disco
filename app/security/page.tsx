@@ -14,15 +14,16 @@ export default function SecurityPage() {
               Safety &amp; Security
             </h1>
             <p className="mt-4 text-xl text-gray-600">
-              Your safety is our top priority. Learn about our security measures.
+              Your safety is our top priority. Learn about our security
+              measures.
             </p>
           </div>
           <div className="mt-12 prose prose-blue mx-auto">
             <h2>Our Commitment to Safety</h2>
             <p>
-              At Disco, we prioritize the safety and security of our users. Our comprehensive
-              safety features include real-time location sharing, emergency contacts,
-              and 24/7 support.
+              At Disco, we prioritize the safety and security of our users. Our
+              comprehensive safety features include real-time location sharing,
+              emergency contacts, and 24/7 support.
             </p>
           </div>
         </div>
