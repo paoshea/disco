@@ -208,7 +208,6 @@ export default function SafetyPage() {
                 onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />
               <SafetyCenter
-                userId={user.id}
                 safetySettings={settings}
                 onSettingsChange={createAsyncCallback(updateSafetySettings)}
               />

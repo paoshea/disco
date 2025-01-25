@@ -305,7 +305,6 @@ function SafetyPage() {
             onSettingsChange={updateSafetySettings}
           />
           <SafetyCenter
-            userId={user?.id || ''}
             safetySettings={settings}
             onSettingsChange={updateSafetySettings}
           />
