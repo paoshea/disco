@@ -1,3 +1,4 @@
+
 import { User } from '@/types/user';
 import { apiService } from './api';
 import type { AxiosError } from 'axios';
@@ -19,6 +20,10 @@ interface AuthResponse {
   token: string;
   refreshToken?: string;
   user: User;
+}
+
+interface ApiResponse<T> {
+  data: T;
 }
 
 class AuthService {
@@ -52,11 +57,11 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<{ data: AuthResponse }>(`${this.baseUrl}/login`, {
-        email,
-        password,
-      });
-      const { data: { data: authData } } = response;
+      const response = await apiService.post<ApiResponse<AuthResponse>>(
+        `${this.baseUrl}/login`,
+        { email, password }
+      );
+      const authData = response.data.data;
       this.setTokens(authData.token, authData.refreshToken);
       return authData;
     } catch (error) {
@@ -66,13 +71,13 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<AuthResponse>(
+      const response = await apiService.post<ApiResponse<AuthResponse>>(
         `${this.baseUrl}/register`,
         data
       );
-      const { data } = response.data;
-      this.setTokens(data.token, data.refreshToken);
-      return data;
+      const authData = response.data.data;
+      this.setTokens(authData.token, authData.refreshToken);
+      return authData;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -80,7 +85,7 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiService.get<{ data: { user: User } }>(
+      const response = await apiService.get<ApiResponse<{ user: User }>>(
         `${this.baseUrl}/me`
       );
       return response.data.data.user;
@@ -110,7 +115,7 @@ class AuthService {
 
   async updateProfile(updates: Partial<User>): Promise<User> {
     try {
-      const response = await apiService.patch<{ data: { user: User } }>(
+      const response = await apiService.patch<ApiResponse<{ user: User }>>(
         `${this.baseUrl}/profile`,
         updates
       );
@@ -125,13 +130,13 @@ class AuthService {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No refresh token found');
 
-      const response = await apiService.post<{ data: { token: string; refreshToken: string } }>(
+      const response = await apiService.post<ApiResponse<{ token: string; refreshToken: string }>>(
         `${this.baseUrl}/refresh`,
         { refreshToken }
       );
-
-      const { data } = response.data;
-      this.setTokens(data.token, data.refreshToken);
+      
+      const { token, refreshToken: newRefreshToken } = response.data.data;
+      this.setTokens(token, newRefreshToken);
     } catch (error) {
       this.clearTokens();
       throw this.handleError(error);
