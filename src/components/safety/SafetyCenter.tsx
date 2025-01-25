@@ -15,11 +15,11 @@ interface SafetyCenterProps {
 }
 
 // Helper function to create async callbacks
-const createAsyncCallback = <T extends (...args: unknown[]) => Promise<void>>(
+const createAsyncCallback = <T extends (arg: any) => Promise<void>>(
   func: T
-) => {
-  return (...args: Parameters<T>) => {
-    void func(...args);
+): (arg: Parameters<T>[0]) => void => {
+  return (arg: Parameters<T>[0]) => {
+    void func(arg);
   };
 };
 
