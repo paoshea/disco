@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { createAsyncCallback } from '@/lib/utils/event-handlers';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { createToast } from '@/hooks/use-toast';
@@ -119,7 +120,7 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.sosAlertEnabled}
-                  onChange={createAsyncCallback(enabled =>
+                  onChange={createAsyncCallback((enabled: boolean) =>
                     updateSafetySettings({ sosAlertEnabled: enabled }).catch(
                       error => {
                         console.error(
