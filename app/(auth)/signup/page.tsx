@@ -63,7 +63,7 @@ export default function SignupPage() {
       const result = signUp(registerData);
       console.log('Signup result:', result);
 
-      if (result && typeof result === 'object' && 'success' in result) {
+      if (await Promise.resolve(result) && typeof result === 'object' && 'success' in result) {
         console.log('Signup successful, preparing to redirect...');
         toast({
           title: 'Success!',
@@ -76,7 +76,7 @@ export default function SignupPage() {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         // Redirect using router.push for more reliable navigation
-        await router.push('/dashboard');
+        router.push('/dashboard');
         router.refresh(); // Refresh to ensure new auth state is reflected
       } else {
         console.log('Signup failed:', result.error);
