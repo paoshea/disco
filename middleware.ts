@@ -47,9 +47,9 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Get token from Authorization header
+  // Get token from Authorization header or cookie
   const authHeader = request.headers.get('Authorization');
-  const token = authHeader?.replace('Bearer ', '');
+  const token = authHeader?.replace('Bearer ', '') || request.cookies.get('accessToken')?.value;
 
   // No token found
   if (!token) {

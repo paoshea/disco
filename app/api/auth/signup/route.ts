@@ -78,6 +78,9 @@ export async function POST(request: NextRequest): Promise<Response> {
       console.log('User created but verification email failed to send');
     }
 
+    // Ensure database connection is initialized
+    await prisma.$connect();
+
     // Generate tokens for automatic login
     const { token, refreshToken, accessTokenExpiresIn } = await generateTokens({
       id: user.id,
