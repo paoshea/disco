@@ -1,0 +1,28 @@
+
+app/api/safety/alerts/[id]/route.ts:38:9 - error TS2352: Conversion of type '{ type: SafetyAlertType; status: "dismissed" | "resolved" | "active"; id: string; createdAt: Date; updatedAt: Date; userId: string; priority: string; message: string | null; ... 5 more ...; resolvedAt: Date | null; }' to type 'SafetyAlertNew' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'location' are incompatible.
+    Type 'JsonValue' is not comparable to type '{ latitude: number; longitude: number; accuracy?: number | undefined; timestamp: Date; }'.
+
+ 38       ? {
+            ~
+ 39           ...alertResponse,
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+... 
+ 45             : 'active') as 'dismissed' | 'resolved' | 'active',
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 46         } as SafetyAlertNew
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:25:38 - error TS2352: Conversion of type '{ type: SafetyAlertType; status: "dismissed" | "resolved" | "active"; id: string; createdAt: Date; updatedAt: Date; userId: string; priority: string; message: string | null; ... 5 more ...; resolvedAt: Date | null; }' to type 'SafetyAlertNew' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Types of property 'location' are incompatible.
+    Type 'JsonValue' is not comparable to type '{ latitude: number; longitude: number; accuracy?: number | undefined; timestamp: Date; }'.
+      Type 'JsonValue[]' is missing the following properties from type '{ latitude: number; longitude: number; accuracy?: number | undefined; timestamp: Date; }': latitude, longitude, timestamp
+
+ 25       ? alertsResponse.map(alert => ({
+                                         ~
+ 26           ...alert,
+    ~~~~~~~~~~~~~~~~~~~
+... 
+ 28           status: (alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active') as 'dismissed' | 'resolved' | 'active'
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 29         } as SafetyAlertNew))
