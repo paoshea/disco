@@ -2,7 +2,8 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
-import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
+import { SafetyAlert } from '@prisma/client';
+import type { SafetyAlertType } from '@/types/safety';
 import { z } from 'zod';
 
 const ActionSchema = z.object({
@@ -26,10 +27,20 @@ async function validateRequest() {
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
+type SafetyAlertResponse = SafetyAlert & {
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp: Date;
+  } | null;
+};
+
+
 export async function GET(
   request: NextRequest,
   context: Context
-): Promise<NextResponse<SafetyAlertNew | { error: string }>> {
+): Promise<NextResponse<SafetyAlertResponse | { error: string }>> {
   try {
     const userId = await validateRequest();
     const params = await context.params;
@@ -54,13 +65,9 @@ export async function GET(
               };
               return locData;
             }
-            return {
-              latitude: 0,
-              longitude: 0,
-              timestamp: new Date()
-            };
+            return null;
           })()
-        } as SafetyAlertNew)
+        } as SafetyAlertResponse)
       : null;
 
     if (!alert) {
