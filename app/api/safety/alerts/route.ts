@@ -24,7 +24,7 @@ export async function GET(): Promise<
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);
     const alerts = Array.isArray(alertsResponse)
-      ? alertsResponse.map(alert => ({
+      ? alertsResponse.map<SafetyAlertNew>(alert => ({
               ...alert,
               type: alert.type as SafetyAlertType,
               status: alert.dismissed
@@ -50,8 +50,7 @@ export async function GET(): Promise<
               createdAt: new Date(alert.createdAt).toISOString(),
               updatedAt: new Date(alert.updatedAt).toISOString(),
               resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : null
-        })) as SafetyAlertNew[]
-        )
+        }))
       : [];
     return NextResponse.json({ alerts });
   } catch (error: unknown) {
