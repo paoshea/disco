@@ -1,27 +1,34 @@
+
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const portSchema = z.string().transform(val => {
-  const parsed = parseInt(val, 10);
-  return isNaN(parsed) ? 3001 : parsed;
-});
+const portSchema = z.preprocess(
+  (val) => {
+    const processed = z.string().safeParse(val);
+    return processed.success ? parseInt(processed.data, 10) : 3001;
+  },
+  z.number().min(1).max(65535)
+);
 
 export const env = createEnv({
   server: {
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PORT: portSchema,
+    REDIS_HOST: z.string().default('0.0.0.0'),
+    REDIS_PORT: portSchema.default(6379),
+    REDIS_PASSWORD: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_WEBSOCKET_URL: z
-      .string()
-      .url()
-      .default(`ws://0.0.0.0:${process.env.PORT || '3001'}/ws`),
+    NEXT_PUBLIC_WEBSOCKET_URL: z.string().url().default(`ws://0.0.0.0:${process.env.PORT || '3001'}/ws`),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     PORT: process.env.PORT,
+    REDIS_HOST: process.env.REDIS_HOST,
+    REDIS_PORT: process.env.REDIS_PORT,
+    REDIS_PASSWORD: process.env.REDIS_PASSWORD,
     NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
     NEXT_PUBLIC_WEBSOCKET_URL: process.env.NEXT_PUBLIC_WEBSOCKET_URL,
-  },
+  }
 });
