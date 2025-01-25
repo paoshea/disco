@@ -23,9 +23,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <Providers>
           <Suspense fallback={<LoadingSpinner className="w-8 h-8" />}>
-            <Layout>
-              {children}
-            </Layout>
+            {children}
           </Suspense>
         </Providers>
       </body>
