@@ -18,9 +18,11 @@ const redisEnv = RedisEnvSchema.parse({
 });
 
 // Prevent multiple instances of Redis client
-const globalForRedis = globalThis as unknown as {
-  redis: Redis | undefined;
-};
+interface GlobalRedis {
+  redis?: Redis;
+}
+
+const globalForRedis = globalThis as unknown as GlobalRedis;
 
 // Redis configuration with type safety
 const redisConfig: RedisOptions = {

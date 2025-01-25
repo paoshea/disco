@@ -28,7 +28,7 @@ export function SafetyAlertProvider({
   children: React.ReactNode;
 }) {
   const [alerts, setAlerts] = useState<SafetyAlertNew[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {

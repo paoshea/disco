@@ -41,6 +41,7 @@ interface AuthState {
   ) => Promise<{ success: boolean; error?: string }>;
   sendVerificationEmail: () => Promise<{ success: boolean; error?: string }>;
   set: (state: Partial<AuthState>) => void;
+  refreshTokens: () => Promise<boolean>;
 }
 
 export interface LoginResult {
@@ -98,7 +99,14 @@ export const useAuth = create<AuthState>()(
       async login(email, password) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post<LoginResponse>(
+          interface LoginApiResponse {
+            token: string;
+            user: User;
+            refreshToken?: string;
+            needsVerification?: boolean;
+          }
+
+          const response = await apiClient.post<LoginApiResponse>(
             '/api/auth/login',
             {
               email,
