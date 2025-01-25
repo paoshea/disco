@@ -9,6 +9,7 @@ This guide covers common issues encountered during development and their solutio
 - [Redis Issues](#redis-issues)
 - [Route and API Issues](#route-and-api-issues)
 - [Page Component Issues](#page-component-issues)
+- [Deployment Issues](#deployment-issues)
 
 ## TypeScript Issues
 
@@ -129,86 +130,32 @@ session({ session, token }) {
 
 ## Redis Issues
 
-### 1. Authentication Errors
+### 1. Connection Errors
 
 **Issue:**
-Redis connection may show `NOAUTH Authentication required` errors when:
-- Redis is running without authentication but code expects a password
-- Password is set but empty in environment variables
-- Redis is configured with authentication but no password is provided
+Redis connection may show `NOAUTH Authentication required` or connection refused errors.
 
 **Solution:**
 
 1. Environment Configuration:
 ```bash
 # Redis Configuration
-LOCATION_REDIS_URL=localhost:6379
-LOCATION_REDIS_PASSWORD=  # Empty for non-auth mode
+REDIS_URL=redis://0.0.0.0:6379
+REDIS_PASSWORD=  # Empty for non-auth mode
 ```
 
 2. Redis Client Configuration:
 ```typescript
 const redisConfig = {
-  host: env.REDIS_HOST || 'localhost',
-  port: parseInt(env.REDIS_PORT || '6379'),
-  ...(env.REDIS_PASSWORD && env.REDIS_PASSWORD.trim() !== ''
-    ? { password: env.REDIS_PASSWORD }
+  host: '0.0.0.0',
+  port: parseInt(process.env.REDIS_PORT || '6379'),
+  ...(process.env.REDIS_PASSWORD && process.env.REDIS_PASSWORD.trim() !== ''
+    ? { password: process.env.REDIS_PASSWORD }
     : {}),
 };
 ```
 
-3. Error Handling:
-```typescript
-redis.on('error', (error: Error) => {
-  if (error.message.includes('NOAUTH')) {
-    console.debug('Redis running in non-auth mode - this is normal if no password is set');
-  } else {
-    console.error('Redis connection error:', error);
-  }
-});
-```
-
-### 2. Development vs Production Configuration
-
-**Development:**
-- Can run without authentication
-- Set `LOCATION_REDIS_PASSWORD=` (empty) in `.env`
-- Errors will be logged as debug messages
-
-**Production:**
-- Should always use authentication
-- Set strong password in environment variables
-- Configure Redis server with authentication
-- Use SSL/TLS if Redis is on a different host
-
-### 3. Authentication Errors
-
-**Error:**
-
-```
-NOAUTH Authentication required
-```
-
-**Solution:**
-
-- Add proper Redis configuration
-- Handle null Redis client gracefully
-- Add error handling for Redis operations
-
-Example:
-
-```typescript
-const redisConfig = {
-  host: process.env.REDIS_HOST,
-  port: parseInt(process.env.REDIS_PORT || '6379'),
-  username: process.env.REDIS_USERNAME || 'default',
-  password: process.env.REDIS_PASSWORD,
-  maxRetriesPerRequest: 3,
-  enableReadyCheck: false,
-};
-```
-
-### 4. Redis Client Handling
+### 2. Redis Client Handling
 
 **Error:**
 
@@ -400,6 +347,63 @@ Pages with authentication may fail during static generation due to missing sessi
 - Use dynamic imports for authenticated content when necessary
 - Implement proper client-side navigation
 
+
+## Deployment Issues
+
+### 1. Build Errors
+
+**Error:**
+```
+Error: Cannot find module '@prisma/client'
+```
+
+**Solution:**
+- Run Prisma generate before build
+- Ensure Prisma client is properly installed
+- Check database URL configuration
+
+Example:
+```typescript
+// Update DATABASE_URL in .env
+DATABASE_URL="postgresql://user:password@0.0.0.0:5432/disco"
+```
+
+### 2. WebSocket Connection Issues
+
+**Error:**
+```
+WebSocket connection failed
+```
+
+**Solution:**
+- Update WebSocket URL to use correct hostname
+- Ensure proper SSL configuration
+- Add error handling and reconnection logic
+
+Example:
+```typescript
+const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'wss://0.0.0.0:4000';
+```
+
+### 3. Environment Variables
+
+**Error:**
+```
+Error: Missing required environment variables
+```
+
+**Solution:**
+- Verify all required environment variables are set
+- Use proper deployment secrets management
+- Add validation for required variables
+
+Example:
+```typescript
+if (!process.env.NEXTAUTH_URL || !process.env.DATABASE_URL) {
+  throw new Error('Missing required environment variables');
+}
+```
+
 ## Environment Setup
 
 ### Required Environment Variables
@@ -464,3 +468,26 @@ Remember to always:
    - Ensure all required environment variables are set
    - Monitor build logs for authentication and connection errors
    - Use appropriate development/production configurations
+
+## Development Commands
+
+```bash
+# Generate Prisma client
+npx prisma generate
+
+# Build application
+npm run build
+
+# Start production server
+npm start
+```
+
+Remember to:
+
+1. Generate Prisma client before deployment
+2. Set all required environment variables
+3. Configure proper hostnames and ports
+4. Enable proper error logging
+5. Test WebSocket connections
+6. Verify database connectivity
+7. Test authentication flows
