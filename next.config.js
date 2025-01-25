@@ -39,6 +39,16 @@ const nextConfig = {
 
     return config;
   },
+  async headers() {
+    return [
+      {
+        source: '/:path*', // This applies to all routes.  Consider more specific routes.
+        headers: [
+          { key: 'Set-Cookie', value: 'SameSite=None; Secure' }, //Consider more specific cookies.
+        ],
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;
