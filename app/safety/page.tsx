@@ -141,10 +141,18 @@ export default function SafetyPage() {
               </h4>
               <div className="mt-4 space-y-4">
                 {settings.emergencyContacts.map((contact) => {
-                  const contactData: EmergencyContact =
-                    typeof contact === 'string'
-                      ? { id: contact, email: '', phoneNumber: '' }
-                      : contact;
+                  const contactData: EmergencyContact = typeof contact === 'string'
+                    ? {
+                        id: contact,
+                        userId: user?.id || '',
+                        firstName: '',
+                        lastName: '',
+                        email: '',
+                        phoneNumber: '',
+                        createdAt: new Date().toISOString(),
+                        updatedAt: new Date().toISOString()
+                      }
+                    : contact;
 
                   return (
                     <div

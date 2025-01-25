@@ -6,8 +6,22 @@ import { useAuth } from '@/hooks/useAuth';
 import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
-import { SafetyCenter } from '@/components/safety/SafetyCenter';
-import type { SafetySettingsNew, EmergencyContact } from '@/types/safety';
+import React from 'react';
+import { SafetySettingsNew } from '@/types/safety';
+
+interface SafetyCenterProps {
+  userId: string;
+  onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
+}
+
+export default function SafetyCenter({ userId, onSettingsChange }: SafetyCenterProps) {
+  // Add implementation here
+  return (
+    <div>
+      {/* Add safety center UI implementation */}
+    </div>
+  );
+}
 
 export default function SafetyPage() {
   const { isLoading, user } = useAuth();

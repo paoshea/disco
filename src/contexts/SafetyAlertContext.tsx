@@ -57,26 +57,30 @@ export function SafetyAlertProvider({
 
   const addAlert = async (alert: Partial<SafetyAlert>) => {
     try {
+      const locationData = alert.location && typeof alert.location === 'object' 
+        ? {
+            latitude: Number((alert.location as any).latitude) || 0,
+            longitude: Number((alert.location as any).longitude) || 0,
+            accuracy: Number((alert.location as any).accuracy) || null,
+            timestamp: new Date()
+          }
+        : {
+            latitude: 0,
+            longitude: 0,
+            accuracy: null,
+            timestamp: new Date()
+          };
+
       const fullAlert = {
         type: alert.type || 'warning',
         priority: alert.priority || 'medium',
         description: alert.description || '',
         message: alert.message || '',
-        location: alert.location ? {
-          latitude: alert.location.latitude,
-          longitude: alert.location.longitude,
-          accuracy: alert.location.accuracy,
-          timestamp: alert.location.timestamp instanceof Date 
-            ? alert.location.timestamp.toISOString()
-            : new Date().toISOString()
-        } : {
-          latitude: 0,
-          longitude: 0,
-          accuracy: null,
-          timestamp: new Date().toISOString()
-        },
+        location: locationData,
+        status: 'active' as const,
         dismissed: false,
         resolved: false,
+        updatedAt: new Date(),
         ...alert
       };
 
