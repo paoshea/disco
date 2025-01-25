@@ -66,12 +66,14 @@ export default function SignupPage() {
       if (!result) {
         throw new Error('No response from signup service');
       }
-      
+
       if (result.success) {
         console.log('Signup successful, preparing to redirect...');
-        
+
         // Show success toast
-        toast.success('Account created successfully! Check your email for verification instructions.');
+        toast.success(
+          'Account created successfully! Check your email for verification instructions.'
+        );
 
         // Ensure state is updated before redirect
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -82,8 +84,10 @@ export default function SignupPage() {
       } else {
         console.log('Signup failed:', result.error);
         // Show the specific error message
-        toast.error(`Registration failed: ${result.error || 'Please try again.'}`);
-        
+        toast.error(
+          `Registration failed: ${result.error || 'Please try again.'}`
+        );
+
         // Reset the form on conflict
         if (result.error?.includes('already exists')) {
           form.reset();

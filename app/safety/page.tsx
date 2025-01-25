@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -21,7 +20,9 @@ export default function SafetyPage() {
     requireVerifiedMatch: false,
   });
 
-  const updateSafetySettings = async (newSettings: Partial<SafetySettingsNew>) => {
+  const updateSafetySettings = async (
+    newSettings: Partial<SafetySettingsNew>
+  ) => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -33,7 +34,7 @@ export default function SafetyPage() {
         throw new Error('Failed to update settings');
       }
 
-      setSettings((prev) => ({
+      setSettings(prev => ({
         ...prev,
         ...newSettings,
       }));
@@ -115,7 +116,7 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.sosAlertEnabled}
-                  onChange={(enabled) => {
+                  onChange={enabled => {
                     void updateSafetySettings({ sosAlertEnabled: enabled });
                   }}
                   className={`${
@@ -125,7 +126,9 @@ export default function SafetyPage() {
                   <span className="sr-only">Enable safety features</span>
                   <span
                     className={`${
-                      settings.sosAlertEnabled ? 'translate-x-6' : 'translate-x-1'
+                      settings.sosAlertEnabled
+                        ? 'translate-x-6'
+                        : 'translate-x-1'
                     } inline-block h-4 w-4 transform rounded-full bg-white transition`}
                   />
                 </Switch>
@@ -141,19 +144,20 @@ export default function SafetyPage() {
                 Emergency Contacts
               </h4>
               <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map((contact) => {
-                  const contactData: EmergencyContact = typeof contact === 'string'
-                    ? {
-                        id: contact,
-                        userId: user?.id || '',
-                        firstName: '',
-                        lastName: '',
-                        email: '',
-                        phoneNumber: '',
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString()
-                      }
-                    : contact;
+                {settings.emergencyContacts.map(contact => {
+                  const contactData: EmergencyContact =
+                    typeof contact === 'string'
+                      ? {
+                          id: contact,
+                          userId: user?.id || '',
+                          firstName: '',
+                          lastName: '',
+                          email: '',
+                          phoneNumber: '',
+                          createdAt: new Date().toISOString(),
+                          updatedAt: new Date().toISOString(),
+                        }
+                      : contact;
 
                   return (
                     <div
@@ -164,8 +168,12 @@ export default function SafetyPage() {
                         <p className="text-sm font-medium text-gray-900">
                           {contactData.id || 'Unknown Contact'}
                         </p>
-                        <p className="text-sm text-gray-500">{contactData.email}</p>
-                        <p className="text-sm text-gray-500">{contactData.phoneNumber}</p>
+                        <p className="text-sm text-gray-500">
+                          {contactData.email}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {contactData.phoneNumber}
+                        </p>
                       </div>
                     </div>
                   );

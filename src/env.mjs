@@ -1,16 +1,19 @@
-import { createEnv } from "@t3-oss/env-nextjs";
-import { z } from "zod";
+import { createEnv } from '@t3-oss/env-nextjs';
+import { z } from 'zod';
 
 const PORT = process.env.PORT || 3001;
 
 export const env = createEnv({
   server: {
-    NODE_ENV: z.enum(["development", "test", "production"]),
-    PORT: z.string().default("3001"),
+    NODE_ENV: z.enum(['development', 'test', 'production']),
+    PORT: z.string().default('3001'),
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_WEBSOCKET_URL: z.string().url().default(`ws://0.0.0.0:${PORT}/ws`),
+    NEXT_PUBLIC_WEBSOCKET_URL: z
+      .string()
+      .url()
+      .default(`ws://0.0.0.0:${PORT}/ws`),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
