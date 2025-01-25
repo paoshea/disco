@@ -260,11 +260,13 @@ function SafetyPage() {
         </div>
 
         <div className="mt-8">
-          <SafetyFeatures
-            user={user}
-            settings={settings}
-            onSettingsChange={createAsyncCallback(updateSafetySettings)}
-          />
+          {user && (
+            <SafetyFeatures
+              user={user}
+              settings={settings}
+              onSettingsChange={createAsyncCallback(updateSafetySettings)}
+            />
+          )}
           <SafetyCenter
             safetySettings={settings}
             onSettingsChange={createAsyncCallback(updateSafetySettings)}
