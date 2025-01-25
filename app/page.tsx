@@ -78,7 +78,7 @@ export default function LandingPage() {
               ) : (
                 <>
                   <Link
-                    href="/signin"
+                    href="/login"
                     className="text-gray-600 hover:text-gray-900 text-sm font-medium"
                   >
                     Sign in
