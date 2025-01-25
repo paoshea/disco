@@ -60,7 +60,7 @@ export default function SignupPage() {
       };
 
       console.log('Starting signup...');
-      const result = await signUp(registerData);
+      const result = await Promise.resolve(signUp(registerData));
       console.log('Signup result:', result);
 
       if (result.success) {
