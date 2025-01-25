@@ -1,4 +1,4 @@
-import Redis from 'ioredis';
+import Redis, { RedisOptions } from 'ioredis';
 import { env } from '@/env.mjs';
 
 // Validate Redis environment variables
@@ -12,7 +12,7 @@ const globalForRedis = globalThis as unknown as {
 };
 
 // Redis configuration with type safety
-const redisConfig: Redis.RedisOptions = {
+const redisConfig: RedisOptions = {
   host: redisHost,
   port: redisPort,
   retryStrategy: (times: number) => {
