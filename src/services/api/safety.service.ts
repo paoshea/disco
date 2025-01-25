@@ -91,9 +91,39 @@ export const safetyService = {
   async createSafetyAlert(
     data: Omit<SafetyAlert, 'id' | 'createdAt'>
   ): Promise<SafetyAlertNew> {
-    const alert = await prisma.safetyAlert.create({ data });
+    // Convert location to Prisma-compatible JSON format
+    const locationJson = data.location
+      ? {
+          type: 'Point',
+          coordinates: [data.location.latitude, data.location.longitude],
+          accuracy: data.location.accuracy,
+          timestamp: new Date().toISOString(),
+        }
+      : null;
 
-    const locationData: SafetyLocationData | null = null; //Simplified
+    const alert = await prisma.safetyAlert.create({
+      data: {
+        ...data,
+        location: locationJson ? (locationJson as Prisma.InputJsonValue) : Prisma.JsonNull,
+      },
+    });
+
+    // Convert stored JSON location back to SafetyLocationData type
+    const storedLocation = alert.location as {
+      type: string;
+      coordinates: number[];
+      accuracy?: number;
+      timestamp: string;
+    } | null;
+
+    const locationData: SafetyLocationData | null = storedLocation
+      ? {
+          latitude: storedLocation.coordinates[0],
+          longitude: storedLocation.coordinates[1],
+          accuracy: storedLocation.accuracy,
+          timestamp: new Date(storedLocation.timestamp),
+        }
+      : null;
 
     return {
       id: alert.id,
