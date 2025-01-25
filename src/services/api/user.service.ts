@@ -1,4 +1,4 @@
-import type { AxiosResponse } from 'axios/dist/node/axios.cjs';
+import type { AxiosResponse } from 'axios';
 import { User, UserSettings, UserPreferences } from '@/types/user';
 import { apiClient } from './api.client';
 
