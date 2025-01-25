@@ -1,0 +1,67 @@
+
+
+
+./app/(auth)/signup/page.tsx
+79:9  Error: Unexpected `await` of a non-Promise (non-"Thenable") value.  @typescript-eslint/await-thenable
+86:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+90:13  Warning: Unsafe member access .includes on an `any` value.  @typescript-eslint/no-unsafe-member-access
+90:13  Warning: Unsafe call of an `any` typed value.  @typescript-eslint/no-unsafe-call
+227:2  Error: Insert `⏎`  prettier/prettier
+
+./app/safety/page.tsx
+33:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+76:74  Error: Insert `·These`  prettier/prettier
+77:17  Error: Delete `These·`  prettier/prettier
+83:28  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+84:29  Error: Replace `(enabled)` with `enabled`  prettier/prettier
+95:37  Error: Replace `(prev)` with `prev`  prettier/prettier
+103:39  Error: Insert `⏎···························`  prettier/prettier
+131:18  Warning: Unsafe member access .map on an `any` value.  @typescript-eslint/no-unsafe-member-access
+131:18  Warning: Unsafe call of an `any` typed value.  @typescript-eslint/no-unsafe-call
+131:49  Error: Insert `⏎··················`  prettier/prettier
+132:1  Error: Insert `··`  prettier/prettier
+133:19  Error: Insert `··`  prettier/prettier
+134:1  Error: Insert `··`  prettier/prettier
+135:1  Error: Insert `··`  prettier/prettier
+136:19  Error: Insert `··`  prettier/prettier
+137:17  Error: Insert `··`  prettier/prettier
+138:1  Error: Replace `··················` with `····················`  prettier/prettier
+139:1  Error: Insert `··`  prettier/prettier
+140:1  Error: Replace `····················` with `······················`  prettier/prettier
+141:19  Error: Insert `··`  prettier/prettier
+142:1  Error: Insert `··`  prettier/prettier
+143:23  Error: Insert `··`  prettier/prettier
+144:1  Error: Insert `··`  prettier/prettier
+145:23  Error: Insert `··`  prettier/prettier
+146:1  Error: Insert `··`  prettier/prettier
+147:23  Error: Insert `··`  prettier/prettier
+148:21  Error: Insert `··`  prettier/prettier
+149:1  Error: Replace `····················` with `······················`  prettier/prettier
+150:1  Error: Insert `··`  prettier/prettier
+151:1  Error: Insert `··`  prettier/prettier
+152:27  Error: Insert `··`  prettier/prettier
+153:1  Error: Replace `····························` with `······························`  prettier/prettier
+154:1  Error: Insert `··`  prettier/prettier
+155:25  Error: Insert `··`  prettier/prettier
+156:23  Error: Insert `··`  prettier/prettier
+157:1  Error: Insert `··`  prettier/prettier
+158:23  Error: Insert `··`  prettier/prettier
+159:1  Error: Insert `··`  prettier/prettier
+160:19  Error: Insert `··`  prettier/prettier
+161:1  Error: Replace `················)` with `··················)⏎················`  prettier/prettier
+162:18  Warning: Unsafe member access .length on an `any` value.  @typescript-eslint/no-unsafe-member-access
+179:2  Error: Insert `⏎`  prettier/prettier
+
+./src/contexts/SafetyAlertContext.tsx
+32:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+37:23  Error: Replace `'Failed·to·load·safety·alerts:',·error·instanceof·Error·?·error.message·:·'Unknown·error'` with `⏎··········'Failed·to·load·safety·alerts:',⏎··········error·instanceof·Error·?·error.message·:·'Unknown·error'⏎········`  prettier/prettier
+46:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+47:23  Warning: Unsafe return of an `any[]` typed value.  @typescript-eslint/no-unsafe-return
+65:2  Error: Insert `⏎`  prettier/prettier
+
+./src/contexts/WebSocketContext.tsx
+224:23  Error: Insert `⏎············`  prettier/prettier
+225:13  Error: Insert `··`  prettier/prettier
+226:1  Error: Replace `············` with `··············`  prettier/prettier
+227:1  Error: Insert `··`  prettier/prettier
+228:11  Error: Replace `})` with `··})⏎··········`  prettier/prettier
