@@ -210,9 +210,11 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       if (!socket || socket.readyState !== WebSocket.OPEN) {
         throw new Error('WebSocket is not connected');
       }
-      if (!message.payload) {
-        message.payload = {};
-      }
+      const normalizedMessage = {
+        ...message,
+        payload: message.payload || {},
+        timestamp: message.timestamp || Date.now()
+      };
       await new Promise<void>((resolve, reject) => {
         try {
           socket.send(JSON.stringify(message));

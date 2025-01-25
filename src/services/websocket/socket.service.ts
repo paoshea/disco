@@ -219,6 +219,7 @@ class SocketService {
     const message: WebSocketMessage<WebSocketEvents[K]> = {
       type: event,
       data: data || {},
+      payload: {},
       timestamp: Date.now(),
     };
     this.socket.emit('message', message);
