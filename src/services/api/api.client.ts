@@ -1,12 +1,11 @@
 
 import axios from 'axios';
-import type { 
-  AxiosInstance, 
-  AxiosError, 
-  AxiosResponse, 
-  InternalAxiosRequestConfig 
-} from 'axios';
-import type { AuthResponse } from '@/types/auth';
+import type {
+  AxiosInstance,
+  AxiosError,
+  AxiosResponse,
+  InternalAxiosRequestConfig
+} from 'axios/dist/node/axios.cjs';
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
@@ -60,9 +59,10 @@ apiClient.interceptors.response.use(
         localStorage.setItem('token', token);
 
         apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
-        if (originalRequest.headers) {
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-        }
+        originalRequest.headers = {
+          ...originalRequest.headers,
+          Authorization: `Bearer ${token}`
+        };
 
         return apiClient(originalRequest);
       } catch (refreshError) {
