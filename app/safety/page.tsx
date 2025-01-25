@@ -29,7 +29,16 @@ export default function SafetyPage() {
       try {
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
-        const data = await response.json() as { enabled: boolean; emergencyContacts: Array<{ id: string; name: string; email: string; phone: string; priority: string }> };
+        const data = (await response.json()) as {
+          enabled: boolean;
+          emergencyContacts: Array<{
+            id: string;
+            name: string;
+            email: string;
+            phone: string;
+            priority: string;
+          }>;
+        };
         setSettings(data);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
