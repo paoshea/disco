@@ -71,10 +71,7 @@ export default function SignupPage() {
         console.log('Signup successful, preparing to redirect...');
         
         // Show success toast
-        toast.success({
-          title: 'Account created successfully!',
-          description: 'Check your email for verification instructions.',
-        });
+        toast.success('Account created successfully! Check your email for verification instructions.');
 
         // Ensure state is updated before redirect
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -85,10 +82,7 @@ export default function SignupPage() {
       } else {
         console.log('Signup failed:', result.error);
         // Show the specific error message
-        toast.error({
-          title: 'Registration failed',
-          description: result.error || 'Please try again.',
-        });
+        toast.error(`Registration failed: ${result.error || 'Please try again.'}`);
         
         // Reset the form on conflict
         if (result.error?.includes('already exists')) {
@@ -112,10 +106,7 @@ export default function SignupPage() {
         }
       }
 
-      toast.error({
-        title: 'Error',
-        description: errorMessage,
-      });
+      toast.error(errorMessage);
     } finally {
       setIsLoading(false);
     }
