@@ -46,13 +46,13 @@ export async function GET(
           location:
             typeof alertResponse.location === 'object' && alertResponse.location
               ? {
-                  latitude: Number((alertResponse.location as any).latitude),
-                  longitude: Number((alertResponse.location as any).longitude),
-                  accuracy: (alertResponse.location as any).accuracy
-                    ? Number((alertResponse.location as any).accuracy)
+                  latitude: Number((alertResponse.location as Record<string, unknown>).latitude),
+                  longitude: Number((alertResponse.location as Record<string, unknown>).longitude),
+                  accuracy: typeof (alertResponse.location as Record<string, unknown>).accuracy === 'number' 
+                    ? Number((alertResponse.location as Record<string, unknown>).accuracy)
                     : undefined,
                   timestamp: new Date(
-                    (alertResponse.location as any).timestamp
+                    String((alertResponse.location as Record<string, unknown>).timestamp)
                   ),
                 }
               : {
