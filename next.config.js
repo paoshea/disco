@@ -1,4 +1,3 @@
-// @ts-check
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
@@ -7,23 +6,16 @@ const nextConfig = {
     PORT: process.env.PORT || '3000',
   },
   productionBrowserSourceMaps: true,
-  async serverOptions() {
-    return {
-      hostname: '0.0.0.0',
-      port: parseInt(process.env.PORT || '3000'),
-    };
-  },
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
     },
   },
   webpack: (
-    config /** @type {import('webpack').Configuration} */,
-    { isServer /** @type {boolean} */ }
+    config,
+    { isServer }
   ) => {
     if (!isServer) {
-      // Don't include these packages on the client side
       config.resolve.fallback = {
         ...config.resolve.fallback,
         bcrypt: false,
@@ -33,7 +25,6 @@ const nextConfig = {
         '@mapbox/node-pre-gyp': false,
       };
     }
-    // Resolve path aliases
     const path = require('path');
     config.resolve = {
       ...config.resolve,
@@ -48,9 +39,9 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/:path*', // This applies to all routes.  Consider more specific routes.
+        source: '/:path*',
         headers: [
-          { key: 'Set-Cookie', value: 'SameSite=None; Secure' }, //Consider more specific cookies.
+          { key: 'Set-Cookie', value: 'SameSite=None; Secure' },
         ],
       },
     ];
