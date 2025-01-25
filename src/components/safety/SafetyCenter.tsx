@@ -7,104 +7,40 @@ import { createToast } from '@/hooks/use-toast';
 import { Switch } from '@headlessui/react';
 import { SafetyFeatures } from '@/components/safety/SafetyFeatures';
 import React from 'react';
-import type { SafetySettingsNew } from '@/types/safety';
+import type { SafetySettingsNew, EmergencyContact } from '@/types/safety';
 
 interface SafetyCenterProps {
   safetySettings: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
+// Helper function to create async callbacks
+const createAsyncCallback = <T extends (...args: unknown[]) => Promise<void>>(
+  func: T
+) => {
+  return (...args: Parameters<T>) => {
+    void func(...args);
+  };
+};
+
 export default function SafetyCenter({
   safetySettings,
   onSettingsChange,
 }: SafetyCenterProps) {
-  return (
-    <div className="bg-white shadow rounded-lg p-6">
-      <h2 className="text-2xl font-bold text-gray-900 mb-6">Safety Center</h2>
-
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-lg font-medium text-gray-900">
-              Safety Features
-            </h3>
-            <p className="text-sm text-gray-500">
-              Configure your safety preferences
-            </p>
-          </div>
-          <Switch
-            checked={safetySettings.sosAlertEnabled}
-            onChange={enabled =>
-              onSettingsChange?.({ sosAlertEnabled: enabled })
-            }
-            className={`${
-              safetySettings.sosAlertEnabled ? 'bg-blue-600' : 'bg-gray-200'
-            } relative inline-flex h-6 w-11 items-center rounded-full`}
-          >
-            <span className="sr-only">Enable safety features</span>
-            <span
-              className={`${
-                safetySettings.sosAlertEnabled
-                  ? 'translate-x-6'
-                  : 'translate-x-1'
-              } inline-block h-4 w-4 transform rounded-full bg-white transition`}
-            />
-          </Switch>
-        </div>
-
-        {safetySettings.sosAlertEnabled && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-base font-medium text-gray-900">
-                  Auto-share Location
-                </h4>
-                <p className="text-sm text-gray-500">
-                  Share location during meetups
-                </p>
-              </div>
-              <Switch
-                checked={safetySettings.autoShareLocation}
-                onChange={enabled =>
-                  onSettingsChange?.({ autoShareLocation: enabled })
-                }
-                className={`${
-                  safetySettings.autoShareLocation
-                    ? 'bg-blue-600'
-                    : 'bg-gray-200'
-                } relative inline-flex h-6 w-11 items-center rounded-full`}
-              >
-                <span className="sr-only">Enable auto location sharing</span>
-                <span
-                  className={`${
-                    safetySettings.autoShareLocation
-                      ? 'translate-x-6'
-                      : 'translate-x-1'
-                  } inline-block h-4 w-4 transform rounded-full bg-white transition`}
-                />
-              </Switch>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// Initial settings configuration
-const initialSettings: SafetySettingsNew = {
-  sosAlertEnabled: false,
-  emergencyContacts: [],
-  autoShareLocation: false,
-  meetupCheckins: false,
-  requireVerifiedMatch: false
-};
-
-const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
+  const { isLoading, user } = useAuth();
+  const router = useRouter();
+  const [loading, setLoading] = useState<boolean>(true);
+  const [settings, setSettings] = useState<SafetySettingsNew>({
+    sosAlertEnabled: false,
+    emergencyContacts: [],
+    autoShareLocation: false,
+    meetupCheckins: false,
+    requireVerifiedMatch: false,
+  });
 
   const updateSafetySettings = async (
     newSettings: Partial<SafetySettingsNew>
-  ) => {
+  ): Promise<void> => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -116,7 +52,10 @@ const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
         throw new Error('Failed to update settings');
       }
 
-      setSettings(prev => ({ ...prev, ...newSettings }));
+      setSettings(prev => ({
+        ...prev,
+        ...newSettings,
+      }));
       createToast.success({
         title: 'Settings Updated',
         description: 'Your safety settings have been saved.',
@@ -129,8 +68,6 @@ const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
       });
     }
   };
-
-  const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
     if (isLoading) return;
@@ -218,43 +155,6 @@ const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
                 </span>
               </div>
             </div>
-            <div className="mt-6">
-              <h4 className="text-base font-medium text-gray-900">
-                Emergency Contacts
-              </h4>
-              <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map(contact => {
-                  const contactData: EmergencyContact =
-                    typeof contact === 'string'
-                      ? { id: contact, email: '', phoneNumber: '' }
-                      : contact;
-
-                  return (
-                    <div
-                      key={contactData.id}
-                      className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {contactData.id || 'Unknown Contact'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {contactData.email}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          {contactData.phoneNumber}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-                {settings.emergencyContacts.length === 0 && (
-                  <p className="text-sm text-gray-500">
-                    No emergency contacts added yet.
-                  </p>
-                )}
-              </div>
-            </div>
           </div>
         </div>
 
@@ -266,26 +166,8 @@ const [settings, setSettings] = useState<SafetySettingsNew>(initialSettings);
               onSettingsChange={createAsyncCallback(updateSafetySettings)}
             />
           )}
-          <SafetyCenter
-            safetySettings={settings}
-            onSettingsChange={createAsyncCallback(updateSafetySettings)}
-          />
         </div>
       </div>
     </div>
   );
 }
-interface EmergencyContact {
-  id: string;
-  email?: string;
-  phoneNumber?: string;
-}
-
-// Helper function to create async callbacks
-const createAsyncCallback = <T extends (...args: unknown[]) => Promise<void>>(
-  func: T
-) => {
-  return (...args: Parameters<T>) => {
-    void func(...args);
-  };
-};
