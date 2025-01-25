@@ -98,3 +98,19 @@ export default function BlogPage() {
     </PublicLayout>
   );
 }
+export default function BlogPage() {
+  return (
+    <div className="bg-white py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
+            Blog
+          </h1>
+          <p className="mt-4 text-xl text-gray-500">
+            Stay updated with our latest news and insights
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
