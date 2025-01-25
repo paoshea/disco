@@ -84,7 +84,9 @@ export function SafetyAlertProvider({
         location: locationData,
         status: 'active' as const,
         dismissed: false,
+        dismissedAt: null,
         resolved: false,
+        resolvedAt: null,
         updatedAt: new Date(),
         userId,
         ...alert
