@@ -1,0 +1,41 @@
+
+
+./app/api/safety/alerts/[id]/route.ts
+60:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./app/api/safety/alerts/route.ts
+39:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/components/safety/SafetyCenter.tsx
+29:3  Error: 'safetySettings' is defined but never used.  @typescript-eslint/no-unused-vars
+30:3  Error: 'onSettingsChange' is defined but never used.  @typescript-eslint/no-unused-vars
+86:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+88:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+88:28  Warning: Unsafe member access .sosAlertEnabled on an `any` value.  @typescript-eslint/no-unsafe-member-access
+89:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+89:30  Warning: Unsafe member access .emergencyContacts on an `any` value.  @typescript-eslint/no-unsafe-member-access
+90:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+90:30  Warning: Unsafe member access .autoShareLocation on an `any` value.  @typescript-eslint/no-unsafe-member-access
+91:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+91:27  Warning: Unsafe member access .meetupCheckins on an `any` value.  @typescript-eslint/no-unsafe-member-access
+92:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+92:33  Warning: Unsafe member access .requireVerifiedMatch on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/contexts/SafetyAlertContext.tsx
+39:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+56:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+102:13  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/hooks/useAuth.ts
+113:30  Error: This assertion is unnecessary since it does not change the type of the expression.  @typescript-eslint/no-unnecessary-type-assertion
+153:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+154:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+154:24  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/lib/redis.ts
+15:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+15:9  Warning: Unsafe member access .REDIS_HOST on an `any` value.  @typescript-eslint/no-unsafe-member-access
+16:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+16:9  Warning: Unsafe member access .REDIS_PORT on an `any` value.  @typescript-eslint/no-unsafe-member-access
+17:3  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+17:13  Warning: Unsafe member access .REDIS_PASSWORD on an `any` value.  @typescript-eslint/no-unsafe-member-access
