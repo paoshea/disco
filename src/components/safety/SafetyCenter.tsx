@@ -18,7 +18,6 @@ export default function SafetyCenter({
   safetySettings,
   onSettingsChange,
 }: SafetyCenterProps) {
-
   return (
     <div className="bg-white shadow rounded-lg p-6">
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Safety Center</h2>
@@ -283,6 +282,8 @@ interface EmergencyContact {
 }
 
 // Assuming createAsyncCallback is defined elsewhere,  add it here if needed.  This is a placeholder.
-const createAsyncCallback = (func: any) => (...args: any[]) => {
+const createAsyncCallback =
+  (func: any) =>
+  (...args: any[]) => {
     void func(...args);
-};
+  };
