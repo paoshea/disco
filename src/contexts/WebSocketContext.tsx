@@ -111,7 +111,7 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
 
         ws.onmessage = (event: MessageEvent<string>) => {
           try {
-            const rawData: unknown = JSON.parse(event.data);
+            const rawData: unknown = JSON.parse(event.data) || {};
 
             // Type guard function
             const isValidWebSocketMessage = (

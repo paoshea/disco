@@ -24,10 +24,10 @@ const env = {
 
   // Public URLs
   NEXT_PUBLIC_APP_URL:
-    replacePort(process.env.NEXT_PUBLIC_APP_URL) || `http://localhost:${PORT}`,
+    replacePort(process.env.NEXT_PUBLIC_APP_URL) || `http://0.0.0.0:${PORT}`,
   NEXT_PUBLIC_WEBSOCKET_URL:
     replacePort(process.env.NEXT_PUBLIC_WEBSOCKET_URL) ||
-    `ws://localhost:${PORT}/ws`,
+    `ws://0.0.0.0:${PORT}/ws`,
 
   // Email Configuration
   SMTP_HOST: process.env.SMTP_HOST || 'smtp.ethereal.email',
