@@ -72,11 +72,12 @@ export async function PUT(
    }
 
    const { action } = result.data;
+   const params = await context.params;
    if (action === 'dismiss') {
-     const updatedAlert = await safetyService.dismissAlert(context.params.id, userId);
+     const updatedAlert = await safetyService.dismissAlert(params.id, userId);
      return NextResponse.json(updatedAlert);
    } else if (action === 'resolve') {
-     const updatedAlert = await safetyService.resolveAlert(context.params.id, userId);
+     const updatedAlert = await safetyService.resolveAlert(params.id, userId);
      return NextResponse.json(updatedAlert);
    }
 
