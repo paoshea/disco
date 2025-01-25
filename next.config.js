@@ -6,17 +6,13 @@ const nextConfig = {
     JWT_SECRET: process.env.JWT_SECRET,
     PORT: process.env.PORT || '3000',
   },
-  webSocketURL: {
-    hostname: "0.0.0.0",
-    pathname: "/",
-    port: process.env.PORT || '3000'
-  },
-  devServer: {
-    host: '0.0.0.0',
-    port: process.env.PORT || 3000,
-    allowedHosts: 'all'
-  },
   productionBrowserSourceMaps: true,
+  async serverOptions() {
+    return {
+      hostname: '0.0.0.0',
+      port: parseInt(process.env.PORT || '3000'),
+    };
+  },
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'localhost:3001'],
