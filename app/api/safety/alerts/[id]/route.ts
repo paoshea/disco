@@ -43,6 +43,18 @@ export async function GET(
             : alertResponse.resolved
             ? 'resolved'
             : 'active') as 'dismissed' | 'resolved' | 'active',
+          location: typeof alertResponse.location === 'object' && alertResponse.location
+            ? {
+                latitude: Number((alertResponse.location as any).latitude),
+                longitude: Number((alertResponse.location as any).longitude),
+                accuracy: (alertResponse.location as any).accuracy ? Number((alertResponse.location as any).accuracy) : undefined,
+                timestamp: new Date((alertResponse.location as any).timestamp)
+              }
+            : {
+                latitude: 0,
+                longitude: 0,
+                timestamp: new Date()
+              }
         } as SafetyAlertNew
       : null;
 

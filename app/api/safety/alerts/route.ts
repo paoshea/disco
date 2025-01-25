@@ -25,7 +25,19 @@ export async function GET(): Promise<NextResponse<{ alerts: SafetyAlertNew[] } |
       ? alertsResponse.map(alert => ({
           ...alert,
           type: alert.type as SafetyAlertType,
-          status: (alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active') as 'dismissed' | 'resolved' | 'active'
+          status: (alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active') as 'dismissed' | 'resolved' | 'active',
+          location: typeof alert.location === 'object' && alert.location
+            ? {
+                latitude: Number((alert.location as any).latitude),
+                longitude: Number((alert.location as any).longitude),
+                accuracy: (alert.location as any).accuracy ? Number((alert.location as any).accuracy) : undefined,
+                timestamp: new Date((alert.location as any).timestamp)
+              }
+            : {
+                latitude: 0,
+                longitude: 0,
+                timestamp: new Date()
+              }
         } as SafetyAlertNew))
       : [];
     return NextResponse.json({ alerts });
