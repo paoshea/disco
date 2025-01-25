@@ -43,23 +43,23 @@ export async function GET(
             : alertResponse.resolved
               ? 'resolved'
               : 'active',
-          location:
-            typeof alertResponse.location === 'object' && alertResponse.location
-              ? {
-                  latitude: Number((alertResponse.location as Record<string, unknown>).latitude),
-                  longitude: Number((alertResponse.location as Record<string, unknown>).longitude),
-                  accuracy: typeof (alertResponse.location as Record<string, unknown>).accuracy === 'number' 
-                    ? Number((alertResponse.location as Record<string, unknown>).accuracy)
-                    : undefined,
-                  timestamp: new Date(
-                    String((alertResponse.location as Record<string, unknown>).timestamp)
-                  ),
-                }
-              : {
-                  latitude: 0,
-                  longitude: 0,
-                  timestamp: new Date(),
-                },
+          location: (() => {
+            if (typeof alertResponse.location === 'object' && alertResponse.location) {
+              const loc = alertResponse.location as Record<string, unknown>;
+              const locData = {
+                latitude: typeof loc.latitude === 'number' ? loc.latitude : Number(loc.latitude),
+                longitude: typeof loc.longitude === 'number' ? loc.longitude : Number(loc.longitude),
+                accuracy: loc.accuracy !== undefined ? Number(loc.accuracy) : undefined,
+                timestamp: new Date(loc.timestamp as string | number | Date)
+              };
+              return locData;
+            }
+            return {
+              latitude: 0,
+              longitude: 0,
+              timestamp: new Date()
+            };
+          })()
         } as SafetyAlertNew)
       : null;
 
