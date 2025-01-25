@@ -72,15 +72,21 @@ export default function LoginPage() {
           <h2 className="mt-6 text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Sign in to your account
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
-            Or{' '}
+          <div className="mt-2 text-sm text-gray-600 space-x-2">
+            <Link
+              href="/"
+              className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
+            >
+              Home
+            </Link>
+            <span>·</span>
             <Link
               href="/signup"
               className="font-medium text-sky-600 hover:text-sky-500 transition-colors"
             >
-              create a new account
+              Create account
             </Link>
-          </p>
+          </div>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-8 space-y-6">
