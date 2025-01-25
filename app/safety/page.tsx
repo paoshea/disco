@@ -31,8 +31,8 @@ export default function SafetyPage() {
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
         const data = await response.json();
-        const typedData = data as SafetySettings;
-        setSettings(typedData);
+        const typedSettings = data as SafetySettings;
+        setSettings(typedSettings);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
         createToast.error({

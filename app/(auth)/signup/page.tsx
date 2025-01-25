@@ -60,10 +60,10 @@ export default function SignupPage() {
       };
 
       console.log('Starting signup...');
-      const result = signUp(registerData);
+      const result = await Promise.resolve(signUp(registerData));
       console.log('Signup result:', result);
 
-      if (result.success) {
+      if (result && 'success' in result) {
         console.log('Signup successful, preparing to redirect...');
         toast({
           title: 'Success!',
@@ -87,7 +87,7 @@ export default function SignupPage() {
           variant: 'destructive',
         });
         // Reset the form on conflict
-        if (result.error?.includes('already exists')) {
+        if (result?.error?.includes('already exists')) {
           form.reset();
         }
       }

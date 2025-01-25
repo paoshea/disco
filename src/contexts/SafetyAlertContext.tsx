@@ -29,12 +29,15 @@ export function SafetyAlertProvider({
       try {
         const userId = localStorage.getItem('userId');
         if (userId) {
-          const data = await getSafetyAlerts(userId);
-          // Type assertion since we know the structure from our API
-          setAlerts(data as SafetyAlert[]);
+          const response = await getSafetyAlerts(userId);
+          const safetyAlerts = Array.isArray(response) ? response : [];
+          setAlerts(safetyAlerts as SafetyAlert[]);
         }
       } catch (error) {
-        console.error('Failed to load safety alerts:', error instanceof Error ? error.message : 'Unknown error');
+        console.error(
+          'Failed to load safety alerts:',
+          error instanceof Error ? error.message : 'Unknown error'
+        );
       } finally {
         setLoading(false);
       }
