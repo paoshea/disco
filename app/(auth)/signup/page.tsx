@@ -60,23 +60,18 @@ export default function SignupPage() {
       };
 
       console.log('Starting signup...');
-      const result = signUp(registerData);
+      const result = await signUp(registerData);
       console.log('Signup result:', result);
 
       if (!result) {
         throw new Error('No response from signup service');
       }
-
-      const signupResult = await Promise.resolve(result);
       
-      if (signupResult.success) {
+      if (result.success) {
         console.log('Signup successful, preparing to redirect...');
         
         // Show success toast
-        toast({
-          title: 'Success!',
-          description: 'Account created successfully! Check your email for verification instructions.',
-          variant: 'success',
+        toast.success('Account created successfully! Check your email for verification instructions.', {
           duration: 3000,
         });
 
@@ -89,13 +84,10 @@ export default function SignupPage() {
       } else {
         console.log('Signup failed:', result.error);
         // Show the specific error message
-        toast({
-          title: 'Error',
-          description: result.error || 'Registration failed. Please try again.',
-          variant: 'destructive',
-        });
+        toast.error(result.error || 'Registration failed. Please try again.');
+        
         // Reset the form on conflict
-        if (result?.error?.includes('already exists')) {
+        if (result.error?.includes('already exists')) {
           form.reset();
         }
       }
