@@ -33,7 +33,7 @@ export const SafetyAlerts: React.FC = () => {
             timestamp: new Date()
           },
           message: alert.message || undefined,
-          resolvedAt: alert.resolvedAt || undefined
+          resolvedAt: alert.resolvedAt ? alert.resolvedAt.toISOString() : undefined
         };
 
         return (
