@@ -1,0 +1,42 @@
+
+
+
+./app/(auth)/signup/page.tsx
+79:9  Error: Unexpected `await` of a non-Promise (non-"Thenable") value.  @typescript-eslint/await-thenable
+227:2  Error: Insert `⏎`  prettier/prettier
+
+./app/safety/page.tsx
+1:1  Error: Delete `⏎`  prettier/prettier
+34:15  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+76:74  Error: Insert `·These`  prettier/prettier
+77:16  Error: Delete `·These`  prettier/prettier
+83:28  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+84:29  Error: Replace `(enabled)` with `enabled`  prettier/prettier
+95:37  Error: Replace `(prev)` with `prev`  prettier/prettier
+103:39  Error: Insert `⏎···························`  prettier/prettier
+131:18  Warning: Unsafe member access .map on an `any` value.  @typescript-eslint/no-unsafe-member-access
+131:18  Warning: Unsafe call of an `any` typed value.  @typescript-eslint/no-unsafe-call
+131:49  Error: Replace `(contact)` with `contact`  prettier/prettier
+133:26  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+133:26  Warning: Unsafe member access .id on an `any` value.  @typescript-eslint/no-unsafe-member-access
+138:26  Warning: Unsafe member access .name on an `any` value.  @typescript-eslint/no-unsafe-member-access
+140:61  Warning: Unsafe member access .email on an `any` value.  @typescript-eslint/no-unsafe-member-access
+141:61  Warning: Unsafe member access .phone on an `any` value.  @typescript-eslint/no-unsafe-member-access
+146:27  Warning: Unsafe member access .priority on an `any` value.  @typescript-eslint/no-unsafe-member-access
+151:26  Warning: Unsafe member access .priority on an `any` value.  @typescript-eslint/no-unsafe-member-access
+156:18  Warning: Unsafe member access .length on an `any` value.  @typescript-eslint/no-unsafe-member-access
+
+./src/contexts/SafetyAlertContext.tsx
+32:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+37:23  Error: Replace `'Failed·to·load·safety·alerts:',·error·instanceof·Error·?·error.message·:·'Unknown·error'` with `⏎··········'Failed·to·load·safety·alerts:',⏎··········error·instanceof·Error·?·error.message·:·'Unknown·error'⏎········`  prettier/prettier
+46:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+47:23  Warning: Unsafe return of an `any[]` typed value.  @typescript-eslint/no-unsafe-return
+65:2  Error: Insert `⏎`  prettier/prettier
+
+./src/contexts/WebSocketContext.tsx
+222:13  Error: 'normalizedMessage' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/services/api/safety.service.ts
+32:11  Error: 'SafetyAlertInput' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
