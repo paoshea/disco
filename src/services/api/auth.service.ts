@@ -56,9 +56,9 @@ class AuthService {
         email,
         password,
       });
-      const { token, refreshToken } = response.data;
-      this.setTokens(token, refreshToken);
-      return response.data;
+      const { data } = response.data;
+      this.setTokens(data.token, data.refreshToken);
+      return data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -70,9 +70,9 @@ class AuthService {
         `${this.baseUrl}/register`,
         data
       );
-      const { token, refreshToken } = response.data;
-      this.setTokens(token, refreshToken);
-      return response.data;
+      const { data } = response.data;
+      this.setTokens(data.token, data.refreshToken);
+      return data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -80,10 +80,10 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiService.get<{ user: User }>(
+      const response = await apiService.get<{ data: { user: User } }>(
         `${this.baseUrl}/me`
       );
-      return response.data.user;
+      return response.data.data.user;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -110,11 +110,11 @@ class AuthService {
 
   async updateProfile(updates: Partial<User>): Promise<User> {
     try {
-      const response = await apiService.patch<{ user: User }>(
+      const response = await apiService.patch<{ data: { user: User } }>(
         `${this.baseUrl}/profile`,
         updates
       );
-      return response.data.user;
+      return response.data.data.user;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -125,13 +125,13 @@ class AuthService {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No refresh token found');
 
-      const response = await apiService.post<{ token: string; refreshToken: string }>(
+      const response = await apiService.post<{ data: { token: string; refreshToken: string } }>(
         `${this.baseUrl}/refresh`,
         { refreshToken }
       );
 
-      const { token } = response.data;
-      this.setTokens(token, response.data.refreshToken);
+      const { data } = response.data;
+      this.setTokens(data.token, data.refreshToken);
     } catch (error) {
       this.clearTokens();
       throw this.handleError(error);
