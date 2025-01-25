@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -32,7 +31,8 @@ export default function SafetyPage() {
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
         const data = await response.json();
-        setSettings(data as SafetySettings);
+        const typedData = data as SafetySettings;
+        setSettings(typedData);
       } catch (error) {
         console.error('Failed to fetch safety settings:', error);
         createToast.error({
@@ -128,7 +128,13 @@ export default function SafetyPage() {
                 Emergency Contacts
               </h4>
               <div className="mt-4 space-y-4">
-                {settings.emergencyContacts.map((contact) => (
+                {settings.emergencyContacts.map((contact: {
+                  id: string;
+                  name: string;
+                  email: string;
+                  phone: string;
+                  priority: string;
+                }) => (
                   <div
                     key={contact.id}
                     className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
