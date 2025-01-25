@@ -15,13 +15,20 @@ export const SafetyAlerts: React.FC = () => {
   return (
     <div className="fixed bottom-4 right-4 z-50 space-y-4">
       {alerts.map(alert => {
+        const locationData = alert.location as {
+          latitude?: number;
+          longitude?: number;
+          accuracy?: number;
+          timestamp?: string | number;
+        };
+
         const alertLocation: Location = {
           id: alert.id,
           userId: alert.userId,
-          latitude: alert.location?.latitude ?? 0,
-          longitude: alert.location?.longitude ?? 0,
-          accuracy: alert.location?.accuracy,
-          timestamp: new Date(alert.location?.timestamp ?? Date.now()),
+          latitude: locationData?.latitude ?? 0,
+          longitude: locationData?.longitude ?? 0,
+          accuracy: locationData?.accuracy,
+          timestamp: new Date(locationData?.timestamp ?? Date.now()),
           privacyMode: 'precise',
           sharingEnabled: true
         };
