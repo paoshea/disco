@@ -35,9 +35,13 @@ export function SafetyAlertProvider({
       userId: String(alert.userId ?? ''),
       type: alert.type ?? 'custom',
       status: alert.status ?? 'active',
-      location: alert.location ?? { latitude: 0, longitude: 0, timestamp: new Date() },
+      location: alert.location ?? {
+        latitude: 0,
+        longitude: 0,
+        timestamp: new Date(),
+      },
       createdAt: alert.createdAt ?? new Date().toISOString(),
-      updatedAt: alert.updatedAt ?? new Date().toISOString()
+      updatedAt: alert.updatedAt ?? new Date().toISOString(),
     };
   };
   const [loading, setLoading] = useState<boolean>(true);

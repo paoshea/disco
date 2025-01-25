@@ -86,7 +86,9 @@ export default function SafetyCenter({
         const data: Partial<SafetySettingsNew> = await response.json();
         const typedSettings: SafetySettingsNew = {
           sosAlertEnabled: Boolean(data.sosAlertEnabled),
-          emergencyContacts: Array.isArray(data.emergencyContacts) ? data.emergencyContacts : [],
+          emergencyContacts: Array.isArray(data.emergencyContacts)
+            ? data.emergencyContacts
+            : [],
           autoShareLocation: Boolean(data.autoShareLocation),
           meetupCheckins: Boolean(data.meetupCheckins),
           requireVerifiedMatch: Boolean(data.requireVerifiedMatch),

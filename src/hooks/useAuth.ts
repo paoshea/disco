@@ -15,7 +15,10 @@ interface AuthState {
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<RegisterResult>;
   requestPasswordReset: (email: string) => Promise<PasswordResetResult>;
-  resetPassword: (token: string, password: string) => Promise<PasswordResetResult>;
+  resetPassword: (
+    token: string,
+    password: string
+  ) => Promise<PasswordResetResult>;
   updateProfile: (data: UpdateProfileData) => Promise<UpdateProfileResult>;
   sendVerificationEmail: () => Promise<SimpleResult>;
   set: (state: Partial<AuthState>) => void;
@@ -46,7 +49,6 @@ interface SimpleResult {
   success: boolean;
   error?: string;
 }
-
 
 export interface RegisterData {
   email: string;
@@ -97,7 +99,10 @@ export const useAuth = create<AuthState>()(
       async login(email, password) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post<AuthResponse>('/api/auth/login', { email, password });
+          const response = await apiClient.post<AuthResponse>(
+            '/api/auth/login',
+            { email, password }
+          );
           const result = authResponseSchema.safeParse(response.data);
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
@@ -115,7 +120,8 @@ export const useAuth = create<AuthState>()(
           set({ error: 'Login failed' });
           return { error: 'Login failed' };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login failed';
+          const message =
+            error instanceof Error ? error.message : 'Login failed';
           set({ error: message });
           return { error: message };
         } finally {
@@ -131,7 +137,10 @@ export const useAuth = create<AuthState>()(
       },
       async refreshTokens() {
         try {
-          const response = await apiClient.post<{ token: string; refreshToken: string; }>('/api/auth/refresh');
+          const response = await apiClient.post<{
+            token: string;
+            refreshToken: string;
+          }>('/api/auth/refresh');
           const { token, refreshToken } = response.data;
           set({ token, refreshToken });
           return true;
@@ -142,7 +151,10 @@ export const useAuth = create<AuthState>()(
       async register(data: RegisterData) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post<AuthResponse>('/api/auth/signup', data);
+          const response = await apiClient.post<AuthResponse>(
+            '/api/auth/signup',
+            data
+          );
           const result = authResponseSchema.safeParse(response.data);
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
@@ -155,11 +167,18 @@ export const useAuth = create<AuthState>()(
             document.cookie = `token=${token}; path=/; max-age=3600; SameSite=Lax`;
           } else {
             set({ error: 'Registration failed: Missing token or user data' });
-            return { success: false, error: 'Registration failed: Missing token or user data' };
+            return {
+              success: false,
+              error: 'Registration failed: Missing token or user data',
+            };
           }
-          return { success: true, needsVerification: needsVerification || false };
+          return {
+            success: true,
+            needsVerification: needsVerification || false,
+          };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Registration failed';
+          const message =
+            error instanceof Error ? error.message : 'Registration failed';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -169,7 +188,10 @@ export const useAuth = create<AuthState>()(
       async updateProfile(data: UpdateProfileData) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.patch<{ user: User }>('/api/auth/profile', data);
+          const response = await apiClient.patch<{ user: User }>(
+            '/api/auth/profile',
+            data
+          );
           const result = userSchema.safeParse(response.data.user);
           if (!result.success) {
             console.error('Invalid user data:', result.error);
@@ -179,7 +201,8 @@ export const useAuth = create<AuthState>()(
           set({ user: result.data });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Profile update failed';
+          const message =
+            error instanceof Error ? error.message : 'Profile update failed';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -191,7 +214,10 @@ export const useAuth = create<AuthState>()(
           await apiClient.post('/api/auth/send-verification');
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to send verification email';
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to send verification email';
           return { success: false, error: message };
         }
       },
@@ -200,7 +226,10 @@ export const useAuth = create<AuthState>()(
           await apiClient.post('/api/auth/request-reset', { email });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to request password reset';
+          const message =
+            error instanceof Error
+              ? error.message
+              : 'Failed to request password reset';
           return { success: false, error: message };
         }
       },
@@ -209,7 +238,8 @@ export const useAuth = create<AuthState>()(
           await apiClient.post('/api/auth/reset-password', { token, password });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Failed to reset password';
+          const message =
+            error instanceof Error ? error.message : 'Failed to reset password';
           return { success: false, error: message };
         }
       },
