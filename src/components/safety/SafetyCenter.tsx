@@ -235,6 +235,15 @@ function SafetyPage() {
           <SafetyFeatures
             user={{
               id: user?.id || '',
+              email: user?.email || '',
+              firstName: user?.firstName || '',
+              lastName: user?.lastName || '',
+              emailVerified: user?.emailVerified || false,
+              createdAt: user?.createdAt || new Date(),
+              updatedAt: user?.updatedAt || new Date(),
+              name: user?.name || '',
+              lastActive: user?.lastActive || new Date(),
+              verificationStatus: user?.verificationStatus || 'pending',
               preferences: {
                 maxDistance: 50,
                 ageRange: {
