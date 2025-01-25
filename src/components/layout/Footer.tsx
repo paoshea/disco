@@ -36,10 +36,10 @@ export const Footer: React.FC = () => {
               </li>
               <li>
                 <Link
-                  href="/security"
+                  href="/safety"
                   className="text-base text-gray-500 hover:text-gray-900"
                 >
-                  Security
+                  Safety & Security
                 </Link>
               </li>
             </ul>
