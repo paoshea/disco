@@ -30,15 +30,16 @@ export function SafetyAlertProvider({
         const userId = localStorage.getItem('userId');
         if (userId) {
           const data = await getSafetyAlerts(userId);
-          setAlerts(data);
+          // Type assertion since we know the structure from our API
+          setAlerts(data as SafetyAlert[]);
         }
       } catch (error) {
-        console.error('Failed to load safety alerts:', error);
+        console.error('Failed to load safety alerts:', error instanceof Error ? error.message : 'Unknown error');
       } finally {
         setLoading(false);
       }
     }
-    loadAlerts();
+    void loadAlerts();
   }, []);
 
   const createAlert = async (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => {
