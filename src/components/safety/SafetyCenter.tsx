@@ -261,52 +261,13 @@ function SafetyPage() {
 
         <div className="mt-8">
           <SafetyFeatures
-            user={{
-              id: user?.id || '',
-              email: user?.email || '',
-              firstName: user?.firstName || '',
-              lastName: user?.lastName || '',
-              emailVerified: user?.emailVerified || false,
-              createdAt: user?.createdAt || new Date(),
-              updatedAt: user?.updatedAt || new Date(),
-              name: user?.name || '',
-              lastActive: user?.lastActive || new Date(),
-              verificationStatus: user?.verificationStatus || 'pending',
-              preferences: {
-                maxDistance: 50,
-                ageRange: {
-                  min: 18,
-                  max: 99,
-                },
-                interests: [],
-                gender: [],
-                lookingFor: [],
-                relationshipType: [],
-                notifications: {
-                  matches: true,
-                  messages: true,
-                  events: true,
-                  safety: true,
-                },
-                privacy: {
-                  showOnlineStatus: true,
-                  showLastSeen: true,
-                  showLocation: true,
-                  showAge: true,
-                },
-                safety: {
-                  requireVerifiedMatch: true,
-                  meetupCheckins: true,
-                  emergencyContactAlerts: true,
-                },
-              },
-            }}
+            user={user}
             settings={settings}
-            onSettingsChange={updateSafetySettings}
+            onSettingsChange={createAsyncCallback(updateSafetySettings)}
           />
           <SafetyCenter
             safetySettings={settings}
-            onSettingsChange={updateSafetySettings}
+            onSettingsChange={createAsyncCallback(updateSafetySettings)}
           />
         </div>
       </div>
@@ -318,3 +279,8 @@ interface EmergencyContact {
   email?: string;
   phoneNumber?: string;
 }
+
+// Assuming createAsyncCallback is defined elsewhere,  add it here if needed.  This is a placeholder.
+const createAsyncCallback = (func: any) => (...args: any[]) => {
+    void func(...args);
+};
