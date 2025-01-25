@@ -62,10 +62,18 @@ export function SafetyAlertProvider({
         priority: alert.priority || 'medium',
         description: alert.description || '',
         message: alert.message || '',
-        location: alert.location || {
+        location: alert.location ? {
+          latitude: alert.location.latitude,
+          longitude: alert.location.longitude,
+          accuracy: alert.location.accuracy,
+          timestamp: alert.location.timestamp instanceof Date 
+            ? alert.location.timestamp.toISOString()
+            : new Date().toISOString()
+        } : {
           latitude: 0,
           longitude: 0,
-          timestamp: new Date()
+          accuracy: null,
+          timestamp: new Date().toISOString()
         },
         dismissed: false,
         resolved: false,
