@@ -26,13 +26,14 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </div>
 
       {/* Right side - Image */}
-      <div className="hidden lg:block lg:w-1/2 relative">
+      <div className="hidden lg:block lg:w-1/2 relative min-h-screen">
         <Image
           src="/auth-background.svg"
           alt="Authentication background"
           fill
           className="object-cover"
           sizes="50vw"
+          priority
         />
       </div>
     </div>
