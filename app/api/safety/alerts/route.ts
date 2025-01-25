@@ -71,7 +71,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     };
     
-    const alert = await safetyService.createSafetyAlert(userId, alertData);
+    const alert = await safetyService.createSafetyAlert(userId, {
+  ...alertData,
+  updatedAt: new Date(),
+  location: {
+    ...alertData.location,
+    timestamp: new Date(alertData.location.timestamp).toISOString()
+  }
+});
     return NextResponse.json(alert);
   } catch (error) {
     console.error('Failed to create alert:', error);
