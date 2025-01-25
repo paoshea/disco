@@ -16,7 +16,10 @@ export const SafetyAlerts: React.FC = () => {
       {alerts.map(alert => (
         <SafetyAlertNotification
           key={alert.id}
-          alert={alert}
+          alert={{
+            ...alert,
+            status: alert.status || 'active'
+          }}
           onDismiss={() => dismissAlert(alert.id)}
         />
       ))}
