@@ -1,8 +1,7 @@
-
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const portSchema = z.string().transform((val) => {
+const portSchema = z.string().transform(val => {
   const parsed = parseInt(val, 10);
   return isNaN(parsed) ? 3001 : parsed;
 });
