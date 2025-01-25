@@ -1,3 +1,4 @@
+
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
@@ -6,11 +7,7 @@ const portSchema = z.preprocess(val => {
   return processed.success ? parseInt(processed.data, 10) : 3001;
 }, z.number().min(1).max(65535));
 
-export const env = createEnv<{
-  REDIS_HOST: string;
-  REDIS_PORT: string;
-  REDIS_PASSWORD?: string;
-}>({
+export const env = createEnv({
   server: {
     NODE_ENV: z.enum(['development', 'test', 'production']),
     PORT: portSchema,
