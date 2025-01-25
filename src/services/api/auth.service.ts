@@ -1,6 +1,6 @@
 import { User } from '@/types/user';
 import { apiService } from './api';
-import type { AxiosError } from 'axios/base';
+import type { AxiosError } from 'axios';
 
 interface RegisterData extends Record<string, unknown> {
   email: string;
@@ -52,13 +52,13 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<AuthResponse>(`${this.baseUrl}/login`, {
+      const response = await apiService.post<{ data: AuthResponse }>(`${this.baseUrl}/login`, {
         email,
         password,
       });
-      const { data } = response.data;
-      this.setTokens(data.token, data.refreshToken);
-      return data;
+      const { data: { data: authData } } = response;
+      this.setTokens(authData.token, authData.refreshToken);
+      return authData;
     } catch (error) {
       throw this.handleError(error);
     }

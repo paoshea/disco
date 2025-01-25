@@ -62,10 +62,7 @@ apiClient.interceptors.response.use(
         localStorage.setItem('token', token);
 
         apiClient.defaults.headers.common.Authorization = `Bearer ${token}`;
-        originalRequest.headers = {
-          ...originalRequest.headers,
-          Authorization: `Bearer ${token}`
-        };
+        originalRequest.headers.set('Authorization', `Bearer ${token}`);
 
         return apiClient(originalRequest);
       } catch (refreshError) {
