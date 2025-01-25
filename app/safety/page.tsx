@@ -73,8 +73,8 @@ export default function SafetyPage() {
             </h3>
             <div className="mt-2 max-w-xl text-sm text-gray-500">
               <p>
-                Configure your safety preferences and emergency contacts.
-                These settings help ensure your safety while using our service.
+                Configure your safety preferences and emergency contacts. These
+                settings help ensure your safety while using our service.
               </p>
             </div>
             <div className="mt-5">
