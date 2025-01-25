@@ -8,8 +8,24 @@ const nextConfig = {
   productionBrowserSourceMaps: true,
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'localhost:3001'],
+      allowedOrigins: ['*'],
     },
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'host',
+              value: '(?!.*\\.repl\\.co).*',
+            },
+          ],
+          destination: '/:path*',
+        },
+      ],
+    };
   },
   webpack: (
     config,
@@ -33,7 +49,6 @@ const nextConfig = {
         '@': path.resolve(__dirname, './src'),
       },
     };
-
     return config;
   },
   async headers() {
