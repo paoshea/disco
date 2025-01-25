@@ -1,0 +1,32 @@
+ ✓ Compiled successfully
+
+   Linting and checking validity of types ...
+
+
+./app/(auth)/signup/page.tsx
+79:9  Error: Unexpected `await` of a non-Promise (non-"Thenable") value.  @typescript-eslint/await-thenable
+
+./app/safety/page.tsx
+91:28  Error: Promise-returning function provided to attribute where a void return was expected.  @typescript-eslint/no-misused-promises
+135:26  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+
+./src/contexts/SafetyAlertContext.tsx
+32:17  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+33:21  Error: Unsafe argument of type `any` assigned to a parameter of type `SetStateAction<{ id: string; message: string | null; type: string; createdAt: Date; updatedAt: Date; description: string | null; location: JsonValue; priority: string; userId: string; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }[]>`.  @typescript-eslint/no-unsafe-argument
+41:5  Error: Promises must be awaited, end with a call to .catch, end with a call to .then with a rejection handler or be explicitly marked as ignored with the `void` operator.  @typescript-eslint/no-floating-promises
+45:11  Warning: Unsafe assignment of an `any` value.  @typescript-eslint/no-unsafe-assignment
+46:23  Warning: Unsafe return of an `any[]` typed value.  @typescript-eslint/no-unsafe-return
+
+./src/contexts/WebSocketContext.tsx
+222:13  Error: 'normalizedMessage' is assigned a value but never used.  @typescript-eslint/no-unused-vars
+
+./src/services/api/safety.service.ts
+32:11  Error: 'SafetyAlertInput' is defined but never used.  @typescript-eslint/no-unused-vars
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+
+npm notice
+npm notice New major version of npm available! 10.8.2 -> 11.0.0
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.0.0
+npm notice To update run: npm install -g npm@11.0.0
+npm notice
