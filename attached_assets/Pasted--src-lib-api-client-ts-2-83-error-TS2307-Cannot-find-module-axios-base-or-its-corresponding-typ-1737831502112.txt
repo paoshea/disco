@@ -1,0 +1,60 @@
+
+src/lib/api/client.ts:2:83 - error TS2307: Cannot find module 'axios/base' or its corresponding type declarations.
+
+2 import type { AxiosInstance, AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios/base';
+                                                                                    ~~~~~~~~~~~~
+
+src/lib/api/client.ts:3:49 - error TS2307: Cannot find module 'axios/base/internal-axios' or its corresponding type declarations.
+
+3 import type { InternalAxiosRequestConfig } from 'axios/base/internal-axios';
+                                                  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+src/services/api/api.client.ts:65:9 - error TS2322: Type '{ Authorization: string; Accept?: AxiosHeaderValue | undefined; "Content-Length"?: AxiosHeaderValue | undefined; "User-Agent"?: AxiosHeaderValue | undefined; "Content-Encoding"?: AxiosHeaderValue | undefined; 'Content-Type'?: ContentType | undefined; }' is not assignable to type 'AxiosRequestHeaders'.
+  Type '{ Authorization: string; Accept?: AxiosHeaderValue | undefined; "Content-Length"?: AxiosHeaderValue | undefined; "User-Agent"?: AxiosHeaderValue | undefined; "Content-Encoding"?: AxiosHeaderValue | undefined; 'Content-Type'?: ContentType | undefined; }' is missing the following properties from type 'AxiosHeaders': set, get, has, delete, and 23 more.
+
+65         originalRequest.headers = {
+           ~~~~~~~~~~~~~~~~~~~~~~~
+
+src/services/api/auth.service.ts:3:33 - error TS2307: Cannot find module 'axios/base' or its corresponding type declarations.
+
+3 import type { AxiosError } from 'axios/base';
+                                  ~~~~~~~~~~~~
+
+src/services/api/auth.service.ts:69:13 - error TS7022: 'response' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+
+69       const response = await apiService.post<AuthResponse>(
+               ~~~~~~~~
+
+src/services/api/auth.service.ts:71:9 - error TS2448: Block-scoped variable 'data' used before its declaration.
+
+71         data
+           ~~~~
+
+  src/services/api/auth.service.ts:73:15
+    73       const { data } = response.data;
+                     ~~~~
+    'data' is declared here.
+
+src/services/api/auth.service.ts:73:15 - error TS7022: 'data' implicitly has type 'any' because it does not have a type annotation and is referenced directly or indirectly in its own initializer.
+
+73       const { data } = response.data;
+                 ~~~~
+
+src/services/api/auth.service.ts:86:33 - error TS2339: Property 'user' does not exist on type '{ data: { user: User; }; }'.
+
+86       return response.data.data.user;
+                                   ~~~~
+
+src/services/api/auth.service.ts:117:33 - error TS2339: Property 'user' does not exist on type '{ data: { user: User; }; }'.
+
+117       return response.data.data.user;
+                                    ~~~~
+
+src/services/api/auth.service.ts:134:27 - error TS2339: Property 'token' does not exist on type '{ data: { token: string; refreshToken: string; }; }'.
+
+134       this.setTokens(data.token, data.refreshToken);
+                              ~~~~~
+
+src/services/api/auth.service.ts:134:39 - error TS2339: Property 'refreshToken' does not exist on type '{ data: { token: string; refreshToken: string; }; }'.
+
+134       this.setTokens(data.token, data.refreshToken);
