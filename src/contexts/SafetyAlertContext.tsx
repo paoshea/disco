@@ -63,34 +63,34 @@ export function SafetyAlertProvider({
         throw new Error('User ID is required');
       }
 
-      const locationData = alert.location && typeof alert.location === 'object'
-  ? {
-      latitude: Number(alert.location?.latitude) || 0,
-      longitude: Number(alert.location?.longitude) || 0,
-      accuracy: Number(alert.location?.accuracy),
-      timestamp: new Date(),
-      privacyMode: 'precise' as const,
-      sharingEnabled: true,
-      id: alert.id,
-      userId: alert.userId
-    }
-  : {
-      latitude: 0,
-      longitude: 0,
-      accuracy: undefined,
-      timestamp: new Date(),
-      privacyMode: 'precise' as const,
-      sharingEnabled: true,
-      id: alert.id,
-      userId: alert.userId
-    };
+      const jsonLocation: Location = alert.location && typeof alert.location === 'object'
+        ? {
+            latitude: Number(alert.location?.latitude) || 0,
+            longitude: Number(alert.location?.longitude) || 0,
+            accuracy: Number(alert.location?.accuracy),
+            timestamp: new Date(),
+            privacyMode: 'precise' as const,
+            sharingEnabled: true,
+            id: alert.id,
+            userId: alert.userId
+          }
+        : {
+            latitude: 0,
+            longitude: 0,
+            accuracy: undefined,
+            timestamp: new Date(),
+            privacyMode: 'precise' as const,
+            sharingEnabled: true,
+            id: alert.id,
+            userId: alert.userId
+          };
 
       const fullAlert = {
         type: alert.type || 'warning',
         priority: alert.priority || 'medium',
         description: alert.description || '',
         message: alert.message || '',
-        location: locationData,
+        location: jsonLocation,
         status: 'active' as const,
         dismissed: false,
         dismissedAt: null,
