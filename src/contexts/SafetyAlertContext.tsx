@@ -79,7 +79,7 @@ export function SafetyAlertProvider({
         resolved: false,
         ...alert
       };
-      
+
       const newAlert = await createSafetyAlert(fullAlert);
       setAlerts(prev => [newAlert, ...prev]);
     } catch (err) {
