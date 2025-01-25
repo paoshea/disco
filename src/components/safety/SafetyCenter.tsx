@@ -26,7 +26,7 @@ const createAsyncCallback = <
 };
 
 export default function SafetyCenter({
-  settings,
+  safetySettings,
   onSettingsChange,
 }: SafetyCenterProps) {
   const { isLoading, user } = useAuth();
