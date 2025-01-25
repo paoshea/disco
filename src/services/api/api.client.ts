@@ -1,14 +1,17 @@
 
 import axios from 'axios';
-import type {
-  AxiosInstance,
-  AxiosError,
-  AxiosResponse,
-  InternalAxiosRequestConfig
-} from 'axios/dist/node/axios.cjs';
+import type { AxiosInstance, AxiosError, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import type { User } from '@/types/user';
+
+interface AuthResponse {
+  token: string;
+  refreshToken?: string;
+  user: User;
+}
 
 interface ExtendedAxiosRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean;
+  headers: InternalAxiosRequestConfig['headers'];
 }
 
 const apiClient: AxiosInstance = axios.create({
