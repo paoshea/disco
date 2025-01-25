@@ -41,7 +41,9 @@ export const SafetyAlerts: React.FC = () => {
           location: alertLocation,
           description: alert.description || undefined,
           message: alert.message || undefined,
-          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined, // Convert Date to string
+          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined,
+          createdAt: new Date(alert.createdAt).toISOString(),
+          updatedAt: new Date(alert.updatedAt).toISOString()
         };
 
         return (
