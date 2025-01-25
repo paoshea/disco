@@ -22,19 +22,24 @@ export const SafetyAlerts: React.FC = () => {
           latitude: locationData?.latitude ?? 0,
           longitude: locationData?.longitude ?? 0,
           accuracy: locationData?.accuracy,
-          timestamp: new Date(locationData?.timestamp instanceof Date ? locationData.timestamp : Date.now()),
+          timestamp: new Date(
+            locationData?.timestamp instanceof Date
+              ? locationData.timestamp
+              : Date.now()
+          ),
           privacyMode: 'precise',
           sharingEnabled: true,
         };
 
         const safetyAlert: SafetyAlertNew = {
           ...alert,
-          type: alert.type as SafetyAlertType,
-          status: alert.status === 'dismissed' 
-            ? 'dismissed'
-            : alert.resolvedAt 
-              ? 'resolved'
-              : 'active',
+          type: alert.type,
+          status:
+            alert.status === 'dismissed'
+              ? 'dismissed'
+              : alert.resolvedAt
+                ? 'resolved'
+                : 'active',
           location: alertLocation,
           description: alert.description || undefined,
           message: alert.message || undefined,
