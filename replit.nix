@@ -2,7 +2,7 @@
 { pkgs }: {
   deps = [
     pkgs.openssl
-    pkgs.nodejs-19_x
+    pkgs.nodejs-18_x
     pkgs.prisma
   ];
 }
