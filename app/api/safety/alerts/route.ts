@@ -20,7 +20,9 @@ export async function GET(): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);
-    const alerts = Array.isArray(alertsResponse) ? alertsResponse as SafetyAlertNew[] : [];
+    const alerts = Array.isArray(alertsResponse)
+      ? (alertsResponse as SafetyAlertNew[])
+      : [];
     return NextResponse.json({ alerts });
   } catch (error: unknown) {
     const errorMessage =
