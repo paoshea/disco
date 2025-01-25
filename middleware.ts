@@ -63,40 +63,16 @@ export async function middleware(request: NextRequest) {
   }
 
   try {
-    try {
-      // Verify token
-      const payload = await getToken({
-        req: request,
-        secret: process.env.NEXTAUTH_SECRET,
-      });
+    // Verify token
+    const payload = await getToken({
+      req: request,
+      secret: process.env.NEXTAUTH_SECRET,
+    });
 
-      if (!payload) {
-        if (request.nextUrl.pathname.startsWith('/api/')) {
-          return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
-        }
-        return redirectToLogin(request);
+    if (!payload) {
+      if (request.nextUrl.pathname.startsWith('/api/')) {
+        return NextResponse.json({ message: 'Invalid token' }, { status: 401 });
       }
-
-      // Check admin routes
-      if (
-        adminRoutes.some(route => pathname.startsWith(route)) &&
-        payload.role !== 'admin'
-      ) {
-        return NextResponse.redirect(new URL('/403', request.url));
-      }
-
-      // Add user info to request headers
-      const requestHeaders = new Headers(request.headers);
-      requestHeaders.set('x-user-id', payload.sub as string);
-      requestHeaders.set('x-user-role', payload.role as string);
-
-      return NextResponse.next({
-        request: {
-          headers: requestHeaders,
-        },
-      });
-    } catch (error) {
-      console.error('Auth middleware error:', error);
       return redirectToLogin(request);
     }
 
@@ -126,19 +102,24 @@ export async function middleware(request: NextRequest) {
 
     // Redirect to login if accessing protected path without auth
     if (isProtectedPath && !token) {
-      const response = NextResponse.redirect(new URL('/login', request.url));
-      return response;
+      return redirectToLogin(request);
     }
 
     // Redirect to dashboard if accessing auth pages while logged in
     if (isPublicPath && token) {
-      const response = NextResponse.redirect(
-        new URL('/dashboard', request.url)
-      );
-      return response;
+      return NextResponse.redirect(new URL('/dashboard', request.url));
     }
 
-    return NextResponse.next();
+    // Add user info to request headers
+    const requestHeaders = new Headers(request.headers);
+    requestHeaders.set('x-user-id', payload.sub as string);
+    requestHeaders.set('x-user-role', payload.role as string);
+
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    });
   } catch (error) {
     console.error('Auth middleware error:', error);
     if (request.nextUrl.pathname.startsWith('/api/')) {
@@ -157,13 +138,6 @@ function redirectToLogin(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except:
-     * 1. /api/auth/* (authentication routes)
-     * 2. /_next/* (Next.js internals)
-     * 3. /_static/* (static files)
-     * 4. /favicon.ico, /sitemap.xml (static files)
-     */
     '/((?!_next/|_static/|favicon.ico|sitemap.xml).*)',
   ],
 };
