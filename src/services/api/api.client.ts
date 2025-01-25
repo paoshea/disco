@@ -1,5 +1,3 @@
-// import axios, { type AxiosInstance, type AxiosRequestConfig, type AxiosResponse, type AxiosError } from 'axios';
-//import type { InternalAxiosRequestConfig } from 'axios/base/internal-axios';
 import axios, { type AxiosInstance, type AxiosError, type AxiosResponse, type InternalAxiosRequestConfig } from 'axios';
 import type { User } from '@/types/user';
 

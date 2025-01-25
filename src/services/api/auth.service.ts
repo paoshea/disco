@@ -21,10 +21,6 @@ interface AuthResponse {
   user: User;
 }
 
-interface ApiResponse<T> {
-  data: T;
-}
-
 class AuthService {
   private readonly baseUrl = '/api/auth';
 
@@ -35,9 +31,7 @@ class AuthService {
         throw new Error('Unauthorized access. Please login again.');
       }
       const errorData = error.response?.data as ErrorResponse | undefined;
-      throw new Error(
-        errorData?.message || errorData?.error || 'An unexpected error occurred'
-      );
+      throw new Error(errorData?.message || errorData?.error || 'An unexpected error occurred');
     }
     throw error;
   }
@@ -56,13 +50,10 @@ class AuthService {
 
   async login(email: string, password: string): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<ApiResponse<AuthResponse>>(
-        `${this.baseUrl}/login`,
-        { email, password }
-      );
-      const authData = response.data.data;
-      this.setTokens(authData.token, authData.refreshToken);
-      return authData;
+      const response = await apiService.post<AuthResponse>(`${this.baseUrl}/login`, { email, password });
+      const { data } = response.data;
+      this.setTokens(data.token, data.refreshToken);
+      return data;
     } catch (error) {
       throw this.handleError(error);
     }
@@ -70,11 +61,8 @@ class AuthService {
 
   async register(data: RegisterData): Promise<AuthResponse> {
     try {
-      const response = await apiService.post<ApiResponse<AuthResponse>>(
-        `${this.baseUrl}/register`,
-        data
-      );
-      const authData = response.data.data;
+      const response = await apiService.post<AuthResponse>(`${this.baseUrl}/register`, data);
+      const { data: authData } = response.data;
       this.setTokens(authData.token, authData.refreshToken);
       return authData;
     } catch (error) {
@@ -84,9 +72,7 @@ class AuthService {
 
   async getCurrentUser(): Promise<User> {
     try {
-      const response = await apiService.get<ApiResponse<{ user: User }>>(
-        `${this.baseUrl}/me`
-      );
+      const response = await apiService.get<{ user: User }>(`${this.baseUrl}/me`);
       return response.data.data.user;
     } catch (error) {
       throw this.handleError(error);
@@ -103,10 +89,7 @@ class AuthService {
 
   async resetPassword(token: string, password: string): Promise<void> {
     try {
-      await apiService.post(`${this.baseUrl}/password-reset/reset`, {
-        token,
-        password,
-      });
+      await apiService.post(`${this.baseUrl}/password-reset/reset`, { token, password });
     } catch (error) {
       throw this.handleError(error);
     }
@@ -114,10 +97,7 @@ class AuthService {
 
   async updateProfile(updates: Partial<User>): Promise<User> {
     try {
-      const response = await apiService.patch<ApiResponse<{ user: User }>>(
-        `${this.baseUrl}/profile`,
-        updates
-      );
+      const response = await apiService.patch<{ user: User }>(`${this.baseUrl}/profile`, updates);
       return response.data.data.user;
     } catch (error) {
       throw this.handleError(error);
@@ -129,13 +109,12 @@ class AuthService {
       const refreshToken = localStorage.getItem('refreshToken');
       if (!refreshToken) throw new Error('No refresh token found');
 
-      const response = await apiService.post<ApiResponse<{ token: string; refreshToken: string }>>(
+      const response = await apiService.post<{ token: string, refreshToken: string }>(
         `${this.baseUrl}/refresh`,
         { refreshToken }
       );
-
-      const { token, refreshToken: newRefreshToken } = response.data.data;
-      this.setTokens(token, newRefreshToken);
+      const { data } = response.data;
+      this.setTokens(data.token, data.refreshToken);
     } catch (error) {
       this.clearTokens();
       throw this.handleError(error);
