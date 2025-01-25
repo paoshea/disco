@@ -1,33 +1,34 @@
+
 import Redis, { RedisOptions } from 'ioredis';
 import { env } from '@/env.mjs';
 import { z } from 'zod';
 
 const RedisEnvSchema = z.object({
   host: z.string().default('0.0.0.0'),
-  port: z
-    .string()
-    .transform(val => parseInt(val, 10))
-    .default('6379'),
+  port: z.coerce.number().default(6379),
   password: z.string().optional(),
 });
 
-const redisEnv = RedisEnvSchema.parse({
+const redisEnv = RedisEnvSchema.safeParse({
   host: env.REDIS_HOST,
   port: env.REDIS_PORT,
   password: env.REDIS_PASSWORD,
 });
 
-// Prevent multiple instances of Redis client
-interface GlobalRedis {
-  redis?: Redis;
+if (!redisEnv.success) {
+  console.error('Redis environment validation failed:', redisEnv.error);
+  throw new Error('Invalid Redis configuration');
 }
 
-const globalForRedis = globalThis as unknown as GlobalRedis;
+// Prevent multiple instances of Redis client
+declare global {
+  var redis: Redis | undefined;
+}
 
 // Redis configuration with type safety
 const redisConfig: RedisOptions = {
-  host: redisEnv.host,
-  port: redisEnv.port,
+  host: redisEnv.data.host,
+  port: redisEnv.data.port,
   retryStrategy: (times: number) => {
     // Maximum retry delay is 3 seconds
     return Math.min(times * 50, 3000);
@@ -35,12 +36,12 @@ const redisConfig: RedisOptions = {
   maxRetriesPerRequest: 3,
   enableReadyCheck: false,
   lazyConnect: true,
-  ...(redisEnv.password && redisEnv.password.trim() !== ''
-    ? { password: redisEnv.password }
+  ...(redisEnv.data.password && redisEnv.data.password.trim() !== ''
+    ? { password: redisEnv.data.password }
     : {}),
 };
 
-export const redis = globalForRedis.redis ?? new Redis(redisConfig);
+export const redis = global.redis ?? new Redis(redisConfig);
 
 redis.on('error', (error: Error) => {
   if (error.message.includes('NOAUTH')) {
@@ -53,11 +54,11 @@ redis.on('error', (error: Error) => {
 });
 
 redis.on('connect', () => {
-  console.log(`Redis connected to ${redisEnv.host}:${redisEnv.port}`);
+  console.log(`Redis connected to ${redisEnv.data.host}:${redisEnv.data.port}`);
 });
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForRedis.redis = redis;
+  global.redis = redis;
 }
 
 export default redis;
