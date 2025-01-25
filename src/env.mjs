@@ -1,19 +1,23 @@
+
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+const portSchema = z.string().transform((val) => {
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? 3001 : parsed;
+});
 
 export const env = createEnv({
   server: {
     NODE_ENV: z.enum(['development', 'test', 'production']),
-    PORT: z.string().default('3001'),
+    PORT: portSchema,
   },
   client: {
     NEXT_PUBLIC_APP_URL: z.string().url(),
     NEXT_PUBLIC_WEBSOCKET_URL: z
       .string()
       .url()
-      .default(`ws://0.0.0.0:${PORT}/ws`),
+      .default(`ws://0.0.0.0:${process.env.PORT || '3001'}/ws`),
   },
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
