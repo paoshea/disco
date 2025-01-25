@@ -21,8 +21,9 @@ export async function GET(): Promise<NextResponse> {
     const userId = await validateRequest();
     const alerts = await safetyService.getActiveAlerts(userId);
     return NextResponse.json({ alerts });
-  } catch (error) {
-    console.error('Failed to fetch alerts:', error);
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    console.error('Failed to fetch alerts:', errorMessage);
     return NextResponse.json(
       { error: 'Failed to fetch alerts' },
       { status: 500 }
