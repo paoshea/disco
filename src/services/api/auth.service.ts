@@ -1,6 +1,6 @@
 import { User } from '@/types/user';
 import { apiService } from './api';
-import axios, { AxiosError } from 'axios';
+import type { AxiosError } from 'axios';
 
 interface RegisterData extends Record<string, unknown> {
   email: string;

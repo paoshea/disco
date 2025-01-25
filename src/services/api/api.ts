@@ -1,8 +1,10 @@
-import axios, {
+import axios from 'axios';
+import type {
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
   AxiosError,
+  InternalAxiosRequestConfig
 } from 'axios';
 
 export interface ApiErrorResponse {
@@ -37,18 +39,18 @@ class ApiService {
     this.instance = axios.create(config);
 
     this.instance.interceptors.request.use(
-      (config) => {
+      (config: InternalAxiosRequestConfig) => {
         const token = localStorage.getItem('token');
         if (token) {
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
       },
-      (error) => Promise.reject(error)
+      (error: unknown) => Promise.reject(error)
     );
 
     this.instance.interceptors.response.use(
-      (response) => response,
+      (response: AxiosResponse) => response,
       (error: AxiosError<ApiErrorResponse>) => {
         if (error.response?.status === 401) {
           localStorage.removeItem('token');
@@ -130,12 +132,13 @@ class ApiService {
   }
 
   private handleError(error: unknown): ApiError {
-    if (axios.isAxiosError(error)) {
-      const response = error.response?.data as ApiErrorResponse | undefined;
+    if (error && typeof error === 'object' && 'isAxiosError' in error) {
+      const axiosError = error as AxiosError<ApiErrorResponse>;
+      const response = axiosError.response?.data;
       return {
         message: response?.message || 'An unexpected error occurred',
         code: response?.code,
-        status: error.response?.status ?? 500,
+        status: axiosError.response?.status ?? 500,
       };
     }
 
