@@ -1,7 +1,7 @@
 import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const PORT = Number(process.env.PORT) || 3001;
+const PORT: number = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
 
 export const env = createEnv({
   server: {
