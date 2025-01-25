@@ -29,14 +29,6 @@ interface SafetyCheckInput {
   location?: LocationData;
 }
 
-interface SafetyAlertInput {
-  type: string;
-  description: string;
-  severity: 'low' | 'medium' | 'high';
-  location?: LocationData;
-  message?: string;
-}
-
 export const getSafetyAlerts = async (userId: string) => {
   const response = await fetch(`/api/safety/alerts?userId=${userId}`);
   if (!response.ok) {
