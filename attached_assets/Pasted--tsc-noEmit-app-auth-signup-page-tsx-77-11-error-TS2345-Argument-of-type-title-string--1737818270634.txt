@@ -1,0 +1,215 @@
+
+> tsc --noEmit
+
+app/(auth)/signup/page.tsx:77:11 - error TS2345: Argument of type '{ title: string; description: string; variant: string; duration: number; }' is not assignable to parameter of type 'ToastContent<unknown>'.
+  Object literal may only specify known properties, and 'title' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...> | ((props: ToastContentProps<...>) => ReactNode)'.
+
+77           title: 'Success!',
+             ~~~~~
+
+app/(auth)/signup/page.tsx:90:46 - error TS2339: Property 'error' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; needsVerification?: boolean | undefined; }>'.
+
+90         console.log('Signup failed:', result.error);
+                                                ~~~~~
+
+  app/(auth)/signup/page.tsx:90:46
+    90         console.log('Signup failed:', result.error);
+                                                    ~~~~~
+    Did you forget to use 'await'?
+
+app/(auth)/signup/page.tsx:93:11 - error TS2345: Argument of type '{ title: string; description: any; variant: string; }' is not assignable to parameter of type 'ToastContent<unknown>'.
+  Object literal may only specify known properties, and 'title' does not exist in type 'ReactElement<any, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<...> | ((props: ToastContentProps<...>) => ReactNode)'.
+
+93           title: 'Error',
+             ~~~~~
+
+app/(auth)/signup/page.tsx:94:31 - error TS2339: Property 'error' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; needsVerification?: boolean | undefined; }>'.
+
+94           description: result.error || 'Registration failed. Please try again.',
+                                 ~~~~~
+
+  app/(auth)/signup/page.tsx:94:31
+    94           description: result.error || 'Registration failed. Please try again.',
+                                     ~~~~~
+    Did you forget to use 'await'?
+
+app/(auth)/signup/page.tsx:98:21 - error TS2339: Property 'error' does not exist on type 'Promise<{ success: boolean; error?: string | undefined; needsVerification?: boolean | undefined; }>'.
+
+98         if (result?.error?.includes('already exists')) {
+                       ~~~~~
+
+  app/(auth)/signup/page.tsx:98:21
+    98         if (result?.error?.includes('already exists')) {
+                           ~~~~~
+    Did you forget to use 'await'?
+
+app/api/safety/alerts/route.ts:48:65 - error TS2554: Expected 1 arguments, but got 2.
+
+48     const alert = await safetyService.createSafetyAlert(userId, result.data);
+                                                                   ~~~~~~~~~~~
+
+app/safety/page.tsx:16:5 - error TS2345: Argument of type '{ enabled: boolean; emergencyContacts: never[]; }' is not assignable to parameter of type 'SafetySettings | (() => SafetySettings)'.
+  Object literal may only specify known properties, and 'enabled' does not exist in type 'SafetySettings | (() => SafetySettings)'.
+
+16     enabled: false,
+       ~~~~~~~
+
+app/safety/page.tsx:83:37 - error TS2339: Property 'enabled' does not exist on type 'SafetySettings'.
+
+83                   checked={settings.enabled}
+                                       ~~~~~~~
+
+app/safety/page.tsx:119:30 - error TS2339: Property 'enabled' does not exist on type 'SafetySettings'.
+
+119                     settings.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                                 ~~~~~~~
+
+app/safety/page.tsx:125:32 - error TS2339: Property 'enabled' does not exist on type 'SafetySettings'.
+
+125                       settings.enabled ? 'translate-x-6' : 'translate-x-1'
+                                   ~~~~~~~
+
+app/safety/page.tsx:141:27 - error TS2339: Property 'emergencyContacts' does not exist on type 'SafetySettings'.
+
+141                 {settings.emergencyContacts.map(
+                              ~~~~~~~~~~~~~~~~~
+
+app/safety/page.tsx:174:27 - error TS2339: Property 'emergencyContacts' does not exist on type 'SafetySettings'.
+
+174                 {settings.emergencyContacts.length === 0 && (
+                              ~~~~~~~~~~~~~~~~~
+
+app/safety/page.tsx:185:12 - error TS2739: Type '{}' is missing the following properties from type 'SafetyFeaturesProps': user, settings, onSettingsChange
+
+185           <SafetyFeatures />
+               ~~~~~~~~~~~~~~
+
+app/safety/page.tsx:186:12 - error TS2741: Property 'userId' is missing in type '{}' but required in type 'SafetyCenterProps'.
+
+186           <SafetyCenter />
+               ~~~~~~~~~~~~
+
+  src/types/safety.ts:345:3
+    345   userId: string;
+          ~~~~~~
+    'userId' is declared here.
+
+middleware.ts:98:7 - error TS2304: Cannot find name 'payload'.
+
+98       payload.role !== 'admin'
+         ~~~~~~~
+
+src/components/auth/AuthErrorBoundary.tsx:24:5 - error TS2349: This expression is not callable.
+  Type '{ success: (message: string) => Element; error: (message: string) => Element; info: (message: string) => Element; }' has no call signatures.
+
+24     toast({
+       ~~~~~
+
+src/components/safety/EmergencyAlert.tsx:56:53 - error TS2554: Expected 1 arguments, but got 2.
+
+ 56       await safetyService.createSafetyAlert(userId, {
+                                                        ~
+ 57         type: 'emergency_sos',
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+... 
+ 65         },
+    ~~~~~~~~~~
+ 66       });
+    ~~~~~~~
+
+src/components/safety/SafetyAlerts.tsx:6:19 - error TS2339: Property 'dismissAlert' does not exist on type 'SafetyAlertContextType'.
+
+6   const { alerts, dismissAlert } = useSafetyAlerts();
+                    ~~~~~~~~~~~~
+
+src/components/safety/SafetyAlerts.tsx:17:11 - error TS2741: Property 'status' is missing in type '{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; resolved: boolean; dismissed: boolean; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }' but required in type 'SafetyAlertNew'.
+
+17           alert={alert}
+             ~~~~~
+
+  src/types/safety.ts:284:3
+    284   status: 'active' | 'resolved' | 'dismissed';
+          ~~~~~~
+    'status' is declared here.
+  src/components/safety/SafetyAlertNotification.tsx:12:3
+    12   alert: SafetyAlertNew;
+         ~~~~~
+    The expected type comes from property 'alert' which is declared here on type 'IntrinsicAttributes & SafetyAlertNotificationProps'
+
+src/components/safety/SafetyCenter.tsx:15:19 - error TS2339: Property 'isLoading' does not exist on type 'SafetyAlertContextType'.
+
+15   const { alerts, isLoading, error, dismissAlert, addAlert } =
+                     ~~~~~~~~~
+
+src/components/safety/SafetyCenter.tsx:15:30 - error TS2339: Property 'error' does not exist on type 'SafetyAlertContextType'.
+
+15   const { alerts, isLoading, error, dismissAlert, addAlert } =
+                                ~~~~~
+
+src/components/safety/SafetyCenter.tsx:15:37 - error TS2339: Property 'dismissAlert' does not exist on type 'SafetyAlertContextType'.
+
+15   const { alerts, isLoading, error, dismissAlert, addAlert } =
+                                       ~~~~~~~~~~~~
+
+src/components/safety/SafetyCenter.tsx:15:51 - error TS2339: Property 'addAlert' does not exist on type 'SafetyAlertContextType'.
+
+15   const { alerts, isLoading, error, dismissAlert, addAlert } =
+                                                     ~~~~~~~~
+
+src/components/safety/SafetyCenter.tsx:89:17 - error TS2322: Type '{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; resolved: boolean; dismissed: boolean; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }' is not assignable to type 'SafetyAlertNew'.
+
+89                 alert={alert}
+                   ~~~~~
+
+  src/components/safety/SafetyAlertNotification.tsx:12:3
+    12   alert: SafetyAlertNew;
+         ~~~~~
+    The expected type comes from property 'alert' which is declared here on type 'IntrinsicAttributes & SafetyAlertNotificationProps'
+
+src/hooks/useAuth.ts:145:13 - error TS1119: An object literal cannot have property and accessor with the same name.
+
+145       async refreshToken() {
+                ~~~~~~~~~~~~
+
+src/middleware/authMiddleware.ts:18:29 - error TS2304: Cannot find name 'verifyToken'.
+
+18       const decoded = await verifyToken(token);
+                               ~~~~~~~~~~~
+
+src/services/api/safety.service.ts:94:53 - error TS2322: Type 'Omit<{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; resolved: boolean; dismissed: boolean; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }, "id" | "createdAt">' is not assignable to type '(Without<SafetyAlertCreateInput, SafetyAlertUncheckedCreateInput> & SafetyAlertUncheckedCreateInput) | (Without<...> & SafetyAlertCreateInput)'.
+  Type 'Omit<{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; resolved: boolean; dismissed: boolean; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }, "id" | "createdAt">' is not assignable to type 'Without<SafetyAlertCreateInput, SafetyAlertUncheckedCreateInput> & SafetyAlertUncheckedCreateInput'.
+    Type 'Omit<{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; resolved: boolean; dismissed: boolean; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }, "id" | "createdAt">' is not assignable to type 'SafetyAlertUncheckedCreateInput'.
+      Types of property 'location' are incompatible.
+        Type 'JsonValue' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+          Type 'null' is not assignable to type 'NullableJsonNullValueInput | InputJsonValue | undefined'.
+
+94     const alert = await prisma.safetyAlert.create({ data });
+                                                       ~~~~
+
+  node_modules/.prisma/client/index.d.ts:18714:5
+    18714     data: XOR<SafetyAlertCreateInput, SafetyAlertUncheckedCreateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: SafetyAlertSelect<DefaultArgs> | null | undefined; include?: SafetyAlertInclude<DefaultArgs> | null | undefined; data: (Without<...> & SafetyAlertUncheckedCreateInput) | (Without<...> & SafetyAlertCreateInput); }'
+
+src/services/websocket/socket.service.ts:222:7 - error TS2322: Type '{ type: keyof WebSocketEvents; data: WebSocketEvents[K]; payload: {}; timestamp: number; }' is not assignable to type 'WebSocketMessage<WebSocketEvents[K]>'.
+  Object literal may only specify known properties, and 'payload' does not exist in type 'WebSocketMessage<WebSocketEvents[K]>'.
+
+222       payload: {},
+          ~~~~~~~
+
+
+Found 28 errors in 12 files.
+
+Errors  Files
+     5  app/(auth)/signup/page.tsx:77
+     1  app/api/safety/alerts/route.ts:48
+     8  app/safety/page.tsx:16
+     1  middleware.ts:98
+     1  src/components/auth/AuthErrorBoundary.tsx:24
+     1  src/components/safety/EmergencyAlert.tsx:56
+     2  src/components/safety/SafetyAlerts.tsx:6
+     5  src/components/safety/SafetyCenter.tsx:15
+     1  src/hooks/useAuth.ts:145
+     1  src/middleware/authMiddleware.ts:18
+     1  src/services/api/safety.service.ts:94
+     1  src/services/websocket/socket.service.ts:222
