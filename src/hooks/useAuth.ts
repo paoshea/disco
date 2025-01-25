@@ -159,7 +159,8 @@ export const useAuth = create<AuthState>()(
             '/api/auth/signup',
             data
           );
-          const result = authResponseSchema.safeParse(response.data);
+          const parsedData = response.data as unknown;
+          const result = authResponseSchema.safeParse(parsedData);
 
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
