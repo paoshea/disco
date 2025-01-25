@@ -373,13 +373,13 @@ export interface SafetyAlertNew {
     latitude: number;
     longitude: number;
     accuracy: number | null;
-    timestamp: Date;
+    timestamp: string;
   };
   dismissed: boolean;
   resolved: boolean;
-  updatedAt: Date;
-  dismissedAt: Date | null;
-  resolvedAt: Date | null;
+  updatedAt?: Date;
+  dismissedAt?: Date | null;
+  resolvedAt?: Date | null;
 }
 
 export interface EmergencyContact {
