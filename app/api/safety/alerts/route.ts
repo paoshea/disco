@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
 import { SafetyAlertSchema } from '@/schemas/safety.schema';
+import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 
 async function validateRequest() {
   const session = await getServerSession(authOptions);
@@ -21,7 +22,11 @@ export async function GET(): Promise<NextResponse> {
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);
     const alerts = Array.isArray(alertsResponse)
-      ? (alertsResponse as SafetyAlertNew[])
+      ? alertsResponse.map(alert => ({
+          ...alert,
+          type: alert.type as SafetyAlertType,
+          status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active'
+        }))
       : [];
     return NextResponse.json({ alerts });
   } catch (error: unknown) {

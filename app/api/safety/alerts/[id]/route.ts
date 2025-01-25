@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
-import type { SafetyAlertNew } from '@/types/safety';
+import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 import { z } from 'zod';
 
 const ActionSchema = z.object({
@@ -34,7 +34,11 @@ export async function GET(
     const userId = await validateRequest();
     const params = await context.params;
     const alertResponse = await safetyService.getSafetyAlert(params.id);
-    const alert = alertResponse ? (alertResponse as SafetyAlertNew) : null;
+    const alert = alertResponse ? {
+      ...alertResponse,
+      type: alertResponse.type as SafetyAlertType,
+      status: alertResponse.dismissed ? 'dismissed' : alertResponse.resolved ? 'resolved' : 'active'
+    } : null;
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
