@@ -70,16 +70,12 @@ export default function SignupPage() {
       if (result.success) {
         console.log('Signup successful, preparing to redirect...');
 
-        // Show success toast
         toast.success(
           'Account created successfully! Check your email for verification instructions.'
         );
 
-        // Ensure state is updated before redirect
-        await new Promise(resolve => setTimeout(resolve, 1000));
-
         // Use replace instead of push to prevent back navigation to signup
-        await router.replace('/dashboard');
+        router.replace('/dashboard');
         router.refresh();
       } else {
         console.log('Signup failed:', result.error);
