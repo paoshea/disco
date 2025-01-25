@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -15,13 +14,13 @@ export default function SafetyPage() {
   const router = useRouter();
   const [settings, setSettings] = useState<SafetySettings>({
     sosAlertEnabled: false,
-    emergencyContacts: [] as EmergencyContact[],
+    emergencyContacts: [],
     autoShareLocation: false,
     meetupCheckins: false,
     requireVerifiedMatch: false,
   });
 
-  const updateSafetySettings = async (newSettings: Partial<SafetySettingsNew>) => {
+  const updateSafetySettings = async (newSettings: Partial<SafetySettings>) => {
     try {
       const response = await fetch('/api/safety/settings', {
         method: 'PUT',
@@ -33,7 +32,13 @@ export default function SafetyPage() {
         throw new Error('Failed to update settings');
       }
 
-      setSettings(prev => ({ ...prev, ...newSettings }));
+      setSettings((prev) => ({
+        ...prev,
+        ...newSettings,
+        emergencyContacts: Array.isArray(newSettings.emergencyContacts)
+          ? newSettings.emergencyContacts
+          : prev.emergencyContacts,
+      }));
       createToast.success({
         title: 'Settings Updated',
         description: 'Your safety settings have been saved.',
@@ -46,6 +51,7 @@ export default function SafetyPage() {
       });
     }
   };
+
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -111,7 +117,7 @@ export default function SafetyPage() {
               <div className="flex items-center">
                 <Switch
                   checked={settings.sosAlertEnabled}
-                  onChange={enabled => {
+                  onChange={(enabled) => {
                     void updateSafetySettings({ sosAlertEnabled: enabled });
                   }}
                   className={`${
@@ -138,10 +144,11 @@ export default function SafetyPage() {
               </h4>
               <div className="mt-4 space-y-4">
                 {settings.emergencyContacts.map((contact) => {
-                  const contactData = typeof contact === 'string' 
-                    ? { id: contact, name: contact, email: '', phoneNumber: '' }
-                    : contact;
-                    
+                  const contactData: EmergencyContact =
+                    typeof contact === 'string'
+                      ? { id: contact, name: contact, email: '', phoneNumber: '' }
+                      : contact;
+
                   return (
                     <div
                       key={contactData.id}
@@ -149,7 +156,7 @@ export default function SafetyPage() {
                     >
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          {contactData.name || `${contactData.firstName} ${contactData.lastName}`}
+                          {contactData.name || 'Unknown Contact'}
                         </p>
                         <p className="text-sm text-gray-500">{contactData.email}</p>
                         <p className="text-sm text-gray-500">{contactData.phoneNumber}</p>
@@ -168,73 +175,15 @@ export default function SafetyPage() {
         </div>
 
         <div className="mt-8">
-          <SafetyFeatures 
-            user={{
-              id: user?.id || '',
-              firstName: user?.firstName || '',
-              lastName: user?.lastName || '',
-              email: user?.email || '',
-              emailVerified: user?.emailVerified || false,
-              name: user?.name || '',
-              lastActive: new Date(),
-              verificationStatus: 'pending',
-              createdAt: new Date(),
-              updatedAt: new Date(),
-              preferences: {
-                maxDistance: 50,
-                ageRange: { min: 18, max: 99 },
-                interests: [],
-                gender: [],
-                lookingFor: [],
-                relationshipType: [],
-                notifications: {
-                  matches: true,
-                  messages: true,
-                  events: true,
-                  safety: true,
-                },
-                privacy: {
-                  showOnlineStatus: true,
-                  showLastSeen: true,
-                  showLocation: true,
-                  showAge: true,
-                },
-                safety: {
-                  requireVerifiedMatch: false,
-                  meetupCheckins: true,
-                  emergencyContactAlerts: true,
-                },
-              },
-            }}
-            settings={{
-              autoShareLocation: settings.sosAlertEnabled,
-              meetupCheckins: true,
-              sosAlertEnabled: settings.sosAlertEnabled,
-              requireVerifiedMatch: false,
-              emergencyContacts: settings.emergencyContacts
-            }}
-            onSettingsChange={newSettings => {
-              setSettings(prev => ({
-                ...prev,
-                ...newSettings,
-                emergencyContacts: Array.isArray(newSettings.emergencyContacts)
-                  ? newSettings.emergencyContacts
-                  : prev.emergencyContacts
-              }));
-            }}
+          <SafetyFeatures
+            user={user!}
+            settings={settings}
+            onSettingsChange={updateSafetySettings}
           />
-          <SafetyCenter 
+          <SafetyCenter
             userId={user?.id || ''}
             safetySettings={settings}
-            onSettingsChange={newSettings => {
-              setSettings(prev => ({
-                ...prev,
-                ...newSettings,
-                emergencyContacts: Array.isArray(newSettings.emergencyContacts)
-                  ? newSettings.emergencyContacts
-                  : prev.emergencyContacts
-              }));
-            }}
+            onSettingsChange={updateSafetySettings}
           />
         </div>
       </div>
