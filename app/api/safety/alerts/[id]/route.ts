@@ -43,7 +43,7 @@ export async function GET(
     }
 
     return NextResponse.json(alert);
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
@@ -81,7 +81,7 @@ export async function PUT(
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
-  } catch (error) {
+  } catch (error: unknown) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
