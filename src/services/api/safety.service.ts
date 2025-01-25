@@ -1,3 +1,5 @@
+'use server'
+
 import { prisma } from '@/lib/prisma';
 import type {
   SafetyAlertType,
@@ -8,7 +10,7 @@ import type {
   EmergencyContactInput,
 } from '@/types/safety';
 import type { LocationPrivacyMode } from '@/types/location';
-import { Prisma, ReportType, ReportStatus } from '@prisma/client';
+import { Prisma, ReportType, ReportStatus, SafetyAlert } from '@prisma/client';
 
 interface LocationData {
   latitude: number;
@@ -43,13 +45,10 @@ export const safetyService = {
   },
 
   async getSafetyAlerts(userId: string) {
-    return prisma.safetyAlert.findMany({
-      where: {
-        userId,
-        dismissed: false,
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+    return await prisma.safetyAlert.findMany({
+      where: { userId },
+      orderBy: { createdAt: 'desc' }
+    })
   },
 
   async getActiveAlerts(userId: string) {
@@ -74,40 +73,11 @@ export const safetyService = {
   },
 
   async createSafetyAlert(
-    userId: string,
-    data: SafetyAlertInput
+    data: Omit<SafetyAlert, 'id' | 'createdAt'>
   ): Promise<SafetyAlertNew> {
-    const now = new Date();
-    const locationInput = data.location
-      ? {
-          ...data.location,
-          timestamp: now,
-        }
-      : null;
+    const alert = await prisma.safetyAlert.create({ data });
 
-    const alert = await prisma.safetyAlert.create({
-      data: {
-        userId,
-        type: data.type,
-        priority: data.severity,
-        message: data.message || null,
-        description: data.description,
-        location: locationInput as
-          | Prisma.NullableJsonNullValueInput
-          | Prisma.InputJsonValue,
-        dismissed: false,
-        dismissedAt: null,
-        resolved: false,
-        resolvedAt: null,
-      },
-    });
-
-    const locationData: SafetyLocationData | null = locationInput
-      ? {
-          ...locationInput,
-          timestamp: now,
-        }
-      : null;
+    const locationData: SafetyLocationData | null = null; //Simplified
 
     return {
       id: alert.id,
@@ -121,7 +91,7 @@ export const safetyService = {
       location: locationData || {
         latitude: 0,
         longitude: 0,
-        timestamp: now,
+        timestamp: new Date(),
       },
       message: alert.message || undefined,
       description: alert.description || undefined,
