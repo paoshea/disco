@@ -4,9 +4,9 @@ import type {
   AxiosInstance,
   AxiosRequestConfig,
   AxiosResponse,
-  AxiosError
-} from 'axios/base';
-import type { InternalAxiosRequestConfig } from 'axios/base/internal-axios';
+  AxiosError,
+  InternalAxiosRequestConfig
+} from 'axios';
 
 export interface ApiErrorResponse {
   message: string;
