@@ -361,38 +361,3 @@ export interface SafetyReportFormProps {
   onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
   onCancel: () => void;
 }
-export type SafetyAlertType = 'emergency' | 'help' | 'location';
-
-export interface SafetyAlertNew {
-  id?: string;
-  type: SafetyAlertType;
-  message: string | null;
-  description: string | null;
-  priority: string;
-  location: {
-    latitude: number;
-    longitude: number;
-    accuracy: number | null;
-    timestamp: string;
-  };
-  dismissed: boolean;
-  resolved: boolean;
-  updatedAt?: Date;
-  dismissedAt?: Date | null;
-  resolvedAt?: Date | null;
-}
-
-export interface EmergencyContact {
-  id: string;
-  name: string;
-  phoneNumber: string;
-  email: string;
-}
-
-export interface SafetySettings {
-  emergencyContacts: EmergencyContact[];
-  autoShareLocation?: boolean;
-  meetupCheckins?: boolean;
-  sosAlertEnabled: boolean;
-  requireVerifiedMatch?: boolean;
-}
