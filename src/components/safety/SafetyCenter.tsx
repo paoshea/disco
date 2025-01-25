@@ -10,7 +10,7 @@ import React from 'react';
 import type { SafetySettingsNew } from '@/types/safety';
 
 interface SafetyCenterProps {
-  settings?: SafetySettingsNew;
+  safetySettings?: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
