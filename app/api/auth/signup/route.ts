@@ -146,13 +146,34 @@ export async function POST(request: NextRequest): Promise<Response> {
     console.error('Signup error details:', {
       name: err.name,
       message: err.message,
-      stack: err.stack,
     });
-    if (err.code) {
-      console.error('Database error code:', err.code);
+    
+    // Handle specific error types
+    if (err.name === 'PrismaClientInitializationError') {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'Service temporarily unavailable. Please try again in a moment.'
+        },
+        { status: 503 }
+      );
     }
+    
+    if (err.code === 'P2002') {
+      return NextResponse.json(
+        { 
+          success: false,
+          error: 'An account with this email already exists'
+        },
+        { status: 409 }
+      );
+    }
+
     return NextResponse.json(
-      { message: 'An error occurred during signup' },
+      { 
+        success: false,
+        error: 'An error occurred during signup. Please try again.'
+      },
       { status: 500 }
     );
   }
