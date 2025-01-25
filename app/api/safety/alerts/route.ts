@@ -45,7 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    const alert = await safetyService.createSafetyAlert(userId, result.data);
+    const alert = await safetyService.createSafetyAlert(userId);
 
     return NextResponse.json(alert);
   } catch (error) {
