@@ -89,7 +89,8 @@ export const safetyService = {
   },
 
   async createSafetyAlert(
-    data: Omit<SafetyAlert, 'id' | 'createdAt'>
+    userId: string,
+    data: Omit<SafetyAlert, 'id' | 'createdAt' | 'userId'>
   ): Promise<SafetyAlertNew> {
     // Convert location to Prisma-compatible JSON format
     const locationJson = data.location
@@ -104,6 +105,7 @@ export const safetyService = {
     const alert = await prisma.safetyAlert.create({
       data: {
         ...data,
+        userId,
         location: locationJson ? (locationJson as Prisma.InputJsonValue) : Prisma.JsonNull,
       },
     });
