@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { getSession } from '@/lib/auth';
+import { getSession, verifyToken } from '@/lib/auth';
 
 export async function withAuth(
   request: NextRequest,
