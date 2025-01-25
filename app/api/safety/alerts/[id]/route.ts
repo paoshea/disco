@@ -1,3 +1,4 @@
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -17,9 +18,7 @@ async function validateRequest() {
 }
 
 type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
+  params: { id: string };
 };
 
 export const dynamic = 'force-dynamic';
@@ -31,9 +30,8 @@ export async function GET(
   context: RouteContext
 ): Promise<NextResponse> {
   try {
-    const params = await context.params;
     const userId = await validateRequest();
-    const alert = await safetyService.getSafetyAlert(params.id);
+    const alert = await safetyService.getSafetyAlert(context.params.id);
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -61,8 +59,8 @@ export async function PUT(
   context: RouteContext
 ): Promise<NextResponse> {
   try {
-    const params = await context.params;
-    const body = (await request.json()) as z.infer<typeof ActionSchema>;
+    const userId = await validateRequest();
+    const body = await request.json();
     const result = ActionSchema.safeParse(body);
 
     if (!result.success) {
@@ -75,22 +73,14 @@ export async function PUT(
     const { action } = result.data;
 
     if (action === 'dismiss') {
-      const userId = await validateRequest();
-      const alertId = params.id;
-
-      const updatedAlert = await safetyService.dismissAlert(alertId, userId);
-
+      const updatedAlert = await safetyService.dismissAlert(context.params.id, userId);
       return NextResponse.json(updatedAlert);
     } else if (action === 'resolve') {
-      const userId = await validateRequest();
-      const alertId = params.id;
-
-      const updatedAlert = await safetyService.resolveAlert(alertId, userId);
-
+      const updatedAlert = await safetyService.resolveAlert(context.params.id, userId);
       return NextResponse.json(updatedAlert);
-    } else {
-      return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
     }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     if (error instanceof Error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
