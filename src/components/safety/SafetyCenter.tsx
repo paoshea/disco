@@ -83,13 +83,13 @@ export default function SafetyCenter({
       try {
         const response = await fetch('/api/safety/settings');
         if (!response.ok) throw new Error('Failed to fetch safety settings');
-        const data = await response.json();
+        const data: Partial<SafetySettingsNew> = await response.json();
         const typedSettings: SafetySettingsNew = {
-          sosAlertEnabled: data.sosAlertEnabled ?? false,
-          emergencyContacts: data.emergencyContacts ?? [],
-          autoShareLocation: data.autoShareLocation ?? false,
-          meetupCheckins: data.meetupCheckins ?? false,
-          requireVerifiedMatch: data.requireVerifiedMatch ?? false,
+          sosAlertEnabled: Boolean(data.sosAlertEnabled),
+          emergencyContacts: Array.isArray(data.emergencyContacts) ? data.emergencyContacts : [],
+          autoShareLocation: Boolean(data.autoShareLocation),
+          meetupCheckins: Boolean(data.meetupCheckins),
+          requireVerifiedMatch: Boolean(data.requireVerifiedMatch),
         };
         setSettings(typedSettings);
       } catch (error) {

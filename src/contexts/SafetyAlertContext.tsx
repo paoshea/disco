@@ -28,6 +28,18 @@ export function SafetyAlertProvider({
   children: React.ReactNode;
 }) {
   const [alerts, setAlerts] = useState<SafetyAlertNew[]>([]);
+  const transformAlert = (data: unknown): SafetyAlertNew => {
+    const alert = data as Partial<SafetyAlertNew>;
+    return {
+      id: String(alert.id ?? ''),
+      userId: String(alert.userId ?? ''),
+      type: alert.type ?? 'custom',
+      status: alert.status ?? 'active',
+      location: alert.location ?? { latitude: 0, longitude: 0, timestamp: new Date() },
+      createdAt: alert.createdAt ?? new Date().toISOString(),
+      updatedAt: alert.updatedAt ?? new Date().toISOString()
+    };
+  };
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

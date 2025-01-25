@@ -32,7 +32,7 @@ export async function GET(
   try {
     const userId = await validateRequest();
     const params = await context.params;
-    const alert = await safetyService.getSafetyAlert(params.id);
+    const alert = await safetyService.getSafetyAlert(params.id) as SafetyAlertNew | null;
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
