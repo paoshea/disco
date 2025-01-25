@@ -1,0 +1,49 @@
+
+ ○ Compiling /signup ...
+ ✓ Compiled /signup in 855ms (942 modules)
+ GET /signup 200 in 966ms
+ ○ Compiling /api/auth/signup ...
+ ✓ Compiled /api/auth/signup in 1101ms (1085 modules)
+Checking for existing user...
+Signup error details: {
+  name: 'PrismaClientInitializationError',
+  message: '\n' +
+    'Invalid `prisma.user.findUnique()` invocation:\n' +
+    '\n' +
+    '\n' +
+    'Unable to require(`/home/runner/workspace/node_modules/.prisma/client/libquery_engine-debian-openssl-1.1.x.so.node`).\n' +
+    'Prisma cannot find the required `libssl` system library in your system. Please install openssl-1.1.x and try again.\n' +
+    '\n' +
+    'Details: libssl.so.1.1: cannot open shared object file: No such file or directory',
+  stack: 'PrismaClientInitializationError: \n' +
+    'Invalid `prisma.user.findUnique()` invocation:\n' +
+    '\n' +
+    '\n' +
+    'Unable to require(`/home/runner/workspace/node_modules/.prisma/client/libquery_engine-debian-openssl-1.1.x.so.node`).\n' +
+    'Prisma cannot find the required `libssl` system library in your system. Please install openssl-1.1.x and try again.\n' +
+    '\n' +
+    'Details: libssl.so.1.1: cannot open shared object file: No such file or directory\n' +
+    '    at Vn.handleRequestError (/home/runner/workspace/node_modules/@prisma/client/runtime/library.js:121:7640)\n' +
+    '    at Vn.handleAndLogRequestError (/home/runner/workspace/node_modules/@prisma/client/runtime/library.js:121:6663)\n' +
+    '    at Vn.request (/home/runner/workspace/node_modules/@prisma/client/runtime/library.js:121:6370)\n' +
+    '    at async l (/home/runner/workspace/node_modules/@prisma/client/runtime/library.js:130:9617)\n' +
+    '    at async POST (webpack-internal:///(rsc)/./app/api/auth/signup/route.ts:29:30)\n' +
+    '    at async AppRouteRouteModule.do (/home/runner/workspace/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:10:32804)\n' +
+    '    at async AppRouteRouteModule.handle (/home/runner/workspace/node_modules/next/dist/compiled/next-server/app-route.runtime.dev.js:10:39825)\n' +
+    '    at async doRender (/home/runner/workspace/node_modules/next/dist/server/base-server.js:1452:42)\n' +
+    '    at async responseGenerator (/home/runner/workspace/node_modules/next/dist/server/base-server.js:1822:28)\n' +
+    '    at async DevServer.renderToResponseWithComponentsImpl (/home/runner/workspace/node_modules/next/dist/server/base-server.js:1832:28)\n' +
+    '    at async DevServer.renderPageComponent (/home/runner/workspace/node_modules/next/dist/server/base-server.js:2259:24)\n' +
+    '    at async DevServer.renderToResponseImpl (/home/runner/workspace/node_modules/next/dist/server/base-server.js:2297:32)\n' +
+    '    at async DevServer.pipeImpl (/home/runner/workspace/node_modules/next/dist/server/base-server.js:959:25)\n' +
+    '    at async NextNodeServer.handleCatchallRenderRequest (/home/runner/workspace/node_modules/next/dist/server/next-server.js:281:17)\n' +
+    '    at async DevServer.handleRequestImpl (/home/runner/workspace/node_modules/next/dist/server/base-server.js:853:17)\n' +
+    '    at async /home/runner/workspace/node_modules/next/dist/server/dev/next-dev-server.js:371:20\n' +
+    '    at async Span.traceAsyncFn (/home/runner/workspace/node_modules/next/dist/trace/trace.js:153:20)\n' +
+    '    at async DevServer.handleRequest (/home/runner/workspace/node_modules/next/dist/server/dev/next-dev-server.js:368:24)\n' +
+    '    at async invokeRender (/home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:230:21)\n' +
+    '    at async handleRequest (/home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:408:24)\n' +
+    '    at async requestHandlerImpl (/home/runner/workspace/node_modules/next/dist/server/lib/router-server.js:432:13)\n' +
+    '    at async Server.requestListener (/home/runner/workspace/node_modules/next/dist/server/lib/start-server.js:146:13)'
+}
+ POST /api/auth/signup 500 in 1623ms
