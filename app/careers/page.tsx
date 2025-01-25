@@ -1,20 +1,9 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '@/hooks/useAuth';
-import { useRouter } from 'next/navigation';
 import { PublicLayout } from '@/components/layout/PublicLayout';
 
 export default function CareersPage() {
-  const { isLoading, user } = useAuth();
-  const router = useRouter();
-
-  React.useEffect(() => {
-    if (!isLoading && !user) {
-      router.push('/signin?callbackUrl=/careers');
-    }
-  }, [isLoading, user, router]);
-
   const openPositions = [
     {
       title: 'Senior Frontend Engineer',
@@ -35,25 +24,6 @@ export default function CareersPage() {
       type: 'Full-time',
     },
   ];
-
-  if (isLoading) {
-    return (
-      <PublicLayout>
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <div className="animate-pulse">
-              <div className="h-12 bg-gray-200 rounded mb-6"></div>
-              <div className="h-6 bg-gray-200 rounded w-3/4 mx-auto"></div>
-            </div>
-          </div>
-        </div>
-      </PublicLayout>
-    );
-  }
-
-  if (!user) {
-    return null; // Will redirect in useEffect
-  }
 
   return (
     <PublicLayout>
