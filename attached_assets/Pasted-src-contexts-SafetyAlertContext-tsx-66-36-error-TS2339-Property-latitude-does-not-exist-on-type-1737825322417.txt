@@ -1,0 +1,36 @@
+src/contexts/SafetyAlertContext.tsx:66:36 - error TS2339: Property 'latitude' does not exist on type 'string | number | true | JsonObject | JsonArray'.
+  Property 'latitude' does not exist on type 'string'.
+
+66           latitude: alert.location.latitude,
+                                      ~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:67:37 - error TS2339: Property 'longitude' does not exist on type 'string | number | true | JsonObject | JsonArray'.
+  Property 'longitude' does not exist on type 'string'.
+
+67           longitude: alert.location.longitude,
+                                       ~~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:68:36 - error TS2339: Property 'accuracy' does not exist on type 'string | number | true | JsonObject | JsonArray'.
+  Property 'accuracy' does not exist on type 'string'.
+
+68           accuracy: alert.location.accuracy,
+                                      ~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:69:37 - error TS2339: Property 'timestamp' does not exist on type 'string | number | true | JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'string'.
+
+69           timestamp: alert.location.timestamp instanceof Date
+                                       ~~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:70:30 - error TS2339: Property 'timestamp' does not exist on type 'string | number | true | JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'string'.
+
+70             ? alert.location.timestamp.toISOString()
+                                ~~~~~~~~~
+
+src/contexts/SafetyAlertContext.tsx:83:48 - error TS2345: Argument of type '{ message: string | null; location: string | number | boolean | JsonObject | JsonArray | { latitude: any; longitude: any; accuracy: any; timestamp: any; } | null; ... 10 more ...; resolvedAt?: Date | ... 1 more ... | undefined; }' is not assignable to parameter of type 'Omit<{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; resolved: boolean; dismissed: boolean; type: string; userId: string; priority: string; description: string | null; dismissedAt: Date | null; resolvedAt: Date | null; }, "id" | "createdAt">'.
+  Types of property 'updatedAt' are incompatible.
+    Type 'Date | undefined' is not assignable to type 'Date'.
+      Type 'undefined' is not assignable to type 'Date'.
+
+83       const newAlert = await createSafetyAlert(fullAlert);
