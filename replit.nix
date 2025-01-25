@@ -1,7 +1,7 @@
 
 { pkgs }: {
   deps = [
-    pkgs.openssl
+    pkgs.openssl_1_1
     pkgs.nodejs-18_x
     pkgs.prisma-engines
   ];
