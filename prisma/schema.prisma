@@ -64,6 +64,9 @@ model User {
   matchedBy            UserMatch[]      @relation("MatchedUsers")
   reportedBy           Report[]         @relation("ReportedBy")
   reportedUsers        Report[]         @relation("ReportedUsers")
+  blocksInitiated      UserBlock[]      @relation("BlockedBy")
+  blocksReceived       UserBlock[]      @relation("BlockedUser")
+  chatArchives         ChatArchive[]
 }
 
 model Account {
@@ -306,4 +309,21 @@ model Report {
 
   @@index([reporterId])
   @@index([reportedUserId])
+}
+
+model ChatArchive {
+    id          String   @id @default(cuid())
+    userId      String
+    user        User     @relation(fields: [userId], references: [id])
+    messages    String[]
+    archivedAt  DateTime @default(now())
+}
+
+model UserBlock {
+    id          String   @id @default(cuid())
+    blockerId   String
+    blocker     User     @relation("BlockedBy", fields: [blockerId], references: [id])
+    blockedId   String
+    blocked     User     @relation("BlockedUser", fields: [blockedId], references: [id])
+    createdAt   DateTime @default(now())
 }
