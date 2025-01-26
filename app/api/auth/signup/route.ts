@@ -80,13 +80,19 @@ export async function POST(request: NextRequest): Promise<Response> {
 
     // Ensure database connection is initialized
     try {
+      console.log('Attempting database connection...');
       await prisma.$connect();
+      console.log('Database connected successfully');
     } catch (dbError) {
-      console.error('Database connection error:', dbError);
+      console.error('Database connection error details:', {
+        name: dbError.name,
+        message: dbError.message,
+        stack: dbError.stack,
+      });
       return NextResponse.json(
         {
           success: false,
-          error: 'Database connection error. Please try again in a moment.',
+          error: `Database connection failed: ${dbError.message}`,
         },
         { status: 503 }
       );

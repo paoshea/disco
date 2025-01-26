@@ -67,6 +67,7 @@ export default function SignupPage() {
         throw new Error('No response from signup service');
       }
 
+      console.log('Response from signup:', result);
       if (result.success) {
         console.log('Signup successful, preparing to redirect...');
 
