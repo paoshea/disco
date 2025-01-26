@@ -1,11 +1,12 @@
+
 import type { Location } from '@/types/location';
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-//import { safetyService } from '@/services/api/safety.service'; // Removed as Prisma is used now.
 import { SafetyAlertSchema } from '@/schemas/safety.schema';
 import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 import { prisma } from '@/lib/prisma';
+import type { Prisma } from '@prisma/client';
 
 type LocationData = {
   latitude: number;
@@ -27,22 +28,23 @@ export const runtime = 'nodejs';
 
 export async function GET(req: NextRequest) {
   try {
+    const userId = await validateRequest();
     const alerts = await prisma.safetyAlert.findMany({
-      orderBy: {
-        createdAt: 'desc',
-      },
+      where: { userId },
+      orderBy: { createdAt: 'desc' },
+      include: { user: true }
     });
 
-    const formattedAlerts: SafetyAlertNew[] = alerts.map(alert => {
+    const formattedAlerts = alerts.map(alert => {
       let locationData: LocationData;
+      const location = alert.location as Prisma.JsonObject;
 
-      if (typeof alert.location === 'object' && alert.location) {
-        const loc = alert.location as Record<string, unknown>;
+      if (location && typeof location === 'object') {
         locationData = {
-          latitude: Number(loc.latitude),
-          longitude: Number(loc.longitude),
-          ...(loc.accuracy && { accuracy: Number(loc.accuracy) }),
-          timestamp: new Date(loc.timestamp as string),
+          latitude: Number(location.latitude),
+          longitude: Number(location.longitude),
+          accuracy: location.accuracy ? Number(location.accuracy) : undefined,
+          timestamp: new Date(location.timestamp as string),
         };
       } else {
         locationData = {
@@ -52,32 +54,40 @@ export async function GET(req: NextRequest) {
         };
       }
 
-      return {
+      const status = alert.dismissed 
+        ? 'dismissed' 
+        : alert.resolved 
+          ? 'resolved' 
+          : 'active';
+
+      const formatted: SafetyAlertNew = {
         id: alert.id,
         userId: alert.userId,
         type: alert.type as SafetyAlertType,
-        status: alert.status as "resolved" | "dismissed" | "active",
+        status,
         location: locationData,
-        description: alert.description,
-        createdAt: alert.createdAt,
-        updatedAt: alert.updatedAt,
-        resolvedAt: alert.resolvedAt,
-        dismissedAt: alert.dismissedAt,
-        emergencyContactIds: alert.emergencyContactIds as string[],
-        responseTimeSeconds: alert.responseTimeSeconds,
+        description: alert.description || undefined,
+        message: alert.message || undefined,
+        createdAt: alert.createdAt.toISOString(),
+        updatedAt: alert.updatedAt.toISOString(),
+        resolvedAt: alert.resolvedAt?.toISOString(),
+        user: alert.user
       };
+
+      return formatted;
     });
 
     return NextResponse.json({ alerts: formattedAlerts });
   } catch (error) {
     console.error('Error fetching safety alerts:', error);
-    return NextResponse.json({ error: 'Failed to fetch safety alerts' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch safety alerts' }, 
+      { status: 500 }
+    );
   }
 }
 
-
-// POST /api/safety/alerts
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function POST(request: NextRequest) {
   try {
     const userId = await validateRequest();
     const body = await request.json();
@@ -91,8 +101,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     const now = new Date();
-    const alertData = {
-      ...result.data,
+    const alertData: Prisma.SafetyAlertCreateInput = {
+      type: result.data.type,
       priority: 'medium',
       dismissed: false,
       resolved: false,
@@ -101,25 +111,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       updatedAt: now,
       dismissedAt: null,
       resolvedAt: null,
-      location: result.data.location
-        ? {
-            latitude: result.data.location.latitude,
-            longitude: result.data.location.longitude,
-            accuracy: result.data.location.accuracy || null,
-            timestamp:
-              result.data.location.timestamp instanceof Date
-                ? result.data.location.timestamp.toISOString()
-                : now.toISOString(),
-          }
-        : {
-            latitude: 0,
-            longitude: 0,
-            accuracy: null,
-            timestamp: now.toISOString(),
-          },
+      location: {
+        latitude: result.data.location.latitude,
+        longitude: result.data.location.longitude,
+        accuracy: result.data.location.accuracy || null,
+        timestamp: result.data.location.timestamp instanceof Date
+          ? result.data.location.timestamp.toISOString()
+          : now.toISOString(),
+      },
+      user: {
+        connect: { id: userId }
+      }
     };
 
-    const alert = await prisma.safetyAlert.create({ data: alertData }); //Use Prisma here
+    const alert = await prisma.safetyAlert.create({ data: alertData });
     return NextResponse.json(alert);
   } catch (error) {
     console.error('Failed to create alert:', error);
