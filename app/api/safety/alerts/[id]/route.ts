@@ -33,7 +33,8 @@ export async function GET(
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
  try {
    const userId = await validateRequest();
-   const alert = await safetyService.getSafetyAlert(params.params.id);
+   const params = await context.params;
+   const alert = await safetyService.getSafetyAlert(params.id);
 
    if (!alert) {
      return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -67,9 +68,10 @@ export async function PUT(
    }
 
    const { action } = result.data;
+   const params = await context.params;
    const updatedAlert = action === 'dismiss'
-     ? await safetyService.dismissAlert(params.params.id, userId)
-     : await safetyService.resolveAlert(params.params.id, userId);
+     ? await safetyService.dismissAlert(params.id, userId)
+     : await safetyService.resolveAlert(params.id, userId);
 
    return NextResponse.json(updatedAlert);
  } catch (error: Error | unknown) {
