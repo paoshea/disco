@@ -84,15 +84,16 @@ export async function POST(request: NextRequest): Promise<Response> {
       await prisma.$connect();
       console.log('Database connected successfully');
     } catch (dbError) {
+      const typedDbError = dbError as Error;
       console.error('Database connection error details:', {
-        name: dbError.name,
-        message: dbError.message,
-        stack: dbError.stack,
+        name: typedDbError.name,
+        message: typedDbError.message,
+        stack: typedDbError.stack,
       });
       return NextResponse.json(
         {
           success: false,
-          error: `Database connection failed: ${dbError.message}`,
+          error: `Database connection failed: ${typedDbError.message}`,
         },
         { status: 503 }
       );
