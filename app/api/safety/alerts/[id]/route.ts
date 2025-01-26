@@ -28,8 +28,8 @@ async function validateRequest() {
 }
 
 export async function GET(
- request: NextRequest,
- params: RouteParams
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
  try {
    const userId = await validateRequest();
@@ -51,8 +51,8 @@ export async function GET(
 }
 
 export async function PUT(
- request: NextRequest,
- params: RouteParams
+  request: NextRequest,
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
  try {
    const userId = await validateRequest();
