@@ -168,11 +168,20 @@ This document outlines the various user flows and interactions available on the 
    - Safety checks
    - Successful matches
    - Event participation
+   - Role-based activities
+   - Community engagement
 2. System automatically:
-   - Tracks progress
-   - Awards achievements
-   - Updates user points
-   - Triggers notifications
+   - Tracks progress in real-time
+   - Awards achievements with notifications
+   - Updates user points and level
+   - Triggers milestone rewards
+   - Evaluates role progression
+3. Progress Tracking Features:
+   - Activity dashboard
+   - Achievement badges
+   - Progress indicators
+   - Milestone celebrations
+   - Role upgrade prompts
 
 ### 8.2 Role Progression
 
