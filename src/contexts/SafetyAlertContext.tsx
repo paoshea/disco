@@ -51,9 +51,10 @@ export function SafetyAlertProvider({
     async function loadAlerts() {
       try {
         const userId = localStorage.getItem('userId');
-        if (userId) {
-          const response = await getSafetyAlerts(userId);
-          const safetyAlerts = Array.isArray(response) ? response : [];
+        if (userId && typeof window !== 'undefined') {
+          const response = await fetch(`/api/safety/alerts?userId=${userId}`);
+          const data = await response.json();
+          const safetyAlerts = Array.isArray(data) ? data : [];
           setAlerts(safetyAlerts.map(alert => alert as SafetyAlertNew));
         }
       } catch (error) {

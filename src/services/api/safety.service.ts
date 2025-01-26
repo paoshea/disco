@@ -1,4 +1,6 @@
-import { prisma } from '@/lib/prisma';
+import { db } from '@/lib/prisma';
+
+const isBrowser = typeof window !== 'undefined';
 import type {
   SafetyAlertType,
   SafetyAlertNew,
