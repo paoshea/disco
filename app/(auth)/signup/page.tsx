@@ -68,7 +68,7 @@ export default function SignupPage() {
       }
 
       console.log('Response from signup:', result);
-      if (result.success) {
+      if (result?.success) {
         console.log('Signup successful, preparing to redirect...');
 
         toast.success(
@@ -79,19 +79,18 @@ export default function SignupPage() {
         router.replace('/dashboard');
         router.refresh();
       } else {
-        console.log('Signup failed:', result.error);
+        console.log('Signup failed:', result?.error);
+        
         // Handle specific error cases
-        if (result.error?.includes('503')) {
-          toast.error('Unable to connect to database. Please try again in a moment.');
+        if (result?.error?.includes('503')) {
+          toast.error('Service temporarily unavailable. Please try again in a moment.');
+        } else if (result?.error?.includes('409')) {
+          toast.error('An account with this email already exists');
+          form.reset();
         } else {
           toast.error(
-            `Registration failed: ${result.error || 'Please try again.'}`
+            result?.error || 'Registration failed. Please try again.'
           );
-        }
-
-        // Reset the form on conflict
-        if (result.error?.includes('already exists')) {
-          form.reset();
         }
       }
     } catch (err) {
