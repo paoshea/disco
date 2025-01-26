@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextResponse } from 'next/server';
@@ -21,7 +22,7 @@ async function validateRequest() {
 }
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
   try {
@@ -35,8 +36,7 @@ export async function GET(
     }
     return NextResponse.json(alert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
@@ -74,8 +74,7 @@ export async function PUT(
     }
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
