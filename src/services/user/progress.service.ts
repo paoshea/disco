@@ -1,5 +1,5 @@
 
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import type { Achievement, SafetyCheck, UserMatch, Event } from '@prisma/client';
 import { notificationService } from '@/services/notifications/notification.service';
 import { UserProgress, ProgressMilestone } from '@/types/user';

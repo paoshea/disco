@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 
 export async function POST(request: NextRequest) {
