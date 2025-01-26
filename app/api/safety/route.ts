@@ -1,4 +1,3 @@
-'use server';
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
@@ -44,9 +43,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const data = await request.json();
-    await safetyService.updateSafetySettings(session.user.id);
-
+    const settings = await request.json();
+    await safetyService.updateSafetySettings(session.user.id, settings);
+    
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
