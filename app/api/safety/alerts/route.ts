@@ -24,34 +24,28 @@ export async function GET(): Promise<
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);
     const alerts = Array.isArray(alertsResponse)
-      ? alertsResponse.map(alert => {
-          const location = alert.location as Record<string, any> | null;
-          return {
-              ...alert,
-              type: alert.type as SafetyAlertType,
-              status: alert.dismissed
-                ? 'dismissed'
-                : alert.resolved
-                  ? 'resolved'
-                  : 'active',
-              message: alert.message || undefined,
-              location: location
-                ? {
-                    latitude: Number(location.latitude),
-                    longitude: Number(location.longitude),
-                    accuracy: location.accuracy ? Number(location.accuracy) : undefined,
-                    timestamp: new Date()
-                  }
-                : {
-                    latitude: 0,
-                    longitude: 0,
-                    timestamp: new Date()
-                  },
-              createdAt: new Date(alert.createdAt).toISOString(),
-              updatedAt: new Date(alert.updatedAt).toISOString(),
-              resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined
-          } satisfies SafetyAlertNew;
-        })
+      ? alertsResponse.map(alert => ({
+          id: alert.id,
+          userId: alert.userId,
+          type: alert.type as SafetyAlertType,
+          status: alert.dismissed ? 'dismissed' : alert.resolved ? 'resolved' : 'active',
+          message: alert.message || undefined,
+          description: alert.description || undefined,
+          location: alert.location ? {
+            latitude: Number(alert.location.latitude),
+            longitude: Number(alert.location.longitude),
+            accuracy: alert.location.accuracy ? Number(alert.location.accuracy) : undefined,
+            timestamp: new Date()
+          } : {
+            latitude: 0,
+            longitude: 0,
+            timestamp: new Date()
+          },
+          evidence: alert.evidence || [],
+          createdAt: new Date(alert.createdAt).toISOString(),
+          updatedAt: new Date(alert.updatedAt).toISOString(),
+          resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined
+        } as SafetyAlertNew))
       : [];
     return NextResponse.json({ alerts });
   } catch (error: unknown) {
