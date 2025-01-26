@@ -8,7 +8,7 @@ export async function GET(
 ) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: context.params.userId },
+      where: { id: request.params.userId },
       include: {
         safetyChecks: true,
         matches: true,
