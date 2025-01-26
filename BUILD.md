@@ -450,6 +450,9 @@ NEXTAUTH_SECRET=your_secret
 
 # Database Configuration
 DATABASE_URL=your_database_url
+
+# WebSocket Configuration
+NEXT_PUBLIC_WEBSOCKET_URL=wss://api.disco.com/v1/ws
 ```
 
 ## Common Development Commands
