@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma';
 
 export const GET = async (
   request: NextRequest,
-  context: { params: { userId: string | string[] } }
+  context: { params: { userId: string } }
 ) => {
   try {
     const user = await prisma.user.findUnique({
