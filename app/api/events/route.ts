@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
-import { withRoleGuard } from '@/src/middleware/roleGuard';
+import { withRoleGuard } from '@/middleware/roleGuard';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
