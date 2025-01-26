@@ -1,4 +1,3 @@
-import type { Location } from '@/types/location';
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -25,7 +24,7 @@ async function validateRequest() {
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const userId = await validateRequest();
     const alerts = await prisma.safetyAlert.findMany({
