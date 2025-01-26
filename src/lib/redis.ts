@@ -1,3 +1,4 @@
+
 import Redis, { RedisOptions } from 'ioredis';
 import { env } from '@/env.mjs';
 import { z } from 'zod';
@@ -19,9 +20,10 @@ if (!redisEnv.success) {
   throw new Error('Invalid Redis configuration');
 }
 
-// Prevent multiple instances of Redis client
+// Declare redis property on global type
 declare global {
-  let redis: Redis | undefined;
+  // eslint-disable-next-line no-var
+  var redis: Redis | undefined;
 }
 
 // Redis configuration with type safety
