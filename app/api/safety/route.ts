@@ -8,7 +8,7 @@ import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
 import { prisma } from '@/lib/prisma';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -40,9 +40,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const data = await request.json();
-    const settings = await safetyService.updateSafetySettings(data);
-    return NextResponse.json(settings);
+    await safetyService.updateSafetySettings(session.user.id);
+    
+    return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to update safety settings' },
