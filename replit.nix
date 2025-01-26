@@ -3,7 +3,7 @@
   nixpkgs.config.permittedInsecurePackages = [ "openssl-1.1.1w" ];
   deps = [
     pkgs.openssl_1_1
-    pkgs.nodejs-18_x
+    pkgs.nodejs-20_x
     pkgs.openssl
     pkgs.openssl_1_1
     pkgs.prisma-engines
