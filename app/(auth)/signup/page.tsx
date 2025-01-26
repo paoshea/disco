@@ -79,10 +79,14 @@ export default function SignupPage() {
         router.refresh();
       } else {
         console.log('Signup failed:', result.error);
-        // Show the specific error message
-        toast.error(
-          `Registration failed: ${result.error || 'Please try again.'}`
-        );
+        // Handle specific error cases
+        if (result.error?.includes('503')) {
+          toast.error('Unable to connect to database. Please try again in a moment.');
+        } else {
+          toast.error(
+            `Registration failed: ${result.error || 'Please try again.'}`
+          );
+        }
 
         // Reset the form on conflict
         if (result.error?.includes('already exists')) {
