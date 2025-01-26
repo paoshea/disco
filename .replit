@@ -7,7 +7,7 @@ channel = "stable-24_05"
 [deployment]
 deploymentTarget = "static"
 publicDir = ".next"
-build = ["npm", "run", "build"]
+run = ["sh", "-c", "npm run dev"]
 
 [[ports]]
 localPort = 3000
