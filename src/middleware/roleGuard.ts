@@ -1,5 +1,6 @@
-
+import React from 'react';
 import { NextResponse } from 'next/server';
+import { useSession } from 'next-auth/react';
 import type { NextRequest } from 'next/server';
 import { DEFAULT_PERMISSIONS, ROLES } from '@/utils/roleValidation';
 import type { Permission } from '@/types/permissions';
@@ -59,14 +60,14 @@ export function useRoleGuard(Component: React.ComponentType, requiredPermission:
 
     if (!rolePermissions.includes(requiredPermission)) {
       return (
-        <div className="p-4 text-center">
-          <h3 className="text-lg font-semibold">Insufficient Permissions</h3>
-          <p>You need to upgrade your role to access this feature.</p>
-          <RoleUpgrade />
-        </div>
+        React.createElement('div', { className: 'p-4 text-center' },
+          React.createElement('h3', { className: 'text-lg font-semibold' }, 'Insufficient Permissions'),
+          React.createElement('p', null, 'You need to upgrade your role to access this feature.'),
+          React.createElement(RoleUpgrade, null)
+        )
       );
     }
 
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }
