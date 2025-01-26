@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextResponse } from 'next/server';
@@ -36,7 +35,8 @@ export async function GET(
     }
     return NextResponse.json(alert);
   } catch (error: Error | unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
@@ -74,7 +74,8 @@ export async function PUT(
     }
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
