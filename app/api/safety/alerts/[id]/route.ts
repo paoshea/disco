@@ -28,9 +28,6 @@ async function validateRequest() {
   return session.user.id;
 }
 
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 type SafetyAlertResponse = SafetyAlert & {
   location: {
     latitude: number;
