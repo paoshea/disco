@@ -70,19 +70,21 @@ export async function GET(req: NextRequest) {
         createdAt: alert.createdAt.toISOString(),
         updatedAt: alert.updatedAt.toISOString(),
         resolvedAt: alert.resolvedAt?.toISOString(),
-        user: alert.user ? {
-          id: alert.user.id,
-          email: alert.user.email,
-          firstName: alert.user.firstName,
-          lastName: alert.user.lastName,
-          name: alert.user.name || alert.user.firstName,
-          emailVerified: alert.user.emailVerified !== null,
-          createdAt: alert.user.createdAt,
-          updatedAt: alert.user.updatedAt,
-          avatar: alert.user.image || undefined,
-          lastActive: alert.user.updatedAt,
-          verificationStatus: 'verified'
-        } : undefined,
+        user: alert.user
+          ? {
+              id: alert.user.id,
+              email: alert.user.email,
+              firstName: alert.user.firstName,
+              lastName: alert.user.lastName,
+              name: alert.user.name || alert.user.firstName,
+              emailVerified: alert.user.emailVerified !== null,
+              createdAt: alert.user.createdAt,
+              updatedAt: alert.user.updatedAt,
+              avatar: alert.user.image || undefined,
+              lastActive: alert.user.updatedAt,
+              verificationStatus: 'verified',
+            }
+          : undefined,
       };
 
       return formatted;
