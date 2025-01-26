@@ -14,7 +14,7 @@ export async function withRoleGuard(handler: Function, requiredPermission: Permi
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
 
-      const userRole = session.user.role || ROLES.GUEST;
+      const userRole = (session.user.role || ROLES.GUEST) as keyof typeof ROLES;
       const rolePermissions = DEFAULT_PERMISSIONS[userRole];
 
       if (!rolePermissions.includes(requiredPermission)) {
@@ -55,7 +55,7 @@ export function useRoleGuard(Component: React.ComponentType, requiredPermission:
       return null;
     }
 
-    const userRole = session.user.role || ROLES.GUEST;
+    const userRole = (session.user.role || ROLES.GUEST) as keyof typeof ROLES;
     const rolePermissions = DEFAULT_PERMISSIONS[userRole];
 
     if (!rolePermissions.includes(requiredPermission)) {

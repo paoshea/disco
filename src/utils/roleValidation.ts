@@ -9,7 +9,7 @@ export const ROLES = {
   ADMIN: 'admin',
 } as const;
 
-export const DEFAULT_PERMISSIONS: RolePermissions = {
+export const DEFAULT_PERMISSIONS: Record<keyof typeof ROLES, Permission[]> = {
   GUEST: ['view:profiles'],
   USER: [
     'view:profiles',
@@ -35,7 +35,7 @@ export const DEFAULT_PERMISSIONS: RolePermissions = {
     'access:safety',
     'manage:contacts'
   ]
-};
+} as const;
 
 export const isValidRole = (role: string): role is UserRole => {
   return Object.values(ROLES).includes(role as UserRole);
