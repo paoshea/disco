@@ -1,29 +1,14 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+import { validateRequest } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
-import { SafetyAlertSchema } from '@/schemas/safety.schema';
 import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 
-async function validateRequest() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    throw new Error('Unauthorized');
-  }
-  return session.user.id;
-}
-
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
-// GET /api/safety/alerts
-export async function GET(): Promise<
-  NextResponse<{ alerts: SafetyAlertNew[] } | { error: string }>
-> {
+export async function GET() {
   try {
     const userId = await validateRequest();
     const alertsResponse = await safetyService.getActiveAlerts(userId);
-    const alerts = Array.isArray(alertsResponse)
+
+    const alerts: SafetyAlertNew[] = Array.isArray(alertsResponse) 
       ? alertsResponse.map(alert => ({
           id: alert.id,
           userId: alert.userId,
@@ -36,26 +21,17 @@ export async function GET(): Promise<
             longitude: Number(alert.location.longitude),
             accuracy: alert.location.accuracy ? Number(alert.location.accuracy) : undefined,
             timestamp: new Date()
-          } : {
-            latitude: 0,
-            longitude: 0,
-            timestamp: new Date()
-          },
+          } : undefined,
           evidence: alert.evidence || [],
           createdAt: new Date(alert.createdAt).toISOString(),
           updatedAt: new Date(alert.updatedAt).toISOString(),
           resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined
-        } as SafetyAlertNew))
+        }))
       : [];
+
     return NextResponse.json({ alerts });
   } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('Failed to fetch alerts:', errorMessage);
-    return NextResponse.json(
-      { error: 'Failed to fetch alerts' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch alerts' }, { status: 500 });
   }
 }
 
