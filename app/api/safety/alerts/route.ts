@@ -42,9 +42,11 @@ export async function GET(): Promise<
                 longitude: 0,
                 timestamp: new Date()
               },
+          message: alert.message || undefined,
+          description: alert.description || undefined,
           createdAt: alert.createdAt.toISOString(),
           updatedAt: alert.updatedAt.toISOString(),
-          resolvedAt: alert.resolvedAt?.toISOString() || null
+          resolvedAt: alert.resolvedAt?.toISOString() || undefined
         }))
       : [];
     return NextResponse.json({ alerts });
