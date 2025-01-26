@@ -221,13 +221,12 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       }
       await new Promise<void>((resolve, reject) => {
         try {
-          socket.send(
-            JSON.stringify({
-              ...message,
-              payload: message.payload || {},
-              timestamp: message.timestamp || Date.now(),
-            })
-          );
+          const payload = {
+            ...message,
+            payload: message.payload ?? {},
+            timestamp: message.timestamp || new Date().toISOString(),
+          };
+          socket.send(JSON.stringify(payload));
           resolve();
         } catch (err) {
           reject(err);
