@@ -26,12 +26,14 @@ type SafetyAlertResponse = SafetyAlert & {
 ```
 
 This ensures:
+
 - Type definitions stay in sync with your database schema
 - Automatic updates when your schema changes
 - Proper typing for all database operations
 - Elimination of type mismatches between database and application
 
 Legacy manual type (for reference only):
+
 ```typescript
 interface SafetyAlertNew {
   id: string;

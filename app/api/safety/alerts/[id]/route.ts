@@ -36,7 +36,6 @@ type SafetyAlertResponse = SafetyAlert & {
   } | null;
 };
 
-
 export async function GET(
   request: NextRequest,
   context: Context
@@ -55,18 +54,28 @@ export async function GET(
               ? 'resolved'
               : 'active',
           location: (() => {
-            if (typeof alertResponse.location === 'object' && alertResponse.location) {
+            if (
+              typeof alertResponse.location === 'object' &&
+              alertResponse.location
+            ) {
               const loc = alertResponse.location as Record<string, unknown>;
               const locData = {
-                latitude: typeof loc.latitude === 'number' ? loc.latitude : Number(loc.latitude),
-                longitude: typeof loc.longitude === 'number' ? loc.longitude : Number(loc.longitude),
-                accuracy: loc.accuracy !== undefined ? Number(loc.accuracy) : undefined,
-                timestamp: new Date(loc.timestamp as string | number | Date)
+                latitude:
+                  typeof loc.latitude === 'number'
+                    ? loc.latitude
+                    : Number(loc.latitude),
+                longitude:
+                  typeof loc.longitude === 'number'
+                    ? loc.longitude
+                    : Number(loc.longitude),
+                accuracy:
+                  loc.accuracy !== undefined ? Number(loc.accuracy) : undefined,
+                timestamp: new Date(loc.timestamp as string | number | Date),
               };
               return locData;
             }
             return null;
-          })()
+          })(),
         } as SafetyAlertResponse)
       : null;
 
