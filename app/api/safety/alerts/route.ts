@@ -1,3 +1,6 @@
+
+import type { Location } from '@/types/location';
+
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -35,12 +38,12 @@ export async function GET(): Promise<
           location:
             typeof alert.location === 'object' && alert.location
               ? {
-                  latitude: Number((alert.location as any).latitude),
-                  longitude: Number((alert.location as any).longitude),
-                  accuracy: (alert.location as any).accuracy
-                    ? Number((alert.location as any).accuracy)
+                  latitude: Number((alert.location as Location).latitude),
+                  longitude: Number((alert.location as Location).longitude),
+                  accuracy: (alert.location as Location).accuracy
+                    ? Number((alert.location as Location).accuracy)
                     : undefined,
-                  timestamp: new Date((alert.location as any).timestamp),
+                  timestamp: new Date((alert.location as Location).timestamp),
                 }
               : {
                   latitude: 0,
