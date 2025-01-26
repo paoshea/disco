@@ -122,6 +122,32 @@ class AuthService {
     }
   }
 
+  async upgradeRole(userId: string, newRole: string): Promise<User> {
+    try {
+      const response = await apiService.post<{ user: User }>(
+        `${this.baseUrl}/upgrade-role`,
+        { userId, newRole }
+      );
+      return response.data.data.user;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
+  async checkUpgradeEligibility(userId: string): Promise<{
+    eligible: boolean;
+    requirements: string[];
+  }> {
+    try {
+      const response = await apiService.get(
+        `${this.baseUrl}/upgrade-eligibility/${userId}`
+      );
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error);
+    }
+  }
+
   async refreshToken(): Promise<void> {
     try {
       const refreshToken = localStorage.getItem('refreshToken');
