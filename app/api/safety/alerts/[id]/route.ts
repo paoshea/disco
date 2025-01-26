@@ -20,9 +20,14 @@ async function validateRequest() {
   return session.user.id;
 }
 
+type Props = {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
+};
+
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string }; searchParams?: { [key: string]: string } }
+  props: Props
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
   try {
     const userId = await validateRequest();
@@ -43,7 +48,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string }; searchParams?: { [key: string]: string } }
+  props: Props
 ): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
   try {
     const userId = await validateRequest();
