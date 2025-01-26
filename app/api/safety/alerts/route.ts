@@ -1,11 +1,18 @@
 import type { Location } from '@/types/location';
-
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { safetyService } from '@/services/api/safety.service';
+//import { safetyService } from '@/services/api/safety.service'; // Removed as Prisma is used now.
 import { SafetyAlertSchema } from '@/schemas/safety.schema';
 import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
+import { prisma } from '@/lib/prisma';
+
+type LocationData = {
+  latitude: number;
+  longitude: number;
+  accuracy?: number;
+  timestamp: Date;
+};
 
 async function validateRequest() {
   const session = await getServerSession(authOptions);
@@ -18,55 +25,56 @@ async function validateRequest() {
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// GET /api/safety/alerts
-export async function GET(): Promise<
-  NextResponse<{ alerts: SafetyAlertNew[] } | { error: string }>
-> {
+export async function GET(req: NextRequest) {
   try {
-    const userId = await validateRequest();
-    const alertsResponse = await safetyService.getActiveAlerts(userId);
-    const alerts = Array.isArray(alertsResponse)
-      ? alertsResponse.map(alert => ({
-          ...alert,
-          type: alert.type as SafetyAlertType,
-          status: alert.dismissed
-            ? 'dismissed'
-            : alert.resolved
-              ? 'resolved'
-              : 'active',
-          location:
-            typeof alert.location === 'object' && alert.location
-              ? {
-                  latitude: Number((alert.location as Location).latitude),
-                  longitude: Number((alert.location as Location).longitude),
-                  accuracy: (alert.location as Location).accuracy
-                    ? Number((alert.location as Location).accuracy)
-                    : undefined,
-                  timestamp: new Date((alert.location as Location).timestamp),
-                }
-              : {
-                  latitude: 0,
-                  longitude: 0,
-                  timestamp: new Date(),
-                },
-          message: alert.message || undefined,
-          description: alert.description || undefined,
-          createdAt: alert.createdAt.toISOString(),
-          updatedAt: alert.updatedAt.toISOString(),
-          resolvedAt: alert.resolvedAt?.toISOString() || undefined,
-        }))
-      : [];
-    return NextResponse.json({ alerts });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
-    console.error('Failed to fetch alerts:', errorMessage);
-    return NextResponse.json(
-      { error: 'Failed to fetch alerts' },
-      { status: 500 }
-    );
+    const alerts = await prisma.safetyAlert.findMany({
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+
+    const formattedAlerts: SafetyAlertNew[] = alerts.map(alert => {
+      let locationData: LocationData;
+
+      if (typeof alert.location === 'object' && alert.location) {
+        const loc = alert.location as Record<string, unknown>;
+        locationData = {
+          latitude: Number(loc.latitude),
+          longitude: Number(loc.longitude),
+          ...(loc.accuracy && { accuracy: Number(loc.accuracy) }),
+          timestamp: new Date(loc.timestamp as string),
+        };
+      } else {
+        locationData = {
+          latitude: 0,
+          longitude: 0,
+          timestamp: new Date(),
+        };
+      }
+
+      return {
+        id: alert.id,
+        userId: alert.userId,
+        type: alert.type as SafetyAlertType,
+        status: alert.status as "resolved" | "dismissed" | "active",
+        location: locationData,
+        description: alert.description,
+        createdAt: alert.createdAt,
+        updatedAt: alert.updatedAt,
+        resolvedAt: alert.resolvedAt,
+        dismissedAt: alert.dismissedAt,
+        emergencyContactIds: alert.emergencyContactIds as string[],
+        responseTimeSeconds: alert.responseTimeSeconds,
+      };
+    });
+
+    return NextResponse.json({ alerts: formattedAlerts });
+  } catch (error) {
+    console.error('Error fetching safety alerts:', error);
+    return NextResponse.json({ error: 'Failed to fetch safety alerts' }, { status: 500 });
   }
 }
+
 
 // POST /api/safety/alerts
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -111,7 +119,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           },
     };
 
-    const alert = await safetyService.createSafetyAlert(userId, alertData);
+    const alert = await prisma.safetyAlert.create({ data: alertData }); //Use Prisma here
     return NextResponse.json(alert);
   } catch (error) {
     console.error('Failed to create alert:', error);
