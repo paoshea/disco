@@ -42,9 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const settings = await request.json();
-    await safetyService.updateSafetySettings(session.user.id, settings);
-
+    await safetyService.updateSafetySettings(session.user.id);
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
