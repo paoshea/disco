@@ -1,10 +1,12 @@
+
+'use server';
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
-import { SafetyAlert } from '@prisma/client';
-import type { SafetyAlertType } from '@/types/safety';
+import type { SafetyAlert } from '@prisma/client';
 import { z } from 'zod';
 
 const ActionSchema = z.object({
@@ -12,9 +14,9 @@ const ActionSchema = z.object({
 });
 
 interface Context {
-  params: Promise<{
+  params: {
     id: string;
-  }>;
+  };
 }
 
 async function validateRequest() {
@@ -28,11 +30,10 @@ async function validateRequest() {
 export async function GET(
   request: NextRequest,
   context: Context
-): Promise<NextResponse> {
+): Promise<NextResponse<SafetyAlert | { error: string }>> {
   try {
     const userId = await validateRequest();
-    const params = await context.params;
-    const alert = await safetyService.getSafetyAlert(params.id);
+    const alert = await safetyService.getSafetyAlert(context.params.id);
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -52,22 +53,24 @@ export async function GET(
 export async function PUT(
   request: NextRequest,
   context: Context
-): Promise<NextResponse> {
+): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
   try {
     const userId = await validateRequest();
-    const params = await context.params;
     const body = await request.json();
     const result = ActionSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json({ error: 'Invalid input', details: result.error }, { status: 400 });
+      return NextResponse.json(
+        { error: 'Invalid input', details: result.error },
+        { status: 400 }
+      );
     }
 
     const { action } = result.data;
-    const updatedAlert = action === 'dismiss' 
-      ? await safetyService.dismissAlert(params.id, userId)
-      : await safetyService.resolveAlert(params.id, userId);
-
+    const updatedAlert = action === 'dismiss'
+      ? await safetyService.dismissAlert(context.params.id, userId)
+      : await safetyService.resolveAlert(context.params.id, userId);
+      
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
