@@ -213,6 +213,9 @@ export default function ProfilePage() {
                 </>
               )}
             </Tab.Panel>
+            <Tab.Panel>
+              <ProgressDashboard stats={stats} />
+            </Tab.Panel>
           </Tab.Panels>
         </Tab.Group>
       </div>
