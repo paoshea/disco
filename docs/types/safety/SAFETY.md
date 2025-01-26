@@ -4,40 +4,34 @@
 
 The safety system in Disco provides real-time safety monitoring, emergency alerts, and safety checks for users. This document outlines the type system, common issues, and pending tasks for the safety platform.
 
-- Documents all core types:
-  SafetyAlertNew
-  Location
-  SafetyCheckNew
-  JSON serialization types
-- Addresses common issues we've seen:
-  JSON serialization with Prisma
-  Location handling
-  Promise handling in React
-  React hook dependencies
-- Lists pending tasks:
-  Safety settings implementation
-  Location privacy features
-  Emergency contacts system
-  Evidence collection
-  Safety check system improvements
-- Provides best practices for:
-  Type safety
-  Error handling
-  State management
-  API design
-- Includes sections on:
-  Migration from old types
-  Testing requirements
-  Performance considerations
-  Security considerations
-  This document should serve as a comprehensive guide for the safety system and help prevent future issues.
-
 ## Type System
 
 ### Core Types
 
-#### SafetyAlertNew
+For type safety and database consistency, use Prisma's generated types instead of manually defining interfaces. Import these from @prisma/client:
 
+```typescript
+import { SafetyAlert, Location, User } from '@prisma/client';
+
+// Example usage with Prisma types
+type SafetyAlertResponse = SafetyAlert & {
+  location: {
+    latitude: number;
+    longitude: number;
+    accuracy?: number;
+    timestamp: Date;
+  } | null;
+  user: User;
+};
+```
+
+This ensures:
+- Type definitions stay in sync with your database schema
+- Automatic updates when your schema changes
+- Proper typing for all database operations
+- Elimination of type mismatches between database and application
+
+Legacy manual type (for reference only):
 ```typescript
 interface SafetyAlertNew {
   id: string;
@@ -90,7 +84,7 @@ interface SafetyCheckNew {
 
 ```typescript
 interface SafetyCenterProps {
-  safetySettings?: SafetySettingsNew; // Should be safetySettings, not settings
+  safetySettings?: SafetySettingsNew;
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 ```
@@ -100,8 +94,8 @@ interface SafetyCenterProps {
 ```typescript
 interface SafetyReport {
   id: string;
-  reporterId: string; // Maps to Prisma Report.reporterId
-  reportedUserId: string; // Maps to Prisma Report.reportedUserId
+  reporterId: string;
+  reportedUserId: string;
   type: 'harassment' | 'inappropriate' | 'spam' | 'scam' | 'other';
   description: string;
   evidence?: Array<{
@@ -110,9 +104,9 @@ interface SafetyReport {
   }>;
   status: 'pending' | 'reviewing' | 'resolved' | 'dismissed';
   adminNotes?: string;
-  createdAt: string; // ISO string
-  updatedAt: string; // ISO string
-  resolvedAt?: string; // Optional ISO string
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
 }
 ```
 
@@ -126,11 +120,10 @@ interface EmergencyContact {
   lastName: string;
   email?: string;
   phoneNumber?: string;
-  createdAt: string; // ISO string
-  updatedAt: string; // ISO string
+  createdAt: string;
+  updatedAt: string;
 }
 
-// Input type for creating contacts
 interface EmergencyContactInput {
   firstName: string;
   lastName: string;
@@ -142,22 +135,19 @@ interface EmergencyContactInput {
 #### Location Handling
 
 ```typescript
-// Input location data (simplified for API)
 interface LocationData {
   latitude: number;
   longitude: number;
   accuracy?: number;
 }
 
-// Stored location format (GeoJSON-like)
 interface StoredLocation {
   type: 'Point';
-  coordinates: [number, number]; // [latitude, longitude]
+  coordinates: [number, number];
   accuracy?: number;
   timestamp: string;
 }
 
-// Full location type with privacy settings
 import { LocationPrivacyMode } from '@/types/location';
 interface Location {
   id: string;
@@ -166,7 +156,7 @@ interface Location {
   longitude: number;
   accuracy?: number;
   timestamp: Date;
-  privacyMode: LocationPrivacyMode; // 'precise' | 'approximate' | 'zone'
+  privacyMode: LocationPrivacyMode;
   sharingEnabled: boolean;
 }
 ```
@@ -174,7 +164,6 @@ interface Location {
 When storing locations in Prisma:
 
 ```typescript
-// Converting to Prisma JSON
 const locationJson = location
   ? {
       type: 'Point',
@@ -186,14 +175,12 @@ const locationJson = location
 
 await prisma.safetyCheck.create({
   data: {
-    // ...
     location: locationJson
       ? (locationJson as Prisma.InputJsonValue)
       : Prisma.JsonNull,
   },
 });
 
-// Converting from Prisma JSON to Location
 const storedLocation = data.location as StoredLocation | null;
 const location = storedLocation
   ? {
@@ -218,7 +205,7 @@ interface LocationJson {
   latitude: number;
   longitude: number;
   accuracy?: number;
-  timestamp: string; // ISO string
+  timestamp: string;
 }
 ```
 
@@ -243,18 +230,18 @@ interface LocationJson {
 ```typescript
 // Prisma Model
 model Report {
-  reporterId String    // Database field
-  reporter User       // Relation
+  reporterId String
+  reporter User
 }
 
 // Wrong TypeScript Usage
 const report = await prisma.report.create({
-  data: { userId: id }  // Wrong field name
+  data: { userId: id }
 });
 
 // Correct TypeScript Usage
 const report = await prisma.report.create({
-  data: { reporterId: id }  // Matches Prisma model
+  data: { reporterId: id }
 });
 ```
 
@@ -324,6 +311,25 @@ enum ReportStatus {
 // Converting to domain type
 status: dbStatus.toLowerCase() as 'pending' | 'reviewing' | 'resolved' | 'dismissed'
 ```
+
+## Best Practices
+
+### 1. Type Safety
+
+- Use Prisma's generated types from @prisma/client instead of manual interfaces
+- Leverage Prisma's type system for database operations
+- For custom types, extend Prisma's base types
+- Handle JSON fields properly:
+  - Use Prisma.JsonValue for read operations
+  - Use Prisma.InputJsonValue for write operations
+  - Use Prisma.JsonNull for null values
+- Create type-safe response types by combining Prisma types:
+  ```typescript
+  type SafetyResponse = SafetyAlert & {
+    user: Pick<User, 'id' | 'name'>;
+    location: Location | null;
+  };
+  ```
 
 ## Pending Tasks
 
