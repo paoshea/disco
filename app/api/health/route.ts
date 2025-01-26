@@ -1,7 +1,7 @@
 
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { checkConnection } from '@/lib/utils';
+import { checkConnection } from '@/lib/prisma';
 
 export async function GET() {
   const isConnected = await checkConnection();
