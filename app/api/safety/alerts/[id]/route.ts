@@ -1,3 +1,4 @@
+
 'use server';
 
 import { NextResponse } from 'next/server';
@@ -20,14 +21,9 @@ async function validateRequest() {
   return session.user.id;
 }
 
-type Props = {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
-};
-
 export async function GET(
   request: NextRequest,
-  props: Props
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
   try {
     const userId = await validateRequest();
@@ -48,7 +44,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  props: Props
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
   try {
     const userId = await validateRequest();
