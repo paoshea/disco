@@ -1,0 +1,151 @@
+   Collecting page data  ..Error: A "use server" file can only export async functions, found object.
+Read more: https://nextjs.org/docs/messages/invalid-use-server-value
+    at r (.next/server/chunks/4102.js:1:189)
+    at 99997 (.next/server/chunks/4102.js:10:4591)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 48938 (.next/server/app/api/safety/alerts/[id]/route.js:1:2185)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 21744 (.next/server/app/api/safety/alerts/[id]/route.js:1:1258)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at t (.next/server/app/api/safety/alerts/[id]/route.js:1:3988)
+    at <unknown> (.next/server/app/api/safety/alerts/[id]/route.js:1:4044)
+    at t.X (.next/server/webpack-runtime.js:1:1285)
+
+> Build error occurred
+[Error: Failed to collect page data for /api/safety/alerts/[id]] {
+  type: 'Error'
+}
+~/workspace$ npm run build
+
+> disco-app@0.1.0 build
+> next build
+
+   ▲ Next.js 15.1.4
+   - Environments: .env
+
+   Creating an optimized production build ...
+ ✓ Compiled successfully
+
+./app/api/safety/alerts/[id]/route.ts
+13:2  Warning: Insert `·`  prettier/prettier
+17:2  Warning: Insert `·`  prettier/prettier
+18:1  Warning: Insert `·`  prettier/prettier
+19:4  Warning: Insert `·`  prettier/prettier
+20:2  Warning: Insert `·`  prettier/prettier
+21:1  Warning: Insert `·`  prettier/prettier
+25:2  Warning: Insert `·`  prettier/prettier
+26:4  Warning: Insert `·`  prettier/prettier
+27:1  Warning: Insert `·`  prettier/prettier
+31:2  Warning: Insert `·`  prettier/prettier
+32:1  Warning: Insert `·`  prettier/prettier
+33:1  Warning: Insert `·`  prettier/prettier
+34:4  Warning: Insert `·`  prettier/prettier
+35:4  Warning: Insert `·`  prettier/prettier
+36:1  Warning: Insert `·`  prettier/prettier
+40:2  Warning: Insert `·`  prettier/prettier
+41:1  Warning: Insert `·`  prettier/prettier
+43:1  Warning: Insert `·`  prettier/prettier
+44:4  Warning: Insert `·`  prettier/prettier
+45:4  Warning: Insert `·`  prettier/prettier
+46:1  Warning: Insert `·`  prettier/prettier
+48:4  Warning: Insert `·`  prettier/prettier
+49:6  Warning: Insert `·`  prettier/prettier
+50:1  Warning: Insert `·`  prettier/prettier
+51:10  Warning: Insert `·`  prettier/prettier
+52:10  Warning: Insert `·`  prettier/prettier
+53:1  Warning: Insert `·`  prettier/prettier
+54:12  Warning: Insert `·`  prettier/prettier
+55:14  Warning: Insert `·`  prettier/prettier
+56:1  Warning: Insert `·`  prettier/prettier
+57:10  Warning: Insert `·`  prettier/prettier
+58:12  Warning: Insert `·`  prettier/prettier
+59:1  Warning: Insert `·`  prettier/prettier
+60:14  Warning: Insert `·`  prettier/prettier
+61:12  Warning: Insert `·`  prettier/prettier
+62:1  Warning: Insert `·`  prettier/prettier
+63:14  Warning: Insert `·`  prettier/prettier
+64:16  Warning: Insert `·`  prettier/prettier
+65:1  Warning: Insert `·`  prettier/prettier
+66:20  Warning: Insert `·`  prettier/prettier
+67:1  Warning: Insert `·`  prettier/prettier
+68:1  Warning: Insert `·`  prettier/prettier
+69:18  Warning: Insert `·`  prettier/prettier
+70:20  Warning: Insert `·`  prettier/prettier
+71:1  Warning: Insert `·`  prettier/prettier
+72:16  Warning: Insert `·`  prettier/prettier
+73:1  Warning: Insert `·`  prettier/prettier
+74:1  Warning: Insert `·`  prettier/prettier
+75:14  Warning: Insert `·`  prettier/prettier
+76:1  Warning: Insert `·`  prettier/prettier
+77:1  Warning: Insert `·`  prettier/prettier
+78:12  Warning: Insert `·`  prettier/prettier
+79:10  Warning: Insert `·`  prettier/prettier
+80:1  Warning: Insert `·`  prettier/prettier
+81:6  Warning: Insert `·`  prettier/prettier
+83:1  Warning: Insert `·`  prettier/prettier
+84:1  Warning: Insert `·`  prettier/prettier
+85:4  Warning: Insert `·`  prettier/prettier
+87:1  Warning: Insert `·`  prettier/prettier
+88:1  Warning: Insert `·`  prettier/prettier
+89:4  Warning: Insert `·`  prettier/prettier
+91:1  Warning: Insert `·`  prettier/prettier
+92:1  Warning: Insert `·`  prettier/prettier
+93:4  Warning: Insert `·`  prettier/prettier
+94:1  Warning: Insert `·`  prettier/prettier
+95:1  Warning: Insert `·`  prettier/prettier
+96:2  Warning: Insert `·`  prettier/prettier
+100:2  Warning: Insert `·`  prettier/prettier
+101:1  Warning: Insert `·`  prettier/prettier
+103:2  Warning: Insert `·`  prettier/prettier
+104:1  Warning: Insert `·`  prettier/prettier
+105:1  Warning: Insert `·`  prettier/prettier
+106:4  Warning: Insert `·`  prettier/prettier
+107:1  Warning: Insert `·`  prettier/prettier
+109:1  Warning: Insert `·`  prettier/prettier
+110:6  Warning: Insert `·`  prettier/prettier
+111:1  Warning: Insert `·`  prettier/prettier
+112:1  Warning: Insert `·`  prettier/prettier
+113:6  Warning: Insert `·`  prettier/prettier
+114:1  Warning: Insert `·`  prettier/prettier
+116:1  Warning: Insert `·`  prettier/prettier
+117:4  Warning: Insert `·`  prettier/prettier
+118:1  Warning: Insert `·`  prettier/prettier
+119:1  Warning: Insert `·`  prettier/prettier
+120:4  Warning: Insert `·`  prettier/prettier
+121:1  Warning: Insert `·`  prettier/prettier
+122:1  Warning: Insert `·`  prettier/prettier
+123:4  Warning: Insert `·`  prettier/prettier
+125:1  Warning: Insert `·`  prettier/prettier
+126:1  Warning: Insert `·`  prettier/prettier
+127:4  Warning: Insert `·`  prettier/prettier
+128:1  Warning: Insert `·`  prettier/prettier
+129:1  Warning: Insert `·`  prettier/prettier
+130:2  Warning: Insert `·`  prettier/prettier
+131:2  Warning: Insert `⏎`  prettier/prettier
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+ ✓ Linting and checking validity of types 
+   Collecting page data  .[Error [PrismaClientInitializationError]: Unable to require(`/home/runner/workspace/node_modules/.prisma/client/libquery_engine-debian-openssl-1.1.x.so.node`).
+Prisma cannot find the required `libssl` system library in your system. Please install openssl-1.1.x and try again.
+
+Details: libssl.so.1.1: cannot open shared object file: No such file or directory] {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+   Collecting page data  ..Error: A "use server" file can only export async functions, found object.
+Read more: https://nextjs.org/docs/messages/invalid-use-server-value
+    at r (.next/server/chunks/4102.js:1:189)
+    at 99997 (.next/server/chunks/4102.js:10:4591)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 48938 (.next/server/app/api/safety/alerts/[id]/route.js:1:2185)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 21744 (.next/server/app/api/safety/alerts/[id]/route.js:1:1258)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at t (.next/server/app/api/safety/alerts/[id]/route.js:1:3988)
+    at <unknown> (.next/server/app/api/safety/alerts/[id]/route.js:1:4044)
+    at t.X (.next/server/webpack-runtime.js:1:1285)
+
+> Build error occurred
+[Error: Failed to collect page data for /api/safety/alerts/[id]] {
+  type: 'Error'
+}
