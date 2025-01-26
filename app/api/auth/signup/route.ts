@@ -79,7 +79,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     // Ensure database connection is initialized
-    await prisma.$connect();
+    try {
+      await prisma.$connect();
+    } catch (dbError) {
+      console.error('Database connection error:', dbError);
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Database connection error. Please try again in a moment.',
+        },
+        { status: 503 }
+      );
+    }
 
     // Generate tokens for automatic login
     const { token, refreshToken, accessTokenExpiresIn } = await generateTokens({
