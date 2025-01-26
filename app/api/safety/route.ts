@@ -7,8 +7,26 @@ import { safetyService } from '@/services/api/safety.service';
 
 export async function GET(request: NextRequest) {
   try {
-    const safetySettings = await safetyService.getSafetySettings();
-    return NextResponse.json(safetySettings);
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const settings = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        safetyEnabled: true,
+        emergencyContacts: true,
+      },
+    });
+
+    return NextResponse.json({
+      sosAlertEnabled: settings?.safetyEnabled ?? false,
+      emergencyContacts: settings?.emergencyContacts ?? [],
+      autoShareLocation: false,
+      meetupCheckins: false,
+      requireVerifiedMatch: false,
+    });
   } catch (error) {
     return NextResponse.json(
       { error: 'Failed to fetch safety settings' },
