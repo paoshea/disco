@@ -1,4 +1,3 @@
-
 import prisma from '@/lib/prisma';
 import type { Achievement, SafetyCheck, UserMatch, Event } from '@prisma/client';
 import { notificationService } from '@/services/notifications/notification.service';
@@ -150,11 +149,39 @@ export class ProgressService {
           });
 
           // Handle role upgrade if applicable
-          if (milestone.reward.role && milestone.reward.role === 'power_user') {
-            await prisma.user.update({
+          if (milestone.reward.role) {
+            const currentUser = await prisma.user.findUnique({
               where: { id: userId },
-              data: { role: 'power_user' }
+              select: { role: true }
             });
+
+            if (currentUser?.role !== milestone.reward.role) {
+              await prisma.user.update({
+                where: { id: userId },
+                data: { role: milestone.reward.role }
+              });
+
+              // Send role upgrade notification
+              await notificationService.show({
+                title: 'Role Upgraded!',
+                body: `You've been upgraded to ${milestone.reward.role.replace('_', ' ')}!`,
+                data: {
+                  type: 'role_upgrade',
+                  newRole: milestone.reward.role
+                }
+              });
+
+              // Create achievement for role upgrade
+              await prisma.achievement.create({
+                data: {
+                  userId,
+                  type: 'role',
+                  name: 'Role Progression',
+                  description: `Upgraded to ${milestone.reward.role.replace('_', ' ')}`,
+                  earnedAt: new Date()
+                }
+              });
+            }
           }
         }
       }
