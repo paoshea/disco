@@ -40,11 +40,7 @@ export async function GET(): Promise<
                       accuracy: (alert.location as Record<string, unknown>).accuracy
                         ? Number((alert.location as Record<string, unknown>).accuracy)
                         : undefined,
-                      timestamp: alert.location?.timestamp instanceof Date 
-                        ? alert.location.timestamp 
-                        : typeof alert.location?.timestamp === 'string'
-                          ? new Date(alert.location.timestamp)
-                          : new Date(),
+                      timestamp: new Date((alert.location as Record<string, unknown>).timestamp),
                     }
                   : {
                       latitude: 0,
@@ -53,7 +49,7 @@ export async function GET(): Promise<
                     },
               createdAt: new Date(alert.createdAt).toISOString(),
               updatedAt: new Date(alert.updatedAt).toISOString(),
-              resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined
+              resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : null
         }))
       : [];
     return NextResponse.json({ alerts });
