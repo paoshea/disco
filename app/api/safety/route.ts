@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -45,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const settings = await request.json();
     await safetyService.updateSafetySettings(session.user.id, settings);
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(
