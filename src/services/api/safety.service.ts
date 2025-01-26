@@ -1,4 +1,4 @@
-import { db } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 
 const isBrowser = typeof window !== 'undefined';
 import type {

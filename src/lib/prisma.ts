@@ -35,4 +35,4 @@ Object.assign(prisma.event, {
   },
 });
 
-export const db = prisma;
+export { prisma };
