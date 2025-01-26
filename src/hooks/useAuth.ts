@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { apiClient } from '@/services/api/api.client';
 import { z } from 'zod';
-import type { LoginResponse } from '@/types/auth';
+
 import type { User } from '@/types/user';
 
 interface AuthState {
