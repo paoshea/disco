@@ -24,7 +24,7 @@ async function validateRequest() {
   return session.user.id;
 }
 
-'use server';
+('use server');
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
