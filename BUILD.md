@@ -216,28 +216,44 @@ export async function GET(req: NextRequest) {
 **Error:**
 
 ```typescript
-Cannot read property 'id' of undefined
+Type error: Route has an invalid export: Type "{ params: { id: string; }; }" is not a valid type
 ```
 
 **Solution:**
 
-- Add proper parameter validation
-- Use TypeScript path parameter types
-- Add error handling for missing parameters
+- Use correct Next.js route handler parameter types
+- Remove Promise wrapper from params
+- Inline type the params object
+- Properly destructure params parameter
 
 Example:
 
 ```typescript
+// app/api/[id]/route.ts
 export async function GET(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: { id: string } }
-) {
+): Promise<NextResponse> {
   if (!params.id) {
     return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
   }
   // Handle request
 }
+
+// Types are consistent across all HTTP methods
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+): Promise<NextResponse> {
+  // Same params type structure
+}
 ```
+
+Key points:
+- No Promise wrapper on params type
+- Consistent type structure across all HTTP methods
+- Direct destructuring of params in function parameters
+- Explicit NextResponse return type
 
 ## Page Component Issues
 
