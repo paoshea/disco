@@ -42,4 +42,4 @@ export const checkConnection = async () => {
   }
 };
 
-export { prisma };
+export { prisma, checkConnection };
