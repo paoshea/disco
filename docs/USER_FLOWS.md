@@ -160,7 +160,46 @@ This document outlines the various user flows and interactions available on the 
    - Safety issues
 2. Receives confirmation and follow-up
 
-## 8. Account Management
+## 8. Progress & Achievement Tracking
+
+### 8.1 Achievement System
+
+1. User completes qualifying actions:
+   - Safety checks
+   - Successful matches
+   - Event participation
+2. System automatically:
+   - Tracks progress
+   - Awards achievements
+   - Updates user points
+   - Triggers notifications
+
+### 8.2 Role Progression
+
+1. User reaches milestones:
+   - Completes safety requirements
+   - Achieves match thresholds
+   - Participates in events
+2. System triggers:
+   - Role upgrade evaluation
+   - Achievement creation
+   - Notification to user
+   - Points reward
+   
+### 8.3 Milestone Rewards
+
+1. User hits progress milestones:
+   - Receives achievement notification
+   - Gets points reward
+   - Unlocks new features
+   - Role upgrade if eligible
+2. System updates:
+   - User progress dashboard
+   - Achievement list
+   - Points balance
+   - Role status
+
+## 9. Account Management
 
 ### 8.1 Account Settings
 

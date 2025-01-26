@@ -403,6 +403,12 @@ npm run build
 - Planned Features: 0
 - Completion Percentage: 100%
 
+## PENDING PRISMA TASKS
+
+1. Run Database Updates
+   - [ ] Execute `npx prisma generate` to update Prisma client
+   - [ ] Run `npx prisma migrate dev --name add_chat_archive_and_blocks` to apply migrations
+
 ## Priority Matrix
 
 ### Immediate Priority
