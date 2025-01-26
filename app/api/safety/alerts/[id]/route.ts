@@ -69,10 +69,19 @@ export async function PUT(
 
    const { action } = result.data;
    const params = await context.params;
-   const updatedAlert = action === 'dismiss'
-     ? await safetyService.dismissAlert(params.id, userId)
-     : await safetyService.resolveAlert(params.id, userId);
+   const alert = await safetyService.getSafetyAlert(params.id);
+   
+   if (!alert) {
+     return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+   }
 
+   if (action === 'dismiss') {
+     await safetyService.dismissAlert(params.id, userId);
+   } else {
+     await safetyService.resolveAlert(params.id, userId);
+   }
+
+   const updatedAlert = await safetyService.getSafetyAlert(params.id);
    return NextResponse.json(updatedAlert);
  } catch (error: Error | unknown) {
    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
