@@ -198,3 +198,62 @@ export class ProgressService {
 }
 
 export const progressService = new ProgressService();
+import prisma from '@/lib/prisma';
+import { UserProgress, ProgressMilestone } from '@/types/user';
+
+export class ProgressService {
+  async trackMeetupCompletion(userId: string, matchType: string) {
+    const progress = await prisma.userProgress.upsert({
+      where: { userId },
+      update: {
+        totalMeetups: { increment: 1 },
+        [`${matchType}Meetups`]: { increment: 1 }
+      },
+      create: {
+        userId,
+        totalMeetups: 1,
+        [`${matchType}Meetups`]: 1
+      }
+    });
+    
+    await this.checkMilestones(userId, progress);
+  }
+
+  async trackSafetyCompliance(userId: string) {
+    return prisma.userProgress.upsert({
+      where: { userId },
+      update: {
+        safetyCheckins: { increment: 1 },
+        safetyScore: { increment: 5 }
+      },
+      create: {
+        userId,
+        safetyCheckins: 1,
+        safetyScore: 5
+      }
+    });
+  }
+
+  async checkMilestones(userId: string, progress: UserProgress) {
+    const milestones: ProgressMilestone[] = [
+      { name: 'First Connection', requirement: progress.totalMeetups >= 1 },
+      { name: 'Safety Champion', requirement: progress.safetyScore >= 100 },
+      { name: 'Social Explorer', requirement: progress.uniqueLocations >= 5 },
+      { name: 'Trusted Member', requirement: progress.positiveRatings >= 10 }
+    ];
+
+    for (const milestone of milestones) {
+      if (milestone.requirement) {
+        await prisma.userAchievement.create({
+          data: {
+            userId,
+            name: milestone.name,
+            awardedAt: new Date()
+          }
+        });
+      }
+    }
+  }
+}
+
+export const progressService = new ProgressService();

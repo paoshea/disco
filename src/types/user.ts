@@ -109,3 +109,26 @@ export interface UserSettings {
     emergencyContactAlerts: boolean;
   };
 }
+export interface UserProgress {
+  userId: string;
+  totalMeetups: number;
+  safetyScore: number;
+  safetyCheckins: number;
+  uniqueLocations: number;
+  positiveRatings: number;
+  coffeeMeetups?: number;
+  lunchMeetups?: number;
+  workspaceMeetups?: number;
+}
+
+export interface ProgressMilestone {
+  name: string;
+  requirement: boolean;
+}
+
+export interface Achievement {
+  id: string;
+  userId: string;
+  name: string;
+  awardedAt: Date;
+}
