@@ -19,7 +19,7 @@ export const env = createEnv({
     NEXT_PUBLIC_WEBSOCKET_URL: z
       .string()
       .url()
-      .default(`ws://0.0.0.0:${process.env.PORT ?? '3001'}/ws`),
+      .default(`wss://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/ws`),
   },
   runtimeEnv: process.env,
 });
