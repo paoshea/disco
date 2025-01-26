@@ -1,6 +1,8 @@
+
 import prisma from '@/lib/prisma';
 import type { Achievement, SafetyCheck, UserMatch, Event } from '@prisma/client';
 import { notificationService } from '@/services/notifications/notification.service';
+import { UserProgress, ProgressMilestone } from '@/types/user';
 
 interface MilestoneReward {
   type: string;
@@ -195,13 +197,7 @@ export class ProgressService {
 
     return { safetyChecks, matches, events, achievements, pointsEarned: points };
   }
-}
 
-export const progressService = new ProgressService();
-
-import { UserProgress, ProgressMilestone } from '@/types/user';
-
-export class ProgressService {
   async trackMeetupCompletion(userId: string, matchType: string) {
     const progress = await prisma.userProgress.upsert({
       where: { userId },
