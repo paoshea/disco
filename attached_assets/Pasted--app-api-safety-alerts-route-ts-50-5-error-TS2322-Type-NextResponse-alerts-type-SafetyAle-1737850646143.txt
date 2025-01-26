@@ -1,0 +1,14 @@
+
+
+app/api/safety/alerts/route.ts:50:5 - error TS2322: Type 'NextResponse<{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; resolved: boolean; }[]; }>' is not assignable to type 'NextResponse<{ alerts: SafetyAlertNew[]; } | { error: string; }>'.
+  Type '{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; resolved: boolean; }[]; }' is not assignable to type '{ alerts: SafetyAlertNew[]; } | { error: string; }'.
+    Type '{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; resolved: boolean; }[]; }' is not assignable to type '{ alerts: SafetyAlertNew[]; }'.
+      Types of property 'alerts' are incompatible.
+        Type '{ type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; resolved: boolean; }[]' is not assignable to type 'SafetyAlertNew[]'.
+          Type '{ type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; resolved: boolean; }' is not assignable to type 'SafetyAlertNew'.
+            Types of property 'status' are incompatible.
+              Type 'string' is not assignable to type '"dismissed" | "resolved" | "active"'.
+
+50     return NextResponse.json({ alerts });
+       ~~~~~~
+
