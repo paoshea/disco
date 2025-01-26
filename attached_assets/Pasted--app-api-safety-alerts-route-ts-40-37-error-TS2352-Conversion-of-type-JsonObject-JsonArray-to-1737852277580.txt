@@ -1,0 +1,42 @@
+
+app/api/safety/alerts/route.ts:40:37 - error TS2352: Conversion of type 'JsonObject | JsonArray' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonValue[]' is missing the following properties from type 'Location': id, userId, latitude, longitude, and 3 more.
+
+40                   latitude: Number((alert.location as Location).latitude),
+                                       ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:41:38 - error TS2352: Conversion of type 'JsonObject | JsonArray' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonArray' is not comparable to type 'Location'.
+
+41                   longitude: Number((alert.location as Location).longitude),
+                                        ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:42:30 - error TS2352: Conversion of type 'JsonObject | JsonArray' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonArray' is not comparable to type 'Location'.
+
+42                   accuracy: (alert.location as Location).accuracy
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:43:31 - error TS2352: Conversion of type 'JsonObject | JsonArray' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonArray' is not comparable to type 'Location'.
+
+43                     ? Number((alert.location as Location).accuracy)
+                                 ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:45:40 - error TS2352: Conversion of type 'JsonObject | JsonArray' to type 'Location' may be a mistake because neither type sufficiently overlaps with the other. If this was intentional, convert the expression to 'unknown' first.
+  Type 'JsonArray' is not comparable to type 'Location'.
+
+45                   timestamp: new Date((alert.location as Location).timestamp),
+                                          ~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:59:5 - error TS2322: Type 'NextResponse<{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; dismissedAt: Date | null; }[]; }>' is not assignable to type 'NextResponse<{ alerts: SafetyAlertNew[]; } | { error: string; }>'.
+  Type '{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; dismissedAt: Date | null; }[]; }' is not assignable to type '{ alerts: SafetyAlertNew[]; } | { error: string; }'.
+    Type '{ alerts: { type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; dismissedAt: Date | null; }[]; }' is not assignable to type '{ alerts: SafetyAlertNew[]; }'.
+      Types of property 'alerts' are incompatible.
+        Type '{ type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; dismissedAt: Date | null; }[]' is not assignable to type 'SafetyAlertNew[]'.
+          Type '{ type: SafetyAlertType; status: string; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: Date; } | { latitude: number; longitude: number; timestamp: Date; accuracy?: undefined; }; ... 10 more ...; dismissedAt: Date | null; }' is not assignable to type 'SafetyAlertNew'.
+            Types of property 'status' are incompatible.
+              Type 'string' is not assignable to type '"resolved" | "dismissed" | "active"'.
+
+59     return NextResponse.json({ alerts });
+       ~~~~~~
