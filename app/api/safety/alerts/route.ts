@@ -1,4 +1,3 @@
-
 import type { Location } from '@/types/location';
 import { NextResponse, NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -32,7 +31,7 @@ export async function GET(req: NextRequest) {
     const alerts = await prisma.safetyAlert.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
-      include: { user: true }
+      include: { user: true },
     });
 
     const formattedAlerts = alerts.map(alert => {
@@ -54,10 +53,10 @@ export async function GET(req: NextRequest) {
         };
       }
 
-      const status = alert.dismissed 
-        ? 'dismissed' 
-        : alert.resolved 
-          ? 'resolved' 
+      const status = alert.dismissed
+        ? 'dismissed'
+        : alert.resolved
+          ? 'resolved'
           : 'active';
 
       const formatted: SafetyAlertNew = {
@@ -71,12 +70,14 @@ export async function GET(req: NextRequest) {
         createdAt: alert.createdAt.toISOString(),
         updatedAt: alert.updatedAt.toISOString(),
         resolvedAt: alert.resolvedAt?.toISOString(),
-        user: alert.user ? {
-          ...alert.user,
-          lastActive: alert.user.updatedAt,
-          verificationStatus: 'verified',
-          emailVerified: alert.user.emailVerified !== null
-        } : undefined
+        user: alert.user
+          ? {
+              ...alert.user,
+              lastActive: alert.user.updatedAt,
+              verificationStatus: 'verified',
+              emailVerified: alert.user.emailVerified !== null,
+            }
+          : undefined,
       };
 
       return formatted;
@@ -86,7 +87,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     console.error('Error fetching safety alerts:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch safety alerts' }, 
+      { error: 'Failed to fetch safety alerts' },
       { status: 500 }
     );
   }
@@ -120,13 +121,14 @@ export async function POST(request: NextRequest) {
         latitude: result.data.location.latitude,
         longitude: result.data.location.longitude,
         accuracy: result.data.location.accuracy || null,
-        timestamp: result.data.location.timestamp instanceof Date
-          ? result.data.location.timestamp.toISOString()
-          : now.toISOString(),
+        timestamp:
+          result.data.location.timestamp instanceof Date
+            ? result.data.location.timestamp.toISOString()
+            : now.toISOString(),
       },
       user: {
-        connect: { id: userId }
-      }
+        connect: { id: userId },
+      },
     };
 
     const alert = await prisma.safetyAlert.create({ data: alertData });
