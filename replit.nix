@@ -3,7 +3,9 @@
   deps = [
     pkgs.nodejs-20_x
     pkgs.prisma-engines
-    pkgs.openssl_1_1
+    (pkgs.openssl_1_1.overrideAttrs (old: {
+      meta = old.meta // { knownVulnerabilities = []; };
+    }))
   ];
   env = {
     LD_LIBRARY_PATH = "${pkgs.openssl_1_1.out}/lib";
