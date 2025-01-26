@@ -223,3 +223,92 @@ export class NotificationService {
 }
 
 export const notificationService = NotificationService.getInstance();
+
+import { prisma } from '@/lib/prisma';
+import type { User, Achievement } from '@prisma/client';
+
+export type NotificationType = 'MILESTONE' | 'ACHIEVEMENT' | 'LEVEL_UP';
+
+export interface ProgressNotification {
+  id: string;
+  userId: string;
+  type: NotificationType;
+  title: string;
+  message: string;
+  reward?: {
+    type: string;
+    value: number;
+  };
+  createdAt: Date;
+  read: boolean;
+}
+
+class ProgressNotificationService {
+  async createMilestoneNotification(
+    userId: string,
+    milestone: string,
+    reward?: { type: string; value: number }
+  ): Promise<ProgressNotification> {
+    const notification = await prisma.notification.create({
+      data: {
+        userId,
+        type: 'MILESTONE',
+        title: 'Milestone Reached!',
+        message: `Congratulations! You've reached ${milestone}`,
+        metadata: reward ? JSON.stringify(reward) : null,
+      },
+    });
+
+    if (reward) {
+      await this.grantReward(userId, reward);
+    }
+
+    return notification;
+  }
+
+  async grantReward(
+    userId: string,
+    reward: { type: string; value: number }
+  ): Promise<void> {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) return;
+
+    switch (reward.type) {
+      case 'POINTS':
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            points: {
+              increment: reward.value,
+            },
+          },
+        });
+        break;
+      // Add other reward types here
+    }
+  }
+
+  async getUnreadNotifications(userId: string): Promise<ProgressNotification[]> {
+    return prisma.notification.findMany({
+      where: {
+        userId,
+        read: false,
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    });
+  }
+
+  async markAsRead(notificationId: string): Promise<void> {
+    await prisma.notification.update({
+      where: { id: notificationId },
+      data: { read: true },
+    });
+  }
+}
+
+export const progressNotificationService = new ProgressNotificationService();

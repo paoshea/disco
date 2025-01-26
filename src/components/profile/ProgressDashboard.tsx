@@ -15,6 +15,7 @@ export const ProgressDashboard = ({ stats }: { stats: ProgressStats }) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Your Progress</h2>
+      <ProgressNotifications userId={user.id} />
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
