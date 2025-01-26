@@ -1,16 +1,12 @@
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-import type { NextApiRequest, NextApiResponse } from 'next';
-
-export default function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
+export async function GET(
+  request: NextRequest,
+  { params }: { params: { userId: string } }
 ) {
-  const { userId } = req.query;
-  // Function logic stays the same
-}
   try {
     const user = await prisma.user.findUnique({
       where: { id: params.userId },
@@ -28,19 +24,16 @@ export default function handler(
     const requirements = [];
     let eligible = true;
 
-    // Check safety score
     if (user.safetyChecks.length < 5) {
       requirements.push('Complete at least 5 safety checks');
       eligible = false;
     }
 
-    // Check successful matches
     if (user.matches.length < 3) {
       requirements.push('Complete at least 3 successful matches');
       eligible = false;
     }
 
-    // Check event participation
     if (user.events.length < 2) {
       requirements.push('Participate in at least 2 events');
       eligible = false;
@@ -53,4 +46,4 @@ export default function handler(
       { status: 500 }
     );
   }
-};
+}
