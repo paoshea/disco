@@ -9,6 +9,7 @@ interface ProgressStats {
   matches: number;
   events: number;
   achievements: Achievement[];
+  pointsEarned: number;
 }
 
 export const ProgressDashboard = ({ stats }: { stats: ProgressStats }) => {
@@ -43,6 +44,13 @@ export const ProgressDashboard = ({ stats }: { stats: ProgressStats }) => {
               {achievement.name}
             </Badge>
           ))}
+        </div>
+      </div>
+      
+      <div className="mt-4">
+        <h3 className="text-xl font-semibold mb-2">Points Earned</h3>
+        <div className="text-3xl font-bold text-green-600">
+          {stats.pointsEarned}
         </div>
       </div>
     </div>
