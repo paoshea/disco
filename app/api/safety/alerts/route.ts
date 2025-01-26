@@ -71,7 +71,11 @@ export async function GET(req: NextRequest) {
         createdAt: alert.createdAt.toISOString(),
         updatedAt: alert.updatedAt.toISOString(),
         resolvedAt: alert.resolvedAt?.toISOString(),
-        user: alert.user
+        user: alert.user ? {
+          ...alert.user,
+          lastActive: alert.user.updatedAt,
+          verificationStatus: 'verified'
+        } : undefined
       };
 
       return formatted;
