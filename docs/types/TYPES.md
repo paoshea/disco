@@ -881,6 +881,87 @@ npx prisma validate
 - The extended type needs to match your actual Prisma model methods
 - Remember to update the extended type when adding new model operations
 
+## Safety Types and Route Handler Patterns
+
+### Safety Service Pattern Issues
+
+1. **Null Returns vs Non-null Expectations**
+   ```typescript
+   // Service can return null
+   async getSafetyAlert(id: string): Promise<SafetyAlert | null>
+   
+   // But route handler expects non-null
+   Promise<NextResponse<SafetyAlert | { error: string }>>
+   ```
+
+   Solution: Always handle null cases explicitly in route handlers:
+   ```typescript
+   const alert = await safetyService.getSafetyAlert(id);
+   if (!alert) {
+     return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+   }
+   ```
+
+2. **Void Returns vs Object Expectations**
+   ```typescript
+   // Service returns void
+   async dismissAlert(id: string): Promise<void>
+   
+   // But handler expects SafetyAlert
+   Promise<NextResponse<SafetyAlert>>
+   ```
+
+   Solution: Fetch updated alert after modification:
+   ```typescript
+   await safetyService.dismissAlert(id);
+   const updatedAlert = await safetyService.getSafetyAlert(id);
+   if (!updatedAlert) {
+     return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+   }
+   ```
+
+### Next.js 15+ Route Handler Types
+
+1. **Promise-wrapped Parameters**
+   Next.js 15+ expects route parameters to be wrapped in a Promise:
+
+   ```typescript
+   // Correct parameter type for Next.js 15+
+   export async function GET(
+     request: NextRequest,
+     context: { params: Promise<{ id: string }> }
+   ): Promise<NextResponse>
+   
+   // Usage inside handler
+   const params = await context.params;
+   const { id } = params;
+   ```
+
+2. **Context Destructuring Pattern**
+   Always destructure the context parameter to access params:
+
+   ```typescript
+   // Incorrect
+   async function GET(request: NextRequest, context: RouteContext)
+   
+   // Correct
+   async function GET(
+     request: NextRequest,
+     { params }: { params: Promise<{ id: string }> }
+   )
+   ```
+
+3. **Type-safe Response Pattern**
+   Use discriminated union types for responses:
+
+   ```typescript
+   type SafetyResponse = 
+     | { data: SafetyAlert; error?: never }
+     | { error: string; status: number; data?: never };
+   
+   Promise<NextResponse<SafetyResponse>>
+   ```
+
 ## Next.js Route Handler Types
 
 ### Dynamic Route Parameters
