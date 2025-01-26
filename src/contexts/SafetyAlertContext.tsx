@@ -3,8 +3,9 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { SafetyAlert } from '@prisma/client';
 import type { SafetyAlertNew } from '@/types/safety';
+import { Prisma } from '@prisma/client';
 
-//type JsonObject = Prisma.JsonObject; // Removed unused type
+type JsonObject = Prisma.JsonObject;
 
 interface SafetyAlertContextType {
   alerts: SafetyAlertNew[];
