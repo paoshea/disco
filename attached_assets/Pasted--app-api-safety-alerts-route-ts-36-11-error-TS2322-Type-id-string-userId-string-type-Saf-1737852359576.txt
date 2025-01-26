@@ -1,0 +1,46 @@
+
+
+app/api/safety/alerts/route.ts:36:11 - error TS2322: Type '{ id: string; userId: string; type: SafetyAlertType; status: "dismissed" | "resolved" | "active"; location: LocationData; description: string | null; ... 5 more ...; responseTimeSeconds: any; }[]' is not assignable to type 'SafetyAlertNew[]'.
+  Type '{ id: string; userId: string; type: SafetyAlertType; status: "dismissed" | "resolved" | "active"; location: LocationData; description: string | null; ... 5 more ...; responseTimeSeconds: any; }' is not assignable to type 'SafetyAlertNew'.
+    Types of property 'description' are incompatible.
+      Type 'string | null' is not assignable to type 'string | undefined'.
+        Type 'null' is not assignable to type 'string | undefined'.
+
+36     const formattedAlerts: SafetyAlertNew[] = alerts.map(alert => {
+             ~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:44:11 - error TS2698: Spread types may only be created from object types.
+
+44           ...(loc.accuracy && { accuracy: Number(loc.accuracy) }),
+             ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:59:23 - error TS2339: Property 'status' does not exist on type '{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; description: string | null; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }'.
+
+59         status: alert.status as "resolved" | "dismissed" | "active",
+                         ~~~~~~
+
+app/api/safety/alerts/route.ts:66:36 - error TS2339: Property 'emergencyContactIds' does not exist on type '{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; description: string | null; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }'.
+
+66         emergencyContactIds: alert.emergencyContactIds as string[],
+                                      ~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:67:36 - error TS2339: Property 'responseTimeSeconds' does not exist on type '{ message: string | null; location: JsonValue; id: string; createdAt: Date; updatedAt: Date; userId: string; type: string; priority: string; description: string | null; dismissed: boolean; dismissedAt: Date | null; resolved: boolean; resolvedAt: Date | null; }'.
+
+67         responseTimeSeconds: alert.responseTimeSeconds,
+                                      ~~~~~~~~~~~~~~~~~~~
+
+app/api/safety/alerts/route.ts:122:53 - error TS2322: Type '{ priority: string; dismissed: boolean; resolved: boolean; description: string | null; message: string | null; updatedAt: Date; dismissedAt: null; resolvedAt: null; location: { latitude: number; longitude: number; accuracy: number | null; timestamp: string; }; type: "emergency" | ... 1 more ... | "warning"; contacts...' is not assignable to type '(Without<SafetyAlertCreateInput, SafetyAlertUncheckedCreateInput> & SafetyAlertUncheckedCreateInput) | (Without<...> & SafetyAlertCreateInput)'.
+  Type '{ priority: string; dismissed: boolean; resolved: boolean; description: string | null; message: string | null; updatedAt: Date; dismissedAt: null; resolvedAt: null; location: { latitude: number; longitude: number; accuracy: number | null; timestamp: string; }; type: "emergency" | ... 1 more ... | "warning"; contacts...' is not assignable to type 'Without<SafetyAlertUncheckedCreateInput, SafetyAlertCreateInput> & SafetyAlertCreateInput'.
+    Property 'user' is missing in type '{ priority: string; dismissed: boolean; resolved: boolean; description: string | null; message: string | null; updatedAt: Date; dismissedAt: null; resolvedAt: null; location: { latitude: number; longitude: number; accuracy: number | null; timestamp: string; }; type: "emergency" | ... 1 more ... | "warning"; contacts...' but required in type 'SafetyAlertCreateInput'.
+
+122     const alert = await prisma.safetyAlert.create({ data: alertData }); //Use Prisma here
+                                                        ~~~~
+
+  node_modules/.prisma/client/index.d.ts:22845:5
+    22845     user: UserCreateNestedOneWithoutSafetyAlertsInput
+              ~~~~
+    'user' is declared here.
+  node_modules/.prisma/client/index.d.ts:18714:5
+    18714     data: XOR<SafetyAlertCreateInput, SafetyAlertUncheckedCreateInput>
+              ~~~~
+    The expected type comes from property 'data' which is declared here on type '{ select?: SafetyAlertSelect<DefaultArgs> | null | undefined; include?: SafetyAlertInclude<DefaultArgs> | null | undefined; data: (Without<...> & SafetyAlertUncheckedCreateInput) | (Without<...> & SafetyAlertCreateInput); }'
