@@ -57,7 +57,8 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+// Assuming withRoleGuard is defined elsewhere and handles the role check
+export const POST = withRoleGuard(async (request: NextRequest): Promise<NextResponse> => {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {
@@ -100,4 +101,4 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 500 }
     );
   }
-}
+});

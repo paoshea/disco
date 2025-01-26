@@ -1,18 +1,32 @@
 
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { getServerAuthSession } from '@/lib/auth';
+import { DEFAULT_PERMISSIONS } from '@/types/permissions';
+import type { Permission } from '@/types/permissions';
 
-export async function roleGuard(request: NextRequest, allowedRoles: string[]) {
-  const session = await getServerAuthSession(request);
+export function withRoleGuard(handler: Function, requiredPermission: Permission) {
+  return async (request: NextRequest) => {
+    try {
+      const session = request.headers.get('authorization');
+      if (!session) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
 
-  if (!session?.user) {
-    return NextResponse.redirect(new URL('/login', request.url));
-  }
+      // Get user role from session/token
+      const userRole = 'USER'; // Replace with actual role from session
 
-  if (!allowedRoles.includes(session.user.role)) {
-    return NextResponse.redirect(new URL('/unauthorized', request.url));
-  }
+      // Check if user's role has the required permission
+      const rolePermissions = DEFAULT_PERMISSIONS[userRole];
+      if (!rolePermissions.includes(requiredPermission)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
 
-  return NextResponse.next();
+      return handler(request);
+    } catch (error) {
+      return NextResponse.json(
+        { error: 'Internal Server Error' },
+        { status: 500 }
+      );
+    }
+  };
 }

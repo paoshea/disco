@@ -10,6 +10,7 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline';
 import { useCallback } from 'react';
+import { PermissionLevel } from '@/types/permissions'; // Import permission types
 
 interface EventCardProps {
   event: EventWithParticipants;
@@ -17,6 +18,15 @@ interface EventCardProps {
   onEventLeft?: (event: EventWithParticipants) => void;
   showActions?: boolean;
 }
+
+// Permission Gate Component
+const PermissionGate = ({ permission, children, fallback }: { permission: string; children: React.ReactNode; fallback: React.ReactNode }) => {
+    const { user } = useAuth();
+    const hasPermission = user?.permissions?.includes(permission) || false; // Simplified permission check
+
+    return hasPermission ? children : fallback;
+};
+
 
 export function EventCard({
   event,
@@ -143,21 +153,25 @@ export function EventCard({
 
       {showActions && isUpcoming && (
         <div className="flex justify-end space-x-2">
-          {isParticipating ? (
-            <button
-              onClick={onLeaveClick}
-              className="text-red-600 hover:text-red-700 font-medium"
-            >
-              Leave Event
-            </button>
-          ) : (
-            <button
-              onClick={onJoinClick}
-              className="text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Join Event
-            </button>
-          )}
+          <PermissionGate permission="leave:events" fallback={<></>}> {/* Added Permission Gate for Leave Event */}
+            {isParticipating ? (
+              <button
+                onClick={onLeaveClick}
+                className="text-red-600 hover:text-red-700 font-medium"
+              >
+                Leave Event
+              </button>
+            ) : (
+              <PermissionGate permission="join:events" fallback={<button disabled className="text-blue-600 hover:text-blue-700 font-medium">Join Event</button>}> {/* Added Permission Gate for Join Event */}
+                <button
+                  onClick={onJoinClick}
+                  className="text-blue-600 hover:text-blue-700 font-medium"
+                >
+                  Join Event
+                </button>
+              </PermissionGate>
+            )}
+          </PermissionGate>
         </div>
       )}
     </div>
