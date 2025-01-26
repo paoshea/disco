@@ -13,12 +13,6 @@ const ActionSchema = z.object({
   action: z.enum(['dismiss', 'resolve']),
 });
 
-interface Context {
-  params: {
-    id: string;
-  };
-}
-
 async function validateRequest() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -29,11 +23,11 @@ async function validateRequest() {
 
 export async function GET(
   request: NextRequest,
-  context: Context
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string }>> {
   try {
     const userId = await validateRequest();
-    const alert = await safetyService.getSafetyAlert(context.params.id);
+    const alert = await safetyService.getSafetyAlert(params.id);
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -52,7 +46,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: Context
+  { params }: { params: { id: string } }
 ): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
   try {
     const userId = await validateRequest();
@@ -68,8 +62,8 @@ export async function PUT(
 
     const { action } = result.data;
     const updatedAlert = action === 'dismiss'
-      ? await safetyService.dismissAlert(context.params.id, userId)
-      : await safetyService.resolveAlert(context.params.id, userId);
+      ? await safetyService.dismissAlert(params.id, userId)
+      : await safetyService.resolveAlert(params.id, userId);
       
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
