@@ -82,6 +82,9 @@ export async function PUT(
    }
 
    const updatedAlert = await safetyService.getSafetyAlert(params.id);
+   if (!updatedAlert) {
+     return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+   }
    return NextResponse.json(updatedAlert);
  } catch (error: Error | unknown) {
    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
