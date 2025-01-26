@@ -149,15 +149,15 @@
    - Route handlers must use the 'use server' directive at the top of the file
    - Only async functions can be exported from route handler files
    - Non-async exports will cause type and runtime errors
-   
+
    ```typescript
    // Correct usage
    'use server';
-   
+
    export async function GET(request: NextRequest): Promise<NextResponse> {
      // Handler implementation
    }
-   
+
    // Incorrect - will cause errors
    export function helper() {
      // Non-async exports not allowed
@@ -189,7 +189,7 @@
    }
    ```
 
-2. **Example Usage**
+3. **Example Usage**
 
    ```typescript
    // Dynamic route: app/api/chats/rooms/[roomId]/messages/route.ts
@@ -203,7 +203,7 @@
    }
    ```
 
-3. **Configuration Options**
+4. **Configuration Options**
 
    ```typescript
    // Next.js 15.x specific configurations
@@ -212,7 +212,7 @@
    export const revalidate = 0; // Disable caching
    ```
 
-4. **Best Practices**
+5. **Best Practices**
    - Use `Record<string, string>` for params type to match Next.js internal types
    - Access params through context.params
    - Include proper return types (NextResponse)
@@ -906,15 +906,17 @@ npx prisma validate
 ### Safety Service Pattern Issues
 
 1. **Null Returns vs Non-null Expectations**
+
    ```typescript
    // Service can return null
    async getSafetyAlert(id: string): Promise<SafetyAlert | null>
-   
+
    // But route handler expects non-null
    Promise<NextResponse<SafetyAlert | { error: string }>>
    ```
 
    Solution: Always handle null cases explicitly in route handlers:
+
    ```typescript
    const alert = await safetyService.getSafetyAlert(id);
    if (!alert) {
@@ -923,15 +925,17 @@ npx prisma validate
    ```
 
 2. **Void Returns vs Object Expectations**
+
    ```typescript
    // Service returns void
    async dismissAlert(id: string): Promise<void>
-   
+
    // But handler expects SafetyAlert
    Promise<NextResponse<SafetyAlert>>
    ```
 
    Solution: Fetch updated alert after modification:
+
    ```typescript
    await safetyService.dismissAlert(id);
    const updatedAlert = await safetyService.getSafetyAlert(id);
@@ -950,8 +954,8 @@ npx prisma validate
    export async function GET(
      request: NextRequest,
      context: { params: Promise<{ id: string }> }
-   ): Promise<NextResponse>
-   
+   ): Promise<NextResponse>;
+
    // Usage inside handler
    const params = await context.params;
    const { id } = params;
@@ -962,24 +966,24 @@ npx prisma validate
 
    ```typescript
    // Incorrect
-   async function GET(request: NextRequest, context: RouteContext)
-   
+   async function GET(request: NextRequest, context: RouteContext);
+
    // Correct
    async function GET(
      request: NextRequest,
      { params }: { params: Promise<{ id: string }> }
-   )
+   );
    ```
 
 3. **Type-safe Response Pattern**
    Use discriminated union types for responses:
 
    ```typescript
-   type SafetyResponse = 
+   type SafetyResponse =
      | { data: SafetyAlert; error?: never }
      | { error: string; status: number; data?: never };
-   
-   Promise<NextResponse<SafetyResponse>>
+
+   Promise<NextResponse<SafetyResponse>>;
    ```
 
 ## Next.js Route Handler Types

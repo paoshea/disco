@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextResponse } from 'next/server';
@@ -40,7 +39,8 @@ export async function GET(
 
     return NextResponse.json(alert);
   } catch (error: Error | unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
@@ -64,7 +64,7 @@ export async function PUT(
     const { action } = result.data;
     const params = await context.params;
     const alert = await safetyService.getSafetyAlert(params.id);
-    
+
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
     }
@@ -81,7 +81,8 @@ export async function PUT(
     }
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
-    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage =
+      error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
