@@ -5,6 +5,12 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   reactStrictMode: true,
   output: 'standalone',
+
+  serverRuntimeConfig: {
+    port: process.env.PORT || 3000,
+    host: '0.0.0.0',
+  },
+
   env: {
     JWT_SECRET: process.env.JWT_SECRET,
     PORT: process.env.PORT || '3001',
