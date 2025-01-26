@@ -5,11 +5,11 @@ import { prisma } from '@/lib/prisma';
 
 export const GET = async (
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params: { userId: string } }
 ) => {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: params.userId },
+      where: { id: context.params.userId },
       include: {
         safetyChecks: true,
         matches: true,
@@ -49,4 +49,4 @@ export const GET = async (
       { status: 500 }
     );
   }
-}
+};

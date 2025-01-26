@@ -1,3 +1,4 @@
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
@@ -32,7 +33,7 @@ connectWithRetry().catch((error) => {
 });
 
 // Add connection status check utility
-export const checkConnection = async () => {
+const checkConnection = async () => {
   try {
     await prisma.$queryRaw`SELECT 1`;
     return true;
