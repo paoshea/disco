@@ -144,7 +144,27 @@
 
 ### Next.js App Router Route Handler Types
 
-1. **Route Handler Context** (`app/api/**/route.ts`)
+1. **'use server' Directive Requirements**
+
+   - Route handlers must use the 'use server' directive at the top of the file
+   - Only async functions can be exported from route handler files
+   - Non-async exports will cause type and runtime errors
+   
+   ```typescript
+   // Correct usage
+   'use server';
+   
+   export async function GET(request: NextRequest): Promise<NextResponse> {
+     // Handler implementation
+   }
+   
+   // Incorrect - will cause errors
+   export function helper() {
+     // Non-async exports not allowed
+   }
+   ```
+
+2. **Route Handler Context** (`app/api/**/route.ts`)
 
    - Used for Next.js 15.x App Router route handlers
    - Provides type-safe access to dynamic route parameters
