@@ -1,5 +1,46 @@
 # DISCO! Platform Development Roadmap
 
+## IMMEDIATE NEXT STEP - Auth Process Flow Enhancement
+
+### Goals
+- Enable guest users to progress to power users
+- Implement clear role progression system
+- Add role-based permissions
+- Create user progression tracking
+
+### Implementation Steps
+
+1. **Auth Service Enhancement** (Priority)
+   - [x] Add role upgrade functionality
+   - [x] Create upgrade eligibility checks
+   - [x] Implement progression tracking
+   - [ ] Add role permission guards
+   - [ ] Create role transition hooks
+
+2. **User Progress Tracking**
+   - [ ] Track user activity metrics
+   - [ ] Implement achievement system
+   - [ ] Create progress notifications
+   - [ ] Add milestone rewards
+
+3. **Role-Based Access Control**
+   - [ ] Define permission levels
+   - [ ] Implement access guards
+   - [ ] Create role transition UI
+   - [ ] Add role validation
+   
+4. **Progress UI/UX**
+   - [ ] Design progress dashboard
+   - [ ] Implement progress indicators
+   - [ ] Add achievement badges
+   - [ ] Create upgrade prompts
+
+### Success Metrics
+- User progression rate
+- Feature usage by role
+- Upgrade completion rate
+- User retention by role
+
 # Disco Codebase Reorganization Action Plan
 
 ## Objective
