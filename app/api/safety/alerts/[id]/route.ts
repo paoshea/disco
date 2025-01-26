@@ -115,10 +115,10 @@ export async function PUT(
     const { action } = result.data;
     if (action === 'dismiss') {
       const updatedAlert = await safetyService.dismissAlert(params.id, userId);
-      return NextResponse.json(updatedAlert as SafetyAlertNew);
+      return NextResponse.json(updatedAlert);
     } else if (action === 'resolve') {
       const updatedAlert = await safetyService.resolveAlert(params.id, userId);
-      return NextResponse.json(updatedAlert as SafetyAlertNew);
+      return NextResponse.json(updatedAlert);
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
