@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-  export const GET = async (
-    request: NextRequest,
-    { params }: { params: { userId: string } }
-  ) => {
+import type { NextApiRequest, NextApiResponse } from 'next';
+
+export default function handler(
+  req: NextApiRequest,
+  res: NextApiResponse
+) {
+  const { userId } = req.query;
+  // Function logic stays the same
+}
   try {
     const user = await prisma.user.findUnique({
       where: { id: params.userId },
