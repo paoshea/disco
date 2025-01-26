@@ -96,6 +96,11 @@ export async function middleware(request: NextRequest) {
     ];
     const isPublicPath = publicPaths.includes(request.nextUrl.pathname);
 
+    // Allow root path without redirection
+    if (request.nextUrl.pathname === '/') {
+      return NextResponse.next();
+    }
+
     // Protected paths that require auth
     const protectedPaths = ['/dashboard', '/profile', '/settings'];
     const isProtectedPath = protectedPaths.some(path =>
