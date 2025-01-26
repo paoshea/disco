@@ -21,7 +21,7 @@ if (!redisEnv.success) {
 
 // Prevent multiple instances of Redis client
 declare global {
-  var redis: Redis | undefined;
+  let redis: Redis | undefined;
 }
 
 // Redis configuration with type safety
