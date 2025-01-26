@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
+import { withRoleGuard } from '@/path/to/withRoleGuard';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -58,7 +59,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 // Assuming withRoleGuard is defined elsewhere and handles the role check
-export const POST = withRoleGuard(async (request: NextRequest): Promise<NextResponse> => {
+  export const POST = withRoleGuard(async (request: NextRequest): Promise<NextResponse> => {
   try {
     const session = await getServerAuthSession(request);
     if (!session?.user?.id) {

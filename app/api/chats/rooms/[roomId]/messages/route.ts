@@ -100,7 +100,7 @@ export async function GET(
     });
 
     // Transform messages to include required fields
-    const transformedMessages: MessageWithSender[] = messages.map(msg => ({
+      const transformedMessages: MessageWithSender[] = messages.map((msg: any) => ({
       ...msg,
       sender: {
         ...msg.sender,
