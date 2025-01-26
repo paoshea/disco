@@ -1,4 +1,3 @@
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -26,57 +25,14 @@ async function validateRequest() {
   return session.user.id;
 }
 
-type SafetyAlertResponse = SafetyAlert & {
-  location: {
-    latitude: number;
-    longitude: number;
-    accuracy?: number;
-    timestamp: Date;
-  } | null;
-};
-
 export async function GET(
   request: NextRequest,
   context: Context
-): Promise<NextResponse<SafetyAlertResponse | { error: string }>> {
+): Promise<NextResponse> {
   try {
     const userId = await validateRequest();
     const params = await context.params;
-    const alertResponse = await safetyService.getSafetyAlert(params.id);
-    const alert = alertResponse
-      ? ({
-          ...alertResponse,
-          type: alertResponse.type as SafetyAlertType,
-          status: alertResponse.dismissed
-            ? 'dismissed'
-            : alertResponse.resolved
-            ? 'resolved'
-            : 'active',
-          location: (() => {
-            if (
-              typeof alertResponse.location === 'object' &&
-              alertResponse.location
-            ) {
-              const loc = alertResponse.location as Record<string, unknown>;
-              const locData = {
-                latitude:
-                  typeof loc.latitude === 'number'
-                    ? loc.latitude
-                    : Number(loc.latitude),
-                longitude:
-                  typeof loc.longitude === 'number'
-                    ? loc.longitude
-                    : Number(loc.longitude),
-                accuracy:
-                  loc.accuracy !== undefined ? Number(loc.accuracy) : undefined,
-                timestamp: new Date(loc.timestamp as string | number | Date),
-              };
-              return locData;
-            }
-            return null;
-          })(),
-        } as SafetyAlertResponse)
-      : null;
+    const alert = await safetyService.getSafetyAlert(params.id);
 
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
@@ -88,8 +44,7 @@ export async function GET(
 
     return NextResponse.json(alert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
@@ -105,25 +60,17 @@ export async function PUT(
     const result = ActionSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: result.error }, { status: 400 });
     }
 
     const { action } = result.data;
-    if (action === 'dismiss') {
-      const updatedAlert = await safetyService.dismissAlert(params.id, userId);
-      return NextResponse.json(updatedAlert);
-    } else if (action === 'resolve') {
-      const updatedAlert = await safetyService.resolveAlert(params.id, userId);
-      return NextResponse.json(updatedAlert);
-    }
+    const updatedAlert = action === 'dismiss' 
+      ? await safetyService.dismissAlert(params.id, userId)
+      : await safetyService.resolveAlert(params.id, userId);
 
-    return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
+    return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
