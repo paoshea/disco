@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/Button';
 import { Tab } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
 import type { User } from '@/types/user';
+import { RoleUpgrade } from '@/components/profile/RoleUpgrade'; //Import the new component
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -189,22 +190,27 @@ export default function ProfilePage() {
             </Tab.Panel>
             <Tab.Panel>
               {authUser && (
-                <ProfileSettings
-                  user={{
-                    id: authUser.id,
-                    email: authUser.email,
-                    firstName: authUser.firstName,
-                    lastName: authUser.lastName,
-                    emailVerified: authUser.emailVerified,
-                    name: `${authUser.firstName} ${authUser.lastName}`,
-                    lastActive: authUser.updatedAt,
-                    createdAt: authUser.createdAt,
-                    updatedAt: authUser.updatedAt,
-                    verificationStatus: authUser.emailVerified
-                      ? 'verified'
-                      : 'pending',
-                  }}
-                />
+                <>
+                  <ProfileSettings
+                    user={{
+                      id: authUser.id,
+                      email: authUser.email,
+                      firstName: authUser.firstName,
+                      lastName: authUser.lastName,
+                      emailVerified: authUser.emailVerified,
+                      name: `${authUser.firstName} ${authUser.lastName}`,
+                      lastActive: authUser.updatedAt,
+                      createdAt: authUser.createdAt,
+                      updatedAt: authUser.updatedAt,
+                      verificationStatus: authUser.emailVerified
+                        ? 'verified'
+                        : 'pending',
+                    }}
+                  />
+                  <div className="mt-6">
+                    <RoleUpgrade />
+                  </div>
+                </>
               )}
             </Tab.Panel>
           </Tab.Panels>
