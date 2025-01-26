@@ -13,17 +13,6 @@ interface SafetyCenterProps {
   onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
 }
 
-// Helper function to create async callbacks
-const createAsyncCallback = <
-  T extends (settings: Partial<SafetySettingsNew>) => Promise<void>,
->(
-  func: T
-): ((settings: Parameters<T>[0]) => void) => {
-  return (settings: Parameters<T>[0]) => {
-    void func(settings);
-  };
-};
-
 export default function SafetyCenter({
   safetySettings,
   onSettingsChange,
@@ -48,37 +37,6 @@ export default function SafetyCenter({
     },
     [onSettingsChange]
   );
-
-  const updateSafetySettings = async (
-    newSettings: Partial<SafetySettingsNew>
-  ): Promise<void> => {
-    try {
-      const response = await fetch('/api/safety/settings', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newSettings),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update settings');
-      }
-
-      setSettings(prev => ({
-        ...prev,
-        ...newSettings,
-      }));
-      createToast.success({
-        title: 'Settings Updated',
-        description: 'Your safety settings have been saved.',
-      });
-    } catch (error) {
-      console.error('Failed to update safety settings:', error);
-      createToast.error({
-        title: 'Error',
-        description: 'Failed to update settings. Please try again.',
-      });
-    }
-  };
 
   useEffect(() => {
     if (isLoading) return;
