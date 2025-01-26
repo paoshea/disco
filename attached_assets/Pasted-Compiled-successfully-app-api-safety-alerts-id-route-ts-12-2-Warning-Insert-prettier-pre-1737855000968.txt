@@ -1,0 +1,87 @@
+Compiled successfully
+
+./app/api/safety/alerts/[id]/route.ts
+12:2  Warning: Insert `·`  prettier/prettier
+15:6  Warning: 'RouteParams' is defined but never used.  @typescript-eslint/no-unused-vars
+16:2  Warning: Insert `·`  prettier/prettier
+17:1  Warning: Insert `·`  prettier/prettier
+18:2  Warning: Insert `·`  prettier/prettier
+19:1  Warning: Insert `·`  prettier/prettier
+23:2  Warning: Insert `·`  prettier/prettier
+24:1  Warning: Insert `·`  prettier/prettier
+25:4  Warning: Insert `·`  prettier/prettier
+26:1  Warning: Insert `·`  prettier/prettier
+27:2  Warning: Insert `·`  prettier/prettier
+34:2  Warning: Insert `·`  prettier/prettier
+35:1  Warning: Insert `·`  prettier/prettier
+36:4  Warning: Insert `·`  prettier/prettier
+37:1  Warning: Insert `·`  prettier/prettier
+39:4  Warning: Insert `·`  prettier/prettier
+40:1  Warning: Insert `·`  prettier/prettier
+41:4  Warning: Insert `·`  prettier/prettier
+43:1  Warning: Insert `·`  prettier/prettier
+44:6  Warning: Insert `·`  prettier/prettier
+45:4  Warning: Insert `·`  prettier/prettier
+47:1  Warning: Insert `·`  prettier/prettier
+48:2  Warning: Insert `·`  prettier/prettier
+49:1  Warning: Replace `···const·errorMessage·=` with `····const·errorMessage·=⏎·····`  prettier/prettier
+50:4  Warning: Insert `·`  prettier/prettier
+51:1  Warning: Insert `·`  prettier/prettier
+58:1  Warning: Insert `·`  prettier/prettier
+59:4  Warning: Insert `·`  prettier/prettier
+60:1  Warning: Insert `·`  prettier/prettier
+61:4  Warning: Insert `·`  prettier/prettier
+63:1  Warning: Insert `·`  prettier/prettier
+64:6  Warning: Insert `·`  prettier/prettier
+65:1  Warning: Insert `·`  prettier/prettier
+66:8  Warning: Insert `·`  prettier/prettier
+67:6  Warning: Insert `·`  prettier/prettier
+68:1  Warning: Insert `·`  prettier/prettier
+70:4  Warning: Insert `·`  prettier/prettier
+71:1  Warning: Insert `·`  prettier/prettier
+72:4  Warning: Insert `·`  prettier/prettier
+73:1  Warning: Replace `···⏎` with `⏎·`  prettier/prettier
+75:1  Warning: Insert `·`  prettier/prettier
+76:1  Warning: Insert `·`  prettier/prettier
+78:4  Warning: Insert `·`  prettier/prettier
+79:1  Warning: Insert `·`  prettier/prettier
+80:4  Warning: Insert `·`  prettier/prettier
+81:1  Warning: Insert `·`  prettier/prettier
+82:4  Warning: Insert `·`  prettier/prettier
+84:1  Warning: Insert `·`  prettier/prettier
+85:1  Warning: Insert `·`  prettier/prettier
+86:6  Warning: Insert `·`  prettier/prettier
+87:1  Warning: Insert `·`  prettier/prettier
+88:4  Warning: Insert `·`  prettier/prettier
+89:1  Warning: Insert `·`  prettier/prettier
+90:4  Warning: Replace `const·errorMessage·=` with `·const·errorMessage·=⏎·····`  prettier/prettier
+91:1  Warning: Insert `·`  prettier/prettier
+92:2  Warning: Insert `·`  prettier/prettier
+93:2  Warning: Insert `⏎`  prettier/prettier
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#disabling-rules
+ ✓ Linting and checking validity of types 
+   Collecting page data  ..[Error [PrismaClientInitializationError]: Unable to require(`/home/runner/workspace/node_modules/.prisma/client/libquery_engine-debian-openssl-1.1.x.so.node`).
+Prisma cannot find the required `libssl` system library in your system. Please install openssl-1.1.x and try again.
+
+Details: libssl.so.1.1: cannot open shared object file: No such file or directory] {
+  clientVersion: '5.22.0',
+  errorCode: undefined
+}
+Error: A "use server" file can only export async functions, found object.
+Read more: https://nextjs.org/docs/messages/invalid-use-server-value
+    at r (.next/server/chunks/4102.js:1:189)
+    at 99997 (.next/server/chunks/4102.js:10:4591)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 48938 (.next/server/app/api/safety/alerts/[id]/route.js:1:2185)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at 21744 (.next/server/app/api/safety/alerts/[id]/route.js:1:1258)
+    at t (.next/server/webpack-runtime.js:1:143)
+    at t (.next/server/app/api/safety/alerts/[id]/route.js:1:3657)
+    at <unknown> (.next/server/app/api/safety/alerts/[id]/route.js:1:3713)
+    at t.X (.next/server/webpack-runtime.js:1:1285)
+
+> Build error occurred
+[Error: Failed to collect page data for /api/safety/alerts/[id]] {
+  type: 'Error'
+}
