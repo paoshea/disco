@@ -1,11 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import {
-  getSafetyAlerts,
-  createSafetyAlert,
-} from '@/services/api/safety.service';
-import type { SafetyAlert, Prisma } from '@prisma/client';
+import type { SafetyAlert } from '@prisma/client';
 import type { SafetyAlertNew } from '@/types/safety';
 
 //type JsonObject = Prisma.JsonObject; // Removed unused type
@@ -116,7 +112,12 @@ export function SafetyAlertProvider({
         ...alert,
       };
 
-      const newAlert = await createSafetyAlert(fullAlert);
+      const response = await fetch('/api/safety/alerts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fullAlert),
+      });
+      const newAlert = await response.json();
       setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to add alert');

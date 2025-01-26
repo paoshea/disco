@@ -222,8 +222,8 @@ export const WebSocketProvider: React.FC<WebSocketProviderProps> = ({
       await new Promise<void>((resolve, reject) => {
         try {
           const payload = {
-            ...message,
-            payload: message.payload ?? {},
+            type: message.type,
+            payload: message.payload || {},
             timestamp: message.timestamp || new Date().toISOString(),
           };
           socket.send(JSON.stringify(payload));
