@@ -198,7 +198,7 @@ export class ProgressService {
 }
 
 export const progressService = new ProgressService();
-import prisma from '@/lib/prisma';
+
 import { UserProgress, ProgressMilestone } from '@/types/user';
 
 export class ProgressService {
