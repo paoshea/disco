@@ -221,39 +221,40 @@ Type error: Route has an invalid export: Type "{ params: { id: string; }; }" is 
 
 **Solution:**
 
-- Use correct Next.js route handler parameter types
-- Remove Promise wrapper from params
-- Inline type the params object
-- Properly destructure params parameter
+- In Next.js 15+, params must be wrapped in a Promise
+- Define a proper RouteContext type for your dynamic route parameters
+- Use the context parameter in your route handlers
+- Await the params when accessing them
 
 Example:
 
 ```typescript
 // app/api/[id]/route.ts
+
+// Define your route context type
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
-  if (!params.id) {
-    return NextResponse.json({ error: 'Missing ID' }, { status: 400 });
-  }
+  const { id } = await context.params;
   // Handle request
 }
 
 // Types are consistent across all HTTP methods
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: RouteContext
 ): Promise<NextResponse> {
-  // Same params type structure
+  const { id } = await context.params;
+  // Same params structure
 }
 ```
 
-Key points:
-- No Promise wrapper on params type
-- Consistent type structure across all HTTP methods
-- Direct destructuring of params in function parameters
-- Explicit NextResponse return type
+**Note:** In Next.js 15+, route parameters are provided as a Promise that must be awaited. This is different from earlier versions where params were directly accessible.
 
 ## Page Component Issues
 
@@ -506,18 +507,34 @@ Remember to always:
    - Monitor build logs for authentication and connection errors
    - Use appropriate development/production configurations
 
-## Development Commands
+Common Development Commands
 
-```bash
-# Generate Prisma client
-npx prisma generate
+# Install dependencies
+npm install
 
-# Build application
+# Run development server
+npm run dev
+
+# Type checking
+npm run type-check
+
+# ESLint fix
+npm run lint -- --fix
+
+# Format code with Prettier
+npx prettier --write .
+
+# Clear Next.js cache
+rm -rf .next/cache
+
+# Complete clean build
+rm -rf .next && npm run build
+
+# Build for production
 npm run build
 
 # Start production server
 npm start
-```
 
 Remember to:
 
