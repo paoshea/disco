@@ -1,4 +1,8 @@
-import { NextResponse, NextRequest } from 'next/server';
+
+'use server';
+
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { safetyService } from '@/services/api/safety.service';
@@ -23,8 +27,6 @@ async function validateRequest() {
   }
   return session.user.id;
 }
-
-('use server');
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
