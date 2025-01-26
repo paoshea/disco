@@ -74,7 +74,8 @@ export async function GET(req: NextRequest) {
         user: alert.user ? {
           ...alert.user,
           lastActive: alert.user.updatedAt,
-          verificationStatus: 'verified'
+          verificationStatus: 'verified',
+          emailVerified: alert.user.emailVerified !== null
         } : undefined
       };
 
