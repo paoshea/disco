@@ -1,6 +1,3 @@
-
-'use server';
-
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -13,6 +10,12 @@ const ActionSchema = z.object({
   action: z.enum(['dismiss', 'resolve']),
 });
 
+type AlertResponse = SafetyAlert | { error: string; details?: unknown };
+
+type RouteContext = {
+  params: Promise<{ id: string }>;
+};
+
 async function validateRequest() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -23,11 +26,13 @@ async function validateRequest() {
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<SafetyAlert | { error: string }>> {
+  context: RouteContext
+): Promise<NextResponse<AlertResponse>> {
   try {
     const userId = await validateRequest();
+    const params = await context.params;
     const alert = await safetyService.getSafetyAlert(params.id);
+    
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
     }
@@ -36,29 +41,28 @@ export async function GET(
     }
     return NextResponse.json(alert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
-): Promise<NextResponse<SafetyAlert | { error: string; details?: unknown }>> {
+  context: RouteContext
+): Promise<NextResponse<AlertResponse>> {
   try {
     const userId = await validateRequest();
+    const params = await context.params;
     const body = await request.json();
     const result = ActionSchema.safeParse(body);
+    
     if (!result.success) {
-      return NextResponse.json(
-        { error: 'Invalid input', details: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Invalid input', details: result.error }, { status: 400 });
     }
 
     const { action } = result.data;
     const alert = await safetyService.getSafetyAlert(params.id);
+    
     if (!alert) {
       return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
     }
@@ -75,8 +79,7 @@ export async function PUT(
     }
     return NextResponse.json(updatedAlert);
   } catch (error: Error | unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : 'An unknown error occurred';
+    const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred';
     return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
