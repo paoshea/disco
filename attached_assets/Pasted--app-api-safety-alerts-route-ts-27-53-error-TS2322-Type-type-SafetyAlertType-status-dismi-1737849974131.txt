@@ -1,0 +1,45 @@
+
+
+app/api/safety/alerts/route.ts:27:53 - error TS2322: Type '{ type: SafetyAlertType; status: "dismissed" | "resolved" | "active"; location: { latitude: number; longitude: number; accuracy: number | undefined; timestamp: any; } | { ...; }; ... 10 more ...; resolved: boolean; }' is not assignable to type 'SafetyAlertNew'.
+  Types of property 'message' are incompatible.
+    Type 'string | null' is not assignable to type 'string | undefined'.
+      Type 'null' is not assignable to type 'string | undefined'.
+
+ 27       ? alertsResponse.map<SafetyAlertNew>(alert => ({
+                                                        ~~
+ 28               ...alert,
+    ~~~~~~~~~~~~~~~~~~~~~~~
+... 
+ 56               resolvedAt: alert.resolvedAt ? new Date(alert.resolvedAt).toISOString() : undefined
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ 57         }))
+    ~~~~~~~~~~
+
+  node_modules/typescript/lib/lib.es5.d.ts:1455:24
+    1455     map<U>(callbackfn: (value: T, index: number, array: T[]) => U, thisArg?: any): U[];
+                                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    The expected type comes from the return type of this signature.
+
+app/api/safety/alerts/route.ts:43:50 - error TS2339: Property 'timestamp' does not exist on type 'JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'JsonArray'.
+
+43                       timestamp: alert.location?.timestamp instanceof Date
+                                                    ~~~~~~~~~
+
+app/api/safety/alerts/route.ts:44:42 - error TS2339: Property 'timestamp' does not exist on type 'JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'JsonArray'.
+
+44                         ? alert.location.timestamp
+                                            ~~~~~~~~~
+
+app/api/safety/alerts/route.ts:45:50 - error TS2339: Property 'timestamp' does not exist on type 'JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'JsonArray'.
+
+45                         : typeof alert.location?.timestamp === 'string'
+                                                    ~~~~~~~~~
+
+app/api/safety/alerts/route.ts:46:53 - error TS2339: Property 'timestamp' does not exist on type 'JsonObject | JsonArray'.
+  Property 'timestamp' does not exist on type 'JsonArray'.
+
+46                           ? new Date(alert.location.timestamp)
+                                                       ~~~~~~~~~
