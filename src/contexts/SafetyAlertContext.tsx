@@ -66,8 +66,23 @@ export function SafetyAlertProvider({
   }, []);
 
   const createAlert = async (data: Omit<SafetyAlert, 'id' | 'createdAt'>) => {
-    const newAlert = await createSafetyAlert(data);
-    setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
+    try {
+      const response = await fetch('/api/safety/alerts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) {
+        throw new Error('Failed to create safety alert');
+      }
+      const newAlert = await response.json();
+      setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Failed to create alert');
+      throw error;
+    }
   };
 
   const addAlert = async (alert: Partial<SafetyAlert>) => {
