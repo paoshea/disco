@@ -1,4 +1,3 @@
-
 import type { Location } from '@/types/location';
 
 import { NextResponse, NextRequest } from 'next/server';
