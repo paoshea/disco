@@ -1,4 +1,3 @@
-
 'use server';
 
 import { NextResponse } from 'next/server';
@@ -47,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const data = await request.json();
     await safetyService.updateSafetySettings(session.user.id);
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     return NextResponse.json(

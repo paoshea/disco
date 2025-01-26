@@ -1,8 +1,8 @@
-
 { pkgs }: {
   deps = [
     pkgs.nodejs-18_x
     pkgs.openssl
+    pkgs.openssl_1_1
     pkgs.prisma-engines
   ];
   env = {
@@ -10,6 +10,7 @@
     OPENSSL_DIR = "${pkgs.openssl.out}";
     OPENSSL_LIB_DIR = "${pkgs.openssl.out}/lib";
     OPENSSL_INCLUDE_DIR = "${pkgs.openssl.dev}/include";
+    LD_LIBRARY_PATH = "${pkgs.openssl_1_1}/lib";
   };
   nixConfig = {
     extra-substituters = ["https://nixos-static.cachix.org"];
