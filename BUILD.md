@@ -184,6 +184,41 @@ if (redis) {
 }
 ```
 
+## Middleware Issues
+
+### 1. Next.js Root Middleware
+
+**Location:**
+The `middleware.ts` file must be in the root directory for Next.js to automatically detect and apply it. This handles all routing middleware logic before reaching application routes.
+
+**Purpose:**
+- Global route protection
+- Authentication checks
+- Request/response modification
+- Route redirection
+
+### 2. Service Middleware
+
+**Location:**
+The `src/middleware` folder contains modular middleware for services and API routes.
+
+**Usage:**
+- API route protection
+- Request validation
+- Response transformation
+- Service-specific logic
+
+Example:
+
+```typescript
+// Service middleware usage
+import { withAuth } from '@/middleware/authMiddleware';
+
+export const GET = withAuth(async (req) => {
+  // Protected route logic
+});
+```
+
 ## Route and API Issues
 
 ### 1. API Route Type Safety
