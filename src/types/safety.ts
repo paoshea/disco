@@ -1,58 +1,5 @@
-import type { User } from './user';
-import type {
-  SafetyAlert,
-  SafetyCheck,
-  SafetySettings,
-  EmergencyContact,
-  Location
-} from '../schemas/safety.schema';
-
-// Re-export schema-inferred types
-export type {
-  SafetyAlert,
-  SafetyCheck,
-  SafetySettings,
-  EmergencyContact,
-  Location
-};
-
-// Additional application-specific types
-export type SafetyAlertContextType = {
-  alerts: SafetyAlert[];
-  loading: boolean;
-  error: string | null;
-  addAlert: (alert: Partial<SafetyAlert>) => Promise<void>;
-  dismissAlert: (alertId: string) => Promise<void>;
-  resolveAlert: (alertId: string) => Promise<void>;
-};
-
-export type SafetyCenterProps = {
-  userId: string;
-  safetySettings: SafetySettings;
-  onSettingsChange?: (settings: Partial<SafetySettings>) => void;
-};
-
-export type SafetyCheckListProps = {
-  checks: SafetyCheck[];
-  onCheckComplete?: (checkId: string) => void;
-};
-
-export type SafetyFeaturesProps = {
-  user: User;
-  settings: SafetySettings;
-  onSettingsChange: (settings: Partial<SafetySettings>) => void;
-};
-
-export type EmergencyAlertProps = {
-  userId: string;
-  onAlertTriggered?: (alert: SafetyAlert) => void;
-};
-
-export type SafetyReportFormProps = {
-  reportedUserId: string;
-  onSubmit: (report: Partial<SafetyAlert>) => Promise<void>;
-  onCancel: () => void;
-};
+import type { Location } from './location';
+import { User } from './user';
 
 export type IncidentType =
   | 'harassment'
@@ -97,6 +44,17 @@ export interface EmergencyContactFormData {
   notifyOn: EmergencyContactNotifyOn;
 }
 
+export interface EmergencyContact {
+  id: string;
+  userId: string;
+  firstName: string;
+  lastName: string;
+  phoneNumber?: string;
+  email?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface EmergencyContactInput {
   firstName: string;
   lastName: string;
@@ -124,6 +82,38 @@ export interface EmergencyContactLegacy {
   updatedAt: string;
 }
 
+export interface SafetyAlert {
+  id: string;
+  userId: string;
+  type: SafetyAlertType;
+  status: SafetyAlertStatus;
+  location?: Location;
+  message?: string;
+  contactedEmergencyServices: boolean;
+  notifiedContacts: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SafetyCheckInput {
+  type: 'meetup' | 'location' | 'custom';
+  description: string;
+  scheduledFor: string;
+  location?: Location;
+}
+
+export interface SafetyCheck {
+  id: string;
+  userId: string;
+  status: SafetyCheckStatus;
+  scheduledTime: string;
+  location?: Location;
+  notes?: string;
+  notifiedContacts: string[];
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
+}
 
 export interface SafetyReport {
   id: string;
@@ -142,6 +132,12 @@ export interface SafetyReport {
   resolvedAt?: string;
 }
 
+export interface SafetyReportFormProps {
+  reportedUserId: string;
+  onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
+  onCancel: () => void;
+}
+
 export interface SafetyFeature {
   id: string;
   name: string;
@@ -150,6 +146,95 @@ export interface SafetyFeature {
   enabled: boolean;
   requiresPermission?: boolean;
   permissions?: string[];
+}
+
+export interface SafetySettings {
+  sosAlertEnabled: boolean;
+  emergencyContacts: string[];
+}
+
+export interface SafetyReportOld {
+  id: string;
+  reporterId: string;
+  reportedId: string;
+  meetingId?: string;
+  type: IncidentType;
+  description: string;
+  evidence: Evidence[];
+  status: IncidentStatus;
+  resolution?: string;
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+  createdAt: string;
+  updatedAt: string;
+  resolvedAt?: string;
+}
+
+export interface Evidence {
+  id: string;
+  reportId: string;
+  type: 'image' | 'video' | 'audio' | 'document' | 'other';
+  url: string;
+  thumbnail?: string;
+  mimeType: string;
+  size: number;
+  createdAt: string;
+}
+
+export interface SafetyAlertOld {
+  id: string;
+  userId: string;
+  type: 'emergency' | 'warning' | 'info';
+  message: string;
+  createdAt: Date;
+  resolvedAt?: Date;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+}
+
+export interface SafetyCheckOld {
+  id: string;
+  userId: string;
+  type: 'meetup' | 'checkin' | 'custom';
+  status: 'pending' | 'completed' | 'missed';
+  scheduledFor: Date;
+  completedAt?: Date;
+  location?: {
+    latitude: number;
+    longitude: number;
+  };
+  notes?: string;
+}
+
+export interface UserBlock {
+  id: string;
+  blockerId: string;
+  blockedId: string;
+  reason?: string;
+  createdAt: string;
+  expiresAt?: string;
+}
+
+export interface EmergencyAlert {
+  id: string;
+  userId: string;
+  type: 'sos' | 'meetup' | 'safety_check';
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracy: number;
+  };
+  status: IncidentStatus;
+  message?: string;
+  contactedEmergencyServices: boolean;
+  notifiedContacts: string[];
+  createdAt: string;
+  resolvedAt?: string;
 }
 
 export interface SafetySettingsOld {
@@ -240,115 +325,39 @@ export interface SafetyReportNew {
   resolvedAt?: string;
 }
 
-export interface SafetyCheck {
-  id: string;
+export interface SafetyAlertContextType {
+  alerts: SafetyAlertNew[];
+  loading: boolean;
+  error: string | null;
+  addAlert: (alert: Partial<SafetyAlertNew>) => Promise<void>;
+  dismissAlert: (alertId: string) => Promise<void>;
+  resolveAlert: (alertId: string) => Promise<void>;
+}
+
+export interface SafetyCenterProps {
   userId: string;
-  status: SafetyCheckStatus;
-  scheduledTime: string;
-  location?: Location;
-  notes?: string;
-  notifiedContacts: string[];
-  createdAt: string;
-  updatedAt: string;
-  completedAt?: string;
+  safetySettings: SafetySettings;
+  onSettingsChange?: (settings: Partial<SafetySettingsNew>) => void;
+}
+
+export interface SafetyCheckListProps {
+  checks: SafetyCheckNew[];
+  onCheckComplete?: (checkId: string) => void;
+}
+
+export interface SafetyFeaturesProps {
+  user: User;
+  settings: SafetySettingsNew;
+  onSettingsChange: (settings: Partial<SafetySettingsNew>) => void;
+}
+
+export interface EmergencyAlertProps {
+  userId: string;
+  onAlertTriggered?: (alert: SafetyAlertNew) => void;
 }
 
 export interface SafetyReportFormProps {
   reportedUserId: string;
   onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
   onCancel: () => void;
-}
-
-export interface SafetyAlertOld {
-  id: string;
-  userId: string;
-  type: 'emergency' | 'warning' | 'info';
-  message: string;
-  createdAt: Date;
-  resolvedAt?: Date;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-}
-
-export interface SafetyCheckOld {
-  id: string;
-  userId: string;
-  type: 'meetup' | 'checkin' | 'custom';
-  status: 'pending' | 'completed' | 'missed';
-  scheduledFor: Date;
-  completedAt?: Date;
-  location?: {
-    latitude: number;
-    longitude: number;
-  };
-  notes?: string;
-}
-
-export interface UserBlock {
-  id: string;
-  blockerId: string;
-  blockedId: string;
-  reason?: string;
-  createdAt: string;
-  expiresAt?: string;
-}
-
-export interface EmergencyAlert {
-  id: string;
-  userId: string;
-  type: 'sos' | 'meetup' | 'safety_check';
-  location?: {
-    latitude: number;
-    longitude: number;
-    accuracy: number;
-  };
-  status: IncidentStatus;
-  message?: string;
-  contactedEmergencyServices: boolean;
-  notifiedContacts: string[];
-  createdAt: string;
-  resolvedAt?: string;
-}
-
-export interface EmergencyContact {
-  id: string;
-  userId: string;
-  firstName: string;
-  lastName: string;
-  phoneNumber?: string;
-  email?: string;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SafetyAlert {
-  id: string;
-  userId: string;
-  type: SafetyAlertType;
-  status: SafetyAlertStatus;
-  location?: Location;
-  message?: string;
-  contactedEmergencyServices: boolean;
-  notifiedContacts: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface SafetyReportFormProps {
-  reportedUserId: string;
-  onSubmit: (report: Partial<SafetyReportNew>) => Promise<void>;
-  onCancel: () => void;
-}
-
-export interface Evidence {
-  id: string;
-  reportId: string;
-  type: 'image' | 'video' | 'audio' | 'document' | 'other';
-  url: string;
-  thumbnail?: string;
-  mimeType: string;
-  size: number;
-  createdAt: string;
 }

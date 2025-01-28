@@ -1,4 +1,3 @@
-
 import { z } from 'zod';
 
 export const LocationSchema = z.object({
@@ -9,49 +8,41 @@ export const LocationSchema = z.object({
 });
 
 export const SafetyAlertSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
-  type: z.enum(['sos', 'meetup', 'location', 'custom', 'emergency']),
-  status: z.enum(['active', 'resolved', 'dismissed']),
+  type: z.enum(['emergency', 'help', 'warning']),
   location: LocationSchema,
   message: z.string().optional(),
   contacts: z.array(z.string()).optional(),
   description: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  resolvedAt: z.string().optional()
 });
+
+export type SafetyAlertInput = z.infer<typeof SafetyAlertSchema>;
 
 export const SafetyCheckSchema = z.object({
-  id: z.string(),
-  userId: z.string(),
   type: z.enum(['meetup', 'location', 'custom']),
-  status: z.enum(['pending', 'completed', 'missed']),
-  scheduledFor: z.string(),
-  completedAt: z.string().optional(),
+  description: z.string(),
+  scheduledFor: z.string().datetime(),
   location: LocationSchema.optional(),
-  description: z.string().optional()
 });
 
-export const NotifyOnSchema = z.object({
+const NotifyOnSchema = z.object({
   sosAlert: z.boolean(),
   meetupStart: z.boolean(),
   meetupEnd: z.boolean(),
   lowBattery: z.boolean(),
   enterPrivacyZone: z.boolean(),
-  exitPrivacyZone: z.boolean()
+  exitPrivacyZone: z.boolean(),
 });
 
 export const EmergencyContactSchema = z.object({
   id: z.string(),
   userId: z.string(),
-  firstName: z.string(),
-  lastName: z.string(),
-  phoneNumber: z.string().optional(),
+  name: z.string(),
+  relationship: z.string(),
+  phoneNumber: z.string(),
   email: z.string().email().optional(),
   notifyOn: NotifyOnSchema,
   createdAt: z.string(),
-  updatedAt: z.string()
+  updatedAt: z.string(),
 });
 
 export const SafetySettingsSchema = z.object({
@@ -59,12 +50,21 @@ export const SafetySettingsSchema = z.object({
   meetupCheckins: z.boolean(),
   sosAlertEnabled: z.boolean(),
   requireVerifiedMatch: z.boolean(),
-  emergencyContacts: z.array(EmergencyContactSchema)
+  emergencyContacts: z.array(EmergencyContactSchema),
 });
 
-// Export inferred types
+// Export types for use in services
 export type SafetyAlert = z.infer<typeof SafetyAlertSchema>;
 export type SafetyCheck = z.infer<typeof SafetyCheckSchema>;
 export type SafetySettings = z.infer<typeof SafetySettingsSchema>;
 export type EmergencyContact = z.infer<typeof EmergencyContactSchema>;
-export type Location = z.infer<typeof LocationSchema>;
+
+// Export Prisma-compatible types
+export type SafetyAlertCreateInput = Omit<SafetyAlert, 'severity'> & {
+  priority: string;
+};
+
+export type SafetyCheckCreateInput = SafetyCheck & {
+  status: 'pending' | 'completed' | 'cancelled';
+  completedAt: Date | null;
+};
