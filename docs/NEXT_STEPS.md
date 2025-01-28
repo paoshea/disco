@@ -111,6 +111,15 @@ npm run build
 - [ ] Update dashboard page imports
 - [ ] Test dashboard rendering
 
+### Matching Service Docker Setup
+
+Refer to `/matching-service/README.md` for details.
+
+- [ ] Create `docker-compose.yml` for matching service
+- [ ] Add Dockerfile for matching service
+- [ ] Ensure environment variables are set correctly
+- [ ] Verify Docker setup with `docker-compose up`
+
 ## 2. Import Path Updates
 
 - [ ] Update tsconfig.json paths if needed
@@ -593,8 +602,6 @@ Configuration needed for service deployment:
 - `/backend/services/user-service/config` - User service configuration
 - `/backend/services/location-service/config` - Location service configuration
 - `/backend/services/matching-service/config` - Matching service configuration
-- `/backend/services/core-api/internal/cache` - Caching layer
-- `/backend/services/user-service/src/middleware` - Service middleware
 
 ### Priority 5: Testing Infrastructure
 

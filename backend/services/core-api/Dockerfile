@@ -25,7 +25,7 @@ RUN apk add --no-cache ca-certificates tzdata
 
 # Copy binary from builder
 COPY --from=builder /app/main .
-COPY config /app/config
+COPY internal/config /app/internal/config
 
 # Set user for security
 RUN adduser -D -g '' appuser

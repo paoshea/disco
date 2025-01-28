@@ -115,6 +115,10 @@ Make sure you have the following installed:
    ```
    You should see containers with names like `backend-postgres-1` and `backend-redis-1`.
 
+
+   # troubleshooting
+   After making updates, running docker-compose build first before docker-compose up ensures a fresh build and helps diagnose any remaining issues.
+
 ## Step 3: Start Backend Services
 
 The backend consists of several microservices written in Go. Start them in this order:
