@@ -99,3 +99,7 @@ env/
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts
+
+# Replit specific
+.replit
+replit.nix
