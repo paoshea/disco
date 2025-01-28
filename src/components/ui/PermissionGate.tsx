@@ -1,4 +1,3 @@
-
 import { usePermissions } from '@/hooks/usePermissions';
 import type { Permission } from '@/types/permissions';
 import type { ReactNode } from 'react';
@@ -12,7 +11,7 @@ interface PermissionGateProps {
 export const PermissionGate = ({
   permission,
   children,
-  fallback = null
+  fallback = null,
 }: PermissionGateProps) => {
   const { hasPermission } = usePermissions();
 

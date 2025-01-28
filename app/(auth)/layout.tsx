@@ -22,10 +22,16 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 />
               </Link>
               <div className="flex gap-4">
-                <Link href="/" className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                <Link
+                  href="/"
+                  className="text-sm font-medium text-gray-600 hover:text-gray-900"
+                >
                   Home
                 </Link>
-                <Link href="/login" className="text-sm font-medium text-sky-600 hover:text-sky-700">
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-sky-600 hover:text-sky-700"
+                >
                   Login
                 </Link>
               </div>

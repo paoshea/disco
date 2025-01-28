@@ -1,4 +1,3 @@
-
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient({
@@ -27,7 +26,7 @@ const connectWithRetry = async (retries = 5, delay = 2000) => {
 };
 
 // Test database connection on startup
-connectWithRetry().catch((error) => {
+connectWithRetry().catch(error => {
   console.error('Database connection failed:', error);
   process.exit(1);
 });

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { progressService } from '@/services/user/progress.service';
@@ -19,7 +18,7 @@ export function useRoleTransition() {
           toast({
             title: 'Role Upgrade Available!',
             description: `You can now upgrade to ${next.replace('_', ' ')}!`,
-            variant: 'default'
+            variant: 'default',
           });
         }
       });
@@ -28,7 +27,7 @@ export function useRoleTransition() {
 
   const handleRoleTransition = async () => {
     if (!user?.id || !nextRole || transitioning) return;
-    
+
     setTransitioning(true);
     try {
       await progressService.trackUserProgress(user.id);
@@ -37,14 +36,14 @@ export function useRoleTransition() {
       toast({
         title: 'Role Upgraded!',
         description: `Successfully upgraded to ${nextRole.replace('_', ' ')}`,
-        variant: 'default'
+        variant: 'default',
       });
     } catch (error) {
       setTransitioning(false);
       toast({
         title: 'Error',
         description: 'Failed to upgrade role. Please try again.',
-        variant: 'destructive'
+        variant: 'destructive',
       });
     }
   };
@@ -52,6 +51,6 @@ export function useRoleTransition() {
   return {
     transitioning,
     nextRole,
-    handleRoleTransition
+    handleRoleTransition,
   };
 }

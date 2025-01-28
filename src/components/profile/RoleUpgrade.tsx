@@ -1,20 +1,30 @@
-
 import React from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import {
+  checkUpgradeEligibility,
+  upgradeRole,
+} from '../../services/api/role.service'; // Ensure the correct path
+
+interface EligibilityResponse {
+  eligible: boolean;
+  requirements: string[];
+}
 
 export const RoleUpgrade = () => {
-  const { user, checkUpgradeEligibility, upgradeRole } = useAuth();
+  const { user } = useAuth(); // Only get user from useAuth
   const [requirements, setRequirements] = React.useState<string[]>([]);
   const [isEligible, setIsEligible] = React.useState(false);
 
   React.useEffect(() => {
     if (user?.id) {
-      checkUpgradeEligibility(user.id).then(({ eligible, requirements }) => {
-        setIsEligible(eligible);
-        setRequirements(requirements);
-      });
+      void checkUpgradeEligibility(user.id).then(
+        ({ eligible, requirements }: EligibilityResponse) => {
+          setIsEligible(eligible);
+          setRequirements(requirements);
+        }
+      );
     }
   }, [user?.id]);
 
@@ -44,4 +54,4 @@ export const RoleUpgrade = () => {
       )}
     </Card>
   );
-}
+};

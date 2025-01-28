@@ -80,10 +80,12 @@ export default function SignupPage() {
         router.refresh();
       } else {
         console.log('Signup failed:', result?.error);
-        
+
         // Handle specific error cases
         if (result?.error?.includes('503')) {
-          toast.error('Service temporarily unavailable. Please try again in a moment.');
+          toast.error(
+            'Service temporarily unavailable. Please try again in a moment.'
+          );
         } else if (result?.error?.includes('409')) {
           toast.error('An account with this email already exists');
           form.reset();
@@ -120,8 +122,7 @@ export default function SignupPage() {
     <Layout>
       <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-b from-sky-50 to-white py-12 px-4 sm:px-6 lg:px-8">
         <div className="max-w-md w-full space-y-8 bg-white p-8 rounded-xl shadow-lg">
-          <div className="flex flex-col items-center space-y-4">
-          </div>
+          <div className="flex flex-col items-center space-y-4"></div>
           <h2 className="text-center text-3xl font-extrabold bg-gradient-to-r from-sky-500 to-sky-700 bg-clip-text text-transparent">
             Join Disco today
           </h2>

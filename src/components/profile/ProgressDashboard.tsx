@@ -1,7 +1,12 @@
 import React from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
-import type { Achievement } from '@prisma/client';
+// Define the Achievement type if it does not exist
+interface Achievement {
+  id: string;
+  name: string;
+}
+import { ProgressNotifications } from '@/components/profile/ProgressNotifications';
 
 interface ProgressStats {
   safetyChecks: number;
@@ -11,7 +16,13 @@ interface ProgressStats {
   pointsEarned: number;
 }
 
-export const ProgressDashboard = ({ stats }: { stats: ProgressStats }) => {
+export const ProgressDashboard = ({
+  stats,
+  user,
+}: {
+  stats: ProgressStats;
+  user: { id: string };
+}) => {
   return (
     <div className="space-y-6">
       <h2 className="text-2xl font-bold">Your Progress</h2>
@@ -35,12 +46,8 @@ export const ProgressDashboard = ({ stats }: { stats: ProgressStats }) => {
       <div className="mt-8">
         <h3 className="text-xl font-semibold mb-4">Achievements</h3>
         <div className="flex flex-wrap gap-2">
-          {stats.achievements.map((achievement) => (
-            <Badge
-              key={achievement.id}
-              variant="secondary"
-              className="p-2"
-            >
+          {stats.achievements.map(achievement => (
+            <Badge key={achievement.id} variant="achievement">
               {achievement.name}
             </Badge>
           ))}

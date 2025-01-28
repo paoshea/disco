@@ -5,11 +5,13 @@
 The safety system uses a dual-type approach for maximum type safety and runtime validation:
 
 1. **Runtime Validation** (`src/schemas/safety.schema.ts`)
+
 - Handles API request/response validation
 - Uses Zod for runtime type checking
 - Defines validation rules and constraints
 
-2. **TypeScript Types** (`src/types/safety.ts`)  
+2. **TypeScript Types** (`src/types/safety.ts`)
+
 - Provides compile-time type checking
 - Contains React component prop types
 - Defines application-specific types
@@ -45,7 +47,6 @@ const SafetyAlertSchema = z.object({
   resolvedAt: z.date().optional(),
 });
 
-
 const SafetyCheckSchema = z.object({
   id: z.string(),
   userId: z.string(),
@@ -63,7 +64,6 @@ const SafetySettingsSchema = z.object({
   // Define your safety settings schema here
 });
 
-
 const EmergencyContactSchema = z.object({
   firstName: z.string(),
   lastName: z.string(),
@@ -71,7 +71,13 @@ const EmergencyContactSchema = z.object({
   phoneNumber: z.string().optional(),
 });
 
-export { LocationSchema, SafetyAlertSchema, SafetyCheckSchema, SafetySettingsSchema, EmergencyContactSchema };
+export {
+  LocationSchema,
+  SafetyAlertSchema,
+  SafetyCheckSchema,
+  SafetySettingsSchema,
+  EmergencyContactSchema,
+};
 ```
 
 ### Application Types (`safety.ts`)
@@ -92,27 +98,30 @@ interface SafetyAlertContextType {
 }
 
 interface SafetySettings {
-    // Define your safety settings types here.
+  // Define your safety settings types here.
 }
 
 interface SafetyAlert {
-    // Define your safety alert types here.  Potentially extend from a type inferred from SafetyAlertSchema
+  // Define your safety alert types here.  Potentially extend from a type inferred from SafetyAlertSchema
 }
 ```
 
 ## Best Practices
 
 1. **Schema Usage**
+
 - Use Zod schemas for API endpoints
 - Validate incoming data at runtime
 - Export inferred types when needed
 
 2. **Type Usage**
+
 - Use TypeScript types for components
 - Keep application logic types separate
 - Extend schema types when needed
 
 3. **Type Safety**
+
 - Prefer schema validation for external data
 - Use TypeScript types for internal logic
 - Maintain separation of concerns
@@ -134,7 +143,6 @@ const createSafetyAlert = async (req: Request, res: Response) => {
   const newAlert = await prisma.safetyAlert.create({ data: result.data });
   res.status(201).json(newAlert);
 };
-
 ```
 
 ### Component Types
@@ -165,6 +173,7 @@ const SafetyAlertComponent: React.FC<SafetyAlertProps> = ({
 ## Architecture Decision
 
 The separation between schemas and types is intentional and provides:
+
 - Clear boundaries between validation and typing
 - Independent evolution of validation rules
 - Better type safety for components

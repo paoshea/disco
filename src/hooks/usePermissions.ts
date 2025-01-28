@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth';
 import { DEFAULT_PERMISSIONS } from '@/types/permissions';
 import type { Permission } from '@/types/permissions';
@@ -12,6 +11,6 @@ export function usePermissions() {
   };
 
   return {
-    hasPermission
+    hasPermission,
   };
 }

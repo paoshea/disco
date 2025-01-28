@@ -38,7 +38,9 @@ export async function GET(): Promise<NextResponse<CheckResponse>> {
   }
 }
 
-export async function POST(request: NextRequest): Promise<NextResponse<CheckResponse>> {
+export async function POST(
+  request: NextRequest
+): Promise<NextResponse<CheckResponse>> {
   try {
     const userId = await validateRequest();
     const body = await request.json();
@@ -59,12 +61,14 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckResp
       scheduledFor: scheduledFor || new Date().toISOString(),
     });
 
-    const serializedLocation = check.location ? {
-      latitude: check.location.latitude,
-      longitude: check.location.longitude,
-      accuracy: check.location.accuracy || null,
-      timestamp: new Date(check.location.timestamp).toISOString()
-    } : null;
+    const serializedLocation = check.location
+      ? {
+          latitude: check.location.latitude,
+          longitude: check.location.longitude,
+          accuracy: check.location.accuracy || null,
+          timestamp: new Date(check.location.timestamp).toISOString(),
+        }
+      : null;
 
     const serializedCheck: SafetyCheck = {
       ...check,
@@ -73,7 +77,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<CheckResp
       scheduledFor: new Date(check.scheduledFor),
       location: serializedLocation,
       completedAt: check.completedAt ? new Date(check.completedAt) : null,
-      description: check.description || ''
+      description: check.description || '',
     };
 
     return NextResponse.json({ check: serializedCheck });

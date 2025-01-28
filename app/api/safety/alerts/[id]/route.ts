@@ -31,14 +31,11 @@ export async function GET(
 ): Promise<NextResponse<AlertResponse>> {
   const { id } = await context.params;
   const alert = await prisma.safetyAlert.findUnique({
-    where: { id }
+    where: { id },
   });
 
   if (!alert) {
-    return NextResponse.json(
-      { error: 'Alert not found' },
-      { status: 404 }
-    );
+    return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
   }
 
   return NextResponse.json(alert);
@@ -50,10 +47,10 @@ export async function PUT(
 ): Promise<NextResponse<AlertResponse>> {
   const { id } = await context.params;
   const data = await request.json();
-  
+
   const alert = await prisma.safetyAlert.update({
     where: { id },
-    data
+    data,
   });
 
   return NextResponse.json(alert);
@@ -65,7 +62,7 @@ export async function DELETE(
 ): Promise<NextResponse<void>> {
   const { id } = await context.params;
   await prisma.safetyAlert.delete({
-    where: { id }
+    where: { id },
   });
 
   return new NextResponse(null, { status: 204 });

@@ -291,7 +291,9 @@ class ProgressNotificationService {
     }
   }
 
-  async getUnreadNotifications(userId: string): Promise<ProgressNotification[]> {
+  async getUnreadNotifications(
+    userId: string
+  ): Promise<ProgressNotification[]> {
     return prisma.notification.findMany({
       where: {
         userId,

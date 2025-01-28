@@ -34,21 +34,25 @@ This setup enables you to:
 ## Docker Status
 
 ### Complete Components:
+
 - Main compose files:
   - `backend/docker-compose.yml` - All services defined
   - `backend/docker-compose.override.yml` - Development overrides
 - Service Dockerfiles:
   - `core-api/Dockerfile`
   - `location-service/Dockerfile`
-  - `matching-service/Dockerfile` 
+  - `matching-service/Dockerfile`
   - `user-service/Dockerfile`
 
 ### Missing Components:
+
 1. Environment Files:
+
    - Service-specific .env files
    - Environment variable configurations
 
 2. Go Dependencies:
+
    - Missing go.mod/go.sum in some services
    - Need to run `go mod init/tidy`
 
@@ -57,6 +61,7 @@ This setup enables you to:
    - Service-specific configs
 
 ### Action Items:
+
 1. Create environment files for each service
 2. Initialize Go modules where missing
 3. Add required config files
@@ -110,13 +115,15 @@ Make sure you have the following installed:
      The container will be named `backend` in Docker Desktop.
 
 3. Verify containers are running:
+
    ```bash
    docker ps
    ```
+
    You should see containers with names like `backend-postgres-1` and `backend-redis-1`.
 
-
    # troubleshooting
+
    After making updates, running docker-compose build first before docker-compose up ensures a fresh build and helps diagnose any remaining issues.
 
 ## Step 3: Start Backend Services

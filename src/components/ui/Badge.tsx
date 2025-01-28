@@ -27,7 +27,9 @@ export const Badge = ({ children, variant = 'default', type }: BadgeProps) => {
     <span
       className={cn(
         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-        variant === 'achievement' ? getAchievementColor(type) : 'bg-blue-100 text-blue-800'
+        variant === 'achievement'
+          ? getAchievementColor(type)
+          : 'bg-blue-100 text-blue-800'
       )}
     >
       {children}

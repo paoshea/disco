@@ -100,14 +100,16 @@ export async function GET(
     });
 
     // Transform messages to include required fields
-      const transformedMessages: MessageWithSender[] = messages.map((msg: any) => ({
-      ...msg,
-      sender: {
-        ...msg.sender,
-        avatar: null, // Add missing field with default value
-      },
-      timestamp: msg.createdAt.toISOString(),
-    }));
+    const transformedMessages: MessageWithSender[] = messages.map(
+      (msg: any) => ({
+        ...msg,
+        sender: {
+          ...msg.sender,
+          avatar: null, // Add missing field with default value
+        },
+        timestamp: msg.createdAt.toISOString(),
+      })
+    );
 
     return NextResponse.json({ messages: transformedMessages });
   } catch (error) {

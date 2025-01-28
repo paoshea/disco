@@ -1,4 +1,3 @@
-
 import prisma from '@/lib/prisma';
 import { chatArchiveService } from '../chat/archive.service';
 import { notificationService } from '../notifications/notification.service';
@@ -10,9 +9,9 @@ export class BlockService {
       where: {
         OR: [
           { userOneId: userId, userTwoId: blockedUserId },
-          { userOneId: blockedUserId, userTwoId: userId }
-        ]
-      }
+          { userOneId: blockedUserId, userTwoId: userId },
+        ],
+      },
     });
 
     if (existingChat) {
@@ -24,8 +23,8 @@ export class BlockService {
       data: {
         blockedById: userId,
         blockedUserId,
-        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000) // 90 days default
-      }
+        expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days default
+      },
     });
 
     // Send notification about block expiration
@@ -33,7 +32,9 @@ export class BlockService {
       userId,
       title: 'Block Review Reminder',
       body: 'A user block is expiring soon. Would you like to review it?',
-      scheduledFor: new Date(block.expiresAt.getTime() - 7 * 24 * 60 * 60 * 1000) // 7 days before expiry
+      scheduledFor: new Date(
+        block.expiresAt.getTime() - 7 * 24 * 60 * 60 * 1000
+      ), // 7 days before expiry
     });
 
     return block;
@@ -44,10 +45,10 @@ export class BlockService {
       where: {
         OR: [
           { blockedById: userOneId, blockedUserId: userTwoId },
-          { blockedById: userTwoId, blockedUserId: userOneId }
+          { blockedById: userTwoId, blockedUserId: userOneId },
         ],
-        expiresAt: { gt: new Date() }
-      }
+        expiresAt: { gt: new Date() },
+      },
     });
 
     return block !== null;

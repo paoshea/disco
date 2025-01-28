@@ -192,6 +192,7 @@ if (redis) {
 The `middleware.ts` file must be in the root directory for Next.js to automatically detect and apply it. This handles all routing middleware logic before reaching application routes.
 
 **Purpose:**
+
 - Global route protection
 - Authentication checks
 - Request/response modification
@@ -203,6 +204,7 @@ The `middleware.ts` file must be in the root directory for Next.js to automatica
 The `src/middleware` folder contains modular middleware for services and API routes.
 
 **Usage:**
+
 - API route protection
 - Request validation
 - Response transformation
@@ -214,7 +216,7 @@ Example:
 // Service middleware usage
 import { withAuth } from '@/middleware/authMiddleware';
 
-export const GET = withAuth(async (req) => {
+export const GET = withAuth(async req => {
   // Protected route logic
 });
 ```
@@ -548,30 +550,39 @@ Remember to always:
 Common Development Commands
 
 # Install dependencies
+
 npm install
 
 # Run development server
+
 npm run dev
 
 # Type checking
+
 npm run type-check
 
 # ESLint fix
+
 npm run lint -- --fix
 
 # Format code with Prettier
+
 npx prettier --write .
 
 # Clear Next.js cache
+
 rm -rf .next/cache
 
 # Complete clean build
+
 rm -rf .next && npm run build
 
 # Build for production
+
 npm run build
 
 # Start production server
+
 npm start
 
 Remember to:

@@ -194,7 +194,7 @@ This document outlines the various user flows and interactions available on the 
    - Achievement creation
    - Notification to user
    - Points reward
-   
+
 ### 8.3 Milestone Rewards
 
 1. User hits progress milestones:

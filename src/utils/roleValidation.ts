@@ -1,4 +1,3 @@
-
 import type { Permission, RolePermissions } from '@/types/permissions';
 import type { UserRole } from '@/types/auth';
 
@@ -11,12 +10,7 @@ export const ROLES = {
 
 export const DEFAULT_PERMISSIONS: Record<keyof typeof ROLES, Permission[]> = {
   GUEST: ['view:profiles'],
-  USER: [
-    'view:profiles',
-    'send:messages',
-    'join:events',
-    'create:matches'
-  ],
+  USER: ['view:profiles', 'send:messages', 'join:events', 'create:matches'],
   POWER_USER: [
     'view:profiles',
     'send:messages',
@@ -24,17 +18,17 @@ export const DEFAULT_PERMISSIONS: Record<keyof typeof ROLES, Permission[]> = {
     'create:matches',
     'create:events',
     'access:safety',
-    'manage:contacts'
+    'manage:contacts',
   ],
   ADMIN: [
     'view:profiles',
     'send:messages',
-    'join:events', 
+    'join:events',
     'create:matches',
     'create:events',
     'access:safety',
-    'manage:contacts'
-  ]
+    'manage:contacts',
+  ],
 } as const;
 
 export const isValidRole = (role: string): role is UserRole => {
@@ -52,4 +46,3 @@ export const canUpgrade = (currentRole: UserRole): boolean => {
       return false;
   }
 };
-

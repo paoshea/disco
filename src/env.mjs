@@ -1,25 +1,40 @@
-import { createEnv } from '@t3-oss/env-nextjs';
 import { z } from 'zod';
 
-const portSchema = z.preprocess(val => {
-  const processed = z.string().safeParse(val);
-  return processed.success ? parseInt(processed.data, 10) : 3001;
-}, z.number().min(1).max(65535));
-
-export const env = createEnv({
-  server: {
-    NODE_ENV: z.enum(['development', 'test', 'production']),
-    PORT: portSchema,
-    REDIS_HOST: z.string().default('0.0.0.0'),
-    REDIS_PORT: portSchema.default(6379),
-    REDIS_PASSWORD: z.string().optional(),
-  },
-  client: {
-    NEXT_PUBLIC_APP_URL: z.string().url(),
-    NEXT_PUBLIC_WEBSOCKET_URL: z
-      .string()
-      .url()
-      .default(`wss://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/ws`),
-  },
-  runtimeEnv: process.env,
+const envSchema = z.object({
+  NODE_ENV: z.enum(['development', 'test', 'production']),
+  DATABASE_URL: z.string().url(),
+  NEXTAUTH_SECRET: z.string(),
+  NEXTAUTH_URL: z.string().url(),
+  // ...other environment variables...
 });
+
+const env = envSchema.safeParse(process.env);
+
+if (!env.success) {
+  console.error('❌ Invalid environment variables:', env.error.format());
+  throw new Error('Invalid environment variables');
+}
+
+export const {
+  NODE_ENV,
+  DATABASE_URL,
+  NEXTAUTH_SECRET,
+  NEXTAUTH_URL,
+  // ...other environment variables...
+} = env.data;
+
+// Ensure environment variables are properly handled
+export const getEnvVar = (key, defaultValue) => {
+  const value = env.data[key];
+  if (!value) {
+    console.warn(
+      `⚠️ Environment variable ${key} is not set. Using default value: ${defaultValue}`
+    );
+    return defaultValue;
+  }
+  return value;
+};
+
+// Usage example
+const exampleVar = getEnvVar('EXAMPLE_VAR', 'default_value');
+console.log(`Example variable: ${exampleVar}`);

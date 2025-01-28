@@ -8,10 +8,11 @@ import { ProfileEdit } from '@/components/profile/ProfileEdit';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
-import { Tab } from '@headlessui/react';
+import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react'; // Replace Tab.Panel with TabPanel
 import { userService } from '@/services/api/user.service';
 import type { User } from '@/types/user';
-import { RoleUpgrade } from '@/components/profile/RoleUpgrade'; //Import the new component
+import { RoleUpgrade } from '@/components/profile/RoleUpgrade';
+import { ProgressDashboard } from '@/components/profile/ProgressDashboard'; // Correct import
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -30,6 +31,7 @@ export default function ProfilePage() {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState<User | null>(null);
+  const [stats, setStats] = useState<any>(null); // Define the stats state
 
   useEffect(() => {
     const init = async () => {
@@ -39,6 +41,7 @@ export default function ProfilePage() {
           return;
         }
         await loadProfileData();
+        // Remove or replace this call if getStats does not exist
       } catch (err) {
         console.error('Profile initialization error:', err);
       }
@@ -62,6 +65,17 @@ export default function ProfilePage() {
       setIsLoading(false);
     }
   };
+
+  // Remove the loadStats function since getStats does not exist
+  // const loadStats = async () => {
+  //   try {
+  //     // Fetch stats data from an API or service
+  //     const statsData = await userService.getStats();
+  //     setStats(statsData);
+  //   } catch (err) {
+  //     console.error('Error loading stats:', err);
+  //   }
+  // };
 
   const handleLogout = async () => {
     try {
@@ -148,8 +162,8 @@ export default function ProfilePage() {
           </div>
         )}
 
-        <Tab.Group>
-          <Tab.List className="mb-8 flex space-x-1 rounded-xl bg-gray-100 p-1">
+        <TabGroup>
+          <TabList className="mb-8 flex space-x-1 rounded-xl bg-gray-100 p-1">
             <Tab
               className={({ selected }) =>
                 classNames(
@@ -176,9 +190,9 @@ export default function ProfilePage() {
             >
               Settings
             </Tab>
-          </Tab.List>
-          <Tab.Panels>
-            <Tab.Panel>
+          </TabList>
+          <TabPanels>
+            <TabPanel>
               {profileData && (
                 <ProfileEdit
                   user={profileData}
@@ -187,8 +201,8 @@ export default function ProfilePage() {
                   }}
                 />
               )}
-            </Tab.Panel>
-            <Tab.Panel>
+            </TabPanel>
+            <TabPanel>
               {authUser && (
                 <>
                   <ProfileSettings
@@ -212,12 +226,12 @@ export default function ProfilePage() {
                   </div>
                 </>
               )}
-            </Tab.Panel>
-            <Tab.Panel>
-              <ProgressDashboard stats={stats} />
-            </Tab.Panel>
-          </Tab.Panels>
-        </Tab.Group>
+            </TabPanel>
+            <TabPanel>
+              <ProgressDashboard stats={stats} user={authUser} />
+            </TabPanel>
+          </TabPanels>
+        </TabGroup>
       </div>
     </Layout>
   );

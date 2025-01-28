@@ -1,4 +1,3 @@
-
 import prisma from '@/lib/prisma';
 import { encryptMessage, decryptMessage } from '@/utils/encryption';
 
@@ -6,28 +5,28 @@ export class ChatArchiveService {
   async archiveChat(userId: string, chatId: string) {
     const messages = await prisma.message.findMany({
       where: { chatRoomId: chatId },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'asc' },
     });
 
     const encryptedArchive = encryptMessage(JSON.stringify(messages));
-    
+
     return prisma.chatArchive.create({
       data: {
         userId,
         chatId,
         content: encryptedArchive,
         retentionDays: 30, // Default 30 day retention
-        status: 'ACTIVE'
-      }
+        status: 'ACTIVE',
+      },
     });
   }
 
   async getArchivedChat(userId: string, archiveId: string) {
     const archive = await prisma.chatArchive.findUnique({
-      where: { 
+      where: {
         id: archiveId,
-        userId 
-      }
+        userId,
+      },
     });
 
     if (!archive) return null;

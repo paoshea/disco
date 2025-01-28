@@ -1,37 +1,49 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { toast } from '@/components/ui/toast';
-import { useEffect, useState } from 'react';
 import type { ProgressNotification } from '@/services/notifications/notification.service';
 import { progressNotificationService } from '@/services/notifications/notification.service';
 
-export const ProgressNotifications: React.FC<{ userId: string }> = ({ userId }) => {
-  const [notifications, setNotifications] = useState<ProgressNotification[]>([]);
+interface ProgressNotificationsProps {
+  userId: string;
+}
+
+export const ProgressNotifications = ({
+  userId,
+}: ProgressNotificationsProps) => {
+  const [notifications, setNotifications] = useState<ProgressNotification[]>(
+    []
+  );
 
   useEffect(() => {
     const fetchNotifications = async () => {
-      const unread = await progressNotificationService.getUnreadNotifications(userId);
-      setNotifications(unread);
+      try {
+        const unread =
+          await progressNotificationService.getUnreadNotifications(userId);
+        setNotifications(unread);
+      } catch (error) {
+        console.error('Error loading notifications:', error);
+      }
     };
 
-    fetchNotifications();
+    void fetchNotifications(); // Use void operator to mark promise as intentionally not awaited
   }, [userId]);
 
   const handleMarkAsRead = async (notificationId: string) => {
-    await progressNotificationService.markAsRead(notificationId);
-    setNotifications(notifications.filter((n) => n.id !== notificationId));
-    toast({
-      title: 'Notification marked as read',
-      variant: 'default',
-    });
+    try {
+      await progressNotificationService.markAsRead(notificationId);
+      setNotifications(notifications.filter(n => n.id !== notificationId));
+      toast.success('Notification marked as read'); // Correct toast call
+    } catch (error) {
+      console.error('Error handling notification click:', error);
+    }
   };
 
   return (
     <div className="space-y-4">
       <h3 className="text-xl font-semibold">Progress Updates</h3>
-      {notifications.map((notification) => (
+      {notifications.map(notification => (
         <Card key={notification.id} className="p-4 relative">
           <div className="flex justify-between items-start">
             <div>
@@ -44,7 +56,7 @@ export const ProgressNotifications: React.FC<{ userId: string }> = ({ userId }) 
               )}
             </div>
             <button
-              onClick={() => handleMarkAsRead(notification.id)}
+              onClick={() => void handleMarkAsRead(notification.id)}
               className="text-sm text-blue-600 hover:text-blue-800"
             >
               Mark as read

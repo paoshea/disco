@@ -1,6 +1,10 @@
-
 import { prisma } from '@/lib/prisma';
-import type { Achievement, SafetyCheck, UserMatch, Event } from '@prisma/client';
+import type {
+  Achievement,
+  SafetyCheck,
+  UserMatch,
+  Event,
+} from '@prisma/client';
 import { notificationService } from '@/services/notifications/notification.service';
 import { UserProgress, ProgressMilestone } from '@/types/user';
 
@@ -24,8 +28,8 @@ const MILESTONES: MilestoneReward[] = [
     requirement: 10,
     reward: {
       points: 100,
-      badge: 'safety_champion'
-    }
+      badge: 'safety_champion',
+    },
   },
   {
     type: 'social',
@@ -34,8 +38,8 @@ const MILESTONES: MilestoneReward[] = [
     requirement: 5,
     reward: {
       points: 150,
-      badge: 'community_builder'
-    }
+      badge: 'community_builder',
+    },
   },
   {
     type: 'events',
@@ -44,8 +48,8 @@ const MILESTONES: MilestoneReward[] = [
     requirement: 5,
     reward: {
       points: 200,
-      badge: 'event_master'
-    }
+      badge: 'event_master',
+    },
   },
   {
     type: 'engagement',
@@ -53,9 +57,9 @@ const MILESTONES: MilestoneReward[] = [
     description: 'Earn 500 points',
     requirement: 500,
     reward: {
-      role: 'power_user'
-    }
-  }
+      role: 'power_user',
+    },
+  },
 ];
 
 export class ProgressService {
@@ -64,7 +68,7 @@ export class ProgressService {
       prisma.safetyCheck.count({ where: { userId } }),
       prisma.userMatch.count({ where: { userId, status: 'ACCEPTED' } }),
       prisma.eventParticipant.count({ where: { userId } }),
-      prisma.user.findUnique({ where: { id: userId } })
+      prisma.user.findUnique({ where: { id: userId } }),
     ]);
 
     if (!user) return null;
@@ -79,7 +83,7 @@ export class ProgressService {
         type: 'safety',
         name: 'Safety First',
         description: 'Completed 5 safety checks',
-        earnedAt: new Date()
+        earnedAt: new Date(),
       } as Achievement);
     }
 
@@ -90,7 +94,7 @@ export class ProgressService {
         type: 'social',
         name: 'Social Butterfly',
         description: 'Made 3 successful matches',
-        earnedAt: new Date()
+        earnedAt: new Date(),
       } as Achievement);
     }
 
@@ -101,7 +105,7 @@ export class ProgressService {
         type: 'events',
         name: 'Event Explorer',
         description: 'Participated in 2 events',
-        earnedAt: new Date()
+        earnedAt: new Date(),
       } as Achievement);
     }
 
@@ -109,21 +113,27 @@ export class ProgressService {
     if (achievements.length > 0) {
       await prisma.achievement.createMany({
         data: achievements,
-        skipDuplicates: true
+        skipDuplicates: true,
       });
     }
 
     // Check milestones
     for (const milestone of MILESTONES) {
-      const currentValue = milestone.type === 'safety' ? safetyChecks :
-                          milestone.type === 'social' ? matches :
-                          milestone.type === 'events' ? events :
-                          milestone.type === 'engagement' ? points : 0;
+      const currentValue =
+        milestone.type === 'safety'
+          ? safetyChecks
+          : milestone.type === 'social'
+            ? matches
+            : milestone.type === 'events'
+              ? events
+              : milestone.type === 'engagement'
+                ? points
+                : 0;
 
       if (currentValue >= milestone.requirement) {
         // Add achievement if not already earned
         const existingAchievement = await prisma.achievement.findFirst({
-          where: { userId, name: milestone.name }
+          where: { userId, name: milestone.name },
         });
 
         if (!existingAchievement) {
@@ -133,8 +143,8 @@ export class ProgressService {
               type: milestone.type,
               name: milestone.name,
               description: milestone.description,
-              earnedAt: new Date()
-            }
+              earnedAt: new Date(),
+            },
           });
 
           achievements.push(achievement);
@@ -146,21 +156,21 @@ export class ProgressService {
             body: `You've earned the ${milestone.name} achievement!`,
             data: {
               type: 'achievement',
-              achievementId: achievement.id
-            }
+              achievementId: achievement.id,
+            },
           });
 
           // Handle role upgrade if applicable
           if (milestone.reward.role) {
             const currentUser = await prisma.user.findUnique({
               where: { id: userId },
-              select: { role: true }
+              select: { role: true },
             });
 
             if (currentUser?.role !== milestone.reward.role) {
               await prisma.user.update({
                 where: { id: userId },
-                data: { role: milestone.reward.role }
+                data: { role: milestone.reward.role },
               });
 
               // Send role upgrade notification
@@ -169,8 +179,8 @@ export class ProgressService {
                 body: `You've been upgraded to ${milestone.reward.role.replace('_', ' ')}!`,
                 data: {
                   type: 'role_upgrade',
-                  newRole: milestone.reward.role
-                }
+                  newRole: milestone.reward.role,
+                },
               });
 
               // Create achievement for role upgrade
@@ -180,8 +190,8 @@ export class ProgressService {
                   type: 'role',
                   name: 'Role Progression',
                   description: `Upgraded to ${milestone.reward.role.replace('_', ' ')}`,
-                  earnedAt: new Date()
-                }
+                  earnedAt: new Date(),
+                },
               });
             }
           }
@@ -192,10 +202,16 @@ export class ProgressService {
     // Update user points
     await prisma.user.update({
       where: { id: userId },
-      data: { points: { increment: points } }
+      data: { points: { increment: points } },
     });
 
-    return { safetyChecks, matches, events, achievements, pointsEarned: points };
+    return {
+      safetyChecks,
+      matches,
+      events,
+      achievements,
+      pointsEarned: points,
+    };
   }
 
   async trackMeetupCompletion(userId: string, matchType: string) {
@@ -203,15 +219,15 @@ export class ProgressService {
       where: { userId },
       update: {
         totalMeetups: { increment: 1 },
-        [`${matchType}Meetups`]: { increment: 1 }
+        [`${matchType}Meetups`]: { increment: 1 },
       },
       create: {
         userId,
         totalMeetups: 1,
-        [`${matchType}Meetups`]: 1
-      }
+        [`${matchType}Meetups`]: 1,
+      },
     });
-    
+
     await this.checkMilestones(userId, progress);
   }
 
@@ -220,13 +236,13 @@ export class ProgressService {
       where: { userId },
       update: {
         safetyCheckins: { increment: 1 },
-        safetyScore: { increment: 5 }
+        safetyScore: { increment: 5 },
       },
       create: {
         userId,
         safetyCheckins: 1,
-        safetyScore: 5
-      }
+        safetyScore: 5,
+      },
     });
   }
 
@@ -235,7 +251,7 @@ export class ProgressService {
       { name: 'First Connection', requirement: progress.totalMeetups >= 1 },
       { name: 'Safety Champion', requirement: progress.safetyScore >= 100 },
       { name: 'Social Explorer', requirement: progress.uniqueLocations >= 5 },
-      { name: 'Trusted Member', requirement: progress.positiveRatings >= 10 }
+      { name: 'Trusted Member', requirement: progress.positiveRatings >= 10 },
     ];
 
     for (const milestone of milestones) {
@@ -244,8 +260,8 @@ export class ProgressService {
           data: {
             userId,
             name: milestone.name,
-            awardedAt: new Date()
-          }
+            awardedAt: new Date(),
+          },
         });
       }
     }

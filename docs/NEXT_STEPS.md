@@ -3,6 +3,7 @@
 ## IMMEDIATE NEXT STEP - Auth Process Flow Enhancement
 
 ### Goals
+
 - Enable guest users to progress to power users
 - Implement clear role progression system
 - Add role-based permissions
@@ -11,6 +12,7 @@
 ### Implementation Steps
 
 1. **Auth Service Enhancement** (Priority)
+
    - [x] Add role upgrade functionality
    - [x] Create upgrade eligibility checks
    - [x] Implement progression tracking
@@ -18,6 +20,7 @@
    - [x] Create role transition hooks
 
 2. **User Progress Tracking**
+
    - [x] Track user activity metrics
    - [x] Implement achievement system
    - [x] Create progress notifications
@@ -28,7 +31,6 @@
    - [ ] Implement access guards
    - [ ] Create role transition UI
    - [ ] Add role validation
-   
 4. **Progress UI/UX**
    - [ ] Design progress dashboard
    - [ ] Implement progress indicators
@@ -36,10 +38,58 @@
    - [ ] Create upgrade prompts
 
 ### Success Metrics
+
 - User progression rate
 - Feature usage by role
 - Upgrade completion rate
 - User retention by role
+
+### New Priority: Review /lib and src/lib Directories
+
+#### Goals
+
+- Identify and eliminate duplications
+- Consolidate functionality for clarity
+- Improve maintainability
+
+#### Issues Identified
+
+1. **Duplicated Files:**
+   - `prisma.ts` exists in both `/lib` and `src/lib/db/client.ts`
+   - `rateLimit.ts` exists in both directories
+   - `utils.ts` exists in both root `/lib` and as utilities in `src/lib/utils/`
+
+2. **Confusing Structure:**
+   - API-related files split between `/lib/api.ts` and `src/lib/api/client.ts`
+   - Authentication spread across multiple locations
+
+#### Recommended Actions
+
+1. **Consolidate Files:**
+   - `src/lib/prisma.ts`: Consolidate Prisma client
+   - `src/lib/api/index.ts`: Consolidate API utilities
+
+2. **Organize src/lib into Clear Domains:**
+   - Delete `/lib` directory and move all functionality to `src/lib`
+   - Organize `src/lib` as follows:
+     ```
+     src/lib/
+       ├── api/         // All API-related code
+       ├── auth/        // Authentication utilities
+       ├── db/          // Database connections
+       ├── email/       // Email functionality 
+       ├── redis/       // Redis client
+       └── utils/       // Shared utilities
+     ```
+
+3. **Remove /lib Directory:**
+   - Execute `rm -r lib/` to remove the `/lib` directory after consolidation
+
+### Success Criteria
+
+- No duplicated files
+- Clear and maintainable directory structure
+- All functionality consolidated in `src/lib`
 
 # Disco Codebase Reorganization Action Plan
 
@@ -487,13 +537,16 @@ Refer to `/matching-service/README.md` for details.
 ## Progress Update (January 26, 2025)
 
 ### Completed Items
+
 - [x] API Client Restructuring
+
   - [x] Created `src/lib/api` directory
   - [x] Moved API client to `src/lib/api/client.ts`
   - [x] Updated API client imports
   - [x] Verified API connectivity
 
 - [x] Service Layer Organization
+
   - [x] Implemented clear service hierarchy under `src/services/`
   - [x] Created dedicated service directories:
     - api/
@@ -513,6 +566,7 @@ Refer to `/matching-service/README.md` for details.
 ### Current Priorities
 
 1. Auth Service Reorganization (High Priority)
+
 - [ ] Create `src/lib/auth/` directory
 - [ ] Consolidate auth-related files:
   - [ ] Move NextAuth configuration to auth.config.ts
@@ -522,6 +576,7 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Add comprehensive tests
 
 2. Email Functionality Consolidation
+
 - [ ] Create unified `src/lib/email/` structure
 - [ ] Implement:
   - [ ] templates.ts
@@ -529,6 +584,7 @@ Refer to `/matching-service/README.md` for details.
   - [ ] types.ts
 
 3. Database Access Reorganization
+
 - [ ] Create `src/lib/db/` directory
 - [ ] Implement:
   - [ ] client.ts (Prisma client)
@@ -539,16 +595,19 @@ Refer to `/matching-service/README.md` for details.
 ### Next Feature Priorities
 
 1. Safety System Enhancements
+
 - [ ] Implement real-time safety checks
 - [ ] Add emergency contact management
 - [ ] Develop incident reporting system
 
 2. Enhanced Matching System
+
 - [ ] Implement preference-based matching
 - [ ] Add compatibility scoring
 - [ ] Create match quality feedback system
 
 3. Communication Features
+
 - [ ] Rich notifications with interactive responses
 - [ ] Meeting feedback system
 - [ ] Location-aware availability controls

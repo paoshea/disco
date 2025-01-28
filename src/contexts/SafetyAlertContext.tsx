@@ -81,7 +81,9 @@ export function SafetyAlertProvider({
       const newAlert = await response.json();
       setAlerts(prev => [newAlert as SafetyAlertNew, ...prev]);
     } catch (error) {
-      setError(error instanceof Error ? error.message : 'Failed to create alert');
+      setError(
+        error instanceof Error ? error.message : 'Failed to create alert'
+      );
       throw error;
     }
   };

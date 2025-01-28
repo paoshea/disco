@@ -5,13 +5,16 @@
 The following files and directories are referenced in the Dockerfile but are missing from the codebase:
 
 ### Required Files
+
 1. `mix.lock`
    - Purpose: Lock file that contains exact versions of all dependencies
    - Status: Missing
    - Action Needed: Will be generated after running `mix deps.get`
 
 ### Required Directories
+
 1. `config/`
+
    - Purpose: Contains configuration files for different environments (dev, test, prod)
    - Status: Directory missing
    - Required files typically include:
@@ -70,6 +73,7 @@ end
 2. Run `mix deps.get` to generate the `mix.lock` file and compile the project:
 
 3. File Structure (Standard Elixir Project)
+
 ```
 matching-service/
 ├── config/                           # Configuration directory
@@ -98,6 +102,7 @@ matching-service/
 ### Configuration Files (config/)
 
 1. `config/config.exs` - Base configuration
+
 ```elixir
 import Config
 
@@ -115,6 +120,7 @@ import_config "#{config_env()}.exs"
 ```
 
 2. `config/dev.exs` - Development configuration
+
 ```elixir
 import Config
 
@@ -129,6 +135,7 @@ config :matching_service, MatchingService.Repo,
 ### Source Code Files (lib/)
 
 1. `lib/matching_service/application.ex` - Application startup
+
 ```elixir
 defmodule MatchingService.Application do
   use Application
@@ -147,6 +154,7 @@ end
 ```
 
 2. `lib/matching_service/router.ex` - HTTP routing
+
 ```elixir
 defmodule MatchingService.Router do
   use Plug.Router
@@ -176,6 +184,7 @@ end
 ```
 
 3. `lib/matching_service/models/match.ex` - Match schema
+
 ```elixir
 defmodule MatchingService.Models.Match do
   use Ecto.Schema
@@ -199,6 +208,7 @@ end
 ```
 
 4. `lib/matching_service/services/matcher.ex` - Matching logic
+
 ```elixir
 defmodule MatchingService.Services.Matcher do
   alias MatchingService.Models.Match
@@ -219,6 +229,7 @@ end
 ```
 
 5. `lib/matching_service/services/scoring.ex` - Score calculation
+
 ```elixir
 defmodule MatchingService.Services.Scoring do
   def calculate_match_score(criteria) do
@@ -230,6 +241,7 @@ end
 ```
 
 6. `lib/matching_service/utils/validators.ex` - Input validation
+
 ```elixir
 defmodule MatchingService.Utils.Validators do
   def validate_match_criteria(criteria) do
@@ -245,6 +257,7 @@ end
 ```
 
 Each file in the `lib/` directory serves a specific purpose in the application:
+
 - `application.ex`: Manages application startup and supervision tree
 - `router.ex`: Handles HTTP routing and API endpoints
 - `models/`: Contains database schemas and changesets
@@ -252,6 +265,7 @@ Each file in the `lib/` directory serves a specific purpose in the application:
 - `utils/`: Houses helper functions and utilities
 
 The modular structure allows for:
+
 - Clear separation of concerns
 - Easy testing and maintenance
 - Scalable code organization
