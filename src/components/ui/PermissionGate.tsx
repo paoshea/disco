@@ -13,9 +13,9 @@ export const PermissionGate = ({
   children,
   fallback = null,
 }: PermissionGateProps) => {
-  const { hasPermission } = usePermissions();
+  const hasPermission = usePermissions(permission);
 
-  if (!hasPermission(permission)) {
+  if (!hasPermission) {
     return <>{fallback}</>;
   }
 

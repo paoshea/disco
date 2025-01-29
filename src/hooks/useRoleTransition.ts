@@ -12,7 +12,7 @@ export function useRoleTransition() {
 
   useEffect(() => {
     if (user?.id) {
-      checkUpgradeEligibility(user.id).then(({ eligible, nextRole: next }) => {
+      checkUpgradeEligibility(user.id).then(({ eligible, nextRole: next }: { eligible: boolean; nextRole: UserRole }) => {
         if (eligible && next) {
           setNextRole(next);
           toast({
@@ -43,7 +43,7 @@ export function useRoleTransition() {
       toast({
         title: 'Error',
         description: 'Failed to upgrade role. Please try again.',
-        variant: 'destructive',
+        variant: 'error',
       });
     }
   };

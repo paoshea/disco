@@ -80,6 +80,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/jsonwebtoken": "^9.0.7",
+    "@types/lru-cache": "^7.10.9",
     "@types/nodemailer": "^6.4.17",
     "@types/ws": "^8.5.13",
     "@typescript-eslint/eslint-plugin": "^5.59.2",

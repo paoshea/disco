@@ -57,6 +57,7 @@ export interface User extends BaseUser {
     bluetoothEnabled: boolean;
   };
   role: string; // Ensure the role property is included
+  permissions?: string[]; // Add the permissions property
 }
 
 export interface UserPreferences {

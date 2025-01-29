@@ -13,6 +13,8 @@ interface NotificationData {
 interface NotificationOptions<T extends NotificationData = NotificationData> {
   title: string;
   body: string;
+  recipient?: string;
+  scheduledFor?: Date;
   icon?: string;
   data?: T;
   onClick?: () => void | Promise<void>;

@@ -2,14 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { z } from 'zod';
 import { MatchingService } from '@/services/matching/match.service';
-import { RateLimiter } from '@/lib/rateLimit';
+import { isRateLimited } from '@/lib/rateLimit';
 import { prisma } from '@/lib/prisma';
 
 // Rate limiter for match operations
-const rateLimiter = new RateLimiter({
+const rateLimiterConfig = {
   windowMs: 60000, // 1 minute
   maxRequests: 100,
-});
+};
 
 // Validation schema for user preferences
 const userPreferencesSchema = z.object({
@@ -51,7 +51,7 @@ export async function GET(req: NextRequest): Promise<NextResponse> {
 
     // Rate limiting
     const identifier = session.user.id;
-    const isLimited = await rateLimiter.isRateLimited(identifier);
+    const isLimited = await isRateLimited(identifier, 'match-action');
     if (isLimited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }
@@ -106,7 +106,7 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     }
 
     // Rate limiting
-    const isLimited = await rateLimiter.isRateLimited(session.user.id);
+    const isLimited = await isRateLimited(session.user.id, 'match-action');
     if (isLimited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }

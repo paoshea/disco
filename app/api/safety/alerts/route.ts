@@ -23,7 +23,7 @@ async function validateRequest() {
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-export async function GET(request: NextRequest): Promise<NextResponse> {
+export async function GET(_request: NextRequest): Promise<NextResponse> {
   const alerts = await prisma.safetyAlert.findMany();
   return NextResponse.json(alerts);
 }

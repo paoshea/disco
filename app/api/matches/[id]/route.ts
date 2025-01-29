@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { MatchingService } from '@/services/matching/match.service';
-import { RateLimiter } from '@/lib/rateLimit';
+import { isRateLimited } from '@/lib/rateLimit';
 import { z } from 'zod';
 import type { MatchStatus } from '@/types/match';
 
@@ -19,15 +19,9 @@ const matchActionSchema = z.object({
   action: z.enum(['accept', 'reject', 'block']),
 });
 
-// Rate limiter for match operations
-const rateLimiter = new RateLimiter({
-  windowMs: 60000, // 1 minute
-  maxRequests: 100,
-});
-
 // GET /api/matches/[id] - Get specific match details
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   context: RouteContext
 ): Promise<NextResponse> {
   try {
@@ -70,7 +64,7 @@ export async function POST(
     }
 
     // Rate limiting
-    const isLimited = await rateLimiter.isRateLimited(session.user.id);
+    const isLimited = await isRateLimited(session.user.id, 'match-action');
     if (isLimited) {
       return NextResponse.json({ error: 'Too many requests' }, { status: 429 });
     }

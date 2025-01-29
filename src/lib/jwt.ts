@@ -42,7 +42,7 @@ export function generateToken(user: UserPayload): string {
 
   return jsonwebtoken.sign(payload, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
-  });
+  } as jsonwebtoken.SignOptions);
 }
 
 /**
