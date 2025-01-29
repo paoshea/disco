@@ -1,4 +1,4 @@
-'use client'; 
+'use client';
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,9 +11,9 @@ import { Button } from '@/components/ui/Button';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
 import type { User } from '@/types/user';
+import type { UpdateProfileData } from '@/hooks//useAuth';
 import dynamic from 'next/dynamic';
 
-// ✅ Fix dynamic import issues
 const RoleUpgrade = dynamic(
   () =>
     import('@/components/profile/RoleUpgrade').then(mod => ({
@@ -21,6 +21,7 @@ const RoleUpgrade = dynamic(
     })),
   { ssr: false }
 );
+
 const ProgressDashboard = dynamic(
   () =>
     import('@/components/profile/ProgressDashboard').then(mod => ({
@@ -41,7 +42,6 @@ export default function ProfilePage() {
     error: authError,
     logout,
     updateProfile,
-    sendVerificationEmail,
   } = useAuth();
 
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +49,7 @@ export default function ProfilePage() {
   const [profileData, setProfileData] = useState<User | null>(null);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return; // Prevent execution on the server
+    if (typeof window === 'undefined') return;
 
     const init = async () => {
       try {
@@ -71,9 +71,11 @@ export default function ProfilePage() {
       setIsLoading(true);
       setError(null);
       const data = await userService.getProfile();
-      if (data.stats && typeof data.stats.achievements === 'number') {
-        data.stats.achievements = 0; // Reset achievements to 0 or handle appropriately
+
+      if (data.stats && !Array.isArray(data.stats.achievements)) {
+        data.stats.achievements = [];
       }
+
       setProfileData(data);
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -102,27 +104,11 @@ export default function ProfilePage() {
       if (!authUser) {
         throw new Error('Not authenticated');
       }
-      await updateProfile(data);
+      await updateProfile(data as UpdateProfileData);
       await loadProfileData();
     } catch (err) {
       console.error('Profile update error:', err);
       setError(err instanceof Error ? err.message : 'Failed to update profile');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSendVerificationEmail = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      await sendVerificationEmail();
-      setError('Verification email sent successfully');
-    } catch (err) {
-      console.error('Send verification email error:', err);
-      setError(
-        err instanceof Error ? err.message : 'Failed to send verification email'
-      );
     } finally {
       setIsLoading(false);
     }
@@ -153,20 +139,6 @@ export default function ProfilePage() {
         {error && (
           <div className="mb-4 rounded-md bg-red-50 p-4">
             <p className="text-sm text-red-700">{error}</p>
-          </div>
-        )}
-
-        {!authUser.emailVerified && (
-          <div className="mb-4 rounded-md bg-yellow-50 p-4">
-            <p className="text-sm text-yellow-700">
-              Your email is not verified.{' '}
-              <button
-                onClick={() => void handleSendVerificationEmail()}
-                className="font-medium text-yellow-800 hover:underline"
-              >
-                Click here to resend verification email
-              </button>
-            </p>
           </div>
         )}
 
@@ -204,37 +176,15 @@ export default function ProfilePage() {
               {profileData && (
                 <ProfileEdit
                   user={profileData}
-                  onUpdate={async (data: Partial<User>) => {
-                    await handleUpdateProfile(data);
-                  }}
+                  onUpdate={handleUpdateProfile}
                 />
               )}
             </TabPanel>
             <TabPanel>
-              {authUser && (
-                <>
-                  <ProfileSettings
-                    user={{
-                      id: authUser.id,
-                      email: authUser.email,
-                      firstName: authUser.firstName,
-                      lastName: authUser.lastName,
-                      emailVerified: authUser.emailVerified,
-                      name: `${authUser.firstName} ${authUser.lastName}`,
-                      lastActive: authUser.updatedAt,
-                      createdAt: authUser.createdAt,
-                      updatedAt: authUser.updatedAt,
-                      verificationStatus: authUser.emailVerified
-                        ? 'verified'
-                        : 'pending',
-                      role: authUser.role,
-                    }}
-                  />
-                  <div className="mt-6">
-                    <RoleUpgrade />
-                  </div>
-                </>
-              )}
+              {authUser && <ProfileSettings user={authUser} />}
+              <div className="mt-6">
+                <RoleUpgrade />
+              </div>
             </TabPanel>
             <TabPanel>
               {profileData?.stats && (

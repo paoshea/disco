@@ -44,7 +44,7 @@ export interface User extends BaseUser {
     safetyChecks: number;
     matches: number;
     events: number;
-    achievements: number;
+    achievements: Achievement[];
     pointsEarned: number;
   };
   age?: number;
