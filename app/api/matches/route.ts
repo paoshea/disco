@@ -5,12 +5,6 @@ import { MatchingService } from '@/services/matching/match.service';
 import { isRateLimited } from '@/lib/rateLimit';
 import { prisma } from '@/lib/prisma';
 
-// Rate limiter for match operations
-// const rateLimiterConfig = {
-//   windowMs: 60000, // 1 minute
-//  maxRequests: 100,
-// };
-
 // Validation schema for user preferences
 const userPreferencesSchema = z.object({
   maxDistance: z.number().min(0).max(100),

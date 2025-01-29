@@ -1,21 +1,21 @@
+import React from 'react';
 import Link from 'next/link';
-import { cn } from '@/utils/cn';
+// import { cn } from '@/utils/cn';
 
 interface LogoProps {
   className?: string;
   withLink?: boolean;
 }
 
-export function Logo({ className, withLink = true }: LogoProps) {
+export const Logo: React.FC<LogoProps> = ({ className = '', withLink }) => {
   const logo = (
-    <div className={cn('flex items-center space-x-2', className)}>
+    <div className={`flex items-center ${className}`}>
       <svg
-        width="32"
-        height="32"
+        width="120"
+        height="120"
         viewBox="0 0 120 120"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="flex-shrink-0"
       >
         <circle
           cx="60"
@@ -56,4 +56,4 @@ export function Logo({ className, withLink = true }: LogoProps) {
   }
 
   return logo;
-}
+};

@@ -34,7 +34,10 @@ export async function GET(
     return NextResponse.json(alert);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Internal Server Error', details: error instanceof Error ? error.message : error },
+      {
+        error: 'Internal Server Error',
+        details: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }
@@ -66,15 +69,16 @@ export async function PUT(
     return NextResponse.json(updatedAlert);
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to update alert', details: error instanceof Error ? error.message : error },
+      {
+        error: 'Failed to update alert',
+        details: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }
 }
 
-export async function DELETE(
-  request: NextRequest
-): Promise<NextResponse> {
+export async function DELETE(request: NextRequest): Promise<NextResponse> {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.user?.id) {
@@ -95,7 +99,10 @@ export async function DELETE(
     return new NextResponse(null, { status: 204 });
   } catch (error) {
     return NextResponse.json(
-      { error: 'Failed to delete alert', details: error instanceof Error ? error.message : error },
+      {
+        error: 'Failed to delete alert',
+        details: error instanceof Error ? error.message : error,
+      },
       { status: 500 }
     );
   }

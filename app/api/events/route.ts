@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerAuthSession } from '@/lib/auth';
 import { eventService } from '@/services/event/event.service';
-import { withRoleGuard } from '@/middleware/roleGuard';
+import { DEFAULT_PERMISSIONS } from '@/config/permissions';
+import { ROLES } from '@/config/roles';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -58,52 +59,53 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   }
 }
 
-// Assuming withRoleGuard is defined elsewhere and handles the role check
-export const POST: (request: NextRequest) => Promise<NextResponse> = async (
-  request: NextRequest
-) => {
-  const handler = await withRoleGuard(async function handlePost(
-    request: NextRequest
-  ): Promise<NextResponse> {
-    try {
-      const session = await getServerAuthSession(request);
-      if (!session?.user?.id) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-      }
+export async function POST(request: NextRequest): Promise<NextResponse> {
+  try {
+    const session = await getServerAuthSession(request);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-      const body = (await request.json()) as CreateEventBody;
-      if (
-        !body.title ||
-        !body.startTime ||
-        !body.latitude ||
-        !body.longitude ||
-        !body.type
-      ) {
-        return NextResponse.json(
-          { error: 'Missing required fields' },
-          { status: 400 }
-        );
-      }
+    const userRole = (session.user.role || ROLES.GUEST) as keyof typeof ROLES;
+    const rolePermissions = DEFAULT_PERMISSIONS[userRole];
 
-      const result = await eventService.createEvent({
-        ...body,
-        startTime: new Date(body.startTime),
-        endTime: body.endTime ? new Date(body.endTime) : undefined,
-        creatorId: session.user.id,
-      });
-
-      if (!result.success) {
-        return NextResponse.json({ error: result.error }, { status: 400 });
-      }
-      return NextResponse.json(result.data);
-    } catch (error) {
-      console.error('Error in POST /api/events:', error);
+    if (!rolePermissions.includes('create:events')) {
       return NextResponse.json(
-        { error: 'Internal server error' },
-        { status: 500 }
+        { error: 'Insufficient permissions' },
+        { status: 403 }
       );
     }
-  }, 'create:events');
 
-  return handler(request);
-};
+    const body = (await request.json()) as CreateEventBody;
+    // Validate required fields
+    if (
+      !body.title ||
+      !body.startTime ||
+      !body.latitude ||
+      !body.longitude ||
+      !body.type
+    ) {
+      return NextResponse.json(
+        { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+    // Create event using the validated body
+    const result = await eventService.createEvent({
+      ...body,
+      startTime: new Date(body.startTime),
+      endTime: body.endTime ? new Date(body.endTime) : undefined,
+      creatorId: session.user.id,
+    });
+    if (!result.success) {
+      return NextResponse.json({ error: result.error }, { status: 400 });
+    }
+    return NextResponse.json(result.data);
+  } catch (error) {
+    console.error('Error in POST /api/events:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}

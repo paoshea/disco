@@ -12,8 +12,7 @@ const envSchema = z.object({
   NEXT_PUBLIC_WEBSOCKET_URL: z.string().url(),
   SMTP_HOST: z.string(),
   SMTP_PORT: z.string(),
-  SMTP_SECURE: z.string().transform((val) => val === 'true'), // Convert to boolean
-  // SMTP_SECURE: z.preprocess((val) => val === 'true', z.boolean()), // Convert to boolean
+  SMTP_SECURE: z.preprocess(val => val === 'true', z.boolean()),
   SMTP_USER: z.string(),
   SMTP_PASS: z.string(),
   EMAIL_FROM: z.string().email(),
