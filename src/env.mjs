@@ -9,7 +9,7 @@ const envSchema = z.object({
   JWT_EXPIRES_IN: z.string(),
   PORT: z.string(),
   NEXT_PUBLIC_APP_UR: z.string().url(),
-  NEXT_PUBLIC_WEBSOCKET_URL: z.string().url(),  
+  NEXT_PUBLIC_WEBSOCKET_URL: z.string().url(),
   SMTP_HOST: z.string(),
   SMTP_PORT: z.string(),
   SMTP_SECURE: z.boolean(),

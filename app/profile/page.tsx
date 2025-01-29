@@ -8,11 +8,11 @@ import { ProfileEdit } from '@/components/profile/ProfileEdit';
 import { ProfileSettings } from '@/components/profile/ProfileSettings';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
-import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react'; 
+import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
 import type { User } from '@/types/user';
 import { RoleUpgrade } from '@/components/profile/RoleUpgrade';
-import { ProgressDashboard } from '@/components/profile/ProgressDashboard'; 
+import { ProgressDashboard } from '@/components/profile/ProgressDashboard';
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -227,7 +227,9 @@ export default function ProfilePage() {
                     safetyChecks: profileData.stats.safetyChecks,
                     matches: profileData.stats.matches,
                     events: profileData.stats.events,
-                    achievements: Array.isArray(profileData.stats.achievements) ? profileData.stats.achievements : [],
+                    achievements: Array.isArray(profileData.stats.achievements)
+                      ? profileData.stats.achievements
+                      : [],
                     pointsEarned: profileData.stats.pointsEarned,
                   }}
                 />

@@ -146,9 +146,7 @@ export function PlaceSuggestions({
                 <Badge variant="achievement">{place.rating.toFixed(1)} ★</Badge>
               )}
               {place.priceLevel > 0 && (
-                <Badge variant="default">
-                  {'$'.repeat(place.priceLevel)}
-                </Badge>
+                <Badge variant="default">{'$'.repeat(place.priceLevel)}</Badge>
               )}
             </div>
           </div>

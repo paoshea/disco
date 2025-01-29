@@ -547,46 +547,38 @@ Remember to always:
    - Monitor build logs for authentication and connection errors
    - Use appropriate development/production configurations
 
-Common Development Commands
+## Common Development Commands
+🔹 Run npm outdated first to check for available updates.
 
 # Install dependencies
-
 npm install
 
 # Run development server
-
 npm run dev
 
 # Type checking
-
 npm run type-check
+tsc --noEmit 
 
 # ESLint fix
-
 npm run lint -- --fix
 
 # Format code with Prettier
-
 npx prettier --write .
 
 # Clear Next.js cache
-
 rm -rf .next/cache
 
 # Complete clean build
-
 rm -rf .next && npm run build
 
 # Build for production
-
 npm run build
 
 # Start production server
-
 npm start
 
 Remember to:
-
 1. Generate Prisma client before deployment
 2. Set all required environment variables
 3. Configure proper hostnames and ports

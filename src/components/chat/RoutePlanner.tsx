@@ -134,9 +134,7 @@ export function RoutePlanner({
                   <div className="flex items-center gap-2">
                     <Clock className="h-4 w-4 text-gray-500" />
                     <span className="font-medium">{route.duration}</span>
-                    <Badge variant="default">
-                      {route.distance}
-                    </Badge>
+                    <Badge variant="default">{route.distance}</Badge>
                   </div>
                 </div>
 

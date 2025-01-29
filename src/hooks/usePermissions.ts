@@ -6,5 +6,7 @@ export function usePermissions(permission: string): boolean {
 
   if (!user?.role) return false;
 
-  return DEFAULT_PERMISSIONS[user.role as keyof RolePermissions].includes(permission);
+  return DEFAULT_PERMISSIONS[user.role as keyof RolePermissions].includes(
+    permission
+  );
 }

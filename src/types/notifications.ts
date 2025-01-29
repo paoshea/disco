@@ -1,4 +1,8 @@
-export type NotificationType = 'achievement' | 'role_upgrade' | 'milestone' | 'block_expiration';
+export type NotificationType =
+  | 'achievement'
+  | 'role_upgrade'
+  | 'milestone'
+  | 'block_expiration';
 
 export interface ProgressNotification {
   id: string;

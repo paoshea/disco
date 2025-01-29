@@ -139,9 +139,10 @@ class AuthService {
     requirements: string[];
   }> {
     try {
-      const response = await apiService.get<{ eligible: boolean; requirements: string[] }>(
-        `${this.baseUrl}/upgrade-eligibility/${userId}`
-      );
+      const response = await apiService.get<{
+        eligible: boolean;
+        requirements: string[];
+      }>(`${this.baseUrl}/upgrade-eligibility/${userId}`);
       return response.data.data;
     } catch (error) {
       throw this.handleError(error);

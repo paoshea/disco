@@ -10,7 +10,9 @@ interface EligibilityResponse {
   requirements: string[];
 }
 
-export async function checkUpgradeEligibility(userId: string): Promise<EligibilityResponse> {
+export async function checkUpgradeEligibility(
+  userId: string
+): Promise<EligibilityResponse> {
   try {
     const response = await axios.get<ApiResponse<EligibilityResponse>>(
       `/api/upgrade-eligibility/${userId}`

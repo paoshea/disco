@@ -45,7 +45,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     data: {
       ...parsedData.data,
       userId,
-      location: parsedData.data.location as LocationData, 
+      location: parsedData.data.location as LocationData,
     },
   });
 

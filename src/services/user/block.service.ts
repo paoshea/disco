@@ -7,9 +7,7 @@ export class BlockService {
     // Archive any existing chats first
     const existingChat = await prisma.chatRoom.findFirst({
       where: {
-        OR: [
-          { participantId: { in: [userId, blockedUserId] } },
-        ],
+        OR: [{ participantId: { in: [userId, blockedUserId] } }],
       },
     });
 

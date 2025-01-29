@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import {
   checkUpgradeEligibility,
   upgradeRole,
-} from '../../services/api/role.service'; // Ensure the correct path
+} from '../../services/api/role.service'; 
 
 interface EligibilityResponse {
   eligible: boolean;

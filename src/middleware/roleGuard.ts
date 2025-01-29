@@ -1,7 +1,9 @@
+'use client';
+
 import React from 'react';
 import { NextResponse, NextRequest } from 'next/server';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation'; // Updated import
 import { DEFAULT_PERMISSIONS } from '@/config/permissions';
 import { ROLES } from '@/config/roles';
 import type { Permission } from '@/types/permissions';

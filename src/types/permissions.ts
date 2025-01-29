@@ -18,7 +18,14 @@ export type RolePermissions = {
 
 export const DEFAULT_PERMISSIONS: RolePermissions = {
   GUEST: ['view:profiles'],
-  USER: ['view:profiles', 'send:messages', 'join:events', 'create:matches', 'access:safety','manage:contacts'],
+  USER: [
+    'view:profiles',
+    'send:messages',
+    'join:events',
+    'create:matches',
+    'access:safety',
+    'manage:contacts',
+  ],
   POWER_USER: [
     'view:profiles',
     'send:messages',

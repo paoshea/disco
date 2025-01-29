@@ -12,16 +12,24 @@ export function useRoleTransition() {
 
   useEffect(() => {
     if (user?.id) {
-      checkUpgradeEligibility(user.id).then(({ eligible, nextRole: next }: { eligible: boolean; nextRole: UserRole }) => {
-        if (eligible && next) {
-          setNextRole(next);
-          toast({
-            title: 'Role Upgrade Available!',
-            description: `You can now upgrade to ${next.replace('_', ' ')}!`,
-            variant: 'default',
-          });
+      checkUpgradeEligibility(user.id).then(
+        ({
+          eligible,
+          nextRole: next,
+        }: {
+          eligible: boolean;
+          nextRole: UserRole;
+        }) => {
+          if (eligible && next) {
+            setNextRole(next);
+            toast({
+              title: 'Role Upgrade Available!',
+              description: `You can now upgrade to ${next.replace('_', ' ')}!`,
+              variant: 'default',
+            });
+          }
         }
-      });
+      );
     }
   }, [user?.id]);
 

@@ -15,11 +15,16 @@ interface AuthState {
   logout: () => Promise<void>;
   register: (data: RegisterData) => Promise<RegisterResult>;
   requestPasswordReset: (email: string) => Promise<PasswordResetResult>;
-  resetPassword: (token: string, password: string) => Promise<PasswordResetResult>;
+  resetPassword: (
+    token: string,
+    password: string
+  ) => Promise<PasswordResetResult>;
   updateProfile: (data: UpdateProfileData) => Promise<UpdateProfileResult>;
   sendVerificationEmail: () => Promise<SimpleResult>;
   refreshTokens: () => Promise<boolean>;
-  checkUpgradeEligibility: (userId: string) => Promise<{ eligible: boolean; nextRole: UserRole }>;
+  checkUpgradeEligibility: (
+    userId: string
+  ) => Promise<{ eligible: boolean; nextRole: UserRole }>;
   set: (state: Partial<AuthState>) => void;
 }
 
@@ -88,7 +93,7 @@ const authResponseSchema = z.object({
 
 export const useAuth = create<AuthState>()(
   persist(
-    (set) => ({
+    set => ({
       user: null,
       token: null,
       refreshToken: null,
@@ -97,7 +102,10 @@ export const useAuth = create<AuthState>()(
       async login(email, password) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post<AuthResponse>('/api/auth/login', { email, password });
+          const response = await apiClient.post<AuthResponse>(
+            '/api/auth/login',
+            { email, password }
+          );
           const result = authResponseSchema.safeParse(response.data);
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
@@ -115,7 +123,8 @@ export const useAuth = create<AuthState>()(
           set({ error: 'Login failed' });
           return { error: 'Login failed' };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Login failed';
+          const message =
+            error instanceof Error ? error.message : 'Login failed';
           set({ error: message });
           return { error: message };
         } finally {
@@ -131,7 +140,10 @@ export const useAuth = create<AuthState>()(
       },
       async refreshTokens() {
         try {
-          const response = await apiClient.post<{ token: string; refreshToken: string }>('/api/auth/refresh');
+          const response = await apiClient.post<{
+            token: string;
+            refreshToken: string;
+          }>('/api/auth/refresh');
           const { token, refreshToken } = response.data;
           set({ token, refreshToken });
           return true;
@@ -142,7 +154,10 @@ export const useAuth = create<AuthState>()(
       async register(data: RegisterData) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.post<AuthResponse>('/api/auth/signup', data);
+          const response = await apiClient.post<AuthResponse>(
+            '/api/auth/signup',
+            data
+          );
           const result = authResponseSchema.safeParse(response.data);
           if (!result.success) {
             console.error('Invalid response schema:', result.error);
@@ -165,7 +180,8 @@ export const useAuth = create<AuthState>()(
             needsVerification: needsVerification || false,
           };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Registration failed';
+          const message =
+            error instanceof Error ? error.message : 'Registration failed';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -175,7 +191,10 @@ export const useAuth = create<AuthState>()(
       async updateProfile(data: UpdateProfileData) {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiClient.patch<{ user: User }>('/api/auth/profile', data);
+          const response = await apiClient.patch<{ user: User }>(
+            '/api/auth/profile',
+            data
+          );
           const result = userSchema.safeParse(response.data.user);
           if (!result.success) {
             console.error('Invalid user data:', result.error);
@@ -185,7 +204,8 @@ export const useAuth = create<AuthState>()(
           set({ user: result.data });
           return { success: true };
         } catch (error) {
-          const message = error instanceof Error ? error.message : 'Profile update failed';
+          const message =
+            error instanceof Error ? error.message : 'Profile update failed';
           set({ error: message });
           return { success: false, error: message };
         } finally {
@@ -198,7 +218,9 @@ export const useAuth = create<AuthState>()(
           return { success: true };
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : 'Failed to send verification email';
+            error instanceof Error
+              ? error.message
+              : 'Failed to send verification email';
           return { success: false, error: message };
         }
       },
@@ -208,7 +230,9 @@ export const useAuth = create<AuthState>()(
           return { success: true };
         } catch (error) {
           const message =
-            error instanceof Error ? error.message : 'Failed to request password reset';
+            error instanceof Error
+              ? error.message
+              : 'Failed to request password reset';
           return { success: false, error: message };
         }
       },
@@ -224,9 +248,10 @@ export const useAuth = create<AuthState>()(
       },
       async checkUpgradeEligibility(userId: string) {
         try {
-          const response = await apiClient.get<{ eligible: boolean; nextRole: UserRole }>(
-            `/api/users/${userId}/upgrade-eligibility`
-          );
+          const response = await apiClient.get<{
+            eligible: boolean;
+            nextRole: UserRole;
+          }>(`/api/users/${userId}/upgrade-eligibility`);
           return response.data;
         } catch (error) {
           console.error('Error checking upgrade eligibility:', error);

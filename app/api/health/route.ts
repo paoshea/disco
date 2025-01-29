@@ -17,6 +17,9 @@ export async function GET(): Promise<NextResponse> {
   if (isConnected) {
     return NextResponse.json({ status: 'ok' });
   } else {
-    return NextResponse.json({ status: 'error', message: 'Database connection failed' }, { status: 500 });
+    return NextResponse.json(
+      { status: 'error', message: 'Database connection failed' },
+      { status: 500 }
+    );
   }
 }

@@ -54,7 +54,7 @@ export function formatTimestamp(timestamp: string): string {
   return new Date(timestamp).toLocaleTimeString();
 }
 
-export interface BlockService { 
+export interface BlockService {
   user2Id: string;
   user1Id: string;
   blockUser(userId: string, blockedUserId: string): Promise<boolean>;
@@ -62,7 +62,7 @@ export interface BlockService {
   getBlockedUsers(userId: string): Promise<string[]>;
 }
 
-export interface ChatRoomWhereinput { 
+export interface ChatRoomWhereinput {
   id: string;
   user1Id: string;
   user2Id: string;

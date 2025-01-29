@@ -228,7 +228,6 @@ export const notificationService = NotificationService.getInstance();
 
 import { prisma } from '@/lib/prisma';
 
-
 export type LocalNotificationType = 'MILESTONE' | 'ACHIEVEMENT' | 'LEVEL_UP';
 
 export interface LocalProgressNotification {
