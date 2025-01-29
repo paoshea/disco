@@ -45,24 +45,27 @@ export class NotificationService {
       return;
     }
 
-    // Load saved permission from storage
-    const savedPermission = localStorage.getItem(
-      this.storageKey
-    ) as NotificationPermission | null;
-    if (savedPermission) {
-      this.permission = savedPermission;
-    } else {
-      this.permission = Notification.permission;
-      localStorage.setItem(this.storageKey, this.permission);
-    }
+    if (typeof window !== 'undefined') {
+      const savedPermission = localStorage.getItem(
+        this.storageKey
+      ) as NotificationPermission | null;
 
-    if (this.permission === 'default') {
-      await this.requestPermission();
+      if (savedPermission) {
+        this.permission = savedPermission;
+      } else {
+        this.permission = Notification.permission;
+        localStorage.setItem(this.storageKey, this.permission);
+      }
+
+      if (this.permission === 'default') {
+        await this.requestPermission();
+      }
     }
   }
 
   private isSupported(): boolean {
-    return 'Notification' in window;
+    console.warn('This browser does not support notifications');
+    return typeof window !== 'undefined' && 'Notification' in window;
   }
 
   public async requestPermission(): Promise<NotificationPermission> {
@@ -74,7 +77,11 @@ export class NotificationService {
     try {
       const permission = await Notification.requestPermission();
       this.permission = permission;
-      localStorage.setItem(this.storageKey, permission);
+
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(this.storageKey, permission);
+      }
+
       return permission;
     } catch (error) {
       const notificationError = error as NotificationError;
@@ -174,8 +181,10 @@ export class NotificationService {
       icon: match.profileImage,
       data: { type: 'match', matchId: match.id },
       onClick: () => {
-        window.focus();
-        window.location.href = `/matches/${match.id}`;
+        if (typeof window !== 'undefined') {
+          window.focus();
+          window.location.href = `/matches/${match.id}`;
+        }
       },
     });
   }
@@ -195,8 +204,10 @@ export class NotificationService {
         senderId: message.senderId,
       },
       onClick: () => {
-        window.focus();
-        window.location.href = `/messages/${message.senderId}`;
+        if (typeof window !== 'undefined') {
+          window.focus();
+          window.location.href = `/messages/${message.senderId}`;
+        }
       },
     });
   }
@@ -217,8 +228,10 @@ export class NotificationService {
         alertType: alert.type,
       },
       onClick: () => {
-        window.focus();
-        window.location.href = `/safety/alerts/${alert.id}`;
+        if (typeof window !== 'undefined') {
+          window.focus();
+          window.location.href = `/safety/alerts/${alert.id}`;
+        }
       },
     });
   }

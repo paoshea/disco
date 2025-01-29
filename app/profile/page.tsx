@@ -1,4 +1,4 @@
-'use client';
+'use client'; 
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -11,8 +11,23 @@ import { Button } from '@/components/ui/Button';
 import { Tab, TabGroup, TabList, TabPanels, TabPanel } from '@headlessui/react';
 import { userService } from '@/services/api/user.service';
 import type { User } from '@/types/user';
-import { RoleUpgrade } from '@/components/profile/RoleUpgrade';
-import { ProgressDashboard } from '@/components/profile/ProgressDashboard';
+import dynamic from 'next/dynamic';
+
+// ✅ Fix dynamic import issues
+const RoleUpgrade = dynamic(
+  () =>
+    import('@/components/profile/RoleUpgrade').then(mod => ({
+      default: mod.RoleUpgrade,
+    })),
+  { ssr: false }
+);
+const ProgressDashboard = dynamic(
+  () =>
+    import('@/components/profile/ProgressDashboard').then(mod => ({
+      default: mod.ProgressDashboard,
+    })),
+  { ssr: false }
+);
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -28,11 +43,14 @@ export default function ProfilePage() {
     updateProfile,
     sendVerificationEmail,
   } = useAuth();
+
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState<User | null>(null);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return; // Prevent execution on the server
+
     const init = async () => {
       try {
         if (!authUser) {
@@ -53,6 +71,9 @@ export default function ProfilePage() {
       setIsLoading(true);
       setError(null);
       const data = await userService.getProfile();
+      if (data.stats && typeof data.stats.achievements === 'number') {
+        data.stats.achievements = 0; // Reset achievements to 0 or handle appropriately
+      }
       setProfileData(data);
     } catch (err) {
       console.error('Error loading profile:', err);
@@ -229,7 +250,7 @@ export default function ProfilePage() {
                     events: profileData.stats.events,
                     achievements: Array.isArray(profileData.stats.achievements)
                       ? profileData.stats.achievements
-                      : [],
+                      : [], // ✅ Ensure achievements is always an array
                     pointsEarned: profileData.stats.pointsEarned,
                   }}
                 />

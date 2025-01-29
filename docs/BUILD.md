@@ -570,6 +570,7 @@ npm run lint -- --fix
 
 # Format code with Prettier
 
+npm run format
 npx prettier --write .
 
 # Clear Next.js cache

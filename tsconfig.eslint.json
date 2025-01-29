@@ -11,10 +11,8 @@
     "next.config.js",
     "postcss.config.js",
     "src/**/*.mjs", // Include .mjs files
-    "src/env.mjs",   // Specifically include env.mjs
+    "src/env.mjs", // Specifically include env.mjs
     "tailwind.config.js"
   ],
-  "exclude": [
-    "node_modules"
-  ] 
+  "exclude": ["node_modules"]
 }
