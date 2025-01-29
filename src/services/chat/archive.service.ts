@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { encryptMessage, decryptMessage } from '@/utils/encryption';
 
 export class ChatArchiveService {
@@ -21,11 +21,10 @@ export class ChatArchiveService {
     });
   }
 
-  async getArchivedChat(userId: string, archiveId: string) {
+  async getArchivedChat(archiveId: string) {
     const archive = await prisma.chatArchive.findUnique({
       where: {
         id: archiveId,
-        userId,
       },
     });
 

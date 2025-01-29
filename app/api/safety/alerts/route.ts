@@ -3,9 +3,7 @@ import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { SafetyAlertSchema } from '@/schemas/safety.schema';
-import type { SafetyAlertNew, SafetyAlertType } from '@/types/safety';
 import { prisma } from '@/lib/prisma';
-import type { Prisma } from '@prisma/client';
 
 type LocationData = {
   latitude: number;
@@ -31,10 +29,24 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 }
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
+  const userId = await validateRequest();
   const data = await request.json();
 
+  // Validate the data using SafetyAlertSchema
+  const parsedData = SafetyAlertSchema.safeParse(data);
+  if (!parsedData.success) {
+    return NextResponse.json(
+      { error: 'Invalid data', details: parsedData.error.errors },
+      { status: 400 }
+    );
+  }
+
   const alert = await prisma.safetyAlert.create({
-    data,
+    data: {
+      ...parsedData.data,
+      userId,
+      location: parsedData.data.location as LocationData, 
+    },
   });
 
   return NextResponse.json(alert, { status: 201 });

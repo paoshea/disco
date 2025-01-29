@@ -1,16 +1,10 @@
 import { useAuth } from '@/hooks/useAuth';
-import { DEFAULT_PERMISSIONS } from '@/types/permissions';
-import type { Permission } from '@/types/permissions';
+import { DEFAULT_PERMISSIONS, RolePermissions } from '@/config/permissions';
 
-export function usePermissions() {
+export function usePermissions(permission: string): boolean {
   const { user } = useAuth();
 
-  const hasPermission = (permission: Permission): boolean => {
-    if (!user?.role) return false;
-    return DEFAULT_PERMISSIONS[user.role].includes(permission);
-  };
+  if (!user?.role) return false;
 
-  return {
-    hasPermission,
-  };
+  return DEFAULT_PERMISSIONS[user.role as keyof RolePermissions].includes(permission);
 }

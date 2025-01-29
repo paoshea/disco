@@ -68,7 +68,7 @@ export const ChatList: React.FC<ChatListProps> = ({
                 className="h-12 w-12"
               />
               {chat.unreadCount > 0 && (
-                <Badge variant="primary" className="absolute -right-1 -top-1">
+                <Badge variant="default">
                   {chat.unreadCount}
                 </Badge>
               )}

@@ -1,14 +1,9 @@
-import type { Permission, RolePermissions } from '@/types/permissions';
-import type { UserRole } from '@/types/auth';
+import type { Permission } from '@/types/permissions';
+import { ROLES } from '../config/roles';
 
-export const ROLES = {
-  GUEST: 'guest',
-  USER: 'user',
-  POWER_USER: 'power_user',
-  ADMIN: 'admin',
-} as const;
+export type UserRole = keyof typeof ROLES;
 
-export const DEFAULT_PERMISSIONS: Record<keyof typeof ROLES, Permission[]> = {
+export const DEFAULT_PERMISSIONS: Record<UserRole, Permission[]> = {
   GUEST: ['view:profiles'],
   USER: ['view:profiles', 'send:messages', 'join:events', 'create:matches'],
   POWER_USER: [
@@ -28,11 +23,13 @@ export const DEFAULT_PERMISSIONS: Record<keyof typeof ROLES, Permission[]> = {
     'create:events',
     'access:safety',
     'manage:contacts',
+    'manage:users',
+    'manage:roles',
   ],
-} as const;
+};
 
 export const isValidRole = (role: string): role is UserRole => {
-  return Object.values(ROLES).includes(role as UserRole);
+  return (Object.values(ROLES) as string[]).includes(role);
 };
 
 export const canUpgrade = (currentRole: UserRole): boolean => {

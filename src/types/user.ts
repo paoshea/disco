@@ -41,6 +41,11 @@ export interface User extends BaseUser {
     meetupSuccessRate: number;
     matchRate: number;
     lastActive: Date;
+    safetyChecks: number;
+    matches: number;
+    events: number;
+    achievements: number;
+    pointsEarned: number;
   };
   age?: number;
   activityPreferences?: {
@@ -51,6 +56,7 @@ export interface User extends BaseUser {
     mode: 'standard' | 'strict';
     bluetoothEnabled: boolean;
   };
+  role: string; // Ensure the role property is included
 }
 
 export interface UserPreferences {

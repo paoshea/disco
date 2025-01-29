@@ -1,4 +1,45 @@
 # DISCO! Platform Development Roadmap
+### New Priority: Review /lib and src/lib Directories
+#### Goals
+- Identify and eliminate duplications
+- Consolidate functionality for clarity
+- Improve maintainability
+
+#### Issues Identified
+1. **Duplicated Files:**
+   - `prisma.ts` exists in both `/lib` and `src/lib/db/client.ts`
+   - `rateLimit.ts` exists in both directories
+   - `utils.ts` exists in both root `/lib` and as utilities in `src/lib/utils/`
+2. **Confusing Structure:**
+   - API-related files split between `/lib/api.ts` and `src/lib/api/client.ts`
+   - Authentication spread across multiple locations
+
+#### Recommended Actions
+
+1. **Consolidate Files:**
+   - `src/lib/prisma.ts`: Consolidate Prisma client
+   - `src/lib/api/index.ts`: Consolidate API utilities
+
+2. **Organize src/lib into Clear Domains:**
+   - Delete `/lib` directory and move all functionality to `src/lib`
+   - Organize `src/lib` as follows:
+     ```
+     src/lib/
+       ├── api/         // All API-related code
+       ├── auth/        // Authentication utilities
+       ├── db/          // Database connections
+       ├── email/       // Email functionality
+       ├── redis/       // Redis client
+       └── utils/       // Shared utilities
+     ```
+
+3. **Remove /lib Directory:**
+   - Execute `rm -r lib/` to remove the `/lib` directory after consolidation
+
+### Success Criteria
+- No duplicated files
+- Clear and maintainable directory structure
+- All functionality consolidated in `src/lib`
 
 ## IMMEDIATE NEXT STEP - Auth Process Flow Enhancement
 
@@ -38,90 +79,17 @@
    - [ ] Create upgrade prompts
 
 ### Success Metrics
-
 - User progression rate
 - Feature usage by role
 - Upgrade completion rate
 - User retention by role
 
-### New Priority: Review /lib and src/lib Directories
-
-#### Goals
-
-- Identify and eliminate duplications
-- Consolidate functionality for clarity
-- Improve maintainability
-
-#### Issues Identified
-
-1. **Duplicated Files:**
-   - `prisma.ts` exists in both `/lib` and `src/lib/db/client.ts`
-   - `rateLimit.ts` exists in both directories
-   - `utils.ts` exists in both root `/lib` and as utilities in `src/lib/utils/`
-
-2. **Confusing Structure:**
-   - API-related files split between `/lib/api.ts` and `src/lib/api/client.ts`
-   - Authentication spread across multiple locations
-
-#### Recommended Actions
-
-1. **Consolidate Files:**
-   - `src/lib/prisma.ts`: Consolidate Prisma client
-   - `src/lib/api/index.ts`: Consolidate API utilities
-
-2. **Organize src/lib into Clear Domains:**
-   - Delete `/lib` directory and move all functionality to `src/lib`
-   - Organize `src/lib` as follows:
-     ```
-     src/lib/
-       ├── api/         // All API-related code
-       ├── auth/        // Authentication utilities
-       ├── db/          // Database connections
-       ├── email/       // Email functionality 
-       ├── redis/       // Redis client
-       └── utils/       // Shared utilities
-     ```
-
-3. **Remove /lib Directory:**
-   - Execute `rm -r lib/` to remove the `/lib` directory after consolidation
-
-### Success Criteria
-
-- No duplicated files
-- Clear and maintainable directory structure
-- All functionality consolidated in `src/lib`
-
 # Disco Codebase Reorganization Action Plan
 
 ## Objective
-
 Reorganize the Disco codebase to improve maintainability, reduce duplication, and clarify frontend/backend separation while preserving Next.js conventions.
 
-# Rem Useful terminal commands
-
-npm audit fix
-npm run format:check
-npm run format  
-npx prettier --write .
-npx eslint . --fix
-
-npm run type-check  
-npm run lint --fix
-npm run lint
-
-npm run type-check:watch
-npm run lint:watch
-
-npm run test
-npm run test:watch
-
-npm run verify-env
-
-rm -rf .next/  
-npm run build
-
 ## Pre-Migration Checklist
-
 - [ ] Create git branch: `refactor/codebase-reorganization`
 - [ ] Take snapshot of current test coverage
 - [ ] Document current build time metrics
@@ -130,14 +98,12 @@ npm run build
 ## 1. File Migrations
 
 ### Hooks Migration
-
 - [ ] Move `app/hooks/useAuth.ts` → `src/hooks/useAuth.ts`
   - [ ] Update imports in all files using useAuth
   - [ ] Test auth functionality after move
   - [ ] Remove empty app/hooks directory
 
 ### Auth Service Reorganization
-
 - [ ] Create `src/services/auth` directory
 - [ ] Move `src/services/api/auth.service.ts` → `src/services/auth/auth.service.ts`
   - [ ] Update service imports
@@ -145,7 +111,6 @@ npm run build
   - [ ] Verify JWT token handling
 
 ### API Client Restructuring
-
 - [x] Create `src/lib/api` directory
 - [x] Move `src/services/api/api.client.ts` → `src/lib/api/client.ts`
   - [x] Update all API client imports
@@ -153,7 +118,6 @@ npm run build
   - [x] Verify error handling
 
 ### Dashboard Components
-
 - [ ] Create `src/components/dashboard` directory
 - [ ] Move from `app/dashboard/components/` to `src/components/dashboard/`:
   - [ ] `DashboardHeader.tsx`
@@ -164,14 +128,12 @@ npm run build
 ### Matching Service Docker Setup
 
 Refer to `/matching-service/README.md` for details.
-
 - [ ] Create `docker-compose.yml` for matching service
 - [ ] Add Dockerfile for matching service
 - [ ] Ensure environment variables are set correctly
 - [ ] Verify Docker setup with `docker-compose up`
 
 ## 2. Import Path Updates
-
 - [ ] Update tsconfig.json paths if needed
 - [ ] Run search for all affected imports
 - [ ] Update import statements in:
@@ -182,7 +144,6 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Run TypeScript compiler to catch any missed imports
 
 ## 3. Testing Strategy
-
 - [ ] Unit Tests
   - [ ] Verify all component tests pass
   - [ ] Update test import paths
@@ -196,7 +157,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Verify critical user journeys
 
 ## 4. Verification Steps
-
 - [ ] Build Verification
   - [ ] Run `npm run build`
   - [ ] Verify no build errors
@@ -210,14 +170,12 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Fix any type errors
 
 ## 5. Documentation Updates
-
 - [ ] Update README.md with new file structure
 - [ ] Document any changed import patterns
 - [ ] Update API documentation if needed
 - [ ] Update contribution guidelines
 
 ## 6. Performance Validation
-
 - [ ] Compare build times
 - [ ] Run lighthouse scores
 - [ ] Check bundle sizes
@@ -227,7 +185,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Time to Interactive
 
 ## 7. Clean Up
-
 - [ ] Remove any empty directories
 - [ ] Delete unused files
 - [ ] Clean up any duplicate types
@@ -235,7 +192,6 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Format all modified files
 
 ## Success Criteria
-
 - [ ] All tests passing
 - [ ] Build succeeding
 - [ ] No TypeScript errors
@@ -246,28 +202,24 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Maintainable file structure
 
 ## Rollback Plan
-
 1. Create a backup branch before starting
 2. Document all changed files
 3. Prepare rollback commands
 4. Test rollback procedure
 
 ## Notes
-
 - Keep Next.js routing structure intact
 - Maintain backwards compatibility
 - Follow atomic commits
 - Update PR with before/after metrics
 
 ## Other pendings
-
 1. Potential Cleanup:
    `@types/bcryptjs`: If you’re not using bcryptjs directly, but rather its Edge-compatible alternative (`@edge-runtime/bcrypt`), this can be removed.
    `@types/react-router-dom`: Since you’re using `react-router-dom`v6+, you don’t need this if you don’t rely on deprecated methods.
 2. Mobile Responsiveness.
 
 ## Core Infrastructure
-
 - [x] Microservices Architecture Setup
 - [x] API Gateway Implementation
 - [x] Database Schema Design
@@ -284,7 +236,6 @@ Refer to `/matching-service/README.md` for details.
 ## Backend Services
 
 ### Core API Service
-
 - [x] User Management
 - [x] Authentication System
 - [x] Rate Limiting
@@ -326,7 +277,6 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Gamification Engine
 
 ### Real-time Features
-
 - [x] WebSocket Infrastructure
   - [x] Connection management
   - [x] Event handling
@@ -344,7 +294,6 @@ Refer to `/matching-service/README.md` for details.
   - [x] Safety alerts
 
 ### Frontend Components
-
 - [x] Authentication UI
   - [x] Login/Register forms
   - [x] Password recovery
@@ -375,9 +324,7 @@ Refer to `/matching-service/README.md` for details.
   - [x] Chat integration
 
 ## Safety Features Implementation
-
 ### Core Safety Features
-
 - [ ] Safety Settings System
   - [ ] Define proper settings type in safety.service.ts
   - [ ] Implement settings update functionality
@@ -388,7 +335,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Add settings migration strategy for existing users
 
 ### Contact System
-
 - [ ] Contact Form Implementation
   - [ ] Implement contact form submission in contact/page.tsx
   - [ ] Add form validation
@@ -396,7 +342,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Add rate limiting for submissions
 
 ### Emergency Response System
-
 - [ ] Emergency Contact Management
   - [ ] Define EmergencyContact type
   - [ ] Create database schema for emergency contacts
@@ -412,7 +357,6 @@ Refer to `/matching-service/README.md` for details.
     - [ ] Privacy zone entry/exit
 
 ### Location Privacy
-
 - [ ] Privacy Zones
   - [ ] Define privacy zone types
   - [ ] Implement zone creation/editing
@@ -421,7 +365,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Implement location fuzzing for approximate mode
 
 ### Evidence Collection
-
 - [ ] Evidence System
   - [ ] Define evidence types (photo, audio, video)
   - [ ] Implement secure upload
@@ -429,7 +372,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Create evidence review system
 
 ### Safety Check System
-
 - [ ] Check Implementation
   - [ ] Implement recurring checks
   - [ ] Add check templates
@@ -438,7 +380,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Implement check verification
 
 ### Testing & Documentation
-
 - [ ] Unit Tests
   - [ ] Location conversion functions
   - [ ] Alert status transitions
@@ -456,14 +397,12 @@ Refer to `/matching-service/README.md` for details.
   - [ ] Privacy policies
 
 ## Progress Tracking
-
 - Total Completed Features: 150
 - Features In Progress: 0
 - Planned Features: 0
 - Completion Percentage: 100%
 
 ## PENDING PRISMA TASKS
-
 1. Run Database Updates
    - [ ] Execute `npx prisma generate` to update Prisma client
    - [ ] Run `npx prisma migrate dev --name add_chat_archive_and_blocks` to apply migrations
@@ -471,9 +410,7 @@ Refer to `/matching-service/README.md` for details.
 ## Priority Matrix
 
 ### Immediate Priority
-
 1. Authentication & User Onboarding
-
    - Enhance email verification flow
    - Add signup success guidance
    - Implement onboarding checklist
@@ -484,14 +421,12 @@ Refer to `/matching-service/README.md` for details.
    - Add "Welcome" email template
 
 2. Core Gamification
-
    - Streak system
    - Basic achievements
    - Activity tracking
    - User dashboard
 
 3. Safety Features
-
    - Emergency contacts
    - Location sharing
    - Real-time alerts
@@ -505,13 +440,11 @@ Refer to `/matching-service/README.md` for details.
 ### Medium Priority
 
 1. Enhanced Gamification
-
    - Advanced achievements
    - Community rewards
    - Leaderboards
 
 2. Community Features
-
    - Group activities
    - Event system
    - Social interactions
@@ -524,7 +457,6 @@ Refer to `/matching-service/README.md` for details.
 ### Long-term Goals
 
 1. Advanced Features
-
    - AI recommendations
    - Advanced analytics
    - Premium features
@@ -537,16 +469,13 @@ Refer to `/matching-service/README.md` for details.
 ## Progress Update (January 26, 2025)
 
 ### Completed Items
-
 - [x] API Client Restructuring
-
   - [x] Created `src/lib/api` directory
   - [x] Moved API client to `src/lib/api/client.ts`
   - [x] Updated API client imports
   - [x] Verified API connectivity
 
 - [x] Service Layer Organization
-
   - [x] Implemented clear service hierarchy under `src/services/`
   - [x] Created dedicated service directories:
     - api/
@@ -566,7 +495,6 @@ Refer to `/matching-service/README.md` for details.
 ### Current Priorities
 
 1. Auth Service Reorganization (High Priority)
-
 - [ ] Create `src/lib/auth/` directory
 - [ ] Consolidate auth-related files:
   - [ ] Move NextAuth configuration to auth.config.ts
@@ -576,7 +504,6 @@ Refer to `/matching-service/README.md` for details.
 - [ ] Add comprehensive tests
 
 2. Email Functionality Consolidation
-
 - [ ] Create unified `src/lib/email/` structure
 - [ ] Implement:
   - [ ] templates.ts
@@ -584,7 +511,6 @@ Refer to `/matching-service/README.md` for details.
   - [ ] types.ts
 
 3. Database Access Reorganization
-
 - [ ] Create `src/lib/db/` directory
 - [ ] Implement:
   - [ ] client.ts (Prisma client)
@@ -595,25 +521,21 @@ Refer to `/matching-service/README.md` for details.
 ### Next Feature Priorities
 
 1. Safety System Enhancements
-
 - [ ] Implement real-time safety checks
 - [ ] Add emergency contact management
 - [ ] Develop incident reporting system
 
 2. Enhanced Matching System
-
 - [ ] Implement preference-based matching
 - [ ] Add compatibility scoring
 - [ ] Create match quality feedback system
 
 3. Communication Features
-
 - [ ] Rich notifications with interactive responses
 - [ ] Meeting feedback system
 - [ ] Location-aware availability controls
 
 ## Notes
-
 - Focus on core authentication and dashboard first
 - Implement gamification gradually to maintain engagement
 - Ensure all features support safety and privacy
@@ -623,17 +545,13 @@ Refer to `/matching-service/README.md` for details.
 ## Empty Folders (Implementation Priority)
 
 ### Priority 1: Core Types and Shared Libraries
-
 These are foundational and should be implemented first as other components depend on them:
-
 - `/backend/libs/dto-types` - Data transfer object types
 - `/backend/libs/common-utils` - Common utility functions
 - `/backend/libs/security` - Security utilities
 
 ### Priority 2: Core Service Foundations
-
 Essential service components needed for basic functionality:
-
 - `/backend/services/core-api/internal/repository` - Data repositories
 - `/backend/services/core-api/internal/validators` - Input validators
 - `/backend/services/core-api/api/v1` - API v1 endpoints
@@ -643,9 +561,7 @@ Essential service components needed for basic functionality:
 - `/backend/services/user-service/src/services` - Service implementations
 
 ### Priority 3: Supporting Services
-
 Services that enhance core functionality:
-
 - `/backend/services/location-service/src/models` - Data models
 - `/backend/services/location-service/src/services` - Service implementations
 - `/backend/services/location-service/src/utils` - Utility functions
@@ -654,27 +570,21 @@ Services that enhance core functionality:
 - `/backend/services/matching-service/lib/channels` - Communication channels
 
 ### Priority 4: Service Configuration
-
 Configuration needed for service deployment:
-
 - `/backend/services/core-api/config` - Core API configuration
 - `/backend/services/user-service/config` - User service configuration
 - `/backend/services/location-service/config` - Location service configuration
 - `/backend/services/matching-service/config` - Matching service configuration
 
 ### Priority 5: Testing Infrastructure
-
 Test suites for ensuring service reliability:
-
 - `/backend/services/core-api/tests` - Core API test suite
 - `/backend/services/user-service/test` - User service test suite
 - `/backend/services/location-service/tests` - Location service test suite
 - `/backend/services/matching-service/test` - Matching service test suite
 
 ### Priority 6: Deployment Infrastructure
-
 Infrastructure as code and deployment configurations:
-
 - `/backend/deploy/terraform/modules` - Terraform modules
 - `/backend/deploy/terraform/environments` - Terraform environment configurations
 - `/backend/deploy/kubernetes/base/core-api` - Core API base configuration
@@ -683,9 +593,7 @@ Infrastructure as code and deployment configurations:
 - `/backend/deploy/kubernetes/base/matching-service` - Matching service base configuration
 
 ### Priority 7: Environment-Specific Configurations
-
 Environment overlays and initialization:
-
 - `/backend/deploy/kubernetes/overlays/dev` - Kubernetes development overlay
 - `/backend/deploy/kubernetes/overlays/staging` - Kubernetes staging overlay
 - `/backend/deploy/kubernetes/overlays/prod` - Kubernetes production overlay
@@ -698,13 +606,10 @@ Environment overlays and initialization:
 ### Aim to standardize on one library as soon as possible to avoid the issues mentioned below.
 
 # Replace jsonwebtoken with jose
-
 Using both `jsonwebtoken` and `jose` in the same project is technically possible, but it's generally not ideal due to potential redundancy, increased bundle size, and confusion about which library to use for specific tasks. Here's a detailed breakdown:
 
 ### **1. Compatibility and Use Case Differences**
-
 - **`jsonwebtoken`**:
-
   - A popular library for working with JWTs in Node.js environments.
   - Provides functions like `sign`, `verify`, and `decode`.
   - Heavily relies on Node.js-specific modules like `crypto` and is **not Edge-compatible** (e.g., for Next.js API routes running in the Edge Runtime).
@@ -715,29 +620,23 @@ Using both `jsonwebtoken` and `jose` in the same project is technically possible
   - Works seamlessly with modern web crypto APIs, making it ideal for Next.js applications with serverless or Edge runtime requirements.
 
 ### **2. Potential Issues**
-
 - **Redundancy**:
-
   - Both libraries offer overlapping functionality for handling JWTs, which can lead to confusion about which one to use in specific parts of your code.
   - This also increases your bundle size unnecessarily, especially if you're using both in client-side code.
 
 - **Inconsistent Behavior**:
-
   - If parts of your codebase rely on `jsonwebtoken` and others on `jose`, subtle differences in API behavior or token verification could lead to bugs or security risks.
 
 - **Edge Runtime Incompatibility**:
   - If you use `jsonwebtoken` in Edge-compatible routes or client-side code, you will encounter runtime errors because `jsonwebtoken` relies on Node.js-specific modules.
 
 ### **3. Recommendation**
-
 If you are starting fresh or aiming for compatibility with modern environments (like Edge), **migrate entirely to `jose`**. It is more future-proof and works in all the environments where `jsonwebtoken` might fail.
 
 ### **4. How to Replace `jsonwebtoken` with `jose`**
-
 Here’s how common tasks can be done using `jose`:
 
 #### Signing a JWT:
-
 ```typescript
 import { SignJWT } from 'jose';
 
@@ -755,7 +654,6 @@ async function createToken(payload: object, secretKey: string) {
 ```
 
 #### Verifying a JWT:
-
 ```typescript
 import { jwtVerify } from 'jose';
 
@@ -768,7 +666,6 @@ async function verifyToken(token: string, secretKey: string) {
 ```
 
 #### Decoding a JWT (without verification):
-
 ```typescript
 import { decodeJwt } from 'jose';
 
@@ -778,14 +675,11 @@ function decodeToken(token: string) {
 ```
 
 ### **5. Migrating Gradually**
-
 If migrating entirely to `jose` isn’t feasible immediately:
-
 - Use `jose` for new code, especially in Edge-compatible routes.
 - Plan to replace `jsonwebtoken` in older code incrementally.
 
 ### **6. Removing `jsonwebtoken`**
-
 Once the migration is complete, remove `jsonwebtoken` from your `package.json`:
 
 ```bash
@@ -794,16 +688,13 @@ npm uninstall @types/jsonwebtoken
 ```
 
 ### **7. When to Keep Both**
-
 The only valid reason to use both libraries would be:
-
 - Legacy code relies on `jsonwebtoken`, and refactoring it is currently impractical.
 - New parts of the project require Edge compatibility, where `jose` is used.
 
 ## Priority Features From README.md
 
 ### Priority 1: Core Privacy & Security Features
-
 - [ ] Zero personal data storage implementation
 - [ ] End-to-end encrypted communications
 - [ ] Approximate distance indicators
@@ -822,7 +713,6 @@ The only valid reason to use both libraries would be:
 - [ ] Enhanced privacy mode controls
 
 ### Priority 2: Location & Discovery
-
 - [ ] Battery-optimized background location
   - [ ] Motion-based updates
   - [ ] Activity recognition integration
@@ -843,7 +733,6 @@ The only valid reason to use both libraries would be:
 - [ ] Context-aware privacy rules
 
 ### Priority 3: Safety Infrastructure
-
 - [ ] Real-time safety check-ins
 - [ ] Emergency contact system
   - [ ] Multiple notification triggers
@@ -866,7 +755,6 @@ The only valid reason to use both libraries would be:
   - [ ] Improved blocking criteria
 
 ### Priority 4: User Experience & Notifications
-
 - [ ] Battery optimization
 - [ ] Enhanced Push Notification System
   - [ ] Priority-based delivery
@@ -882,7 +770,6 @@ The only valid reason to use both libraries would be:
 - [ ] Context-aware delivery
 
 ### Priority 5: Chat & Communication
-
 - [ ] Enhanced Chat System
   - [ ] Media message support
   - [ ] Voice messages
@@ -905,7 +792,6 @@ The only valid reason to use both libraries would be:
   - [ ] Secure key storage
 
 ### Priority 6: Community Features
-
 - [ ] Public roadmap integration
 - [ ] City expansion voting system
 - [ ] Community blog integration
@@ -920,7 +806,6 @@ The only valid reason to use both libraries would be:
 - [ ] Trust score system
 
 ### Priority 7: Support Infrastructure
-
 - [ ] 24/7 in-app support chat
 - [ ] Support ticket system
 - [ ] Email support integration
@@ -929,7 +814,6 @@ The only valid reason to use both libraries would be:
 - [ ] User feedback collection
 
 ### Priority 8: Analytics & Reporting
-
 - [ ] Safety rating analytics
 - [ ] Connection success metrics
 - [ ] User engagement tracking
@@ -938,7 +822,6 @@ The only valid reason to use both libraries would be:
 - [ ] Community health monitoring
 
 ### Priority 9: Accessibility Features
-
 - [ ] Screen reader support implementation
 - [ ] Keyboard navigation system
 - [ ] High contrast mode
@@ -950,15 +833,12 @@ The only valid reason to use both libraries would be:
 ## Spontaneous Social Engagement Implementation Order
 
 ### Phase 1: Core Location & Privacy Foundation
-
 1. Privacy-focused location processing
-
    - Essential for user trust and data protection
    - Foundation for all location-based features
    - Must be implemented before any location features go live
 
 2. Profile visibility controls
-
    - Allow users to control what potential matches can see
    - Set up granular privacy settings
    - Enable temporary profile visibility options
@@ -971,7 +851,6 @@ The only valid reason to use both libraries would be:
 ### Phase 2: Matching & Filtering
 
 4. Interest-based matching
-
    - Define interest categories and tags
    - Implement matching algorithm weights
    - Create interest-based filtering UI
@@ -984,7 +863,6 @@ The only valid reason to use both libraries would be:
 ### Phase 3: Real-time Notifications
 
 6. Push notification system
-
    - Near-match notifications
    - Chat request alerts
    - Safety check notifications
@@ -999,7 +877,6 @@ The only valid reason to use both libraries would be:
 ### Phase 4: Enhanced Proximity Features
 
 8. Bluetooth proximity enhancement
-
    - Short-range precise matching
    - Battery-efficient proximity detection
    - Indoor location enhancement
@@ -1010,21 +887,18 @@ The only valid reason to use both libraries would be:
    - Temporary contact sharing options
 
 ### Success Criteria for Each Phase
-
 - Phase 1: Users can safely share location and control visibility
 - Phase 2: Users are matched based on compatible interests and activities
 - Phase 3: Users receive timely notifications about potential matches
 - Phase 4: Enhanced proximity detection and secure information sharing
 
 ### Dependencies
-
 - Phase 1 must be completed before any other phases
 - Phase 2 can begin once basic privacy controls are in place
 - Phase 3 requires completion of Phase 1
 - Phase 4 can run in parallel with Phase 3
 
 ### Metrics for Success
-
 - Battery impact < 5% per day
 - Match notification latency < 30 seconds
 - False positive matches < 10%

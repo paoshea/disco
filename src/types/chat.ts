@@ -25,6 +25,7 @@ export interface ChatRoomInfo {
   creatorId: string;
   participantId: string;
   matchId: string;
+  user2Id: string;
   participants: string[];
   lastMessage?: MessageInfo;
   unreadCount: number;
@@ -51,4 +52,21 @@ export interface ChatParticipant {
 
 export function formatTimestamp(timestamp: string): string {
   return new Date(timestamp).toLocaleTimeString();
+}
+
+export interface BlockService { 
+  user2Id: string;
+  user1Id: string;
+  blockUser(userId: string, blockedUserId: string): Promise<boolean>;
+  unblockUser(userId: string, blockedUserId: string): Promise<boolean>;
+  getBlockedUsers(userId: string): Promise<string[]>;
+}
+
+export interface ChatRoomWhereinput { 
+  id: string;
+  user1Id: string;
+  user2Id: string;
+  creatorId: string;
+  participantId: string;
+  matchId: string;
 }

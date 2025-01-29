@@ -43,6 +43,7 @@ function convertToAppUser(
       : undefined,
     createdAt: prismaUser.createdAt,
     updatedAt: prismaUser.updatedAt,
+    role: prismaUser.role, // Ensure the role property is included
   };
 }
 

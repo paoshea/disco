@@ -256,15 +256,38 @@ export class ProgressService {
 
     for (const milestone of milestones) {
       if (milestone.requirement) {
-        await prisma.userAchievement.create({
+        await prisma.achievement.create({
           data: {
             userId,
+            type: 'milestone', // Add the type field
             name: milestone.name,
-            awardedAt: new Date(),
+            description: `Achieved milestone: ${milestone.name}`, // Add the description field
+            earnedAt: new Date(), // Use 'earnedAt' instead of 'awardedAt'
           },
         });
       }
     }
+  }
+
+  // Example usage of SafetyCheck, UserMatch, and Event types
+  async getUserSafetyChecks(userId: string): Promise<SafetyCheck[]> {
+    return prisma.safetyCheck.findMany({ where: { userId } });
+  }
+
+  async getUserMatches(userId: string): Promise<UserMatch[]> {
+    return prisma.userMatch.findMany({ where: { userId, status: 'ACCEPTED' } });
+  }
+
+  async getUserEvents(userId: string): Promise<Event[]> {
+    return prisma.event.findMany({
+      where: {
+        participants: {
+          some: {
+            userId,
+          },
+        },
+      },
+    });
   }
 }
 

@@ -1,5 +1,103 @@
-import { PrismaClient, Prisma } from '@prisma/client';
-import { DefaultArgs } from '@prisma/client/runtime/library';
+import { Prisma, PrismaClient } from '@prisma/client';
+
+type EventInclude = {
+  creator:
+    | boolean
+    | {
+        select: {
+          id: true;
+          email: true;
+          firstName: true;
+          lastName: true;
+        };
+      };
+  participants:
+    | boolean
+    | {
+        include: {
+          user: {
+            select: {
+              id: true;
+              email: true;
+              firstName: true;
+              lastName: true;
+            };
+          };
+        };
+      };
+};
+
+export type EventWithParticipants = Prisma.EventGetPayload<{
+  include: EventInclude;
+}>;
+
+type LocationInclude = {
+  user:
+    | boolean
+    | {
+        select: {
+          id: true;
+          email: true;
+          firstName: true;
+          lastName: true;
+        };
+      };
+};
+
+export type LocationWithUser = Prisma.LocationGetPayload<{
+  include: LocationInclude;
+}>;
+
+export type ExtendedPrismaClient = PrismaClient & {
+  $extends: {
+    model: {
+      event: {
+        findNearby: (
+          latitude: number,
+          longitude: number,
+          radiusInMeters: number
+        ) => Promise<EventWithParticipants[]>;
+      };
+      location: {
+        findNearby: (
+          latitude: number,
+          longitude: number,
+          radiusInMeters: number
+        ) => Promise<LocationWithUser[]>;
+      };
+    };
+  };
+};
+
+export interface UserProfile {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+  permissions: string[];
+  role: string;
+  emailVerified: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export type UserWithProfile = Prisma.UserGetPayload<{
+  select: {
+    id: true;
+    email: true;
+    profile: {
+      select: {
+        id: true;
+        firstName: true;
+        lastName: true;
+        role: true;
+        emailVerified: true;
+        createdAt: true;
+        updatedAt: true;
+      };
+    };
+  };
+}>;
 
 export type PrismaTransactionClient = Omit<
   PrismaClient,
@@ -22,24 +120,4 @@ export interface ModelReturnTypes {
   chatRoom: Prisma.ChatRoomGetPayload<Record<string, never>>;
   message: Prisma.MessageGetPayload<Record<string, never>>;
   userMatch: Prisma.UserMatchGetPayload<Record<string, never>>;
-}
-
-// Use Prisma's built-in delegate types instead of creating our own
-export interface ExtendedPrismaClient
-  extends PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs> {
-  event: Prisma.EventDelegate<DefaultArgs>;
-  location: Prisma.LocationDelegate<DefaultArgs>;
-  privacyZone: Prisma.PrivacyZoneDelegate<DefaultArgs>;
-  safetyAlert: Prisma.SafetyAlertDelegate<DefaultArgs>;
-  safetyCheck: Prisma.SafetyCheckDelegate<DefaultArgs>;
-  user: Prisma.UserDelegate<DefaultArgs>;
-  account: Prisma.AccountDelegate<DefaultArgs>;
-  session: Prisma.SessionDelegate<DefaultArgs>;
-  passwordReset: Prisma.PasswordResetDelegate<DefaultArgs>;
-  emergencyContact: Prisma.EmergencyContactDelegate<DefaultArgs>;
-  achievement: Prisma.AchievementDelegate<DefaultArgs>;
-  rateLimitAttempt: Prisma.RateLimitAttemptDelegate<DefaultArgs>;
-  chatRoom: Prisma.ChatRoomDelegate<DefaultArgs>;
-  message: Prisma.MessageDelegate<DefaultArgs>;
-  userMatch: Prisma.UserMatchDelegate<DefaultArgs>;
 }

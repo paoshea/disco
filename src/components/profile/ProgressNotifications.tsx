@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { toast } from '@/components/ui/toast';
-import type { ProgressNotification } from '@/services/notifications/notification.service';
+import type { LocalProgressNotification as ProgressNotification } from '@/services/notifications/notification.service';
 import { progressNotificationService } from '@/services/notifications/notification.service';
 
 interface ProgressNotificationsProps {

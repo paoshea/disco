@@ -136,7 +136,7 @@ export const MatchCard: React.FC<MatchCardProps> = ({
         >
           <div className="flex flex-wrap gap-2">
             {match.commonInterests.map(interest => (
-              <Badge key={interest} variant="secondary">
+              <Badge key={interest} variant="default">
                 {interest}
               </Badge>
             ))}

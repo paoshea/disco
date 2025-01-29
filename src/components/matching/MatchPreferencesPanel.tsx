@@ -164,7 +164,7 @@ export function MatchPreferencesPanel({
             <div className="flex flex-wrap gap-2 mt-2">
               {watch('interests')?.map((interest: string) => (
                 <div key={interest} className="relative group">
-                  <Badge variant="secondary" className="pr-6">
+                  <Badge variant="default">
                     {interest}
                   </Badge>
                   <button

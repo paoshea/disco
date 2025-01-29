@@ -1,11 +1,13 @@
 export type Permission =
-  | 'create:events'
-  | 'join:events'
-  | 'send:messages'
-  | 'create:matches'
   | 'view:profiles'
+  | 'send:messages'
+  | 'join:events'
+  | 'create:matches'
+  | 'create:events'
   | 'access:safety'
-  | 'manage:contacts';
+  | 'manage:contacts'
+  | 'manage:users'
+  | 'manage:roles';
 
 export type RolePermissions = {
   GUEST: Permission[];
@@ -16,7 +18,7 @@ export type RolePermissions = {
 
 export const DEFAULT_PERMISSIONS: RolePermissions = {
   GUEST: ['view:profiles'],
-  USER: ['view:profiles', 'send:messages', 'join:events', 'create:matches'],
+  USER: ['view:profiles', 'send:messages', 'join:events', 'create:matches', 'access:safety','manage:contacts'],
   POWER_USER: [
     'view:profiles',
     'send:messages',

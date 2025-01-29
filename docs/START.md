@@ -1,18 +1,15 @@
 # Getting Started with Disco
 
 ## Target Setup
-
 This guide will help you set up the Disco development environment.
 When properly configured, you'll have:
 
 1. **Infrastructure Services** (running in Docker):
-
    - PostgreSQL database
    - Redis cache
    - Container name in Docker Desktop: `backend`
 
 2. **Backend Services**:
-
    - Core API running locally at http://localhost:8080
    - Health check available at http://localhost:8080/health
    - API endpoints served through both:
@@ -25,7 +22,6 @@ When properly configured, you'll have:
    - Full TypeScript support
 
 This setup enables you to:
-
 - Develop and test the frontend with live updates
 - Access API endpoints through Next.js routes or the Go backend
 - Maintain data persistence with PostgreSQL
@@ -34,7 +30,6 @@ This setup enables you to:
 ## Docker Status
 
 ### Complete Components:
-
 - Main compose files:
   - `backend/docker-compose.yml` - All services defined
   - `backend/docker-compose.override.yml` - Development overrides
@@ -45,14 +40,11 @@ This setup enables you to:
   - `user-service/Dockerfile`
 
 ### Missing Components:
-
 1. Environment Files:
-
    - Service-specific .env files
    - Environment variable configurations
 
 2. Go Dependencies:
-
    - Missing go.mod/go.sum in some services
    - Need to run `go mod init/tidy`
 
@@ -61,25 +53,20 @@ This setup enables you to:
    - Service-specific configs
 
 ### Action Items:
-
 1. Create environment files for each service
 2. Initialize Go modules where missing
 3. Add required config files
 4. Test full docker-compose stack
 
 ## Prerequisites
-
 Make sure you have the following installed:
-
 - Node.js (v18 or higher)
 - Docker Desktop
 - Go (v1.19 or higher)
 - Git
 
 ## Step 1: Environment Setup
-
 1. Clone the repository and install dependencies:
-
    ```bash
    git clone <repository-url>
    cd Disco
@@ -95,27 +82,23 @@ Make sure you have the following installed:
 ## Step 2: Start Docker Services
 
 1. Start Docker Desktop on your machine
-
    - On Mac: Open Docker Desktop application
    - On Windows: Start Docker Desktop from the Start menu
    - Wait until Docker Desktop shows "Running"
    - If another project is running, see [Switching Between Projects](#switching-between-projects) section
 
 2. Start the database and other containerized services:
-
    ```bash
    cd backend
    docker compose -f docker-compose.yml -f docker-compose.override.yml up -d postgres redis
    ```
 
    This will start:
-
    - PostgreSQL database
    - Redis cache
      The container will be named `backend` in Docker Desktop.
 
 3. Verify containers are running:
-
    ```bash
    docker ps
    ```
@@ -123,25 +106,20 @@ Make sure you have the following installed:
    You should see containers with names like `backend-postgres-1` and `backend-redis-1`.
 
    # troubleshooting
-
    After making updates, running docker-compose build first before docker-compose up ensures a fresh build and helps diagnose any remaining issues.
 
 ## Step 3: Start Backend Services
-
 The backend consists of several microservices written in Go. Start them in this order:
 
 1. Core API Service:
-
    ```bash
    cd backend/services/core-api
    go mod tidy  # Install/update dependencies
    go run main.go
    ```
-
    Keep this terminal window open.
 
 2. Location Service (in a new terminal):
-
    ```bash
    cd backend/services/location-service
    go mod tidy
@@ -149,7 +127,6 @@ The backend consists of several microservices written in Go. Start them in this 
    ```
 
 3. Matching Service (in a new terminal):
-
    ```bash
    cd backend/services/matching-service
    go mod tidy
@@ -166,7 +143,6 @@ The backend consists of several microservices written in Go. Start them in this 
 ## Step 4: Database Setup
 
 1. Run database migrations:
-
    ```bash
    cd backend/services/core-api
    go run cmd/migrate/main.go up
@@ -178,11 +154,9 @@ The backend consists of several microservices written in Go. Start them in this 
    ```
 
 ## Step 5: Start Frontend Development Server
-
 You can either run the development server or build for production:
 
 ### Development Mode
-
 ```bash
 # In the root directory
 npm run dev
@@ -191,29 +165,23 @@ npm run dev
 The application will be available at http://localhost:3000 with hot reloading enabled.
 
 ### Production Build
-
 ```bash
 # In the root directory
 npm run build
 npm start
 ```
-
 The application will be available at http://localhost:3000 in production mode.
 
 ## Shutting Down the Development Environment
-
 When you're done working or need to shut down for the night, follow these steps in order:
 
 ### 1. Stop Frontend Services
-
 1. Stop the Next.js development server:
    - Press `Ctrl+C` in the terminal where Next.js is running
    - Wait for the process to fully terminate
 
 ### 2. Stop Backend Services
-
 1. Stop all Go services in any order:
-
    - Press `Ctrl+C` in each terminal running a Go service:
      - Core API Service
      - Location Service
@@ -231,16 +199,12 @@ When you're done working or need to shut down for the night, follow these steps 
    ```
 
 ### 3. Stop Infrastructure Services
-
 1. Stop Docker containers:
-
    ```bash
    cd backend
    docker compose down
    ```
-
    This will:
-
    - Stop and remove all containers (PostgreSQL, Redis)
    - Remove the Docker network
    - Preserve your data volumes
@@ -252,26 +216,20 @@ When you're done working or need to shut down for the night, follow these steps 
    Should show no running containers.
 
 ### 4. Optional: Clean Up (if needed)
-
 1. Remove unused Docker resources:
-
    ```bash
    docker system prune
    ```
-
    This removes:
-
    - Stopped containers
    - Unused networks
    - Dangling images
    - Build cache
 
 2. Clear Node.js cache (if experiencing issues):
-
    ```bash
    npm cache clean --force
    ```
-
 3. Remove development build artifacts:
    ```bash
    # In root directory
@@ -280,11 +238,8 @@ When you're done working or need to shut down for the night, follow these steps 
    cd backend/services
    find . -name "tmp" -type d -exec rm -rf {} +
    ```
-
 ### 5. Verify Clean Shutdown
-
 1. Check for any remaining processes:
-
    ```bash
    # Check for Node processes
    ps aux | grep node
@@ -304,31 +259,24 @@ When you're done working or need to shut down for the night, follow these steps 
    ```
 
 ## Switching Between Projects
-
 If you have other Docker projects running, follow these steps to switch to Disco:
-
 1. Stop and remove all running containers:
-
    ```bash
    docker stop $(docker ps -q)  # Stop all running containers
    docker rm $(docker ps -aq)   # Remove all containers
    ```
 
 2. Start only the essential services for Disco:
-
    ```bash
    cd backend
    docker compose -f docker-compose.yml -f docker-compose.override.yml up -d postgres redis
    ```
-
    This will create a container named `backend` in Docker Desktop.
 
 3. Verify the correct services are running:
-
    ```bash
    docker ps
    ```
-
    You should see only the Postgres and Redis containers for the Disco project.
 
 4. Start the development services locally:
@@ -342,7 +290,6 @@ This approach of running only essential services in Docker and other services lo
 ### Docker Issues
 
 - If containers fail to start, try:
-
   ```bash
   docker compose down
   docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
@@ -357,7 +304,6 @@ This approach of running only essential services in Docker and other services lo
   ```
 
 ### Process Issues
-
 - If a service won't stop with Ctrl+C:
 
   ```bash
@@ -376,7 +322,6 @@ This approach of running only essential services in Docker and other services lo
   ```
 
 ### Database Issues
-
 - If PostgreSQL won't start:
   ```bash
   # Remove PostgreSQL volume and recreate
@@ -390,7 +335,6 @@ This approach of running only essential services in Docker and other services lo
 Remember to always shut down services in the correct order to prevent data corruption or orphaned processes.
 
 ## Development Workflow
-
 1. Start Docker services first
 2. Start all Go backend services
 3. Start the frontend development server
@@ -399,7 +343,6 @@ Remember to always shut down services in the correct order to prevent data corru
 6. Run `npm run lint` to check for code style issues
 
 ## Additional Commands
-
 - Format code:
   ```bash
   npm run format
@@ -417,11 +360,26 @@ Remember to always shut down services in the correct order to prevent data corru
   npm run verify-env
   ```
 
+# Rem Useful terminal commands
+npm audit fix
+npm run format:check
+npm run format  
+npx prettier --write .
+npx eslint . --fix
+npm run type-check  
+npm run lint --fix
+npm run lint
+npm run type-check:watch
+npm run lint:watch
+npm run test
+npm run test:watch
+npm run verify-env
+rm -rf .next/  
+npm run build
+
 ## Architecture Overview
-
 The application uses:
-
-- Next.js 13+ with App Router for the frontend
+- Next.js 15+ with App Router for the frontend
 - Go microservices for backend functionality
 - PostgreSQL for data storage
 - Redis for caching
@@ -430,9 +388,7 @@ The application uses:
 Each component is designed to work independently, making it easier to debug and maintain.
 
 ## Need Help?
-
 If you encounter any issues:
-
 1. Check the logs of the specific service
 2. Verify all required services are running
 3. Consult the troubleshooting section above

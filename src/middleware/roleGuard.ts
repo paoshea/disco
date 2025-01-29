@@ -1,10 +1,12 @@
 import React from 'react';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { useSession } from 'next-auth/react';
-import type { NextRequest } from 'next/server';
-import { DEFAULT_PERMISSIONS, ROLES } from '@/utils/roleValidation';
+import { useRouter } from 'next/router';
+import { DEFAULT_PERMISSIONS } from '@/config/permissions';
+import { ROLES } from '@/config/roles';
 import type { Permission } from '@/types/permissions';
 import { getServerAuthSession } from '@/lib/auth';
+import { RoleUpgrade } from '@/components/profile/RoleUpgrade';
 
 export async function withRoleGuard(
   handler: Function,
@@ -56,7 +58,7 @@ export function useRoleGuard(
   requiredPermission: Permission
 ) {
   return function ProtectedComponent(props: any) {
-    const session = useSession();
+    const { data: session } = useSession();
     const router = useRouter();
 
     if (!session?.user) {

@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { chatArchiveService } from '../chat/archive.service';
 import { notificationService } from '../notifications/notification.service';
 
@@ -8,8 +8,8 @@ export class BlockService {
     const existingChat = await prisma.chatRoom.findFirst({
       where: {
         OR: [
-          { userOneId: userId, userTwoId: blockedUserId },
-          { userOneId: blockedUserId, userTwoId: userId },
+          { id: userId, user2Id: blockedUserId },
+          { id: blockedUserId, user2Id: userId },
         ],
       },
     });
@@ -21,14 +21,14 @@ export class BlockService {
     // Create block record
     const block = await prisma.userBlock.create({
       data: {
-        blockedById: userId,
-        blockedUserId,
+        blockedId: userId,
+        blockerId: userId,
         expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days default
       },
     });
 
     // Send notification about block expiration
-    await notificationService.scheduleNotification({
+    await notificationService.show({
       userId,
       title: 'Block Review Reminder',
       body: 'A user block is expiring soon. Would you like to review it?',

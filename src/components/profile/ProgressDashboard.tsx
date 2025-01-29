@@ -11,6 +11,10 @@ import { ProgressNotifications } from '@/components/profile/ProgressNotification
 interface ProgressStats {
   safetyChecks: number;
   matches: number;
+  responseRate: number;
+  meetupSuccessRate: number;
+  matchRate: number;
+  lastActive: Date;
   events: number;
   achievements: Achievement[];
   pointsEarned: number;

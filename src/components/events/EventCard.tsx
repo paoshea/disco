@@ -10,7 +10,6 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline';
 import { useCallback } from 'react';
-import { PermissionLevel } from '@/types/permissions'; // Import permission types
 
 interface EventCardProps {
   event: EventWithParticipants;
@@ -30,7 +29,7 @@ const PermissionGate = ({
   fallback: React.ReactNode;
 }) => {
   const { user } = useAuth();
-  const hasPermission = user?.permissions?.includes(permission) || false; // Simplified permission check
+  const hasPermission = user?.permissions?.includes(permission) || false;
 
   return hasPermission ? children : fallback;
 };

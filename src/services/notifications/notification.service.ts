@@ -225,14 +225,14 @@ export class NotificationService {
 export const notificationService = NotificationService.getInstance();
 
 import { prisma } from '@/lib/prisma';
-import type { User, Achievement } from '@prisma/client';
 
-export type NotificationType = 'MILESTONE' | 'ACHIEVEMENT' | 'LEVEL_UP';
 
-export interface ProgressNotification {
+export type LocalNotificationType = 'MILESTONE' | 'ACHIEVEMENT' | 'LEVEL_UP';
+
+export interface LocalProgressNotification {
   id: string;
   userId: string;
-  type: NotificationType;
+  type: LocalNotificationType;
   title: string;
   message: string;
   reward?: {
@@ -248,7 +248,7 @@ class ProgressNotificationService {
     userId: string,
     milestone: string,
     reward?: { type: string; value: number }
-  ): Promise<ProgressNotification> {
+  ): Promise<LocalProgressNotification> {
     const notification = await prisma.notification.create({
       data: {
         userId,
@@ -263,7 +263,10 @@ class ProgressNotificationService {
       await this.grantReward(userId, reward);
     }
 
-    return notification;
+    return {
+      ...notification,
+      type: notification.type as LocalNotificationType,
+    };
   }
 
   async grantReward(
@@ -293,8 +296,8 @@ class ProgressNotificationService {
 
   async getUnreadNotifications(
     userId: string
-  ): Promise<ProgressNotification[]> {
-    return prisma.notification.findMany({
+  ): Promise<LocalProgressNotification[]> {
+    const notifications = await prisma.notification.findMany({
       where: {
         userId,
         read: false,
@@ -303,6 +306,11 @@ class ProgressNotificationService {
         createdAt: 'desc',
       },
     });
+
+    return notifications.map(notification => ({
+      ...notification,
+      type: notification.type as LocalNotificationType,
+    }));
   }
 
   async markAsRead(notificationId: string): Promise<void> {

@@ -30,43 +30,56 @@ model User {
   id                    String           @id @default(cuid())
   name                  String?
   email                 String           @unique
-  emailVerified        DateTime?
-  image                String?
-  accounts             Account[]
-  sessions             Session[]
-  safetyAlerts         SafetyAlert[]
-  safetyChecks         SafetyCheck[]
-  password             String
-  firstName            String
-  lastName             String
-  role                 String           @default("user")
-  verificationToken    String?
-  refreshToken         String?          @unique
+  emailVerified         DateTime?
+  image                 String?
+  accounts              Account[]
+  sessions              Session[]
+  safetyAlerts          SafetyAlert[]
+  safetyChecks          SafetyCheck[]
+  password              String
+  firstName             String
+  lastName              String
+  role                  String           @default("user")
+  verificationToken     String?
+  refreshToken          String?          @unique
   refreshTokenExpiresAt DateTime?
-  lastLogin            DateTime?
-  streakCount          Int              @default(0)
-  lastStreak           DateTime?
-  safetyEnabled        Boolean          @default(false)
-  createdAt            DateTime         @default(now())
-  updatedAt            DateTime         @updatedAt
-  passwordResets       PasswordReset[]
-  emergencyContacts    EmergencyContact[]
-  achievements         Achievement[]
-  rateLimitAttempts    RateLimitAttempt[]
-  createdRooms         ChatRoom[]       @relation("CreatedRooms")
-  participatingRooms   ChatRoom[]       @relation("ParticipatingRooms")
-  messages             Message[]
-  locations            Location[]
-  privacyZones         PrivacyZone[]
-  events               Event[]
-  eventParticipants    EventParticipant[]
-  matches              UserMatch[]      @relation("UserMatches")
-  matchedBy            UserMatch[]      @relation("MatchedUsers")
-  reportedBy           Report[]         @relation("ReportedBy")
-  reportedUsers        Report[]         @relation("ReportedUsers")
-  blocksInitiated      UserBlock[]      @relation("BlockedBy")
-  blocksReceived       UserBlock[]      @relation("BlockedUser")
-  chatArchives         ChatArchive[]
+  lastLogin             DateTime?
+  streakCount           Int              @default(0)
+  lastStreak            DateTime?
+  safetyEnabled         Boolean          @default(false)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  points                Int              @default(0)
+  passwordResets        PasswordReset[]
+  emergencyContacts     EmergencyContact[]
+  achievements          Achievement[]
+  rateLimitAttempts     RateLimitAttempt[]
+  createdRooms          ChatRoom[]       @relation("CreatedRooms")
+  participatingRooms    ChatRoom[]       @relation("ParticipatingRooms")
+  messages              Message[]
+  locations             Location[]
+  privacyZones          PrivacyZone[]
+  events                Event[]
+  eventParticipants     EventParticipant[]
+  matches               UserMatch[]      @relation("UserMatches")
+  matchedBy             UserMatch[]      @relation("MatchedUsers")
+  reportedBy            Report[]         @relation("ReportedBy")
+  reportedUsers         Report[]         @relation("ReportedUsers")
+  blocksInitiated       UserBlock[]      @relation("BlockedBy")
+  blocksReceived        UserBlock[]      @relation("BlockedUser")
+  chatArchives          ChatArchive[]    @relation("UserChatArchives")
+  notifications         Notification[]
+  progress              UserProgress?    
+}
+
+model UserProgress {
+  userId           String   @id
+  totalMeetups     Int      @default(0)
+  safetyCheckins   Int      @default(0)
+  safetyScore      Int      @default(0)
+  uniqueLocations  Int      @default(0)
+  positiveRatings  Int      @default(0)
+  user             User     @relation(fields: [userId], references: [id])
 }
 
 model Account {
@@ -178,7 +191,7 @@ model Message {
   senderId   String
   sender     User      @relation(fields: [senderId], references: [id])
   createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
+  updatedAt  DateTime  @default(now())
 }
 
 model Location {
@@ -204,7 +217,7 @@ model PrivacyZone {
   longitude Float
   radius    Float    // in kilometers
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  updatedAt DateTime @default(now())
 
   @@index([userId])
 }
@@ -223,7 +236,7 @@ model Event {
   creator         User      @relation(fields: [creatorId], references: [id])
   tags            String[]
   createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  updatedAt       DateTime  @default(now())
   participants    EventParticipant[]
 
   @@index([latitude, longitude])
@@ -252,7 +265,7 @@ model UserMatch {
   score         Float
   reportReason  String?
   createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  updatedAt     DateTime  @default(now())
 
   @@index([userId])
   @@index([matchedUserId])
@@ -312,18 +325,23 @@ model Report {
 }
 
 model ChatArchive {
-    id          String   @id @default(cuid())
-    userId      String
-    user        User     @relation(fields: [userId], references: [id])
-    messages    String[]
-    archivedAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  userId        String
+  chatId        String
+  content       String
+  retentionDays Int
+  status        String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now())
+  user          User     @relation("UserChatArchives", fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model UserBlock {
-    id          String   @id @default(cuid())
-    blockerId   String
-    blocker     User     @relation("BlockedBy", fields: [blockerId], references: [id])
-    blockedId   String
-    blocked     User     @relation("BlockedUser", fields: [blockedId], references: [id])
-    createdAt   DateTime @default(now())
+  id          String   @id @default(cuid())
+  blockerId   String
+  blocker     User     @relation("BlockedBy", fields: [blockerId], references: [id])
+  blockedId   String
+  blocked     User     @relation("BlockedUser", fields: [blockedId], references: [id])
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime
 }

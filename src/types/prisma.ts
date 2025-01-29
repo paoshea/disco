@@ -75,6 +75,7 @@ export interface UserProfile {
   firstName: string;
   lastName: string;
   role: string;
+  permissions: string[];
   emailVerified: boolean;
   createdAt: Date;
   updatedAt: Date;

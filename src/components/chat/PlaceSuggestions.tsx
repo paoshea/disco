@@ -143,10 +143,10 @@ export function PlaceSuggestions({
             <p className="text-sm text-gray-500">{place.address}</p>
             <div className="mt-2 flex items-center space-x-2">
               {place.rating > 0 && (
-                <Badge variant="secondary">{place.rating.toFixed(1)} ★</Badge>
+                <Badge variant="achievement">{place.rating.toFixed(1)} ★</Badge>
               )}
               {place.priceLevel > 0 && (
-                <Badge variant="secondary">
+                <Badge variant="default">
                   {'$'.repeat(place.priceLevel)}
                 </Badge>
               )}
