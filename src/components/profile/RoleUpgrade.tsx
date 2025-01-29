@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/Card';
 import {
   checkUpgradeEligibility,
   upgradeRole,
-} from '../../services/api/role.service'; 
+} from '../../services/api/role.service';
 
 interface EligibilityResponse {
   eligible: boolean;
@@ -40,7 +40,8 @@ export const RoleUpgrade = () => {
       {isEligible ? (
         <div>
           <p className="mb-4">You are eligible for a Power User upgrade!</p>
-          <Button onClick={handleUpgrade}>Upgrade Now</Button>
+          <Button onClick={() => void handleUpgrade()}>Upgrade Now</Button>{' '}
+          {/* ✅ Fixed */}
         </div>
       ) : (
         <div>

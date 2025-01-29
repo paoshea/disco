@@ -2,68 +2,101 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { safetyService } from '@/services/api/safety.service';
 import type { SafetyAlert } from '@prisma/client';
-import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
-
-const ActionSchema = z.object({
-  action: z.enum(['dismiss', 'resolve']),
-});
 
 type AlertResponse = SafetyAlert | { error: string; details?: unknown };
 
-type RouteContext = {
-  params: Promise<{ id: string }>;
-};
-
-async function validateRequest() {
-  const session = await getServerSession(authOptions);
-  if (!session?.user?.id) {
-    throw new Error('Unauthorized');
-  }
-  return session.user.id;
-}
-
 export async function GET(
-  request: NextRequest,
-  context: RouteContext
+  request: NextRequest
 ): Promise<NextResponse<AlertResponse>> {
-  const { id } = await context.params;
-  const alert = await prisma.safetyAlert.findUnique({
-    where: { id },
-  });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  if (!alert) {
-    return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    const alert = await prisma.safetyAlert.findUnique({
+      where: { id },
+    });
+
+    if (!alert) {
+      return NextResponse.json({ error: 'Alert not found' }, { status: 404 });
+    }
+
+    return NextResponse.json(alert);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Internal Server Error', details: error instanceof Error ? error.message : error },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json(alert);
 }
 
 export async function PUT(
-  request: NextRequest,
-  context: RouteContext
+  request: NextRequest
 ): Promise<NextResponse<AlertResponse>> {
-  const { id } = await context.params;
-  const data = await request.json();
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  const alert = await prisma.safetyAlert.update({
-    where: { id },
-    data,
-  });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
 
-  return NextResponse.json(alert);
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    const data = await request.json();
+
+    const updatedAlert = await prisma.safetyAlert.update({
+      where: { id },
+      data,
+    });
+
+    return NextResponse.json(updatedAlert);
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to update alert', details: error instanceof Error ? error.message : error },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(
-  request: NextRequest,
-  context: RouteContext
-): Promise<NextResponse<void>> {
-  const { id } = await context.params;
-  await prisma.safetyAlert.delete({
-    where: { id },
-  });
+  request: NextRequest
+): Promise<NextResponse> {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
 
-  return new NextResponse(null, { status: 204 });
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get('id');
+
+    if (!id) {
+      return NextResponse.json({ error: 'ID is required' }, { status: 400 });
+    }
+
+    await prisma.safetyAlert.delete({
+      where: { id },
+    });
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return NextResponse.json(
+      { error: 'Failed to delete alert', details: error instanceof Error ? error.message : error },
+      { status: 500 }
+    );
+  }
 }

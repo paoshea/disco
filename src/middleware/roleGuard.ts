@@ -10,8 +10,8 @@ import type { Permission } from '@/types/permissions';
 import { getServerAuthSession } from '@/lib/auth';
 import { RoleUpgrade } from '@/components/profile/RoleUpgrade';
 
-export async function withRoleGuard(
-  handler: Function,
+export function withRoleGuard(
+  handler: (request: NextRequest) => Promise<NextResponse>,
   requiredPermission: Permission
 ) {
   return async (request: NextRequest) => {
@@ -43,7 +43,7 @@ export async function withRoleGuard(
           action: 'feature_access',
           permission: requiredPermission,
         }),
-      }).catch(() => {}); // Non-blocking progress tracking
+      }).catch(error => console.warn('Progress tracking failed:', error));
 
       return handler(request);
     } catch (error) {
@@ -59,7 +59,7 @@ export function useRoleGuard(
   Component: React.ComponentType,
   requiredPermission: Permission
 ) {
-  return function ProtectedComponent(props: any) {
+  return function ProtectedComponent(props: Record<string, unknown>) {
     const { data: session } = useSession();
     const router = useRouter();
 

@@ -1,3 +1,5 @@
+// app/api/progress/route.ts
+
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { progressService } from '@/services/user/progress.service';

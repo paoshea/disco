@@ -11,7 +11,6 @@ import { Layout } from '@/components/layout/Layout';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Logo } from '@/components/ui/Logo';
 import { useState } from 'react';
 
 const signupSchema = z

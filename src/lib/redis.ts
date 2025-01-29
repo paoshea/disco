@@ -1,5 +1,5 @@
 import Redis, { RedisOptions } from 'ioredis';
-import { env } from '@/env.mjs';
+import { env } from '@/env';
 import { z } from 'zod';
 
 const RedisEnvSchema = z.object({

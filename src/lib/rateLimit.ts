@@ -1,4 +1,5 @@
 import LRU from 'lru-cache';
+import { NextApiResponse } from 'next';
 import { prisma } from '@/lib/prisma';
 import * as crypto from 'crypto';
 
@@ -14,7 +15,7 @@ export default function rateLimit(options?: Options) {
   });
 
   return {
-    check: (res: any, limit: number, token: string) =>
+    check: (res: NextApiResponse, limit: number, token: string) =>
       new Promise<void>((resolve, reject) => {
         const tokenCount = (tokenCache.get(token) || [0])[0];
         if (tokenCount === 0) {

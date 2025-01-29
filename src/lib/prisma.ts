@@ -25,8 +25,10 @@ Object.assign(prisma.event, {
     latitude: number,
     longitude: number,
     radiusInMeters: number
-  ): Promise<Prisma.EventGetPayload<{}>[]> {
-    const events = await prisma.$queryRaw<Prisma.EventGetPayload<{}>[]>`
+  ): Promise<Prisma.EventGetPayload<Record<string, never>>[]> {
+    const events = await prisma.$queryRaw<
+      Prisma.EventGetPayload<Record<string, never>>[]
+    >`
       SELECT *
       FROM "Event"
       WHERE ST_DWithin(

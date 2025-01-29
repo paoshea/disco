@@ -12,7 +12,7 @@ export function useRoleTransition() {
 
   useEffect(() => {
     if (user?.id) {
-      checkUpgradeEligibility(user.id).then(
+      void checkUpgradeEligibility(user.id).then(
         ({
           eligible,
           nextRole: next,
@@ -31,7 +31,7 @@ export function useRoleTransition() {
         }
       );
     }
-  }, [user?.id]);
+  }, [user?.id, checkUpgradeEligibility, toast]); // ✅ Added missing dependencies
 
   const handleRoleTransition = async () => {
     if (!user?.id || !nextRole || transitioning) return;

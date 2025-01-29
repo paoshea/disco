@@ -5,7 +5,7 @@ import type { SafetyAlert } from '@prisma/client';
 import type { SafetyAlertNew } from '@/types/safety';
 import { Prisma } from '@prisma/client';
 
-type JsonObject = Prisma.JsonObject;
+// type JsonObject = Prisma.JsonObject;
 
 interface SafetyAlertContextType {
   alerts: SafetyAlertNew[];

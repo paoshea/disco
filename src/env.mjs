@@ -8,11 +8,12 @@ const envSchema = z.object({
   JWT_SECRET: z.string(),
   JWT_EXPIRES_IN: z.string(),
   PORT: z.string(),
-  NEXT_PUBLIC_APP_UR: z.string().url(),
+  NEXT_PUBLIC_APP_URL: z.string().url(),
   NEXT_PUBLIC_WEBSOCKET_URL: z.string().url(),
   SMTP_HOST: z.string(),
   SMTP_PORT: z.string(),
-  SMTP_SECURE: z.boolean(),
+  SMTP_SECURE: z.string().transform((val) => val === 'true'), // Convert to boolean
+  // SMTP_SECURE: z.preprocess((val) => val === 'true', z.boolean()), // Convert to boolean
   SMTP_USER: z.string(),
   SMTP_PASS: z.string(),
   EMAIL_FROM: z.string().email(),
@@ -23,25 +24,40 @@ const envSchema = z.object({
   GOOGLE_MAPS_API_KEY: z.string(),
 });
 
-if (!env.success) {
-  console.error('❌ Invalid environment variables:', env.error.format());
-  throw new Error('Invalid environment variables');
+// ✅ Validate environment variables
+let env;
+try {
+  env = envSchema.parse(process.env);
+  console.log('✅ Environment variables loaded successfully.');
+} catch (error) {
+  console.error('❌ Invalid environment variables:', error);
+  process.exit(1);
 }
 
-export const env = env.data;
+// ✅ Export the validated environment variables
+export { env };
 
-// Ensure environment variables are properly handled
-export const getEnvVar = (key, defaultValue) => {
+// ✅ Safe access to individual variables
+export const NODE_ENV = String(env.NODE_ENV);
+export const DATABASE_URL = String(env.DATABASE_URL);
+export const JWT_SECRET = String(env.JWT_SECRET);
+
+console.log(`Running in ${NODE_ENV} mode`);
+console.log(`Connecting to database at ${DATABASE_URL}`);
+console.log(`Using JWT secret: ${JWT_SECRET}`);
+
+// ✅ Safe environment variable retrieval
+export function getEnvVar(key, defaultValue) {
   const value = env[key];
   if (!value) {
     console.warn(
-      `⚠️ Environment variable ${key} is not set. Using default value: ${defaultValue}`
+      `⚠️ Environment variable ${String(key)} is not set. Using default value: ${String(defaultValue)}`
     );
-    return defaultValue;
+    return String(defaultValue); // ✅ Ensure default value is a string
   }
-  return value;
-};
+  return String(value); // ✅ Ensure return value is a string
+}
 
-// Usage example
-const exampleVar = getEnvVar('EXAMPLE_VAR', 'default_value');
+// ✅ Example usage
+const exampleVar = getEnvVar('NEXT_PUBLIC_APP_URL', 'https://default-url.com');
 console.log(`Example variable: ${exampleVar}`);
