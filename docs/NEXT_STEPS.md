@@ -1,9 +1,87 @@
 # DISCO! Platform Development Roadmap
 
+# Next Steps
+
+## Overview
+
+This document outlines the next steps for completing the Disco application, including priorities and the current state of completion.
+
+## Priorities
+
+1. **Real-Time Notifications**
+   - Implement real-time notifications using WebSocket or similar technology.
+   - Ensure notifications are displayed to users in real-time.
+
+2. **Error Handling and Validation**
+   - Review and enhance error handling across all API routes and components.
+   - Implement comprehensive validation for user inputs and API requests.
+
+3. **Testing**
+   - Write unit tests for critical components and functions.
+   - Implement integration tests for key workflows (e.g., user authentication, event creation).
+
+4. **Documentation**
+   - Ensure all functionalities are well-documented.
+   - Update `README.md` with detailed usage instructions and examples.
+
+## State of Completion
+
+### User Authentication
+- **Status**: Completed
+- **Details**: Implemented using `next-auth`. Includes login, logout, and session management.
+
+### Profile Management
+- **Status**: Completed
+- **Details**: Profile page with user details and role upgrade functionality. Fetching and displaying profile data.
+
+### Event Creation and Management
+- **Status**: Completed
+- **Details**: API routes for creating and fetching events. Role-based access control for event creation.
+
+### Role-Based Access Control
+- **Status**: Completed
+- **Details**: Middleware for role-based access control. Server-side checks for user roles and permissions.
+
+### Progress Tracking and Achievements
+- **Status**: Completed
+- **Details**: Progress dashboard component. Fetching and displaying progress stats.
+
+### Safety Features
+- **Status**: Completed
+- **Details**: Safety alert management. API routes for fetching and updating safety alerts.
+
+### Real-Time Notifications
+- **Status**: Not Started
+- **Details**: Implementation details are missing. Need to add WebSocket or similar real-time communication for notifications.
+
+## Action Items
+
+1. **Implement Real-Time Notifications**
+   - Research and choose a suitable technology (e.g., WebSocket, Socket.IO).
+   - Implement server-side and client-side logic for real-time notifications.
+   - Test and verify the functionality.
+
+2. **Enhance Error Handling and Validation**
+   - Review existing error handling and validation logic.
+   - Implement additional checks and error messages where necessary.
+   - Test and verify the improvements.
+
+3. **Write Tests**
+   - Identify critical components and functions for unit testing.
+   - Write and run unit tests.
+   - Implement integration tests for key workflows.
+   - Ensure test coverage is adequate.
+
+4. **Update Documentation**
+   - Review and update `README.md` with detailed usage instructions and examples.
+   - Ensure all new functionalities are documented.
+   - Update `/docs/NEXT_STEPS.md` as progress is made.
+
+By following these next steps, we can ensure the Disco application is feature-complete, robust, and well-documented.
+
 ### New Priority: Review /lib and src/lib Directories
 
 #### Goals
-
 - Identify and eliminate duplications
 - Consolidate functionality for clarity
 - Improve maintainability
